@@ -1,0 +1,1246 @@
+/* ShiftControl Pro V19 · Centro unificado y superficie limpia */
+.v18-notification-fab,.v18-station-context{display:none!important}
+.v19-command-fab{position:fixed;right:20px;bottom:20px;z-index:1840;width:54px;height:54px;border:1px solid color-mix(in srgb,var(--line) 82%,transparent);border-radius:17px;background:color-mix(in srgb,var(--panel) 96%,transparent);backdrop-filter:blur(18px);color:var(--text);box-shadow:0 18px 50px rgba(0,0,0,.25);display:grid;place-items:center;cursor:pointer;transition:transform .18s ease,border-color .18s ease;font-size:17px;font-weight:950;letter-spacing:-.05em}
+.v19-command-fab:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--blue) 52%,var(--line))}
+.v19-command-fab .v19-badge{position:absolute;top:-5px;right:-5px;display:none;place-items:center;min-width:20px;height:20px;padding:0 5px;border:2px solid var(--panel);border-radius:999px;background:var(--red);color:#fff;font-size:9px;letter-spacing:0;font-weight:950}
+.v19-command-backdrop{position:fixed;inset:0;z-index:1810;background:rgba(5,8,12,.42);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s ease}
+.v19-command-backdrop.open{opacity:1;pointer-events:auto}
+.v19-command-center{position:fixed;top:0;right:0;z-index:1820;width:min(430px,94vw);height:100dvh;background:var(--panel);border-left:1px solid var(--line);box-shadow:-28px 0 70px rgba(0,0,0,.3);transform:translateX(104%);transition:transform .24s ease;display:flex;flex-direction:column;color:var(--text)}
+.v19-command-center.open{transform:translateX(0)}
+.v19-command-head{padding:20px 20px 14px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.v19-command-head h3{margin:3px 0 4px;font-size:20px}.v19-command-head p{margin:0;color:var(--muted);font-size:12px}.v19-command-close{width:36px;height:36px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--text);cursor:pointer;font-size:20px}
+.v19-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}.v19-tab{border:0;border-radius:10px;padding:9px 7px;background:transparent;color:var(--muted);font-size:11px;font-weight:850;cursor:pointer}.v19-tab.active{background:var(--panel2);color:var(--text)}
+.v19-command-body{flex:1;overflow:auto;padding:14px}.v19-pane{display:none}.v19-pane.active{display:block}.v19-section-title{margin:5px 3px 9px;color:var(--muted);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em}
+.v19-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.v19-action{min-height:76px;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--text);text-align:left;cursor:pointer;transition:transform .15s ease,border-color .15s ease}.v19-action:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--blue) 42%,var(--line))}.v19-action span{display:block;font-size:19px;margin-bottom:8px}.v19-action strong{display:block;font-size:12px}.v19-action small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.v19-summary-list,.v19-nav-list{display:grid;gap:7px}.v19-summary-item,.v19-nav-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);cursor:pointer}.v19-summary-item:hover,.v19-nav-item:hover{border-color:color-mix(in srgb,var(--blue) 42%,var(--line))}.v19-summary-icon{width:32px;height:32px;border-radius:10px;background:color-mix(in srgb,var(--blue) 10%,var(--panel));display:grid;place-items:center}.v19-summary-item strong,.v19-nav-item strong{display:block;font-size:12px}.v19-summary-item small,.v19-nav-item small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.v19-count-chip{padding:5px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:9px;font-weight:850;color:var(--muted)}
+.v19-worker-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px}.v19-search-toggle{width:38px;height:38px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text);cursor:pointer}.v19-worker-toolbar .field{display:none;flex:1}.v19-worker-toolbar.search-open .field{display:block}.v19-worker-toolbar.search-open{justify-content:stretch}.v19-worker-toolbar.search-open .v19-search-toggle{flex:0 0 auto}
+#employees .topbar{margin-bottom:10px}#employees .toolbar{display:none!important}
+@media(max-width:820px){.v19-command-fab{right:14px;bottom:18px;width:50px;height:50px;border-radius:16px}.v19-command-center{top:auto;bottom:0;width:100%;height:min(84dvh,760px);border-left:0;border-top:1px solid var(--line);border-radius:22px 22px 0 0;transform:translateY(104%)}.v19-command-center.open{transform:translateY(0)}.v19-action-grid{grid-template-columns:1fr 1fr}.main{padding-top:16px!important}}
+@media(max-width:430px){.v19-action-grid{grid-template-columns:1fr 1fr}.v19-command-body{padding:12px}.v19-command-head{padding:17px 15px 12px}}
+@media print{.v19-command-fab,.v19-command-center,.v19-command-backdrop{display:none!important}}
+
+/* ===== ShiftControl Pro V21 · Dashboard móvil compacto (Opción 1) ===== */
+@media (max-width: 620px){
+  #dashboard .v16-station-panel{
+    padding:16px;
+    border-radius:17px;
+  }
+
+  #dashboard .v16-station-head{
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  #dashboard .v16-station-head h3{
+    margin:3px 0 2px;
+    font-size:20px;
+    line-height:1.08;
+  }
+
+  #dashboard .v16-station-head p{
+    margin:5px 0 0;
+    max-width:210px;
+    font-size:11px;
+    line-height:1.35;
+  }
+
+  #dashboard .v16-health{
+    flex:0 0 auto;
+    max-width:88px;
+    padding:7px 9px;
+    font-size:8px;
+    line-height:1.2;
+    text-align:center;
+  }
+
+  #dashboard .v16-station-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+  }
+
+  #dashboard .v16-station-metric{
+    min-width:0;
+    padding:11px 9px;
+    border-radius:13px;
+  }
+
+  /* Personal, ausencias y cobertura forman el resumen principal */
+  #dashboard .v16-station-metric:nth-child(1){grid-column:1;grid-row:1}
+  #dashboard .v16-station-metric:nth-child(2){grid-column:2;grid-row:1}
+  #dashboard .v16-station-metric:nth-child(4){grid-column:3;grid-row:1}
+
+  #dashboard .v16-station-metric:nth-child(1),
+  #dashboard .v16-station-metric:nth-child(2),
+  #dashboard .v16-station-metric:nth-child(4){
+    min-height:92px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+
+  #dashboard .v16-station-metric:nth-child(1) span,
+  #dashboard .v16-station-metric:nth-child(2) span,
+  #dashboard .v16-station-metric:nth-child(4) span{
+    min-height:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:7.5px;
+    line-height:1.15;
+    text-align:center;
+  }
+
+  #dashboard .v16-station-metric:nth-child(1) strong,
+  #dashboard .v16-station-metric:nth-child(2) strong,
+  #dashboard .v16-station-metric:nth-child(4) strong{
+    margin:6px 0 2px;
+    font-size:19px;
+    line-height:1;
+  }
+
+  #dashboard .v16-station-metric:nth-child(1) small,
+  #dashboard .v16-station-metric:nth-child(2) small,
+  #dashboard .v16-station-metric:nth-child(4) small{
+    font-size:7px;
+    line-height:1.2;
+    text-align:center;
+  }
+
+  /* Reemplazos, turnos extra y alertas pasan a filas compactas */
+  #dashboard .v16-station-metric:nth-child(3),
+  #dashboard .v16-station-metric:nth-child(5),
+  #dashboard .v16-station-metric:nth-child(6){
+    grid-column:1/-1;
+    min-height:58px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"label value" "detail value";
+    align-items:center;
+    column-gap:12px;
+    padding:10px 13px;
+  }
+
+  #dashboard .v16-station-metric:nth-child(3){grid-row:2}
+  #dashboard .v16-station-metric:nth-child(5){grid-row:3}
+  #dashboard .v16-station-metric:nth-child(6){grid-row:4}
+
+  #dashboard .v16-station-metric:nth-child(3) span,
+  #dashboard .v16-station-metric:nth-child(5) span,
+  #dashboard .v16-station-metric:nth-child(6) span{
+    grid-area:label;
+    font-size:9px;
+  }
+
+  #dashboard .v16-station-metric:nth-child(3) strong,
+  #dashboard .v16-station-metric:nth-child(5) strong,
+  #dashboard .v16-station-metric:nth-child(6) strong{
+    grid-area:value;
+    margin:0;
+    min-width:26px;
+    font-size:20px;
+    text-align:right;
+  }
+
+  #dashboard .v16-station-metric:nth-child(3) small,
+  #dashboard .v16-station-metric:nth-child(5) small,
+  #dashboard .v16-station-metric:nth-child(6) small{
+    grid-area:detail;
+    margin-top:3px;
+    font-size:8px;
+  }
+}
+
+/* =====================================================
+   V22 · Planificación compacta en móvil
+   Los tres indicadores mensuales pasan a una sola fila.
+   La vista de escritorio conserva el diseño original.
+   ===================================================== */
+@media (max-width: 600px){
+  #planning .planning-insights{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
+    margin:10px 0 12px;
+  }
+
+  #planning .planning-insight-card,
+  #planning .planning-insight-card:last-child{
+    grid-column:auto;
+    min-width:0;
+    min-height:86px;
+    margin:0;
+    padding:10px 8px;
+    border-radius:12px;
+    box-shadow:none;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+  }
+
+  #planning .planning-insight-card span{
+    width:100%;
+    min-height:25px;
+    font-size:8px;
+    line-height:1.15;
+    letter-spacing:.035em;
+    overflow-wrap:anywhere;
+  }
+
+  #planning .planning-insight-card strong{
+    margin:4px 0 0;
+    font-size:21px;
+    line-height:1;
+  }
+
+  #planning .planning-insight-card small{
+    display:none;
+  }
+
+  /* La alerta conserva una señal visual clara sin ampliar la tarjeta. */
+  #planning .planning-insight-card.warning{
+    position:relative;
+    padding-right:25px;
+  }
+
+  #planning .planning-insight-card.warning::after{
+    content:'!';
+    position:absolute;
+    top:9px;
+    right:9px;
+    width:17px;
+    height:17px;
+    border-radius:6px;
+    display:grid;
+    place-items:center;
+    background:rgba(245,158,11,.16);
+    color:#f59e0b;
+    font-size:11px;
+    font-weight:900;
+  }
+}
+
+@media (max-width: 360px){
+  #planning .planning-insights{gap:5px}
+  #planning .planning-insight-card,
+  #planning .planning-insight-card:last-child{padding:9px 6px;min-height:82px}
+  #planning .planning-insight-card span{font-size:7.3px}
+  #planning .planning-insight-card strong{font-size:19px}
+}
+
+
+/* =====================================================
+   V23 · Finanzas compactas en móvil (Opción 3)
+   Exportar CSV pasa a un menú secundario y la acción
+   principal conserva prioridad. Escritorio no cambia.
+   ===================================================== */
+.finance-mobile-menu{display:none;position:relative}
+.finance-mobile-menu summary{list-style:none;cursor:pointer}
+.finance-mobile-menu summary::-webkit-details-marker{display:none}
+.finance-mobile-menu-panel{
+  position:absolute;
+  top:calc(100% + 7px);
+  right:0;
+  z-index:35;
+  min-width:155px;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--panel2);
+  box-shadow:var(--shadow);
+}
+.finance-mobile-menu-panel button{
+  width:100%;
+  border:0;
+  border-radius:9px;
+  padding:10px 11px;
+  color:var(--text);
+  background:transparent;
+  text-align:left;
+  font:inherit;
+  font-size:11px;
+  font-weight:750;
+  cursor:pointer;
+}
+.finance-mobile-menu-panel button:hover{background:var(--soft)}
+
+@media (max-width:767px){
+  #finance .finance-topbar{
+    gap:9px;
+    margin-bottom:10px!important;
+  }
+
+  #finance .finance-topbar>div:first-child p{display:none}
+
+  #finance .finance-topbar>div:first-child h2{
+    margin-top:2px;
+    font-size:22px;
+    line-height:1.05;
+  }
+
+  #finance .finance-topbar .eyebrow{font-size:8px}
+
+  #finance .finance-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,.72fr) minmax(0,1.35fr) 42px;
+    gap:7px;
+    align-items:center;
+  }
+
+  #finance .finance-actions>*{width:100%;min-width:0}
+  #finance .finance-export-desktop{display:none}
+  #finance .finance-mobile-menu{display:block;width:42px}
+  #finance .finance-mobile-menu>summary{
+    width:42px;
+    height:38px;
+    min-height:38px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    font-size:20px;
+    line-height:1;
+  }
+
+  #finance .finance-today-btn,
+  #finance .finance-month-control{
+    height:38px;
+    min-height:38px;
+    padding-top:0;
+    padding-bottom:0;
+    font-size:11px;
+  }
+
+  #finance .finance-new-entry{
+    grid-column:1/-1;
+    min-height:40px;
+    height:40px;
+    padding:0 13px;
+    font-size:12px;
+  }
+
+  #finance .finance-tabs{margin-top:4px}
+}
+
+
+/* =====================================================
+   V24 · Centro ejecutivo compacto en móvil
+   Acciones secundarias en menú y bitácora oculta en móvil.
+   Escritorio permanece sin cambios.
+   ===================================================== */
+.executive-mobile-menu{display:none;position:relative}
+.executive-mobile-menu summary{list-style:none;cursor:pointer}
+.executive-mobile-menu summary::-webkit-details-marker{display:none}
+.executive-mobile-menu-panel{
+  position:absolute;
+  top:calc(100% + 7px);
+  right:0;
+  z-index:40;
+  min-width:205px;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--panel2);
+  box-shadow:var(--shadow);
+}
+.executive-mobile-menu-panel button{
+  width:100%;
+  border:0;
+  border-radius:9px;
+  padding:10px 11px;
+  color:var(--text);
+  background:transparent;
+  text-align:left;
+  font:inherit;
+  font-size:11px;
+  font-weight:750;
+  cursor:pointer;
+}
+.executive-mobile-menu-panel button:hover{background:var(--soft)}
+
+@media (max-width:767px){
+  #dashboard .dashboard-hero{
+    gap:9px;
+    margin-bottom:10px!important;
+  }
+
+  #dashboard .dashboard-heading p{display:none}
+
+  #dashboard .dashboard-heading h2{
+    margin-top:2px;
+    font-size:22px;
+    line-height:1.05;
+  }
+
+  #dashboard .dashboard-heading .eyebrow{font-size:8px}
+
+  #dashboard .executive-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 42px;
+    gap:7px;
+    align-items:center;
+  }
+
+  #dashboard .executive-actions>*{width:100%;min-width:0}
+  #dashboard .executive-action-desktop{display:none}
+  #dashboard .executive-mobile-menu{display:block;width:42px}
+  #dashboard .executive-mobile-menu>summary{
+    width:42px;
+    height:38px;
+    min-height:38px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    font-size:20px;
+    line-height:1;
+  }
+
+  #dashboard .executive-today-btn{
+    height:38px;
+    min-height:38px;
+    padding-top:0;
+    padding-bottom:0;
+    font-size:11px;
+  }
+
+  #dashboard .v17-timeline-panel{display:none!important}
+}
+
+/* =====================================================
+   V25 · Vista semanal móvil (Opción 3)
+   Navegación compacta y nombres accesibles por iniciales.
+   Escritorio permanece sin cambios.
+   ===================================================== */
+.weekly-mobile-controls{display:none}
+.weekly-avatar-button{
+  border:0;
+  padding:0;
+  color:inherit;
+  font:inherit;
+  cursor:pointer;
+}
+.weekly-person-popover{display:none}
+
+@media (max-width:767px){
+  #weekly .topbar{
+    gap:10px;
+    margin-bottom:10px!important;
+  }
+
+  #weekly .topbar>div:first-child p{display:none}
+  #weekly .topbar>div:first-child h2{
+    font-size:22px;
+    line-height:1.05;
+  }
+
+  #weekly .weekly-desktop-actions{display:none!important}
+  #weekly .weekly-mobile-controls{
+    display:grid;
+    width:100%;
+    gap:8px;
+  }
+
+  #weekly .weekly-mobile-datebar,
+  #weekly .weekly-mobile-shortcuts{
+    display:grid;
+    align-items:center;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+    background:var(--panel2);
+  }
+
+  #weekly .weekly-mobile-datebar{
+    grid-template-columns:44px minmax(0,1fr) 44px;
+    min-height:43px;
+  }
+
+  #weekly .weekly-mobile-arrow{
+    height:43px;
+    border:0;
+    background:transparent;
+    color:var(--text);
+    font-size:25px;
+    cursor:pointer;
+  }
+
+  #weekly .weekly-mobile-date{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    height:43px;
+    border-left:1px solid var(--line);
+    border-right:1px solid var(--line);
+    color:var(--text);
+  }
+
+  #weekly .weekly-mobile-date input{
+    width:132px;
+    max-width:calc(100% - 22px);
+    border:0;
+    padding:0;
+    background:transparent;
+    color:var(--text);
+    font:inherit;
+    font-size:12px;
+    font-weight:750;
+    color-scheme:dark;
+  }
+
+  body.light #weekly .weekly-mobile-date input{color-scheme:light}
+
+  #weekly .weekly-mobile-shortcuts{
+    grid-template-columns:1fr 1fr 1fr;
+    min-height:42px;
+  }
+
+  #weekly .weekly-mobile-shortcuts>*{
+    min-width:0;
+    height:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    border:0;
+    border-right:1px solid var(--line);
+    background:transparent;
+    color:var(--text);
+    font:inherit;
+    font-size:11px;
+    font-weight:750;
+  }
+
+  #weekly .weekly-mobile-shortcuts>*:last-child{border-right:0}
+  #weekly .weekly-mobile-shortcuts button{cursor:pointer}
+  #weekly .weekly-today-dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#3b82f6;
+    box-shadow:0 0 0 3px rgba(59,130,246,.13);
+  }
+
+  #weekly .toolbar{margin-top:2px}
+
+  /* En móvil la columna de personas deja de quedar anclada. */
+  #weekly .week-grid{
+    grid-template-columns:52px repeat(7,minmax(92px,1fr));
+    min-width:696px;
+  }
+
+  #weekly .week-name{
+    position:static!important;
+    left:auto!important;
+    z-index:auto!important;
+    padding:7px 5px!important;
+  }
+
+  #weekly .week-name .person{
+    justify-content:center;
+    gap:0!important;
+  }
+
+  #weekly .weekly-person-copy{display:none}
+  #weekly .weekly-avatar-button{
+    position:relative;
+    width:32px!important;
+    height:32px!important;
+    border-radius:9px!important;
+    display:grid;
+    place-items:center;
+    background:var(--soft);
+    border:1px solid var(--line);
+    font-size:9px!important;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+
+  #weekly .weekly-person-popover{
+    position:absolute;
+    left:2px;
+    top:calc(100% + 6px);
+    z-index:80;
+    width:max-content;
+    max-width:210px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--panel);
+    box-shadow:var(--shadow);
+    color:var(--text);
+    text-align:left;
+    pointer-events:none;
+  }
+
+  #weekly .weekly-person-popover strong{
+    font-size:11px;
+    white-space:nowrap;
+  }
+  #weekly .weekly-person-popover span{
+    font-size:9px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+
+  #weekly .week-title:first-child{
+    position:static!important;
+    color:transparent;
+    font-size:0;
+  }
+  #weekly .week-title:first-child::after{
+    content:'ID';
+    color:var(--muted);
+    font-size:9px;
+  }
+}
+
+
+/* =====================================================
+   V26 · Vista semanal móvil depurada
+   Elimina navegación duplicada y reduce las iniciales.
+   ===================================================== */
+@media (max-width:767px){
+  /* Oculta con prioridad el bloque antiguo de fecha/semana. */
+  #weekly .topbar .weekly-desktop-actions,
+  #weekly .weekly-desktop-actions{
+    display:none!important;
+  }
+
+  #weekly .topbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    align-items:start!important;
+    gap:8px!important;
+  }
+
+  #weekly .weekly-mobile-controls{
+    display:grid!important;
+    margin-top:0!important;
+  }
+
+  /* Columna de identificadores más angosta y filas más bajas. */
+  #weekly .week-grid{
+    grid-template-columns:38px repeat(7,minmax(88px,1fr))!important;
+    min-width:654px!important;
+  }
+
+  #weekly .week-grid>div{
+    padding:6px 5px!important;
+  }
+
+  #weekly .week-name{
+    min-height:58px!important;
+    padding:4px 3px!important;
+  }
+
+  #weekly .week-name .person{
+    min-height:100%;
+  }
+
+  #weekly .weekly-avatar-button{
+    width:23px!important;
+    height:23px!important;
+    min-width:23px!important;
+    min-height:23px!important;
+    border-radius:7px!important;
+    font-size:7px!important;
+    line-height:1!important;
+    letter-spacing:0!important;
+  }
+
+  #weekly .week-cell{
+    min-height:58px!important;
+    font-size:10px!important;
+  }
+
+  #weekly .week-meta{
+    font-size:8px!important;
+    line-height:1.25!important;
+    margin-top:3px!important;
+  }
+
+  #weekly .week-title{
+    padding:6px 4px!important;
+    font-size:8px!important;
+  }
+
+  #weekly .week-title:first-child::after{
+    font-size:7px!important;
+  }
+
+  #weekly .weekly-person-popover{
+    left:0!important;
+    top:calc(100% + 4px)!important;
+    padding:7px 9px!important;
+  }
+}
+
+/* =====================================================
+   V27 · Planificación mensual móvil ultra compacta
+   Barra de periodo compacta + herramientas por iconos.
+   ===================================================== */
+.planning-mobile-tools{display:contents}
+.planning-tool-icon{display:none}
+
+@media (max-width:767px){
+  #planning .topbar{
+    gap:7px!important;
+    margin-bottom:10px!important;
+  }
+
+  #planning .topbar>div:first-child p{
+    display:none!important;
+  }
+
+  #planning .planning-actions{
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) 40px 40px!important;
+    gap:6px!important;
+    width:100%!important;
+    align-items:center!important;
+  }
+
+  #planning .planning-period-today,
+  #planning .planning-month-nav{
+    min-height:38px!important;
+    height:38px!important;
+    padding:0 10px!important;
+  }
+
+  #planning .planning-month-nav{
+    width:40px!important;
+    min-width:40px!important;
+    padding:0!important;
+    font-size:16px!important;
+  }
+
+  #planning .planning-period-combo{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 72px!important;
+    min-width:0!important;
+    border:1px solid var(--line)!important;
+    border-radius:10px!important;
+    overflow:hidden!important;
+    background:var(--panel)!important;
+  }
+
+  #planning .planning-period-combo .select{
+    min-width:0!important;
+    width:100%!important;
+    height:36px!important;
+    min-height:36px!important;
+    padding:0 8px!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+  }
+
+  #planning .planning-period-combo .select+ .select{
+    border-left:1px solid var(--line)!important;
+  }
+
+  #planning .planning-mobile-tools{
+    display:grid!important;
+    grid-column:1/-1!important;
+    grid-template-columns:repeat(7,minmax(0,1fr))!important;
+    gap:5px!important;
+    margin-top:1px!important;
+  }
+
+  #planning .planning-tool{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:3px!important;
+    min-width:0!important;
+    width:100%!important;
+    height:48px!important;
+    min-height:48px!important;
+    padding:4px 2px!important;
+    border-radius:9px!important;
+    font-size:inherit!important;
+  }
+
+  #planning .planning-tool-icon{
+    display:block!important;
+    font-size:15px!important;
+    line-height:1!important;
+    font-weight:700!important;
+  }
+
+  #planning .planning-tool-label{
+    display:block!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:7px!important;
+    line-height:1!important;
+    font-weight:700!important;
+    letter-spacing:-.15px!important;
+  }
+
+  #planning .toolbar{
+    gap:7px!important;
+    margin-bottom:10px!important;
+  }
+
+  #planning .toolbar .filters{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:6px!important;
+  }
+
+  #planning .toolbar .filters .select{
+    min-width:0!important;
+    width:100%!important;
+    min-height:36px!important;
+    height:36px!important;
+    padding:0 9px!important;
+    font-size:11px!important;
+  }
+
+  #planning .legend{
+    gap:4px 7px!important;
+    font-size:8px!important;
+    line-height:1.15!important;
+  }
+
+  #planning .legend span{
+    gap:3px!important;
+  }
+
+  #planning .legend i{
+    width:7px!important;
+    height:7px!important;
+  }
+
+  #planning #monthState{
+    padding:8px 10px!important;
+    min-height:0!important;
+    font-size:9px!important;
+    line-height:1.3!important;
+  }
+}
+.planning-tool-label{display:none}
+.planning-tool-desktop{display:inline}
+@media (max-width:767px){
+  #planning .planning-tool-desktop{display:none!important}
+  #planning .planning-tool-label{display:block!important}
+}
+
+
+/* =====================================================
+   V29 · Historial de actividad
+   La bitácora sale del Centro Ejecutivo y queda disponible
+   como módulo independiente desde Utilidades/Navegar.
+   ===================================================== */
+@media (max-width:767px){
+  #audit .topbar{gap:9px;margin-bottom:10px!important}
+  #audit .topbar p{display:none}
+  #audit .actions{gap:6px}
+  #audit .actions .btn{min-height:36px;padding:0 10px;font-size:11px}
+  #audit .cards{gap:8px}
+  #audit .card{padding:12px}
+  #audit .card-head{gap:8px}
+  #audit #auditSearch{max-width:none!important;width:100%}
+}
+
+/* =====================================================
+   V30 · Centro Ejecutivo depurado · opción 3 móvil
+   Dashboard jerárquico: estado, prioridades, salud,
+   compromisos, avance y resumen. Módulos secundarios fuera.
+   ===================================================== */
+@media (max-width:767px){
+  #dashboard.dashboard-view.active{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:10px!important;
+    align-content:start!important;
+    padding-bottom:92px!important;
+  }
+
+  #dashboard.dashboard-view.active > *{grid-column:1/-1}
+
+  #dashboard .dashboard-hero{
+    order:0;
+    margin-bottom:0!important;
+    padding-bottom:2px!important;
+  }
+  #dashboard .dashboard-heading .eyebrow,
+  #dashboard .dashboard-heading p{display:none!important}
+  #dashboard .dashboard-heading h2{font-size:22px!important;line-height:1.05!important;margin:0!important}
+
+  /* Los contenedores dejan participar a sus tarjetas en la grilla principal. */
+  #dashboard .v16-operation-center,
+  #dashboard .exec-option-one-grid,
+  #dashboard #v17SmartGrid{
+    display:contents!important;
+  }
+
+  /* 1 · Estado de la estación */
+  #dashboard .v16-station-panel{
+    order:10;
+    grid-column:1/-1!important;
+    margin:0!important;
+    padding:13px!important;
+    border-radius:15px!important;
+  }
+  #dashboard .v16-station-head{margin-bottom:10px!important}
+  #dashboard .v16-station-head .muted{display:none!important}
+  #dashboard .v16-station-head h3{font-size:16px!important;margin-top:2px!important}
+
+  /* 2 · Prioridades */
+  #dashboard .exec-priorities-panel{
+    order:20;
+    grid-column:1/-1!important;
+    margin:0!important;
+    padding:13px!important;
+    border-radius:15px!important;
+  }
+  #dashboard .exec-priorities-panel .dashboard-panel-head p{display:none!important}
+  #dashboard .exec-task-list{gap:6px!important}
+  #dashboard .exec-task-list .task-item{padding:9px!important}
+
+  /* 3 · Estado del sistema / Integridad */
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(1),
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(2){display:none!important}
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3){
+    display:block!important;
+    order:30;
+    grid-column:1!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:12px!important;
+    border-radius:15px!important;
+  }
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-panel-head{
+    display:block!important;
+    margin-bottom:9px!important;
+  }
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .section-kicker,
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-panel-head p{display:none!important}
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-panel-head h3{
+    font-size:13px!important;
+    margin:0 0 6px!important;
+  }
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-chip{
+    display:inline-flex!important;
+    padding:4px 7px!important;
+    font-size:8px!important;
+  }
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-integrity-item{
+    grid-template-columns:26px minmax(0,1fr)!important;
+    padding:8px!important;
+    gap:7px!important;
+  }
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-integrity-item .icon{
+    width:26px!important;height:26px!important;border-radius:8px!important
+  }
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-integrity-item strong{font-size:10px!important}
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-integrity-item small,
+  #dashboard #v17SmartGrid > .v17-panel:nth-child(3) .v17-integrity-item > span{display:none!important}
+
+  /* 4 · Compromisos pendientes, resumidos */
+  #dashboard .exec-economic-panel{
+    order:31;
+    grid-column:2!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:12px!important;
+    border-radius:15px!important;
+  }
+  #dashboard .exec-economic-panel .section-kicker,
+  #dashboard .exec-economic-panel .dashboard-panel-head p,
+  #dashboard .exec-economic-panel .dashboard-panel-head .btn{display:none!important}
+  #dashboard .exec-economic-panel .dashboard-panel-head{margin-bottom:9px!important}
+  #dashboard .exec-economic-panel .dashboard-panel-head h3{font-size:13px!important;margin:0!important}
+  #dashboard .exec-economic-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:5px!important;
+  }
+  #dashboard .exec-economic-card{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:4px 7px!important;
+    min-height:0!important;
+    padding:6px 7px!important;
+    border-radius:9px!important;
+  }
+  #dashboard .exec-economic-card span{font-size:8px!important}
+  #dashboard .exec-economic-card strong{font-size:11px!important;grid-column:2!important;grid-row:1!important}
+  #dashboard .exec-economic-card b{font-size:9px!important;grid-column:2!important}
+  #dashboard .exec-economic-card small{display:none!important}
+  #dashboard .exec-economic-card:nth-child(2),
+  #dashboard .exec-economic-card:nth-child(3){display:none!important}
+
+  /* 5 · Avance del turno */
+  #dashboard .v16-workflow-panel{
+    order:40;
+    grid-column:1/-1!important;
+    margin:0!important;
+    padding:13px!important;
+    border-radius:15px!important;
+  }
+  #dashboard .v16-workflow-panel .dashboard-panel-head p,
+  #dashboard .v16-workflow-panel .section-kicker{display:none!important}
+  #dashboard .v16-workflow-panel .dashboard-panel-head{margin-bottom:9px!important}
+  #dashboard .v16-workflow-panel .dashboard-panel-head h3{font-size:14px!important;margin:0!important}
+  #dashboard .v16-workflows{gap:7px!important}
+  #dashboard .v16-workflow-card{padding:9px!important;min-height:0!important}
+
+  /* 6 · Resumen inteligente */
+  #dashboard .v16-summary-panel{
+    order:50;
+    grid-column:1/-1!important;
+    margin:0!important;
+    padding:13px!important;
+    border-radius:15px!important;
+  }
+  #dashboard .v16-summary-panel .section-kicker,
+  #dashboard .v16-summary-panel .dashboard-panel-head p{display:none!important}
+  #dashboard .v16-summary-panel .dashboard-panel-head{margin-bottom:8px!important}
+  #dashboard .v16-summary-panel .dashboard-panel-head h3{font-size:14px!important;margin:0!important}
+  #dashboard .v16-summary-copy{padding:10px!important;font-size:10px!important;line-height:1.45!important}
+
+  /* Módulos especializados: ya no ocupan el Centro Ejecutivo. */
+  #dashboard .exec-summary-panel,
+  #dashboard .dashboard-layout-secondary,
+  #dashboard .v17-chief-today{display:none!important}
+}
+
+/* =========================================================
+   V31 · Registro real móvil — matriz inteligente compacta
+   Solo afecta pantallas pequeñas. Escritorio permanece igual.
+   ========================================================= */
+@media (max-width: 767px){
+  #actual{
+    padding-bottom:88px!important;
+  }
+  #actual .topbar{
+    display:block!important;
+    margin-bottom:10px!important;
+  }
+  #actual .topbar > div:first-child{
+    position:relative;
+    padding-right:54px;
+  }
+  #actual .topbar h2{
+    font-size:22px!important;
+    line-height:1.08!important;
+    margin:0 0 5px!important;
+  }
+  #actual .topbar p{
+    font-size:11px!important;
+    line-height:1.35!important;
+    margin:0!important;
+    max-width:285px;
+  }
+  #actual .topbar > .actions{
+    display:none!important;
+  }
+  #actual .v31-actual-today{
+    position:absolute;
+    right:0;
+    top:0;
+    min-height:34px;
+    padding:0 10px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--surface);
+    color:var(--text);
+    font:inherit;
+    font-size:11px;
+    font-weight:700;
+  }
+  #actual .v31-actual-mobile-nav{
+    display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) 42px;
+    gap:7px;
+    align-items:center;
+    margin:10px 0 9px;
+  }
+  #actual .v31-actual-mobile-nav button,
+  #actual .v31-actual-mobile-nav select{
+    width:100%;
+    min-width:0;
+    height:40px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    background:var(--surface);
+    color:var(--text);
+    font:inherit;
+    font-size:12px;
+    font-weight:750;
+  }
+  #actual .v31-actual-mobile-nav button{
+    font-size:18px;
+    line-height:1;
+  }
+  #actual .v31-actual-period{
+    text-align:center;
+    text-align-last:center;
+    padding:0 26px 0 12px;
+  }
+  #actual .toolbar{
+    margin:0 0 8px!important;
+  }
+  #actual .filters{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:7px!important;
+    width:100%!important;
+  }
+  #actual .filters .select{
+    width:100%!important;
+    min-width:0!important;
+    height:39px!important;
+    padding:0 28px 0 11px!important;
+    font-size:11px!important;
+    border-radius:11px!important;
+  }
+  #actual .actual-legend{
+    display:flex!important;
+    gap:5px 10px!important;
+    margin:8px 0 0!important;
+    font-size:9px!important;
+    line-height:1.2!important;
+  }
+  #actual .actual-legend span{
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:4px!important;
+    white-space:nowrap;
+  }
+  #actual .actual-dot{
+    width:7px!important;
+    height:7px!important;
+    border-radius:50%!important;
+  }
+  #actual > .notice{
+    margin:9px 0 0!important;
+    padding:8px 10px!important;
+    border-radius:10px!important;
+    font-size:9px!important;
+    line-height:1.35!important;
+  }
+  #actual .calendar-shell{
+    max-height:none!important;
+    margin-top:8px!important;
+    border-radius:12px!important;
+    overflow:auto!important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  #actual .actual-calendar-grid{
+    min-width:1510px!important;
+  }
+  #actual .actual-calendar-grid .cal-head,
+  #actual .actual-calendar-grid .cal-row{
+    grid-template-columns:112px repeat(31,42px) 58px!important;
+  }
+  #actual .actual-calendar-grid .cal-head > div{
+    min-height:38px!important;
+    padding:5px 2px!important;
+    font-size:9px!important;
+    line-height:1.15!important;
+  }
+  #actual .actual-calendar-grid .sticky-name,
+  #actual .actual-calendar-grid .cal-name{
+    position:sticky!important;
+    left:0!important;
+    z-index:5!important;
+    background:var(--surface)!important;
+    border-right:1px solid var(--border)!important;
+  }
+  #actual .actual-calendar-grid .sticky-summary,
+  #actual .actual-calendar-grid .cal-summary{
+    position:sticky!important;
+    right:0!important;
+    z-index:4!important;
+    background:var(--surface)!important;
+    border-left:1px solid var(--border)!important;
+  }
+  #actual .actual-calendar-grid .cal-name{
+    padding:5px!important;
+    min-height:44px!important;
+  }
+  #actual .actual-calendar-grid .cal-name .person{
+    display:grid!important;
+    grid-template-columns:25px minmax(0,1fr)!important;
+    gap:5px!important;
+    align-items:center!important;
+  }
+  #actual .actual-calendar-grid .cal-name .avatar{
+    width:25px!important;
+    height:25px!important;
+    border-radius:8px!important;
+    font-size:8px!important;
+  }
+  #actual .actual-calendar-grid .cal-name strong{
+    display:block!important;
+    max-width:70px!important;
+    font-size:9px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #actual .actual-calendar-grid .cal-name .person span{
+    display:block!important;
+    font-size:7px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #actual .actual-calendar-grid .cal-cell{
+    min-height:44px!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  #actual .actual-calendar-grid .actual-shift{
+    display:none!important;
+  }
+  #actual .actual-calendar-grid .actual-status{
+    display:block!important;
+    width:9px!important;
+    height:9px!important;
+    min-width:9px!important;
+    padding:0!important;
+    border-radius:50%!important;
+    overflow:hidden!important;
+    text-indent:-999px!important;
+    border:0!important;
+    box-shadow:0 0 0 2px color-mix(in srgb,currentColor 16%,transparent);
+  }
+  #actual .actual-calendar-grid .actual-empty-day::after{
+    content:'–';
+    color:var(--muted);
+    font-size:9px;
+    opacity:.55;
+  }
+  #actual .actual-calendar-grid .cal-summary{
+    min-height:44px!important;
+    padding:4px 3px!important;
+    font-size:7px!important;
+    line-height:1.25!important;
+    text-align:center!important;
+  }
+}
+@media (min-width:768px){
+  #actual .v31-actual-mobile-nav,
+  #actual .v31-actual-today{display:none!important}
+}
