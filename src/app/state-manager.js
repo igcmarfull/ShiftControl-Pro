@@ -28,6 +28,21 @@ window.ShiftControlState = {
 
   },
 
+
+  save(){
+
+    if(typeof window.save === "function"){
+
+      window.save();
+
+      console.log(
+        "[ShiftControl V31] Estado guardado"
+      );
+
+    }
+
+  },
+
   syncLegacyState(){
 
     if(window.state){

@@ -63,6 +63,10 @@ window.EmployeeModule = {
 
     state.employees.push(employee);
 
+    if(window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
+
     return employee;
 
   },
@@ -79,6 +83,10 @@ window.EmployeeModule = {
         : employee
     );
 
+    if(window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
+
     return this.find(id);
 
   },
@@ -92,6 +100,10 @@ window.EmployeeModule = {
       state.employees.filter(
         employee=>employee.id!==id
       );
+
+    if(window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
 
     return true;
 
