@@ -24,7 +24,23 @@ window.ShiftControlState = {
 
   set(data){
 
-    this.data=data;
+    this.data = data;
+
+  },
+
+  syncLegacyState(){
+
+    if(window.state){
+
+      this.data = window.state;
+
+      console.log(
+        "[ShiftControl V31] Estado antiguo conectado"
+      );
+
+    }
+
+    return this.data;
 
   }
 
