@@ -11172,7 +11172,7 @@ function showWeeklyEmployee(event,employeeId){
   event.preventDefault();
   event.stopPropagation();
   document.querySelectorAll('.weekly-person-popover').forEach(el=>el.remove());
-  const employee=state.employees.find(item=>item.id===employeeId);
+  const employee=EmployeeModule.find(employeeId);
   const name=employee?.name||'Trabajadora';
   const detail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(employee?.shift||'—'):(employee?.area||'');
   const target=event.currentTarget;
