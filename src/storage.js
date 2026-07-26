@@ -78,7 +78,19 @@
       if (error) throw error;
 
       if (data?.data) {
-        state = data.data;
+
+        Object.keys(state).forEach(key=>{
+          delete state[key];
+        });
+
+        Object.assign(state, data.data);
+
+        window.state = state;
+
+        if(window.ShiftControlState){
+          window.ShiftControlState.set(state);
+        }
+
         localStorage.setItem(KEYS.data, JSON.stringify(state));
         localStorage.setItem(
           LOCAL_SYNC_KEY,
