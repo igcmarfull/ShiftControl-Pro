@@ -1,6 +1,6 @@
 (function(){
 
-var EmployeeModule = window.EmployeeModule = {
+window.EmployeeModule = {
 
   getAll(){
 
