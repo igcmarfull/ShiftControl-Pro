@@ -13,7 +13,19 @@ window.EmployeeModule = {
 
     return state?.employees || [];
 
+  },
+
+
+  find(id){
+
+    const employees = this.getAll();
+
+    return employees.find(
+      employee => employee.id === id
+    ) || null;
+
   }
+
 
 };
 
