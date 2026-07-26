@@ -10355,7 +10355,11 @@ if(!state.demoRealistaJunio2026){
   state.demoRealistaJunio2026=true;
 }
 
-function save(){localStorage.setItem(KEYS.data,JSON.stringify(state))}
+function save(){
+  const currentState = window.ShiftControlState?.get?.() || state;
+  window.state = currentState;
+  localStorage.setItem(KEYS.data, JSON.stringify(currentState));
+}
 save();
 
 let selectedCells=[];
