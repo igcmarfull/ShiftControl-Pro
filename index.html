@@ -12014,9 +12014,7 @@ function quickPresent(employeeId,date){
     id:existing?.id||safeRandomUUID(),
     employeeId,date,status:'Presente',replacementId:'',note:'Confirmado desde Operación del día'
   };
-  state.executions=existing
-    ? state.executions.map(x=>x.id===existing.id?data:x)
-    : [...state.executions,data];
+  AttendanceModule.create(data);
   state.additional=state.additional.filter(a=>a.generatedFromExecutionId!==data.id);
   save();renderAll();toast('Trabajador confirmado presente');
 }
@@ -12031,7 +12029,7 @@ function markPendingPresent(){
   if(!pending.length)return toast('No hay pendientes');
   snapshot();
   pending.forEach(r=>{
-    state.executions.push({
+    AttendanceModule.create({
       id:safeRandomUUID(),
       employeeId:r.employee.id,
       date,
@@ -12082,7 +12080,7 @@ function confirmToday(){
   if(warnings.length&&!confirm(`Antes de cerrar:\n\n• ${warnings.join('\n• ')}\n\n¿Deseas continuar?`))return;
 
   snapshot();
-  pending.forEach(r=>state.executions.push({
+  pending.forEach(r=>AttendanceModule.create({
     id:safeRandomUUID(),
     employeeId:r.employee.id,
     date,
@@ -12105,7 +12103,7 @@ function clearTodayExecutions(){
   if(!confirm('¿Eliminar todos los registros de ejecución y reemplazos automáticos de este día?'))return;
   snapshot();
   const ids=state.executions.filter(x=>x.date===date).map(x=>x.id);
-  state.executions=state.executions.filter(x=>x.date!==date);
+  AttendanceModule.clearDate(date);
   state.additional=state.additional.filter(a=>!ids.includes(a.generatedFromExecutionId)&&!(a.source==='sunday'&&a.date===date));
   state.dailyClosures=(state.dailyClosures||[]).filter(d=>d!==date);
   log(`Se reinició la operación del día ${date}`);
@@ -12452,12 +12450,17 @@ function replacementUnavailable(employeeId,date){
 }
 
 function clearGeneratedReplacementAttendance(executionId,replacementId=''){
-  state.executions=state.executions.filter(item=>{
-    if(item.source!=='replacement-attendance')return true;
-    if(item.generatedFromExecutionId!==executionId)return true;
-    if(replacementId&&item.employeeId===replacementId)return true;
-    return false;
+
+  AttendanceModule.removeWhere(item=>{
+
+    if(item.source!=='replacement-attendance')return false;
+    if(item.generatedFromExecutionId!==executionId)return false;
+    if(replacementId&&item.employeeId===replacementId)return false;
+
+    return true;
+
   });
+
 }
 
 function ensureReplacementPresent({
@@ -12502,7 +12505,7 @@ function ensureReplacementPresent({
     return {ok:true,created:false,status:existing.status};
   }
 
-  state.executions.push({
+  AttendanceModule.create({
     id:safeRandomUUID(),
     employeeId:replacementId,
     date,
@@ -12552,9 +12555,7 @@ function saveTodayException(){
     note:noteParts.filter(Boolean).join(' · ')
   };
 
-  state.executions=existing
-    ?state.executions.map(item=>item.id===existing.id?data:item)
-    :[...state.executions,data];
+  AttendanceModule.create(data);
 
   state.additional=state.additional.filter(item=>
     item.generatedFromExecutionId!==executionId
@@ -12652,9 +12653,13 @@ function markAllPresent(){
   planned.forEach(p=>{
     const existing=state.executions.find(x=>x.employeeId===p.employeeId&&x.date===date);
     if(!existing){
-      state.executions.push({
-        id:safeRandomUUID(),employeeId:p.employeeId,date,status:'Presente',
-        replacementId:'',note:'Marcado masivamente como presente'
+      AttendanceModule.create({
+        id:safeRandomUUID(),
+        employeeId:p.employeeId,
+        date,
+        status:'Presente',
+        replacementId:'',
+        note:'Marcado masivamente como presente'
       });
       added++;
     }
@@ -12747,9 +12752,7 @@ function saveQuickReplacement(){
     note:quickReplacementNote.value.trim()||'Reemplazo rápido desde calendario'
   };
 
-  state.executions=existing
-    ?state.executions.map(item=>item.id===existing.id?data:item)
-    :[...state.executions,data];
+  AttendanceModule.create(data);
 
   state.additional=state.additional.filter(item=>
     item.generatedFromExecutionId!==executionId
@@ -12882,9 +12885,7 @@ dailyForm.addEventListener('submit',e=>{
     note:dailyNote.value.trim()
   };
 
-  state.executions=existing
-    ?state.executions.map(item=>item.id===existing.id?data:item)
-    :[...state.executions,data];
+  AttendanceModule.create(data);
 
   state.additional=state.additional.filter(item=>
     item.generatedFromExecutionId!==executionId
@@ -13093,12 +13094,7 @@ function deleteEmployee(id){
 
   PlanningModule.removeEmployeePlans(id);
 
-  state.executions=state.executions
-    .filter(x=>x.employeeId!==id)
-    .map(x=>x.replacementId===id
-      ? {...x,replacementId:''}
-      : x
-    );
+  AttendanceModule.removeEmployeeReferences(id);
 
   state.additional=state.additional.filter(
     a=>a.employeeId!==id&&a.replacedEmployeeId!==id
@@ -13951,9 +13947,9 @@ function generatedExecutionsForAbsence(absenceId){
 }
 
 function removeGeneratedAbsenceExecutions(absenceId){
-  state.executions=state.executions.filter(item=>
-    !(item.source==='absence-period'&&item.absenceId===absenceId)
-  );
+
+  AttendanceModule.removeGeneratedByAbsence(absenceId);
+
 }
 
 function absenceExecutionConflicts(employeeId,dates,absenceId=''){
@@ -13996,7 +13992,10 @@ function synchronizeAbsenceExecutions(absenceRecord){
 
   if(conflicts.length){
     const conflictIds=new Set(conflicts.map(item=>item.id));
-    state.executions=state.executions.filter(item=>!conflictIds.has(item.id));
+
+    AttendanceModule.removeWhere(
+      item=>conflictIds.has(item.id)
+    );
   }
 
   const status=normalizedAbsenceStatus(absenceRecord.type);
@@ -14007,7 +14006,7 @@ function synchronizeAbsenceExecutions(absenceRecord){
       item.date===date
     );
 
-    state.executions.push({
+    AttendanceModule.create({
       id:safeRandomUUID(),
       employeeId:absenceRecord.employeeId,
       date,
@@ -16993,6 +16992,7 @@ window.EmployeeModule = window.EmployeeModule || {
 
 <script src="src/modules/employees/employees.js"></script>
 <script src="src/modules/planning/planning.js"></script>
+<script src="src/modules/attendance/attendance.js"></script>
 
 <script src="src/app/app.js"></script>
 
