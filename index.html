@@ -10085,12 +10085,16 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </nav>
 
 <script src="src/app/state-manager.js"></script>
+<script src="src/modules/employees/employees.js"></script>
 <script src="src/modules/settings/settings.js"></script>
 <script src="src/modules/additional/additional.js"></script>
 <script src="src/modules/absences/absences.js"></script>
 <script src="src/modules/holidays/holidays.js"></script>
 <script src="src/modules/audit/audit.js"></script>
 <script src="src/modules/daily-closures/daily-closures.js"></script>
+<script src="src/modules/planning/planning.js"></script>
+<script src="src/modules/month-closures/month-closures.js"></script>
+<script src="src/modules/attendance/attendance.js"></script>
 
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
@@ -15544,7 +15548,7 @@ function opsIncidents(){return opsRead(window.OPS_INCIDENTS_KEY,[])}
 function seedOpsModules(){if(!localStorage.getItem(window.OPS_INCIDENTS_KEY)){const now=new Date();opsWrite(window.OPS_INCIDENTS_KEY,[{id:safeRandomUUID(),title:'Surtidor 3 presenta intermitencia',type:'Equipo',priority:'Alta',shift:'Mañana',reporter:'María González',owner:'Mantención',dueDate:isoToday,description:'Se bloqueó preventivamente y se informó al servicio técnico.',file:'foto-surtidor.jpg',status:'review',archived:false,createdAt:new Date(now-45*60000).toISOString(),createdBy:'Jefa de isla',updates:[]}])}}
 function ensureIncidentPermission(){return true}
 function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],list=opsIncidents();list.unshift({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||'Jefa de isla',owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,createdAt:new Date().toISOString(),createdBy:getAppRole()==='admin'?'Administrador':'Jefa de isla',updates:[]});opsWrite(window.OPS_INCIDENTS_KEY,list);event.target.reset();incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
-function showToast(msg){if(!window.toast)return;toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1800)}
+function showToast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
 function filterOpsIncidents(f,b){opsIncidentFilter=f;document.querySelectorAll('[data-incident-filter]').forEach(x=>x.classList.toggle('active',x.dataset.incidentFilter===f));renderOpsIncidents()}
 function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const list=opsIncidents(),x=list.find(i=>i.id===id);if(!x)return;x.status=status;x.updates=x.updates||[];x.updates.push({at:new Date().toISOString(),text:`Estado cambiado a ${status}`});if(status==='resolved')x.resolvedAt=new Date().toISOString();opsWrite(window.OPS_INCIDENTS_KEY,list);renderOpsIncidents()}
 function archiveOpsIncident(id){if(!ensureIncidentPermission()||!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const list=opsIncidents(),x=list.find(i=>i.id===id);if(x)x.archived=true;opsWrite(window.OPS_INCIDENTS_KEY,list);renderOpsIncidents()}
@@ -17147,11 +17151,6 @@ window.EmployeeModule = window.EmployeeModule || {
   }
 };
 </script>
-
-<script src="src/modules/employees/employees.js"></script>
-<script src="src/modules/planning/planning.js"></script>
-<script src="src/modules/month-closures/month-closures.js"></script>
-<script src="src/modules/attendance/attendance.js"></script>
 
 <script src="src/app/app.js"></script>
 
