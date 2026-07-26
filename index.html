@@ -10087,6 +10087,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/additional/additional.js"></script>
 <script src="src/modules/absences/absences.js"></script>
 <script src="src/modules/holidays/holidays.js"></script>
+<script src="src/modules/audit/audit.js"></script>
 
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
@@ -10255,7 +10256,10 @@ AdditionalModule.replaceAll(
   Array.isArray(state.additional)?state.additional:[],
   {save:false}
 );
-state.audit=Array.isArray(state.audit)?state.audit:[];
+AuditModule.replaceAll(
+  Array.isArray(state.audit)?state.audit:[],
+  {save:false}
+);
 HolidayModule.replaceAll(state.holidays||[],{save:false});
 AbsenceModule.replaceAll(state.absences||[],{save:false});
 state.settings=state.settings||{};
@@ -10390,7 +10394,10 @@ if(!state.demoRealistaJunio2026){
     const date=`2026-06-${String(day).padStart(2,'0')}`;
     if(new Date(date+'T12:00:00').getDay()!==6)state.dailyClosures.push(date);
   }
-  state.audit.unshift({id:safeRandomUUID(),date:new Date().toISOString(),action:'Demo realista de junio 2026 cargada'});
+  AuditModule.add(
+    {id:safeRandomUUID(),date:new Date().toISOString(),action:'Demo realista de junio 2026 cargada'},
+    {save:false}
+  );
   state.demoRealistaJunio2026=true;
 }
 
@@ -10451,7 +10458,16 @@ function fmt(d){return d?new Date(d+'T12:00:00').toLocaleDateString('es-CL'):'�
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1600)}
-function log(action){state.audit.unshift({id:safeRandomUUID(),date:new Date().toISOString(),action});state.audit=state.audit.slice(0,250)}
+function log(action){
+  AuditModule.add(
+    {id:safeRandomUUID(),date:new Date().toISOString(),action},
+    {save:false}
+  );
+  AuditModule.replaceAll(
+    AuditModule.getAll().slice(0,250),
+    {save:false}
+  );
+}
 function periodPrefix(monthId='planMonth',yearId='planYear'){return document.getElementById(yearId).value+'-'+document.getElementById(monthId).value}
 function isClosed(prefix){return state.closedMonths.includes(prefix)}
 function fillPeriods(){
@@ -13983,7 +13999,7 @@ function clearAudit(){
   if(!(state.audit||[]).length)return toast('El historial ya está vacío');
   if(!confirm('¿Eliminar todo el historial? Esta acción no se puede deshacer.'))return;
 
-  state.audit=[];
+  AuditModule.replaceAll([],{save:false});
   save();
   renderAudit();
   toast('Historial eliminado');
