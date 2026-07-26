@@ -10847,6 +10847,31 @@ function updateSelectionBar(){
   bar.classList.toggle('show',selectedCells.length>0);
   document.getElementById('selectionCount').textContent=`${selectedCells.length} celda(s) seleccionada(s)`;
 }
+function validatePlanRemoval(targets){
+  const blockers=(targets||[]).filter(cell=>
+    PlanningModule.find(cell.employeeId,cell.date) &&
+    AttendanceModule.find(cell.employeeId,cell.date)
+  );
+
+  if(!blockers.length)return true;
+
+  if(blockers.length===1){
+    const blocked=blockers[0];
+    alert(
+      `No se puede eliminar el turno de ${employee(blocked.employeeId)?.name||'este trabajador'} `
+      +`el ${fmt(blocked.date)} porque ya tiene una ejecución registrada. `
+      +'Corrige primero la asistencia desde Operación diaria.'
+    );
+  }else{
+    alert(
+      `No se puede completar la operación porque ${blockers.length} turnos `
+      +'ya tienen una ejecución registrada. Corrige primero esas asistencias '
+      +'desde Operación diaria.'
+    );
+  }
+
+  return false;
+}
 function applyToSelection(code){
   /*
     Fuente de verdad: las celdas realmente seleccionadas en pantalla.
@@ -10870,6 +10895,8 @@ function applyToSelection(code){
 
   const prefix=periodPrefix();
   if(isClosed(prefix))return alert('El mes está cerrado.');
+
+  if(code==='Eliminar'&&!validatePlanRemoval(targets))return;
 
   snapshot();
 
@@ -10969,8 +10996,10 @@ function copySelection(){
 }
 function pasteSelection(){
   if(!clipboardCells.length||!selectedCells.length)return toast('Copia y selecciona un destino');
-  snapshot();
   const codes=clipboardCells.map(c=>c.code);
+  const removalTargets=selectedCells.filter((c,i)=>!codes[i%codes.length]);
+  if(!validatePlanRemoval(removalTargets))return;
+  snapshot();
   selectedCells.forEach((c,i)=>{
     const code=codes[i%codes.length];
     const existing=PlanningModule.find(c.employeeId,c.date);
@@ -11012,8 +11041,6 @@ function applyContext(code){
 document.addEventListener('click',e=>{if(!e.target.closest('#contextMenu'))document.getElementById('contextMenu')?.classList.remove('open')});
 function openCell(employeeId,date){cellEmployee.value=employeeId;cellDate.value=date;cellTitle.textContent=`${employee(employeeId)?.name} · ${fmt(date)}`;openModal('cellModal')}
 function savePlanCell(code){
-  snapshot();
-
   const employeeId=cellEmployee.value;
   const date=cellDate.value;
   const prefix=date.slice(0,7);
@@ -11029,6 +11056,10 @@ function savePlanCell(code){
     code;
 
   const existing=PlanningModule.find(employeeId,date);
+
+  if(compact==='Eliminar'&&!validatePlanRemoval([{employeeId,date}]))return;
+
+  snapshot();
 
   if(compact==='Eliminar'){
 
