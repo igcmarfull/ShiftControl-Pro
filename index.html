@@ -10085,6 +10085,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </nav>
 
 <script src="src/modules/additional/additional.js"></script>
+<script src="src/modules/absences/absences.js"></script>
 
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
@@ -10254,7 +10255,8 @@ AdditionalModule.replaceAll(
   {save:false}
 );
 state.audit=Array.isArray(state.audit)?state.audit:[];
-state.holidays=state.holidays||[];state.absences=state.absences||[];
+state.holidays=state.holidays||[];
+AbsenceModule.replaceAll(state.absences||[],{save:false});
 state.settings=state.settings||{};
 state.settings.tariffs=state.settings.tariffs||{A:30000,B:35000,C:45000};
 state.settings.patterns=state.settings.patterns||[
@@ -10302,7 +10304,12 @@ if(!state.demoRealistaJunio2026){
     state.additional.filter(x=>!x.date.startsWith(prefix)),
     {save:false}
   );
-  state.absences=state.absences.filter(x=>!x.start?.startsWith(prefix)&&!x.date?.startsWith(prefix));
+  AbsenceModule.replaceAll(
+    AbsenceModule.getAll().filter(
+      item=>!item.start?.startsWith(prefix)&&!item.date?.startsWith(prefix)
+    ),
+    {save:false}
+  );
 
   const employees=state.employees.filter(e=>e.active).slice(0,13);
   employees.forEach((e,index)=>{
@@ -10343,17 +10350,29 @@ if(!state.demoRealistaJunio2026){
   // Licencias médicas
   ['2026-06-08','2026-06-09','2026-06-10'].forEach(d=>setStatus(3,d,'Licencia','Licencia médica de tres días'));
   ['2026-06-25','2026-06-26'].forEach(d=>setStatus(12,d,'Licencia','Reposo médico'));
-  state.absences.push({id:safeRandomUUID(),employeeId:E(3).id,type:'Licencia',start:'2026-06-08',end:'2026-06-10',note:'Licencia médica de tres días'});
-  state.absences.push({id:safeRandomUUID(),employeeId:E(12).id,type:'Licencia',start:'2026-06-25',end:'2026-06-26',note:'Reposo médico'});
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(3).id,type:'Licencia',start:'2026-06-08',end:'2026-06-10',note:'Licencia médica de tres días'},
+    {save:false}
+  );
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(12).id,type:'Licencia',start:'2026-06-25',end:'2026-06-26',note:'Reposo médico'},
+    {save:false}
+  );
 
   // Vacaciones
   ['2026-06-15','2026-06-16','2026-06-17','2026-06-18','2026-06-19'].forEach(d=>setStatus(0,d,'Vacaciones','Vacaciones programadas'));
-  state.absences.push({id:safeRandomUUID(),employeeId:E(0).id,type:'Vacaciones',start:'2026-06-15',end:'2026-06-19',note:'Vacaciones programadas'});
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(0).id,type:'Vacaciones',start:'2026-06-15',end:'2026-06-19',note:'Vacaciones programadas'},
+    {save:false}
+  );
 
   // Permisos
   setStatus(10,'2026-06-12','Permiso','Permiso administrativo');
   setStatus(11,'2026-06-29','Permiso','Trámite personal');
-  state.absences.push({id:safeRandomUUID(),employeeId:E(10).id,type:'Permiso',start:'2026-06-12',end:'2026-06-12',note:'Permiso administrativo'});
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(10).id,type:'Permiso',start:'2026-06-12',end:'2026-06-12',note:'Permiso administrativo'},
+    {save:false}
+  );
 
   // Jornadas adicionales
   AdditionalModule.add(
@@ -14810,7 +14829,7 @@ function deleteHoliday(id){
 }
 
 function deleteAbsence(id){
-  const item=(state.absences||[]).find(row=>row.id===id);
+  const item=AbsenceModule.findById(id);
   if(!item)return;
 
   if(!confirm('¿Eliminar este registro? Los estados automáticos también desaparecerán del calendario real.'))return;
@@ -14819,7 +14838,7 @@ function deleteAbsence(id){
 
   const removedExecutions=generatedExecutionsForAbsence(id).length;
   removeGeneratedAbsenceExecutions(id);
-  state.absences=state.absences.filter(row=>row.id!==id);
+  AbsenceModule.remove(id,{save:false});
 
   log(
     `${item.type||'Ausencia'} eliminada: `
@@ -15190,7 +15209,7 @@ document.getElementById('absenceForm')?.addEventListener('submit',event=>{
   snapshot();
 
   const existing=id
-    ?state.absences.find(item=>item.id===id)
+    ?AbsenceModule.findById(id)
     :null;
 
   const absenceRecord={
@@ -15227,9 +15246,9 @@ document.getElementById('absenceForm')?.addEventListener('submit',event=>{
   }
 
   if(existing){
-    Object.assign(existing,absenceRecord);
+    AbsenceModule.update(existing.id,absenceRecord,{save:false});
   }else{
-    state.absences.push(absenceRecord);
+    AbsenceModule.add(absenceRecord,{save:false});
   }
 
   log(
