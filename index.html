@@ -15307,7 +15307,7 @@ seedOpsModules();window.addEventListener('DOMContentLoaded',()=>{if(checklistDat
 // --- V6: evaluaciones independientes + portal personal de atendedora ---
 var ATTENDANT_NOTICE_KEY='shiftcontrol_attendant_notices_v6';
 function attendantEmployee(){
-  return state.employees.find(e=>e.name==='Valentina Vega') || state.employees.find(e=>/operador|operadora|atendedor|atendedora/i.test(e.role||'')) || state.employees.find(e=>e.active);
+  return EmployeeModule.getAll().find(e=>e.name==='Valentina Vega') || EmployeeModule.getAll().find(e=>/operador|operadora|atendedor|atendedora/i.test(e.role||'')) || EmployeeModule.getAll().find(e=>e.active);
 }
 // applyAppRole usa el aislamiento estricto definido en la sección de perfiles.
 function closeEvaluationEditor(){const el=document.getElementById('evaluationEditor');if(el)el.hidden=true}
@@ -15360,7 +15360,7 @@ function renderAttendanceNoticeInbox(){
  const root=document.getElementById('attendanceNoticeInbox');if(!root)return;
  
  const notices=opsRead(ATTENDANT_NOTICE_KEY,[]).filter(x=>!x.validated).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
- root.innerHTML=notices.length?notices.map(n=>{const worker=state.employees.find(e=>e.id===n.employeeId);const label={confirmed:'Confirmó asistencia',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;return `<div class="ops-list-item"><div><strong>${opsEsc(worker?.name||'Trabajadora')}</strong><span>${opsEsc(label)} · ${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL')}</span>${n.reason?`<small>Motivo: ${opsEsc(n.reason)}</small>`:''}</div><button class="btn" onclick="validateAttendanceNotice('${n.id}')">Revisado</button></div>`}).join(''):'<div class="ops-empty">No hay avisos pendientes de las atendedoras.</div>';
+ root.innerHTML=notices.length?notices.map(n=>{const worker=EmployeeModule.find(n.employeeId);const label={confirmed:'Confirmó asistencia',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;return `<div class="ops-list-item"><div><strong>${opsEsc(worker?.name||'Trabajadora')}</strong><span>${opsEsc(label)} · ${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL')}</span>${n.reason?`<small>Motivo: ${opsEsc(n.reason)}</small>`:''}</div><button class="btn" onclick="validateAttendanceNotice('${n.id}')">Revisado</button></div>`}).join(''):'<div class="ops-empty">No hay avisos pendientes de las atendedoras.</div>';
 }
 function validateAttendanceNotice(id){
  
@@ -15381,7 +15381,7 @@ function attendanceNoticeStatusText(n){
 function assignAttendanceCoverage(id){
   
   const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;
-  const absent=state.employees.find(e=>e.id===item.employeeId);
+  const absent=EmployeeModule.find(item.employeeId);
   const candidates=state.employees.filter(e=>e.active&&e.id!==item.employeeId);
   const names=candidates.map((e,i)=>`${i+1}. ${e.name}`).join('\n');
   const selected=prompt(`Selecciona número de reemplazo para ${absent?.name||'la trabajadora'}:\n${names}`);
@@ -15400,7 +15400,7 @@ function renderAttendanceNoticeInbox(){
   
   const notices=opsRead(ATTENDANT_NOTICE_KEY,[]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
   const pending=notices.filter(x=>!x.validated||x.status==='absent'&&x.coverageStatus!=='resolved');if(count)count.textContent=String(pending.length);
-  root.innerHTML=notices.length?notices.slice(0,12).map(n=>{const worker=state.employees.find(e=>e.id===n.employeeId);const label={confirmed:'Confirmó que asistirá',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;const status=attendanceNoticeStatusText(n);return `<article class="notification-item ${n.status==='absent'&&n.coverageStatus!=='resolved'?'urgent':''}"><div><span class="notice-status ${n.validated?'reviewed':''}">${opsEsc(status)}</span><h4>${opsEsc(worker?.name||'Trabajadora')} · ${opsEsc(label)}</h4><p>${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}${n.reason?` · Motivo: ${opsEsc(n.reason)}`:''}</p><small>Enviado a ${attendanceNoticeRecipientText()} · ${new Date(n.createdAt).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</small></div><div class="notification-actions">${!n.validated?`<button class="btn small" onclick="validateAttendanceNotice('${n.id}')">Marcar revisado</button>`:''}${n.status==='absent'&&n.coverageStatus!=='assigned'&&n.coverageStatus!=='resolved'?`<button class="btn small primary" onclick="assignAttendanceCoverage('${n.id}')">Asignar reemplazo</button>`:''}${n.status==='absent'&&n.coverageStatus!=='resolved'?`<button class="btn small" onclick="resolveAttendanceNotice('${n.id}')">Resolver</button>`:''}</div></article>`}).join(''):'<div class="ops-empty">No hay avisos enviados por las atendedoras.</div>';
+  root.innerHTML=notices.length?notices.slice(0,12).map(n=>{const worker=EmployeeModule.find(n.employeeId);const label={confirmed:'Confirmó que asistirá',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;const status=attendanceNoticeStatusText(n);return `<article class="notification-item ${n.status==='absent'&&n.coverageStatus!=='resolved'?'urgent':''}"><div><span class="notice-status ${n.validated?'reviewed':''}">${opsEsc(status)}</span><h4>${opsEsc(worker?.name||'Trabajadora')} · ${opsEsc(label)}</h4><p>${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}${n.reason?` · Motivo: ${opsEsc(n.reason)}`:''}</p><small>Enviado a ${attendanceNoticeRecipientText()} · ${new Date(n.createdAt).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</small></div><div class="notification-actions">${!n.validated?`<button class="btn small" onclick="validateAttendanceNotice('${n.id}')">Marcar revisado</button>`:''}${n.status==='absent'&&n.coverageStatus!=='assigned'&&n.coverageStatus!=='resolved'?`<button class="btn small primary" onclick="assignAttendanceCoverage('${n.id}')">Asignar reemplazo</button>`:''}${n.status==='absent'&&n.coverageStatus!=='resolved'?`<button class="btn small" onclick="resolveAttendanceNotice('${n.id}')">Resolver</button>`:''}</div></article>`}).join(''):'<div class="ops-empty">No hay avisos enviados por las atendedoras.</div>';
 }
 // Sobrescribe la vista personal para mostrar destinatario y estado de recepción.
 const _renderMyShiftV9=renderMyShift;
@@ -15814,7 +15814,7 @@ function evaluationScoreMeta(value){
   }[value]||{label:'Sin responder',short:'Pendiente',icon:'○',points:0};
 }
 function updateEvaluationPersonCard(){
-  const worker=state.employees.find(e=>e.id===document.getElementById('evaluationEmployee')?.value);
+  const worker=EmployeeModule.find(document.getElementById('evaluationEmployee')?.value);
   const avatar=document.getElementById('evaluationPersonAvatar');
   const role=document.getElementById('evaluationPersonRole');
   if(avatar)avatar.textContent=(worker?.name||'TR').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
@@ -15897,7 +15897,7 @@ function evaluationScoreSummary(){
 function renderEvaluationReviewSummary(){
   const root=document.getElementById('evaluationReviewSummary');
   if(!root)return;
-  const worker=state.employees.find(e=>e.id===evaluationEmployee.value);
+  const worker=EmployeeModule.find(evaluationEmployee.value);
   const summary=evaluationScoreSummary();
   const grouped={};
   summary.rows.forEach(({section,item})=>{
@@ -15981,7 +15981,7 @@ function saveFinanceStore(store){
   localStorage.setItem(FINANCE_KEY,JSON.stringify(store));
 }
 function financeEmployeeName(id){
-  return state.employees.find(e=>e.id===id)?.name||'Sin trabajador';
+  return EmployeeModule.find(id)?.name||'Sin trabajador';
 }
 function financeMonthValue(){
   return document.getElementById('financeMonth')?.value||isoToday.slice(0,7);
