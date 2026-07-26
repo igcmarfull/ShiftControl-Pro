@@ -3,10 +3,12 @@
 
   const config = window.SHIFTCONTROL_CONFIG;
   const LOCAL_SYNC_KEY = 'shiftcontrol_supabase_last_sync';
-  let client = null;
+  const ACTIVE_COMPANY_KEY = 'shiftcontrol_local_state_company_v1';
   let ready = false;
+  let activeCompanyId = null;
   let pendingSave = false;
   let saveTimer = null;
+  let bootstrapPromise = null;
 
   function log(message, detail) {
     console.info(`[ShiftControl Sync] ${message}`, detail || '');
@@ -17,50 +19,138 @@
   }
 
   function getClient() {
-    if (client) return client;
-
-    if (!config?.supabaseUrl || !config?.supabasePublishableKey) {
-      throw new Error('Falta la configuración de Supabase.');
+    if (!window.ShiftControlAuth?.getClient) {
+      throw new Error('No se cargó la autenticación de Supabase.');
     }
 
-    if (!window.supabase?.createClient) {
-      throw new Error('No se cargó la librería de Supabase.');
-    }
+    return window.ShiftControlAuth.getClient();
+  }
 
-    client = window.supabase.createClient(
-      config.supabaseUrl,
-      config.supabasePublishableKey
+  function getBaseLocalKey() {
+    return typeof KEYS !== 'undefined' && KEYS?.data
+      ? KEYS.data
+      : 'shiftcontrol_pro_v2_all_replacement_candidates';
+  }
+
+  function getTenantLocalKey(companyId) {
+    return `${getBaseLocalKey()}:company:${companyId}`;
+  }
+
+  function getTenantSyncKey(companyId) {
+    return `${LOCAL_SYNC_KEY}:company:${companyId}`;
+  }
+
+  function readTenantState(companyId) {
+    try {
+      const raw = localStorage.getItem(getTenantLocalKey(companyId));
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      warn('No fue posible leer la caché local de la empresa.', error);
+      return null;
+    }
+  }
+
+  function writeTenantState(companyId, nextState, syncedAt) {
+    const serialized = JSON.stringify(nextState);
+    const timestamp = syncedAt || new Date().toISOString();
+
+    try {
+      localStorage.setItem(getTenantLocalKey(companyId), serialized);
+      localStorage.setItem(getBaseLocalKey(), serialized);
+      localStorage.setItem(ACTIVE_COMPANY_KEY, companyId);
+      localStorage.setItem(getTenantSyncKey(companyId), timestamp);
+      localStorage.setItem(LOCAL_SYNC_KEY, timestamp);
+    } catch (error) {
+      warn('No fue posible actualizar la caché local de la empresa.', error);
+    }
+  }
+
+  function tenantStateError(companyId) {
+    const error = new Error(
+      'La empresa no tiene un estado operacional inicializado.'
     );
+    error.code = 'AUTH_COMPANY_STATE_UNAVAILABLE';
+    error.companyId = companyId;
+    return error;
+  }
 
-    return client;
+  function legacyStateFor(companyId) {
+    const localCompanyId = localStorage.getItem(ACTIVE_COMPANY_KEY);
+
+    if (localCompanyId && localCompanyId !== companyId) {
+      return null;
+    }
+
+    return window.ShiftControlState?.get?.() || null;
+  }
+
+  function applyState(companyId, nextState, syncedAt) {
+    const currentState = window.ShiftControlState.replace(nextState);
+    writeTenantState(companyId, currentState, syncedAt);
+
+    if (typeof renderAll === 'function') {
+      renderAll();
+    }
+
+    return currentState;
+  }
+
+  async function resolveContext() {
+    let context = window.AuthContext?.get?.() || null;
+    if (context) return context;
+
+    if (window.ShiftControlAuth?.isInvitationPending?.()) {
+      return null;
+    }
+
+    if (window.ShiftControlAuth?.initialize) {
+      await window.ShiftControlAuth.initialize();
+      context = window.AuthContext?.get?.() || null;
+    }
+
+    return context;
   }
 
   async function pushState() {
-    if (!ready) {
+    const context = window.AuthContext?.get?.() || null;
+
+    if (
+      !ready ||
+      !context?.companyId ||
+      context.companyId !== activeCompanyId
+    ) {
       pendingSave = true;
-      return;
+      return null;
     }
 
     try {
       const currentState = window.ShiftControlState.get();
+      const updatedAt = new Date().toISOString();
+
+      writeTenantState(context.companyId, currentState, updatedAt);
 
       const { error } = await getClient()
         .from('app_state')
         .upsert(
           {
+            company_id: context.companyId,
             key: config.stateKey,
             data: currentState,
-            updated_at: new Date().toISOString()
+            updated_at: updatedAt
           },
-          { onConflict: 'key' }
+          { onConflict: 'company_id,key' }
         );
 
       if (error) throw error;
 
-      localStorage.setItem(LOCAL_SYNC_KEY, new Date().toISOString());
-      log('Estado sincronizado con Supabase.');
+      log('Estado de la empresa sincronizado con Supabase.');
+      return currentState;
     } catch (error) {
-      warn('No fue posible sincronizar. Los datos siguen guardados localmente.', error);
+      warn(
+        'No fue posible sincronizar. Los datos siguen guardados localmente.',
+        error
+      );
+      return null;
     }
   }
 
@@ -70,45 +160,97 @@
   }
 
   async function bootstrap() {
-    try {
-      const { data, error } = await getClient()
-        .from('app_state')
-        .select('data, updated_at')
-        .eq('key', config.stateKey)
-        .maybeSingle();
+    if (bootstrapPromise) return bootstrapPromise;
 
-      if (error) throw error;
+    bootstrapPromise = (async function () {
+      const context = await resolveContext();
 
-      if (data?.data) {
+      if (!context?.companyId) {
+        ready = false;
+        activeCompanyId = null;
+        return null;
+      }
 
-        const currentState = window.ShiftControlState.replace(data.data);
+      if (ready && activeCompanyId === context.companyId) {
+        return window.ShiftControlState.get();
+      }
 
-        localStorage.setItem(KEYS.data, JSON.stringify(currentState));
-        localStorage.setItem(
-          LOCAL_SYNC_KEY,
-          data.updated_at || new Date().toISOString()
-        );
+      ready = false;
+      activeCompanyId = context.companyId;
 
-        if (typeof renderAll === 'function') {
-          renderAll();
+      try {
+        const { data, error } = await getClient()
+          .from('app_state')
+          .select('data, updated_at')
+          .eq('company_id', context.companyId)
+          .eq('key', config.stateKey)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data?.data) {
+          const currentState = applyState(
+            context.companyId,
+            data.data,
+            data.updated_at
+          );
+
+          ready = true;
+          log('Estado de la empresa recuperado desde Supabase.');
+          return currentState;
         }
 
-        log('Estado recuperado desde Supabase.');
-      } else {
-        log('Supabase está vacío. Subiendo los datos locales iniciales.');
-        ready = true;
-        await pushState();
-        return;
-      }
-    } catch (error) {
-      warn('Se continuará trabajando con localStorage.', error);
-    } finally {
-      ready = true;
+        const tenantState =
+          readTenantState(context.companyId) ||
+          legacyStateFor(context.companyId);
 
-      if (pendingSave) {
-        pendingSave = false;
-        schedulePush();
+        if (!tenantState) {
+          throw tenantStateError(context.companyId);
+        }
+
+        const currentState = applyState(
+          context.companyId,
+          tenantState
+        );
+
+        ready = true;
+        log('Inicializando el estado remoto de la empresa desde localStorage.');
+        await pushState();
+        return currentState;
+      } catch (error) {
+        const tenantState =
+          readTenantState(context.companyId) ||
+          legacyStateFor(context.companyId);
+
+        if (tenantState) {
+          const currentState = applyState(
+            context.companyId,
+            tenantState
+          );
+
+          ready = true;
+          warn(
+            'Se continuará con la caché local aislada de la empresa.',
+            error
+          );
+          return currentState;
+        }
+
+        ready = false;
+        activeCompanyId = null;
+        throw error;
+      } finally {
+        if (ready && pendingSave) {
+          pendingSave = false;
+          schedulePush();
+        }
       }
+    })();
+
+    try {
+      return await bootstrapPromise;
+    } finally {
+      bootstrapPromise = null;
     }
   }
 
@@ -117,6 +259,15 @@
   if (typeof originalSave === 'function') {
     window.save = function () {
       originalSave.apply(this, arguments);
+
+      const companyId = window.AuthContext?.get?.()?.companyId;
+      if (ready && companyId && companyId === activeCompanyId) {
+        writeTenantState(
+          companyId,
+          window.ShiftControlState.get()
+        );
+      }
+
       schedulePush();
     };
   } else {
@@ -126,8 +277,8 @@
   window.ShiftControlStorage = Object.freeze({
     pushState,
     bootstrap,
-    isReady: () => ready
+    isReady: () => ready,
+    getActiveCompanyId: () => activeCompanyId,
+    getTenantLocalKey
   });
-
-  bootstrap();
 })();
