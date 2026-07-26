@@ -10239,6 +10239,8 @@ let state=JSON.parse(localStorage.getItem(KEYS.data)||'null')||{
   closedMonths:[],
   audit:[]
 };
+
+window.state = state;
 state.employees=Array.isArray(state.employees)?state.employees:[];
 state.employees=state.employees.map(e=>({...e,active:e.active!==false,shift:e.shift||'A'}));
 state.plans=Array.isArray(state.plans)?state.plans:[];
@@ -16830,6 +16832,14 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/app/bridge.js"></script>
 <script src="src/app/app.js"></script>
 <script src="src/app/state-manager.js"></script>
+
+<script>
+window.addEventListener("DOMContentLoaded",()=>{
+  if(typeof initApp === "function"){
+    initApp();
+  }
+});
+</script>
 <script id="v52-architecture-ux-script">
 (function(){
   function mountWorkCenter(){
