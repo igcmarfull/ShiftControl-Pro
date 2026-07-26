@@ -10241,6 +10241,10 @@ let state=JSON.parse(localStorage.getItem(KEYS.data)||'null')||{
 };
 
 window.state = state;
+
+if(window.ShiftControlState){
+  window.ShiftControlState.initialize(state);
+}
 state.employees=Array.isArray(state.employees)?state.employees:[];
 state.employees=state.employees.map(e=>({...e,active:e.active!==false,shift:e.shift||'A'}));
 state.plans=Array.isArray(state.plans)?state.plans:[];
