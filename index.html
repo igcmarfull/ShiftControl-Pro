@@ -10085,6 +10085,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </nav>
 
 <script src="src/app/state-manager.js"></script>
+<script src="src/modules/settings/settings.js"></script>
 <script src="src/modules/additional/additional.js"></script>
 <script src="src/modules/absences/absences.js"></script>
 <script src="src/modules/holidays/holidays.js"></script>
@@ -10264,15 +10265,15 @@ AuditModule.replaceAll(
 );
 HolidayModule.replaceAll(state.holidays||[],{save:false});
 AbsenceModule.replaceAll(state.absences||[],{save:false});
-state.settings=state.settings||{};
-state.settings.tariffs=state.settings.tariffs||{A:30000,B:35000,C:45000};
-state.settings.patterns=state.settings.patterns||[
+SettingsModule.replaceAll(state.settings||{},{save:false});
+SettingsModule.set('tariffs',state.settings.tariffs||{A:30000,B:35000,C:45000},{save:false});
+SettingsModule.set('patterns',state.settings.patterns||[
   {id:'fixed-a',name:'Turno fijo A',sequence:['A','A','A','A','A','D','D']},
   {id:'fixed-b',name:'Turno fijo B',sequence:['B','B','B','B','B','D','D']},
   {id:'fixed-c',name:'Turno fijo C',sequence:['C','C','C','C','C','D','D']},
   {id:'rot-4x4',name:'Rotación 4x4',sequence:['A','A','B','B','C','C','D','D']},
   {id:'six-one',name:'6x1',sequence:['A','A','A','A','A','A','D']}
-];
+],{save:false});
 const demoEmployees=[
   {name:'Juan Herrera',rut:'16.111.111-1',role:'Operador',area:'Operaciones',shift:'A'},
   {name:'Pedro Muñoz',rut:'16.222.222-2',role:'Operador',area:'Operaciones',shift:'B'},
@@ -10293,16 +10294,16 @@ demoEmployees.forEach(d=>{
     });
   }
 });
-state.settings=state.settings||{};
-if(!state.settings.theme)state.settings.theme='dark';
-if(state.settings.sundayThreshold==null)state.settings.sundayThreshold=2;
-if(state.settings.defaultExtraPayment==null)state.settings.defaultExtraPayment=30000;
-if(state.settings.sundayNormalAmount==null)state.settings.sundayNormalAmount=0;
-if(state.settings.sundaySpecialAmount==null)state.settings.sundaySpecialAmount=50000;
-if(state.settings.sundayAutoGenerate==null)state.settings.sundayAutoGenerate=true;
+SettingsModule.replaceAll(state.settings||{},{save:false});
+if(!state.settings.theme)SettingsModule.set('theme','dark',{save:false});
+if(state.settings.sundayThreshold==null)SettingsModule.set('sundayThreshold',2,{save:false});
+if(state.settings.defaultExtraPayment==null)SettingsModule.set('defaultExtraPayment',30000,{save:false});
+if(state.settings.sundayNormalAmount==null)SettingsModule.set('sundayNormalAmount',0,{save:false});
+if(state.settings.sundaySpecialAmount==null)SettingsModule.set('sundaySpecialAmount',50000,{save:false});
+if(state.settings.sundayAutoGenerate==null)SettingsModule.set('sundayAutoGenerate',true,{save:false});
 state.plans=(state.plans||[]).map(p=>({...p,code:p.code==='Licencia'?'L':p.code==='Vacaciones'?'V':p.code==='Permiso'?'P':p.code==='Ausente'||p.code==='Ausencia'?'X':p.code}));
 
-state.settings.sundayAutoGenerate=false;
+SettingsModule.set('sundayAutoGenerate',false,{save:false});
 if(!state.demoRealistaJunio2026){
   const prefix='2026-06';
   state.plans=state.plans.filter(x=>!x.date.startsWith(prefix));
@@ -11455,7 +11456,7 @@ function applyTheme(){
 }
 function setTheme(theme){
   if(theme!=='light'&&theme!=='dark')return;
-  state.settings.theme=theme;
+  SettingsModule.set('theme',theme,{save:false});
   save();applyTheme();
   toast(theme==='light'?'Tema claro activado':'Tema oscuro activado');
 }
@@ -11776,10 +11777,10 @@ function sundayMonthSummary(prefix){
   });
 }
 function saveSundaySettings(){
-  state.settings.sundayThreshold=Math.max(0,Number(sundayThreshold.value||0));
-  state.settings.sundayNormalAmount=Math.max(0,Number(sundayNormalAmount.value||0));
-  state.settings.sundaySpecialAmount=Math.max(0,Number(sundaySpecialAmount.value||0));
-  state.settings.sundayAutoGenerate=sundayAutoGenerate.value==='true';
+  SettingsModule.set('sundayThreshold',Math.max(0,Number(sundayThreshold.value||0)),{save:false});
+  SettingsModule.set('sundayNormalAmount',Math.max(0,Number(sundayNormalAmount.value||0)),{save:false});
+  SettingsModule.set('sundaySpecialAmount',Math.max(0,Number(sundaySpecialAmount.value||0)),{save:false});
+  SettingsModule.set('sundayAutoGenerate',sundayAutoGenerate.value==='true',{save:false});
   log('Regla de domingos actualizada');
   save();renderAll();toast('Regla dominical guardada');
 }
@@ -12695,11 +12696,11 @@ function getTariff(shift){
   return Number(state.settings?.tariffs?.[shift]||0);
 }
 function saveTariffs(){
-  state.settings.tariffs={
+  SettingsModule.set('tariffs',{
     A:Number(tariffA.value||0),
     B:Number(tariffB.value||0),
     C:Number(tariffC.value||0)
-  };
+  },{save:false});
   save();toast('Tarifas guardadas');
 }
 function loadTariffs(){
@@ -14887,14 +14888,14 @@ function renderSettings(){
 document.getElementById('settingsForm')?.addEventListener('submit',e=>{
   e.preventDefault();
   snapshot();
-  state.settings={
+  SettingsModule.replaceAll({
     ...state.settings,
     company:document.getElementById('companyName').value.trim(),
     A:document.getElementById('shiftA').value.trim(),
     B:document.getElementById('shiftB').value.trim(),
     C:document.getElementById('shiftC').value.trim(),
     defaultExtraPayment:Math.max(0,Number(document.getElementById('defaultExtraPayment')?.value||30000))
-  };
+  },{save:false});
   log('Configuración actualizada');
   save();
   renderAll();
