@@ -38,4 +38,8 @@ window.EmployeeModule = {
 
 console.log("[ShiftControl V31] Employees module loaded");
 
+
+window.EmployeeModule = window.EmployeeModule;
+var EmployeeModule = window.EmployeeModule;
+
 })();
