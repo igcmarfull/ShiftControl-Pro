@@ -10727,9 +10727,14 @@ function duplicatePreviousMonth(){snapshot();
     const maxDay=new Date(y,m,0).getDate();
     if(Number(day)>maxDay)return;
     const date=`${current}-${day}`;
-    const existing=state.plans.find(x=>x.employeeId===p.employeeId&&x.date===date);
-    const data={id:existing?.id||safeRandomUUID(),employeeId:p.employeeId,date,code:p.code};
-    state.plans=existing?state.plans.map(x=>x.id===existing.id?data:x):[...state.plans,data];
+    const existing=PlanningModule.find(p.employeeId,date);
+    const data={
+      id:existing?.id||safeRandomUUID(),
+      employeeId:p.employeeId,
+      date,
+      code:p.code
+    };
+    PlanningModule.create(data);
   });
   log(`Planificación duplicada desde ${prev} a ${current}`);
   save();renderAll();toast('Mes anterior duplicado');
@@ -10804,9 +10809,16 @@ function applyToSelection(code){
   );
 
   if(code==='Eliminar'){
-    state.plans=state.plans.filter(plan=>
-      !targetKeys.has(`${plan.employeeId}|${plan.date}`)
-    );
+    targets.forEach(cell=>{
+      const existing=PlanningModule.find(
+        cell.employeeId,
+        cell.date
+      );
+
+      if(existing){
+        PlanningModule.remove(existing.id);
+      }
+    });
   }else{
     /*
       Conserva toda la planificación y reemplaza/agrega únicamente
@@ -10825,11 +10837,7 @@ function applyToSelection(code){
         code
       };
 
-      if(index>=0){
-        state.plans[index]=record;
-      }else{
-        state.plans.push(record);
-      }
+      PlanningModule.create(record);
     });
   }
 
@@ -10896,11 +10904,25 @@ function pasteSelection(){
   const codes=clipboardCells.map(c=>c.code);
   selectedCells.forEach((c,i)=>{
     const code=codes[i%codes.length];
-    const existing=state.plans.find(p=>p.employeeId===c.employeeId&&p.date===c.date);
-    if(!code)state.plans=state.plans.filter(p=>!(p.employeeId===c.employeeId&&p.date===c.date));
-    else{
-      const data={id:existing?.id||safeRandomUUID(),employeeId:c.employeeId,date:c.date,code};
-      state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data];
+    const existing=PlanningModule.find(c.employeeId,c.date);
+
+    if(!code){
+
+      if(existing){
+        PlanningModule.remove(existing.id);
+      }
+
+    }else{
+
+      const data={
+        id:existing?.id||safeRandomUUID(),
+        employeeId:c.employeeId,
+        date:c.date,
+        code
+      };
+
+      PlanningModule.create(data);
+
     }
   });
   log(`Se pegaron ${selectedCells.length} celda(s)`);
@@ -10920,9 +10942,50 @@ function applyContext(code){
 }
 document.addEventListener('click',e=>{if(!e.target.closest('#contextMenu'))document.getElementById('contextMenu')?.classList.remove('open')});
 function openCell(employeeId,date){cellEmployee.value=employeeId;cellDate.value=date;cellTitle.textContent=`${employee(employeeId)?.name} · ${fmt(date)}`;openModal('cellModal')}
-function savePlanCell(code){snapshot();const employeeId=cellEmployee.value,date=cellDate.value,prefix=date.slice(0,7);if(isClosed(prefix))return alert('El mes está cerrado.');const existing=state.plans.find(p=>p.employeeId===employeeId&&p.date===date);const compact=code==='Licencia'?'L':code==='Vacaciones'?'V':code==='Permiso'?'P':code==='Ausente'||code==='Ausencia'?'X':code;if(compact==='Eliminar')state.plans=state.plans.filter(p=>!(p.employeeId===employeeId&&p.date===date));else{const data={id:existing?.id||safeRandomUUID(),employeeId,date,code:compact};state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data]}log(`Planificación actualizada para ${employee(employeeId)?.name} el ${fmt(date)}`);save();closeModal('cellModal');renderAll()}
+function savePlanCell(code){
+  snapshot();
+
+  const employeeId=cellEmployee.value;
+  const date=cellDate.value;
+  const prefix=date.slice(0,7);
+
+  if(isClosed(prefix))
+    return alert('El mes está cerrado.');
+
+  const compact=
+    code==='Licencia'?'L':
+    code==='Vacaciones'?'V':
+    code==='Permiso'?'P':
+    code==='Ausente'||code==='Ausencia'?'X':
+    code;
+
+  const existing=PlanningModule.find(employeeId,date);
+
+  if(compact==='Eliminar'){
+
+    if(existing){
+      PlanningModule.remove(existing.id);
+    }
+
+  }else{
+
+    PlanningModule.create({
+      id:existing?.id||safeRandomUUID(),
+      employeeId,
+      date,
+      code:compact
+    });
+
+  }
+
+  log(`Planificación actualizada para ${employee(employeeId)?.name} el ${fmt(date)}`);
+
+  save();
+  closeModal('cellModal');
+  renderAll();
+}
 function openBulkModal(){fillEmployeeSelects();const p=periodPrefix();bulkFrom.value=p+'-01';bulkTo.value=p+'-'+String(new Date(Number(p.slice(0,4)),Number(p.slice(5,7)),0).getDate()).padStart(2,'0');openModal('bulkModal')}
-bulkForm.addEventListener('submit',e=>{e.preventDefault();snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=state.plans.find(p=>p.employeeId===id&&p.date===date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data];i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
+bulkForm.addEventListener('submit',e=>{e.preventDefault();snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=PlanningModule.find(id,date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};PlanningModule.create(data);i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
 
 function weekMonday(dateStr){
   const d=new Date((dateStr||isoToday)+'T12:00:00');
@@ -11277,28 +11340,30 @@ const todayUI={
   exceptionNote:document.getElementById('todayExceptionNote')
 };
 function todayPlannedRows(date){
-  const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
+  const role=typeof getAppRole==='function'
+    ? getAppRole()
+    : (document.body.dataset.role||'admin');
+
   return window.EmployeeModule.getAll()
     .filter(e=>e.active!==false)
     .filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla')
     .map(emp=>{
-      const explicit=state.plans.find(p=>p.employeeId===emp.id&&p.date===date);
 
-      // Si existe una ausencia planificada, no se muestra como turno normal.
-      if(explicit&&['D','P','L','V','X'].includes(explicit.code))return null;
+      const explicit=state.plans.find(
+        p=>p.employeeId===emp.id && p.date===date
+      );
+
+      if(!explicit) return null;
+
+      if(['D','P','L','V','X'].includes(explicit.code)){
+        return null;
+      }
 
       return {
-        plan: explicit&&['A','B','C'].includes(explicit.code)
-          ? explicit
-          : {
-              id:`virtual-${emp.id}-${date}`,
-              employeeId:emp.id,
-              date,
-              code:emp.shift||'A',
-              virtual:true
-            },
-        employee:emp
+        plan: explicit,
+        employee: emp
       };
+
     })
     .filter(Boolean);
 }
@@ -11313,7 +11378,7 @@ function loadTodayBaseSchedule(){
   active.forEach(emp=>{
     const existing=state.plans.find(p=>p.employeeId===emp.id&&p.date===date);
     if(!existing){
-      state.plans.push({
+      PlanningModule.create({
         id:safeRandomUUID(),
         employeeId:emp.id,
         date,
@@ -12602,7 +12667,8 @@ function openPatternModal(){
   patternSelect.innerHTML=state.settings.patterns.map(p=>`<option value="${p.id}">${p.name} · ${p.sequence.join('-')}</option>`).join('');
   const prefix=periodPrefix();
   patternFrom.value=prefix+'-01';
-  patternTo.value=prefix+'-'+String(daysInMonth(prefix)).padStart(2,'0');
+  const [py,pm]=prefix.split('-').map(Number);
+  patternTo.value=prefix+'-'+String(new Date(py,pm,0).getDate()).padStart(2,'0');
   openModal('patternModal');
 }
 function applyPattern(){
@@ -12618,10 +12684,17 @@ function applyPattern(){
   while(date<=end){
     const iso=date.toISOString().slice(0,10);
     ids.forEach(id=>{
-      const existing=state.plans.find(p=>p.employeeId===id&&p.date===iso);
+      const existing=PlanningModule.find(id,iso);
       if(patternKeepExceptions.checked&&existing&&exceptions.includes(existing.code))return;
-      const data={id:existing?.id||safeRandomUUID(),employeeId:id,date:iso,code:pattern.sequence[index%pattern.sequence.length]};
-      state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data];
+
+      const data={
+        id:existing?.id||safeRandomUUID(),
+        employeeId:id,
+        date:iso,
+        code:pattern.sequence[index%pattern.sequence.length]
+      };
+
+      PlanningModule.create(data);
       count++;
     });
     date.setDate(date.getDate()+1);index++;
@@ -13018,9 +13091,7 @@ function deleteEmployee(id){
 
   EmployeeModule.remove(id);
 
-  state.plans=state.plans.filter(
-    p=>p.employeeId!==id
-  );
+  PlanningModule.removeEmployeePlans(id);
 
   state.executions=state.executions
     .filter(x=>x.employeeId!==id)
@@ -16921,6 +16992,7 @@ window.EmployeeModule = window.EmployeeModule || {
 </script>
 
 <script src="src/modules/employees/employees.js"></script>
+<script src="src/modules/planning/planning.js"></script>
 
 <script src="src/app/app.js"></script>
 
