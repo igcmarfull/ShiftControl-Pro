@@ -8,7 +8,13 @@ async function initApp(){
     await window.ShiftControlStorage.bootstrap();
   }
 
-  AppState.initialized = true;
+  if(window.ShiftControlState){
+    window.ShiftControlState.syncLegacyState();
+  }
+
+  if(window.AppState){
+    AppState.initialized = true;
+  }
 
   console.log("[ShiftControl] Aplicación inicializada.");
 
