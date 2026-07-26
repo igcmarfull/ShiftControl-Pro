@@ -10086,6 +10086,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
 <script src="src/modules/additional/additional.js"></script>
 <script src="src/modules/absences/absences.js"></script>
+<script src="src/modules/holidays/holidays.js"></script>
 
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
@@ -10255,7 +10256,7 @@ AdditionalModule.replaceAll(
   {save:false}
 );
 state.audit=Array.isArray(state.audit)?state.audit:[];
-state.holidays=state.holidays||[];
+HolidayModule.replaceAll(state.holidays||[],{save:false});
 AbsenceModule.replaceAll(state.absences||[],{save:false});
 state.settings=state.settings||{};
 state.settings.tariffs=state.settings.tariffs||{A:30000,B:35000,C:45000};
@@ -14816,12 +14817,12 @@ function openAbsenceModal(){
 }
 
 function deleteHoliday(id){
-  const item=(state.holidays||[]).find(row=>row.id===id);
+  const item=HolidayModule.findById(id);
   if(!item)return;
   if(!confirm(`¿Eliminar el feriado "${item.name||item.title||'Feriado'}"?`))return;
 
   snapshot();
-  state.holidays=state.holidays.filter(row=>row.id!==id);
+  HolidayModule.remove(id,{save:false});
   log(`Feriado eliminado: ${item.name||item.title||'Feriado'}`);
   save();
   renderAll();
@@ -15173,15 +15174,17 @@ document.getElementById('holidayForm')?.addEventListener('submit',event=>{
   snapshot();
 
   if(id){
-    const item=state.holidays.find(row=>row.id===id);
-    if(item)Object.assign(item,{date,name,type});
+    HolidayModule.update(id,{date,name,type},{save:false});
   }else{
-    state.holidays.push({
-      id:safeRandomUUID(),
-      date,
-      name,
-      type
-    });
+    HolidayModule.add(
+      {
+        id:safeRandomUUID(),
+        date,
+        name,
+        type
+      },
+      {save:false}
+    );
   }
 
   log(`Feriado registrado: ${name}`);
