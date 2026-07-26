@@ -35,8 +35,12 @@ Patrón actual:
 ### Estado
 
 - Obtener el estado modular mediante `window.ShiftControlState.get()` en los módulos ya extraídos.
-- Mantener sincronizados `state`, `window.state` y `ShiftControlState.data`.
-- Evitar sustituir la referencia compartida sin una migración deliberada; preferir mutación controlada cuando el contrato depende de identidad.
+- Reemplazar el estado completo únicamente mediante
+  `ShiftControlState.replace(nextState)`. No asignar directamente `state`,
+  `window.state` ni `ShiftControlState.data` fuera de esa infraestructura.
+- `replace()` conserva el objeto recibido y mantiene sincronizados `state`,
+  `window.state` y `ShiftControlState.data`.
+- Usar el módulo propietario para mutar cada colección principal.
 - Después de una mutación persistente, usar el mecanismo vigente de guardado.
 - No crear un segundo estado canónico en `AppState` mientras el runtime siga consumiendo el estado legacy.
 

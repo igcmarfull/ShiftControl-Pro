@@ -15,7 +15,7 @@ Este inventario diferencia:
 
 | Pieza | Estado | Responsabilidad observada |
 |---|---|---|
-| `src/app/state-manager.js` | Activo | Mantiene la referencia del estado, la expone con `get()`/`set()` y delega en `save()`. |
+| `src/app/state-manager.js` | Activo | Mantiene la referencia canónica, la reemplaza con `replace()`, la expone con `get()`/`set()` y delega en `save()`. |
 | `src/app/state.js` | Parcial | Declara `AppState`; solo se observa el uso de `initialized`. |
 | `src/app/app.js` | Activo | Ejecuta el bootstrap de almacenamiento, sincroniza estado legacy y marca inicialización. |
 | `src/app/bridge.js` | No iniciado | Publica `ShiftControlBridge.start()`, sin llamada observada. |
@@ -71,6 +71,10 @@ Archivo activo: `src/modules/attendance/attendance.js`.
 API observada:
 
 - `getAll()`;
+- `findById(id)`;
+- `add(data, options)`;
+- `patch(id, changes, options)`;
+- `replaceAll(items, options)`;
 - `find(employeeId, date)`;
 - `create(data)`;
 - `remove(id)`;
@@ -93,6 +97,8 @@ Se carga antes del bloque monolítico que inicializa el estado para poder normal
 API observada:
 
 - `getAll()`;
+- `findById(id)`;
+- `patch(id, changes, options)`;
 - `replaceAll(records, options)`;
 - `add(data, options)`;
 - `find(employeeId, date)`;
@@ -101,7 +107,87 @@ API observada:
 - `remove(id)`;
 - `getPendingPayments()`.
 
-Las escrituras que antes usaban asignación directa, `push()` o `unshift()` en `index.html` pasan por `replaceAll()` o `add()`. La interfaz y varias lecturas o mutaciones de campos individuales permanecen en el monolito.
+Las inserciones, reemplazos de colección y mutaciones residuales de registros
+usadas por la interfaz pasan por el módulo. Los flujos de negocio, pagos,
+snapshots, logs y renderizado permanecen en el monolito.
+
+### Ausencias
+
+Archivo activo: `src/modules/absences/absences.js`.
+
+API observada:
+
+- `getAll()`;
+- `findById(id)`;
+- `add(data, options)`;
+- `update(id, changes, options)`;
+- `remove(id, options)`;
+- `replaceAll(items, options)`.
+
+Encapsula las escrituras mecánicas de `state.absences`. La sincronización de
+ejecuciones, reglas de reemplazo, confirmaciones, snapshots, logs y renderizado
+permanecen en `index.html`.
+
+### Feriados
+
+Archivo activo: `src/modules/holidays/holidays.js`.
+
+Expone `getAll()`, `findById()`, `add()`, `update()`, `remove()` y
+`replaceAll()`. Encapsula `state.holidays` sin mover cálculos contables,
+planificación, snapshots, logs ni renderizado.
+
+### Auditoría principal
+
+Archivo activo: `src/modules/audit/audit.js`.
+
+Expone `getAll()`, `add()` y `replaceAll()` sobre `state.audit`. La función
+global `log()` conserva la generación de identificador y fecha, el orden y el
+límite de 250 registros. Los almacenes auxiliares V12 y V17 no pertenecen a
+este módulo.
+
+### Cierres mensuales
+
+Archivo activo: `src/modules/month-closures/month-closures.js`.
+
+Expone `getAll()`, `isClosed()`, `add()`, `remove()` y `replaceAll()` sobre
+`state.closedMonths`. La función global `isClosed(prefix)` se conserva como
+fachada para los consumidores históricos.
+
+### Cierres diarios
+
+Archivo activo: `src/modules/daily-closures/daily-closures.js`.
+
+Expone `getAll()`, `isClosed()`, `add()`, `remove()` y `replaceAll()` sobre
+`state.dailyClosures`. Attendance, pagos dominicales, auditoría y la interfaz
+Today permanecen fuera del módulo.
+
+### Configuración
+
+Archivo activo: `src/modules/settings/settings.js`.
+
+Expone `getAll()`, `get(key)`, `set(key, value, options)` y
+`replaceAll(settings, options)` sobre `state.settings`. Los defaults, lecturas,
+cálculos, formularios y la clave auxiliar `localStorage.shiftcontrol_settings`
+permanecen fuera del módulo.
+
+## Resumen de propiedad del estado principal
+
+| Colección | Módulo propietario |
+|---|---|
+| `employees` | `EmployeeModule` |
+| `plans` | `PlanningModule` |
+| `executions` | `AttendanceModule` |
+| `additional` | `AdditionalModule` |
+| `absences` | `AbsenceModule` |
+| `holidays` | `HolidayModule` |
+| `audit` | `AuditModule` |
+| `settings` | `SettingsModule` |
+| `closedMonths` | `MonthClosureModule` |
+| `dailyClosures` | `DailyClosureModule` |
+
+Los módulos son propietarios de las mutaciones runtime de estas colecciones.
+Las lecturas y la coordinación entre dominios continúan en `index.html`. El
+bootstrap/demo conserva asignaciones directas limitadas de empleados y planes.
 
 ## Almacenamiento
 

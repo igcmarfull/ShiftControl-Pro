@@ -26,10 +26,16 @@ No reemplazar estos contratos de forma incidental. Una migración de arquitectur
 - Cambiar solo lo necesario para la tarea solicitada.
 - No inventar funcionalidades, entidades, endpoints, tablas, permisos ni requisitos de negocio.
 - No completar archivos vacíos basándose solo en su nombre.
-- No duplicar lógica ya extraída a `EmployeeModule`, `PlanningModule` o `AttendanceModule`.
-- Usar `AdditionalModule` para las escrituras de `state.additional`; antes de usar cualquier otro adaptador presente, verificar si está cargado e inicializado en el runtime.
+- No duplicar lógica ya extraída a los módulos activos de `src/modules/`.
+- Usar el módulo propietario para las escrituras de `employees`, `plans`,
+  `executions`, `additional`, `absences`, `holidays`, `audit`, `settings`,
+  `closedMonths` y `dailyClosures`.
+- Antes de usar cualquier otro adaptador presente, verificar si está cargado e
+  inicializado en el runtime.
 - Conservar los nombres globales consumidos por HTML inline y atributos `onclick`.
-- Mantener la referencia compartida del estado; no sustituir el objeto sin revisar `state`, `window.state` y `ShiftControlState`.
+- Reemplazar el estado completo únicamente mediante
+  `ShiftControlState.replace(nextState)`. Esta operación mantiene sincronizados
+  `state`, `window.state` y `ShiftControlState.data`.
 - Toda escritura persistente del estado principal debe respetar el camino vigente de `save()`.
 - No exponer valores de configuración, sesiones ni datos almacenados por usuarios.
 - No modificar archivos históricos de respaldo salvo petición explícita.

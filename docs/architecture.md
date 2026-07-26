@@ -33,9 +33,15 @@ ShiftControl Pro es una aplicación web de una sola página, ejecutada directame
 │   │   └── state-manager.js      # referencia y guardado del estado principal
 │   ├── modules/
 │   │   ├── employees/            # módulo activo y tres archivos vacíos
-│   │   ├── planning/             # módulo activo
-│   │   ├── attendance/           # módulo activo
-│   │   └── additional/           # módulo activo de escritura de jornadas adicionales
+│   │   ├── planning/             # state.plans
+│   │   ├── attendance/           # state.executions
+│   │   ├── additional/           # state.additional
+│   │   ├── absences/             # state.absences
+│   │   ├── holidays/             # state.holidays
+│   │   ├── audit/                # state.audit
+│   │   ├── settings/             # state.settings
+│   │   ├── month-closures/       # state.closedMonths
+│   │   └── daily-closures/       # state.dailyClosures
 │   └── storage/
 │       ├── local.js              # adaptador presente, no cargado
 │       ├── supabase.js           # adaptador presente, no cargado
@@ -50,14 +56,11 @@ Interfaz y eventos
   index.html + src/v20-interface.js
                │
                ├── renderizadores y funciones globales de index.html
-               └── módulos globales activos
-                    ├── EmployeeModule
-                    ├── PlanningModule
-                    ├── AttendanceModule
-                    └── AdditionalModule
+               └── diez módulos globales de estado
                               │
                               ▼
                      ShiftControlState
+                    get()/replace()/save()
                               │
                               ▼
                            save()
@@ -77,9 +80,13 @@ No hay una capa de servicios separada activa entre los módulos y el estado. Los
 
 El navegador procesa el marcado, los estilos y varios scripts inline incluidos en `index.html`.
 
-### 2. Carga temprana de jornadas adicionales
+### 2. Carga de estado y módulos requeridos por el bootstrap
 
-`src/modules/additional/additional.js` se carga antes del bloque monolítico principal. Durante esta fase usa `window.state` como referencia; después de la inicialización usa `ShiftControlState`.
+Antes del bloque monolítico se cargan `ShiftControlState`, `EmployeeModule`,
+`SettingsModule`, `AdditionalModule`, `AbsenceModule`, `HolidayModule`,
+`AuditModule`, `DailyClosureModule`, `PlanningModule`, `MonthClosureModule` y
+`AttendanceModule`. Así, todos los módulos de estado existen antes de la
+normalización, los datos demo y cualquier renderizado.
 
 ### 3. Creación del estado legacy
 
@@ -89,7 +96,7 @@ El script principal:
 2. intenta recuperar el estado JSON desde `localStorage`;
 3. crea datos iniciales cuando no hay estado guardado;
 4. normaliza colecciones y ajustes;
-5. expone la referencia mediante `window.state`;
+5. conecta la referencia mediante `ShiftControlState.initialize(state)`;
 6. define `save()` y ejecuta un guardado;
 7. registra renderizadores, eventos y flujos funcionales.
 
@@ -105,20 +112,16 @@ Al final del documento se cargan la librería de Supabase, la configuración, la
 - la reemplaza con un wrapper que primero conserva el guardado original;
 - programa la escritura remota con un debounce de 500 ms;
 - consulta o actualiza la fila configurada de `app_state`;
-- muta la referencia existente al recibir estado remoto, en vez de sustituirla;
+- reemplaza oficialmente la referencia completa mediante
+  `ShiftControlState.replace(data.data)`;
 - conserva operación local si Supabase falla;
 - ejecuta `bootstrap()` al cargarse.
 
 ### 5. Carga de infraestructura y módulos
 
-Después se declaran `AppState`, `ShiftControlBridge` y `ShiftControlState`. Se instala un fallback mínimo para empleados y luego se cargan:
-
-- `EmployeeModule`;
-- `PlanningModule`;
-- `AttendanceModule`;
-- `initApp`.
-
-`AdditionalModule` ya está disponible desde la carga temprana.
+Después se declaran `AppState` y `ShiftControlBridge`. Se instala un fallback
+mínimo de empleados que no reemplaza el módulo ya cargado y se carga
+`initApp`.
 
 ### 6. `DOMContentLoaded`
 
@@ -146,6 +149,7 @@ ShiftControlState.data
 
 `ShiftControlState` ofrece:
 
+- `replace(nextState)`;
 - `initialize(defaultState)`;
 - `get()`;
 - `set(data)`;
@@ -153,6 +157,15 @@ ShiftControlState.data
 - `syncLegacyState()`.
 
 Sus módulos activos leen la referencia con `get()`, la mutan y llaman a `save()`.
+
+`replace(nextState)` conserva exactamente el objeto recibido y sincroniza las
+tres referencias:
+
+```text
+state === window.state === ShiftControlState.get()
+```
+
+Undo, redo, importación de respaldo y recuperación remota usan esta operación.
 
 ### Estado nominal no canónico
 
@@ -197,7 +210,9 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
 - El HTML usa manejadores inline, por lo que muchos nombres globales forman parte de la interfaz interna.
 - Scripts de versiones posteriores envuelven funciones como `renderAll`, `renderDashboard` o `renderActualCalendar` para agregar comportamiento.
 - `src/v20-interface.js` también instala y envuelve componentes después de la carga del DOM.
-- `AdditionalModule` concentra las inserciones y reemplazos de la colección `additional`; parte de sus lecturas y mutaciones de campos individuales permanece en `index.html`.
+- `AdditionalModule` concentra las inserciones, reemplazos de colección y
+  mutaciones residuales de registros `additional`; las reglas, cálculos,
+  snapshots, logs y renderizado permanecen en `index.html`.
 
 ## Integraciones presentes pero no activas
 
@@ -217,6 +232,11 @@ Además:
 - El orden de scripts es un contrato.
 - El namespace global es el mecanismo de integración.
 - La identidad de la referencia de estado importa para evitar divergencia entre legacy, módulos y sincronización.
+- Las diez colecciones principales tienen módulo propietario para sus
+  mutaciones runtime. `index.html` conserva lecturas, reglas, coordinación y
+  renderizado.
+- El bootstrap/demo conserva asignaciones mecánicas directas sobre
+  `employees`, `plans` y la marca de datos demo.
 - Las redefiniciones tardías pueden reemplazar implementaciones anteriores.
 - No toda persistencia se sincroniza remotamente.
 - No hay pruebas automatizadas que protejan la migración.

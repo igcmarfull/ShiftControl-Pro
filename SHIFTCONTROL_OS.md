@@ -13,7 +13,9 @@ La aplicación está en una transición gradual desde un documento HTML monolít
 - `index.html` conserva el marcado, gran parte de los estilos, la lógica histórica, el modelo inicial, los renderizadores y los flujos funcionales.
 - `src/v20-interface.css` y `src/v20-interface.js` extienden la interfaz vigente.
 - `src/app/` contiene piezas de inicialización y gestión de estado.
-- `src/modules/` contiene módulos extraídos para trabajadores, planificación y asistencia.
+- `src/modules/` contiene módulos activos para trabajadores, planificación,
+  asistencia, jornadas adicionales, ausencias, feriados, auditoría,
+  configuración y cierres diarios y mensuales.
 - `src/storage.js` conecta el estado principal con `localStorage` y Supabase.
 - Otros adaptadores y módulos presentes en `src/` todavía no están conectados al flujo cargado por `index.html`.
 
@@ -49,12 +51,20 @@ La integración se realiza mediante funciones y objetos en `window`, no mediante
 ## Fuentes de verdad
 
 1. El comportamiento real está en `index.html` y en los archivos que este carga.
-2. El estado funcional principal es el objeto mutable creado como `state` en `index.html`, expuesto también como `window.state` y conectado a `window.ShiftControlState`.
+2. El estado funcional principal es el objeto mutable creado como `state` en
+   `index.html`, expuesto también como `window.state` y conectado a
+   `window.ShiftControlState`. `ShiftControlState.replace()` es la única
+   operación autorizada para reemplazar la referencia completa.
 3. La clave local principal es `shiftcontrol_pro_v2_all_replacement_candidates`.
 4. `src/storage.js` envuelve `save()` y sincroniza el mismo estado con la tabla `app_state` de Supabase usando la clave configurada en `src/config.js`.
 5. Algunas áreas conservan almacenes independientes en `localStorage`; están inventariadas en `docs/architecture.md`.
 
 `window.AppState` existe, pero hoy no es el estado canónico utilizado por los renderizadores y módulos funcionales.
+
+Las colecciones principales `employees`, `plans`, `executions`, `additional`,
+`absences`, `holidays`, `audit`, `settings`, `closedMonths` y
+`dailyClosures` tienen módulos activos para sus mutaciones. `index.html`
+conserva la orquestación, las lecturas, los cálculos y el renderizado.
 
 ## Límites de la base
 

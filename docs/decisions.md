@@ -25,18 +25,23 @@ Estas entradas documentan decisiones inferidas directamente del código y del hi
 - Decisión observada: los archivos publican APIs como propiedades de `window` y se encapsulan habitualmente en IIFE.
 - Consecuencia: nombres globales, handlers inline y orden de carga son contratos que deben preservarse durante la transición.
 
-## ADR-004 — Estado legacy como fuente efectiva
+## ADR-004 — Estado compartido como fuente efectiva
 
-- Estado: parcial.
+- Estado: vigente.
 - Contexto: `index.html` crea `state`; `AppState` también existe, pero no alimenta los renderizadores.
-- Decisión observada: conectar el estado legacy a `ShiftControlState` para que los módulos extraídos operen sobre la misma referencia.
-- Consecuencia: cualquier sustitución de la referencia debe sincronizar `state`, `window.state` y `ShiftControlState.data`.
+- Decisión observada: conectar el estado legacy a `ShiftControlState` y usar
+  `ShiftControlState.replace(nextState)` como única operación oficial para
+  sustituir la referencia completa.
+- Consecuencia: `state`, `window.state` y `ShiftControlState.data` permanecen
+  sincronizados después de inicialización, undo, redo, importación y
+  recuperación remota.
 
 ## ADR-005 — Módulos de datos sobre el estado compartido
 
 - Estado: vigente.
-- Contexto: trabajadores, planificación y asistencia fueron extraídos.
-- Decisión observada: esos módulos obtienen el estado desde `ShiftControlState`, mutan sus colecciones y delegan el guardado.
+- Contexto: las diez colecciones principales tienen módulo activo.
+- Decisión observada: los módulos obtienen el estado desde
+  `ShiftControlState`, mutan su colección y delegan el guardado.
 - Consecuencia: los módulos no son aislados ni puros; dependen del estado global y de `save()`.
 
 ## ADR-006 — Persistencia local con sincronización remota tolerante a fallos
@@ -46,12 +51,25 @@ Estas entradas documentan decisiones inferidas directamente del código y del hi
 - Decisión observada: conservar `localStorage` como guardado inmediato y añadir sincronización diferida del estado principal a Supabase.
 - Consecuencia: un fallo remoto genera una advertencia y no bloquea el trabajo local.
 
-## ADR-007 — Preservar la identidad del estado durante carga remota
+## ADR-007 — Sustitución canónica durante carga remota
 
 - Estado: vigente.
 - Contexto: módulos y legacy comparten una referencia mutable.
-- Decisión observada: al recuperar Supabase, borrar y reasignar propiedades sobre el objeto existente en vez de reemplazarlo.
-- Consecuencia: consumidores que retienen la referencia continúan viendo el estado actualizado.
+- Decisión observada: al recuperar Supabase, conservar exactamente el objeto
+  recibido y publicarlo mediante `ShiftControlState.replace()`.
+- Consecuencia: todos los consumidores dinámicos leen la nueva referencia y
+  los campos desconocidos permanecen intactos.
+
+## ADR-012 — Propiedad modular de las colecciones principales
+
+- Estado: vigente.
+- Contexto: la migración incremental encapsuló configuración, trabajadores,
+  planificación, asistencia, jornadas adicionales, ausencias, feriados,
+  auditoría y cierres.
+- Decisión observada: cada colección principal tiene un módulo propietario de
+  sus mutaciones runtime; `index.html` conserva reglas, coordinación y UI.
+- Consecuencia: una futura persistencia relacional puede sustituirse detrás de
+  contratos de módulo sin exigir primero otra extracción de dominios.
 
 ## ADR-008 — Almacenes auxiliares separados
 
@@ -88,7 +106,6 @@ El repositorio no contiene una decisión final para:
 - el papel definitivo de `AppState`;
 - la duplicación del bootstrap de almacenamiento;
 - el destino de los adaptadores en `src/storage/`;
-- el alcance final de `AdditionalModule` más allá de inserciones y reemplazos de colección;
 - la consolidación de claves locales auxiliares;
 - una estrategia automatizada de pruebas;
 - empaquetado o despliegue.

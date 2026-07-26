@@ -19,24 +19,42 @@ Fecha de este levantamiento: 26 de julio de 2026.
 - `index.html` contiene aproximadamente 17.000 líneas y concentra DOM, CSS inline, datos iniciales, renderizadores, eventos, autenticación local y la mayoría de los flujos.
 - `src/v20-interface.css` y `src/v20-interface.js` agregan la interfaz vigente.
 - La única dependencia externa cargada es `@supabase/supabase-js@2` desde jsDelivr.
-- La integración entre archivos se hace con globals: `window.state`, `window.ShiftControlState`, `window.EmployeeModule`, `window.PlanningModule`, `window.AttendanceModule`, `window.AdditionalModule` y otros.
+- La integración entre archivos se hace con globals: `window.state`,
+  `window.ShiftControlState` y los módulos de trabajadores, planificación,
+  asistencia, jornadas adicionales, ausencias, feriados, auditoría,
+  configuración y cierres.
 - No hay `package.json`, bundler, imports ESM, servidor de aplicación, tests, linter ni CI visibles.
 
 ## Estado y persistencia
 
 - El estado principal se crea en `index.html` y se lee inicialmente desde `localStorage`.
-- `window.ShiftControlState` mantiene una referencia al mismo objeto y delega el guardado a `window.save()`.
+- `window.ShiftControlState` mantiene la referencia canónica. Su operación
+  `replace()` sincroniza `state`, `window.state` y `ShiftControlState.data` sin
+  clonar ni normalizar el objeto recibido.
 - `src/storage.js` reemplaza `window.save` por un wrapper que conserva el guardado local y programa un `upsert` a Supabase.
 - Supabase usa la tabla `app_state`, una fila identificada por la clave de `src/config.js` y un campo JSON `data`.
 - Incidencias operativas, checklists, entregas, evaluaciones, autenticación, finanzas, depósitos, tareas y otros datos auxiliares también usan claves separadas de almacenamiento del navegador.
 
 No asumir que `window.AppState` es canónico: hoy solo se declara y se marca como inicializado.
 
-## Archivos cargados al final de `index.html`
+## Orden de carga relevante
 
-En orden relevante:
+Antes del bloque monolítico se cargan:
 
-`src/modules/additional/additional.js` se carga antes del script monolítico que inicializa `state`, porque participa en la normalización y carga de los datos iniciales.
+1. `src/app/state-manager.js`
+2. `src/modules/employees/employees.js`
+3. `src/modules/settings/settings.js`
+4. `src/modules/additional/additional.js`
+5. `src/modules/absences/absences.js`
+6. `src/modules/holidays/holidays.js`
+7. `src/modules/audit/audit.js`
+8. `src/modules/daily-closures/daily-closures.js`
+9. `src/modules/planning/planning.js`
+10. `src/modules/month-closures/month-closures.js`
+11. `src/modules/attendance/attendance.js`
+
+Estos archivos están disponibles para la inicialización, normalización y datos
+demo del estado.
 
 Al final del documento se cargan, en orden relevante:
 
@@ -46,13 +64,9 @@ Al final del documento se cargan, en orden relevante:
 4. `src/storage.js`
 5. `src/app/state.js`
 6. `src/app/bridge.js`
-7. `src/app/state-manager.js`
-8. fallback inline de `EmployeeModule`
-9. `src/modules/employees/employees.js`
-10. `src/modules/planning/planning.js`
-11. `src/modules/attendance/attendance.js`
-12. `src/app/app.js`
-13. inicialización ligada a `DOMContentLoaded`
+7. fallback inline de `EmployeeModule`, que no reemplaza el módulo ya cargado
+8. `src/app/app.js`
+9. inicialización ligada a `DOMContentLoaded`
 
 `src/storage/local.js`, `src/storage/supabase.js` y `src/storage/sync.js` no se cargan desde el documento actual. Los archivos `employees-schema.js`, `employees-service.js` y `employees-ui.js` están vacíos.
 
@@ -63,7 +77,8 @@ Al final del documento se cargan, en orden relevante:
 - Existen dos representaciones nominales de estado (`AppState` y el estado legacy), pero solo la segunda alimenta el runtime.
 - La inicialización de almacenamiento aparece tanto al cargar `src/storage.js` como desde `initApp()`.
 - Parte de la persistencia está en el objeto principal y parte en claves locales independientes.
-- Reemplazar el objeto de estado puede desalinear referencias; el código reciente intenta preservar la identidad del objeto durante la sincronización remota.
+- Toda sustitución completa debe usar `ShiftControlState.replace()`. Undo, redo,
+  importación y recuperación remota ya usan esta operación.
 
 ## Forma correcta de razonar sobre un cambio
 
