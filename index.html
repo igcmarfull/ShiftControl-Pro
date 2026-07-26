@@ -10381,7 +10381,13 @@ function redoAction(){
   save();renderAll();toast('Cambio rehecho');
 }
 
-function employee(id){return EmployeeModule.find(id)}
+function employee(id){
+  if(window.EmployeeModule){
+    return EmployeeModule.find(id);
+  }
+
+  return state.employees.find(e=>e.id===id);
+}
 function initials(name){return(name||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}
 
 function escapeHtml(value){
@@ -16830,9 +16836,9 @@ body[data-role="chief"] .v17-chief-today{display:block}
 
 <script src="src/app/state.js"></script>
 <script src="src/app/bridge.js"></script>
-<script src="src/app/app.js"></script>
 <script src="src/app/state-manager.js"></script>
 <script src="src/modules/employees/employees.js"></script>
+<script src="src/app/app.js"></script>
 
 <script>
 window.addEventListener("DOMContentLoaded",()=>{
