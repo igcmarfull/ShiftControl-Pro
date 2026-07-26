@@ -10467,6 +10467,11 @@ document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',
 }));
 
 function renderDashboard(){
+  if(!window.EmployeeModule){
+    console.warn('[ShiftControl] EmployeeModule aún no disponible, esperando carga');
+    return;
+  }
+
   const referenceDate=document.getElementById('todayDate')?.value||isoToday;
   document.getElementById('todayText').innerHTML=`Operación de <strong>${fmt(referenceDate)}</strong>`;
 
