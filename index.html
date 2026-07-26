@@ -10381,7 +10381,7 @@ function redoAction(){
   save();renderAll();toast('Cambio rehecho');
 }
 
-function employee(id){return state.employees.find(e=>e.id===id)}
+function employee(id){return EmployeeModule.find(id)}
 function initials(name){return(name||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}
 
 function escapeHtml(value){
