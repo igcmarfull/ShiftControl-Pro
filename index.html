@@ -10242,9 +10242,7 @@ let state=JSON.parse(localStorage.getItem(KEYS.data)||'null')||{
 
 window.state = state;
 
-if(window.ShiftControlState){
-  window.ShiftControlState.initialize(state);
-}
+
 state.employees=Array.isArray(state.employees)?state.employees:[];
 state.employees=state.employees.map(e=>({...e,active:e.active!==false,shift:e.shift||'A'}));
 state.plans=Array.isArray(state.plans)?state.plans:[];
@@ -14976,6 +14974,12 @@ function renderAll(){
 window.addEventListener('DOMContentLoaded',()=>{
 setTimeout(()=>{
 try{
+
+  if(window.ShiftControlState){
+    window.ShiftControlState.initialize(state);
+    console.log("[ShiftControl V31] Estado principal conectado");
+  }
+
   renderAll();
 
   const savedPeriod=localStorage.getItem('shiftcontrol_active_period');
