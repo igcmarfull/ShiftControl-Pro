@@ -11515,7 +11515,7 @@ function renderTodayIntelligence(date,rows,execs){
 
   coverage.innerHTML=['A','B','C'].map(code=>{
     const planned=rows.filter(r=>r.plan.code===code).length;
-    const reviewed=rows.filter(r=>r.plan.code===code&&execs.some(x=>x.employeeId===r.employee.id)).length;
+    const reviewed=rows.filter(r=>r.plan.code===code&&execs.some(x=>x.employeeId===r.employee.id&&['Presente','Atrasado'].includes(x.status))).length;
     const pct=planned?Math.round(reviewed/planned*100):100;
     return `<div class="coverage-row">
       <strong>Turno ${code}</strong>
@@ -12028,7 +12028,7 @@ function renderTodayMobileShiftView(date,rows,execs){
 
   const coverageHtml=shiftOrder.filter(code=>groups[code]?.length).map(code=>{
     const people=groups[code];
-    const confirmed=people.filter(({employee:emp})=>execs.some(e=>e.employeeId===emp.id)).length;
+    const confirmed=people.filter(({employee:emp})=>execs.some(e=>e.employeeId===emp.id&&['Presente','Atrasado'].includes(e.status))).length;
     const pct=people.length?Math.round((confirmed/people.length)*100):0;
     return `<div class="today-mobile-coverage-row shift-${code}">
       <span>${shiftNames[code]}</span>
