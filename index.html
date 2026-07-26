@@ -10254,7 +10254,10 @@ window.ShiftControlState.initialize(state);
 state.employees=Array.isArray(state.employees)?state.employees:[];
 state.employees=state.employees.map(e=>({...e,active:e.active!==false,shift:e.shift||'A'}));
 state.plans=Array.isArray(state.plans)?state.plans:[];
-state.executions=Array.isArray(state.executions)?state.executions:[];
+AttendanceModule.replaceAll(
+  Array.isArray(state.executions)?state.executions:[],
+  {save:false}
+);
 AdditionalModule.replaceAll(
   Array.isArray(state.additional)?state.additional:[],
   {save:false}
@@ -10307,7 +10310,10 @@ SettingsModule.set('sundayAutoGenerate',false,{save:false});
 if(!state.demoRealistaJunio2026){
   const prefix='2026-06';
   state.plans=state.plans.filter(x=>!x.date.startsWith(prefix));
-  state.executions=state.executions.filter(x=>!x.date.startsWith(prefix));
+  AttendanceModule.replaceAll(
+    state.executions.filter(x=>!x.date.startsWith(prefix)),
+    {save:false}
+  );
   AdditionalModule.replaceAll(
     state.additional.filter(x=>!x.date.startsWith(prefix)),
     {save:false}
@@ -10327,14 +10333,22 @@ if(!state.demoRealistaJunio2026){
       const dow=new Date(date+'T12:00:00').getDay();
       const code=dow===6?'D':(e.shift||['A','B','C'][index%3]);
       state.plans.push({id:safeRandomUUID(),employeeId:e.id,date,code});
-      if(code!=='D')state.executions.push({id:safeRandomUUID(),employeeId:e.id,date,status:'Presente',replacementId:'',note:'Asistencia demo junio 2026'});
+      if(code!=='D')AttendanceModule.add(
+        {id:safeRandomUUID(),employeeId:e.id,date,status:'Presente',replacementId:'',note:'Asistencia demo junio 2026'},
+        {save:false}
+      );
     }
   });
 
   const E=i=>employees[i%employees.length];
   const execution=(i,date)=>state.executions.find(x=>x.employeeId===E(i).id&&x.date===date);
   const setStatus=(i,date,status,note,replacementId='')=>{
-    const x=execution(i,date); if(x){x.status=status;x.note=note;x.replacementId=replacementId;}
+    const x=execution(i,date);
+    if(x)AttendanceModule.patch(
+      x.id,
+      {status,note,replacementId},
+      {save:false}
+    );
   };
   const replacement=(absentIndex,replIndex,date,note,amount)=>{
     setStatus(absentIndex,date,'Ausente',note,E(replIndex).id);
@@ -12460,7 +12474,7 @@ function runReplacementAssistant(){
 }
 
 function acceptAssistantReplacement(executionId,replacementId,date){
-  const absence=state.executions.find(item=>item.id===executionId);
+  const absence=AttendanceModule.findById(executionId);
   if(!absence)return alert('La ausencia ya no existe.');
   if(absence.replacementId)return alert('Esta ausencia ya tiene reemplazante.');
   if(replacementUnavailable(replacementId,date))return alert('El reemplazante ya no está disponible.');
@@ -12468,8 +12482,10 @@ function acceptAssistantReplacement(executionId,replacementId,date){
   const shift=plannedShiftFor(absence.employeeId,date);
   snapshot();
 
-  absence.replacementId=replacementId;
-  absence.note=[absence.note,'Reemplazo sugerido por asistente'].filter(Boolean).join(' · ');
+  AttendanceModule.patch(executionId,{
+    replacementId,
+    note:[absence.note,'Reemplazo sugerido por asistente'].filter(Boolean).join(' · ')
+  },{save:false});
 
   const attendanceResult=ensureReplacementPresent({
     executionId,
@@ -12576,7 +12592,9 @@ function ensureReplacementPresent({
     }
 
     if(!String(existing.note||'').includes(coverageNote)){
-      existing.note=[existing.note,coverageNote].filter(Boolean).join(' · ');
+      AttendanceModule.patch(existing.id,{
+        note:[existing.note,coverageNote].filter(Boolean).join(' · ')
+      },{save:false});
     }
 
     return {ok:true,created:false,status:existing.status};
@@ -14419,7 +14437,7 @@ function filterReplacementCandidates(listId,searchId,toggleId){
 }
 
 function assignReplacementCore(executionId,replacementId,date,{silent=false}={}){
-  const execution=state.executions.find(item=>item.id===executionId);
+  const execution=AttendanceModule.findById(executionId);
 
   if(!execution){
     return {ok:false,message:'No existe un registro real para ese turno.'};
@@ -14434,11 +14452,13 @@ function assignReplacementCore(executionId,replacementId,date,{silent=false}={})
   }
 
   const shift=plannedShiftFor(execution.employeeId,date);
-  execution.replacementId=replacementId;
-  execution.note=[
-    execution.note,
-    'Reemplazo asignado desde Licencias'
-  ].filter(Boolean).join(' · ');
+  AttendanceModule.patch(executionId,{
+    replacementId,
+    note:[
+      execution.note,
+      'Reemplazo asignado desde Licencias'
+    ].filter(Boolean).join(' · ')
+  },{save:false});
 
   const attendanceResult=ensureReplacementPresent({
     executionId,
@@ -14449,7 +14469,9 @@ function assignReplacementCore(executionId,replacementId,date,{silent=false}={})
   });
 
   if(!attendanceResult.ok){
-    execution.replacementId='';
+    AttendanceModule.patch(executionId,{
+      replacementId:''
+    },{save:false});
     return {ok:false,message:attendanceResult.message};
   }
 

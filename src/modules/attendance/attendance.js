@@ -16,6 +16,78 @@ window.AttendanceModule = {
 
   },
 
+  findById(id){
+
+    const state = this._getState();
+
+    return (state?.executions || []).find(
+      item=>item.id===id
+    ) || null;
+
+  },
+
+  add(data, {save=true}={}){
+
+    const state = this._getState();
+
+    if(!state){
+      return null;
+    }
+
+    state.executions.push(data);
+
+    if(save&&window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
+
+    return data;
+
+  },
+
+  patch(id, changes, {save=true}={}){
+
+    const state = this._getState();
+
+    if(!state){
+      return null;
+    }
+
+    const existing=(state.executions || []).find(
+      item=>item.id===id
+    ) || null;
+
+    if(!existing){
+      return null;
+    }
+
+    Object.assign(existing,changes);
+
+    if(save&&window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
+
+    return existing;
+
+  },
+
+  replaceAll(items, {save=true}={}){
+
+    const state = this._getState();
+
+    if(!state){
+      return [];
+    }
+
+    state.executions=items;
+
+    if(save&&window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
+
+    return items;
+
+  },
+
 
   find(employeeId,date){
 
