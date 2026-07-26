@@ -15,6 +15,7 @@ Este roadmap no propone funcionalidades nuevas. Ordena únicamente la modulariza
 - `EmployeeModule` cargado y usado por múltiples flujos.
 - `PlanningModule` cargado y usado por planificación.
 - `AttendanceModule` cargado y usado por asistencia, ausencias y reemplazos.
+- `AdditionalModule` cargado y usado para insertar o reemplazar la colección de jornadas adicionales.
 - Interfaz externa en `src/v20-interface.css` y `src/v20-interface.js`.
 
 ### Parcial o coexistente
@@ -30,7 +31,6 @@ Este roadmap no propone funcionalidades nuevas. Ordena únicamente la modulariza
 
 - adaptadores `src/storage/local.js`, `src/storage/supabase.js` y `src/storage/sync.js`;
 - `ShiftControlBridge.start()`;
-- implementación de `AdditionalModule`;
 - archivos de schema, service y UI de trabajadores, actualmente vacíos.
 
 ## Secuencia técnica derivada del estado actual
@@ -72,7 +72,7 @@ Resultado esperado: persistencia vigente explícita y sin caminos nominales sin 
 
 Objetivo: continuar la separación de operaciones existentes sin añadir casos de uso.
 
-- verificar e integrar o descartar, mediante una decisión explícita, `AdditionalModule`;
+- continuar la migración de lecturas y mutaciones de campos individuales hacia `AdditionalModule`;
 - mover gradualmente lógica de UI o servicio solo cuando exista un consumidor comprobado;
 - mantener los globals de compatibilidad durante cada extracción;
 - retirar archivos vacíos únicamente si se confirma que no representan trabajo planificado.

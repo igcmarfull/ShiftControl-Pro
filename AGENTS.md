@@ -27,7 +27,7 @@ No reemplazar estos contratos de forma incidental. Una migración de arquitectur
 - No inventar funcionalidades, entidades, endpoints, tablas, permisos ni requisitos de negocio.
 - No completar archivos vacíos basándose solo en su nombre.
 - No duplicar lógica ya extraída a `EmployeeModule`, `PlanningModule` o `AttendanceModule`.
-- Antes de usar `AdditionalModule` u otro adaptador presente, verificar si está cargado e inicializado en el runtime.
+- Usar `AdditionalModule` para las escrituras de `state.additional`; antes de usar cualquier otro adaptador presente, verificar si está cargado e inicializado en el runtime.
 - Conservar los nombres globales consumidos por HTML inline y atributos `onclick`.
 - Mantener la referencia compartida del estado; no sustituir el objeto sin revisar `state`, `window.state` y `ShiftControlState`.
 - Toda escritura persistente del estado principal debe respetar el camino vigente de `save()`.

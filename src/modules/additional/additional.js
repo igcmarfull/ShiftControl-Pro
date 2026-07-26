@@ -2,6 +2,16 @@
 
 window.AdditionalModule = {
 
+  _getState(){
+    return window.ShiftControlState?.get?.() || window.state || null;
+  },
+
+  _saveIfNeeded(shouldSave){
+    if(shouldSave&&window.ShiftControlState?.save){
+      window.ShiftControlState.save();
+    }
+  },
+
   _normalizeAmount(value){
     const amount = Number(value);
     return Number.isFinite(amount) ? amount : 0;
@@ -107,8 +117,43 @@ window.AdditionalModule = {
   },
 
   getAll(){
-    const state = window.ShiftControlState?.get?.();
+    const state = this._getState();
     return state?.additional || [];
+  },
+
+  replaceAll(records, {save=true}={}){
+    const state = this._getState();
+
+    if(!state){
+      return [];
+    }
+
+    state.additional = Array.isArray(records) ? records : [];
+    this._saveIfNeeded(save);
+
+    return state.additional;
+  },
+
+  add(data, {prepend=false, save=true}={}){
+    const state = this._getState();
+
+    if(!state){
+      return null;
+    }
+
+    if(!Array.isArray(state.additional)){
+      state.additional = [];
+    }
+
+    if(prepend){
+      state.additional.unshift(data);
+    }else{
+      state.additional.push(data);
+    }
+
+    this._saveIfNeeded(save);
+
+    return data;
   },
 
   find(employeeId, date){
@@ -120,7 +165,7 @@ window.AdditionalModule = {
   },
 
   create(data){
-    const state = window.ShiftControlState?.get?.();
+    const state = this._getState();
 
     if(!state.additional){
       state.additional = [];
@@ -143,7 +188,7 @@ window.AdditionalModule = {
   },
 
   update(id, data){
-    const state = window.ShiftControlState?.get?.();
+    const state = this._getState();
 
     if(!state.additional){
       state.additional = [];
@@ -163,7 +208,7 @@ window.AdditionalModule = {
   },
 
   remove(id){
-    const state = window.ShiftControlState?.get?.();
+    const state = this._getState();
 
     if(!state.additional){
       state.additional = [];

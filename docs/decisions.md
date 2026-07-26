@@ -88,7 +88,7 @@ El repositorio no contiene una decisión final para:
 - el papel definitivo de `AppState`;
 - la duplicación del bootstrap de almacenamiento;
 - el destino de los adaptadores en `src/storage/`;
-- la integración de `AdditionalModule`;
+- el alcance final de `AdditionalModule` más allá de inserciones y reemplazos de colección;
 - la consolidación de claves locales auxiliares;
 - una estrategia automatizada de pruebas;
 - empaquetado o despliegue.

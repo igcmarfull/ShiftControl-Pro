@@ -86,11 +86,22 @@ Los cálculos de asistencia, reemplazos, ausencias y renderizado siguen en `inde
 
 ### Jornadas adicionales
 
-Archivo presente y no rastreado al momento del levantamiento: `src/modules/additional/additional.js`.
+Archivo activo: `src/modules/additional/additional.js`.
 
-Estado de integración: no está referenciado por una etiqueta `<script>` de `index.html`; la interfaz vigente continúa leyendo y mutando `state.additional` desde el monolito.
+Se carga antes del bloque monolítico que inicializa el estado para poder normalizar, reemplazar e insertar registros desde el arranque. Después utiliza `ShiftControlState` como referencia principal.
 
-La implementación presente define normalización, consulta, alta, edición, eliminación y pagos pendientes. No debe considerarse parte del runtime hasta que exista una integración explícita.
+API observada:
+
+- `getAll()`;
+- `replaceAll(records, options)`;
+- `add(data, options)`;
+- `find(employeeId, date)`;
+- `create(data)`;
+- `update(id, data)`;
+- `remove(id)`;
+- `getPendingPayments()`.
+
+Las escrituras que antes usaban asignación directa, `push()` o `unshift()` en `index.html` pasan por `replaceAll()` o `add()`. La interfaz y varias lecturas o mutaciones de campos individuales permanecen en el monolito.
 
 ## Almacenamiento
 

@@ -35,7 +35,7 @@ ShiftControl Pro es una aplicación web de una sola página, ejecutada directame
 │   │   ├── employees/            # módulo activo y tres archivos vacíos
 │   │   ├── planning/             # módulo activo
 │   │   ├── attendance/           # módulo activo
-│   │   └── additional/           # presente sin rastrear y no cargada por index.html
+│   │   └── additional/           # módulo activo de escritura de jornadas adicionales
 │   └── storage/
 │       ├── local.js              # adaptador presente, no cargado
 │       ├── supabase.js           # adaptador presente, no cargado
@@ -53,7 +53,8 @@ Interfaz y eventos
                └── módulos globales activos
                     ├── EmployeeModule
                     ├── PlanningModule
-                    └── AttendanceModule
+                    ├── AttendanceModule
+                    └── AdditionalModule
                               │
                               ▼
                      ShiftControlState
@@ -76,7 +77,11 @@ No hay una capa de servicios separada activa entre los módulos y el estado. Los
 
 El navegador procesa el marcado, los estilos y varios scripts inline incluidos en `index.html`.
 
-### 2. Creación del estado legacy
+### 2. Carga temprana de jornadas adicionales
+
+`src/modules/additional/additional.js` se carga antes del bloque monolítico principal. Durante esta fase usa `window.state` como referencia; después de la inicialización usa `ShiftControlState`.
+
+### 3. Creación del estado legacy
 
 El script principal:
 
@@ -90,7 +95,7 @@ El script principal:
 
 La colección principal contiene, entre otros, `settings`, `employees`, `plans`, `executions`, `additional`, `holidays`, `absences`, `closedMonths` y `audit`. El código también agrega propiedades como `dailyClosures` y una marca de carga de datos de demostración.
 
-### 3. Carga de extensiones y persistencia
+### 4. Carga de extensiones y persistencia
 
 Al final del documento se cargan la librería de Supabase, la configuración, la interfaz externa y `src/storage.js`.
 
@@ -104,7 +109,7 @@ Al final del documento se cargan la librería de Supabase, la configuración, la
 - conserva operación local si Supabase falla;
 - ejecuta `bootstrap()` al cargarse.
 
-### 4. Carga de infraestructura y módulos
+### 5. Carga de infraestructura y módulos
 
 Después se declaran `AppState`, `ShiftControlBridge` y `ShiftControlState`. Se instala un fallback mínimo para empleados y luego se cargan:
 
@@ -113,7 +118,9 @@ Después se declaran `AppState`, `ShiftControlBridge` y `ShiftControlState`. Se 
 - `AttendanceModule`;
 - `initApp`.
 
-### 5. `DOMContentLoaded`
+`AdditionalModule` ya está disponible desde la carga temprana.
+
+### 6. `DOMContentLoaded`
 
 Hay más de un listener de inicialización:
 
@@ -190,6 +197,7 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
 - El HTML usa manejadores inline, por lo que muchos nombres globales forman parte de la interfaz interna.
 - Scripts de versiones posteriores envuelven funciones como `renderAll`, `renderDashboard` o `renderActualCalendar` para agregar comportamiento.
 - `src/v20-interface.js` también instala y envuelve componentes después de la carga del DOM.
+- `AdditionalModule` concentra las inserciones y reemplazos de la colección `additional`; parte de sus lecturas y mutaciones de campos individuales permanece en `index.html`.
 
 ## Integraciones presentes pero no activas
 
@@ -198,13 +206,11 @@ Los siguientes archivos existen, pero `index.html` no los carga:
 - `src/storage/local.js`;
 - `src/storage/supabase.js`;
 - `src/storage/sync.js`;
-- `src/modules/additional/additional.js`, que además figuraba sin rastrear en el árbol de trabajo durante este levantamiento.
 
 Además:
 
 - `ShiftControlBridge.start()` está definido, pero no se observa una invocación;
 - `employees-schema.js`, `employees-service.js` y `employees-ui.js` no contienen código;
-- `AdditionalModule` no participa actualmente en la vista de jornadas adicionales, cuya lógica permanece en `index.html`.
 
 ## Restricciones arquitectónicas actuales
 

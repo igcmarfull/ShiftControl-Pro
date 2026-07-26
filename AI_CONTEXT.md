@@ -19,7 +19,7 @@ Fecha de este levantamiento: 26 de julio de 2026.
 - `index.html` contiene aproximadamente 17.000 líneas y concentra DOM, CSS inline, datos iniciales, renderizadores, eventos, autenticación local y la mayoría de los flujos.
 - `src/v20-interface.css` y `src/v20-interface.js` agregan la interfaz vigente.
 - La única dependencia externa cargada es `@supabase/supabase-js@2` desde jsDelivr.
-- La integración entre archivos se hace con globals: `window.state`, `window.ShiftControlState`, `window.EmployeeModule`, `window.PlanningModule`, `window.AttendanceModule` y otros.
+- La integración entre archivos se hace con globals: `window.state`, `window.ShiftControlState`, `window.EmployeeModule`, `window.PlanningModule`, `window.AttendanceModule`, `window.AdditionalModule` y otros.
 - No hay `package.json`, bundler, imports ESM, servidor de aplicación, tests, linter ni CI visibles.
 
 ## Estado y persistencia
@@ -36,6 +36,10 @@ No asumir que `window.AppState` es canónico: hoy solo se declara y se marca com
 
 En orden relevante:
 
+`src/modules/additional/additional.js` se carga antes del script monolítico que inicializa `state`, porque participa en la normalización y carga de los datos iniciales.
+
+Al final del documento se cargan, en orden relevante:
+
 1. CDN de Supabase.
 2. `src/config.js`
 3. `src/v20-interface.js`
@@ -50,7 +54,7 @@ En orden relevante:
 12. `src/app/app.js`
 13. inicialización ligada a `DOMContentLoaded`
 
-`src/modules/additional/additional.js` está presente como archivo no rastreado en el árbol de trabajo, pero no está cargado por `index.html`. `src/storage/local.js`, `src/storage/supabase.js` y `src/storage/sync.js` tampoco se cargan desde el documento actual. Los archivos `employees-schema.js`, `employees-service.js` y `employees-ui.js` están vacíos.
+`src/storage/local.js`, `src/storage/supabase.js` y `src/storage/sync.js` no se cargan desde el documento actual. Los archivos `employees-schema.js`, `employees-service.js` y `employees-ui.js` están vacíos.
 
 ## Riesgos de compatibilidad
 
