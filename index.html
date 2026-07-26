@@ -10414,7 +10414,7 @@ function fillPeriods(){
   ['planYear','reportYear'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){for(let y=today.getFullYear()+1;y>=today.getFullYear()-5;y--)e.innerHTML+=`<option value="${y}">${y}</option>`;e.value=cy}});
 }
 function fillEmployeeSelects(){
-  const active=state.employees.filter(e=>e.active);
+  const active=EmployeeModule.getAll().filter(e=>e.active);
   const opts=active.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   ['dailyEmployee','additionalEmployee','bulkEmployees','absenceEmployee'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts});
   const repl=document.getElementById('dailyReplacement');repl.innerHTML='<option value="">Sin reemplazo</option>'+opts;
@@ -10470,7 +10470,7 @@ function renderDashboard(){
   const referenceDate=document.getElementById('todayDate')?.value||isoToday;
   document.getElementById('todayText').innerHTML=`Operación de <strong>${fmt(referenceDate)}</strong>`;
 
-  const active=state.employees.filter(e=>e.active!==false);
+  const active=EmployeeModule.getAll().filter(e=>e.active!==false);
   const planned=state.plans.filter(p=>p.date===referenceDate&&['A','B','C'].includes(p.code));
   const executions=state.executions.filter(e=>e.date===referenceDate);
   const confirmed=executions.filter(e=>['Presente','Atrasado'].includes(e.status));
@@ -10626,7 +10626,7 @@ function renderPlanning(){updateSelectionBar();
   const areaFilter=isChief?'Isla':(document.getElementById('planAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('planEmployeeFilter')?.value||'';
   const normalizeArea=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-  const activeEmployees=state.employees.filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
+  const activeEmployees=EmployeeModule.getAll().filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
   let visibleEmployees=activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
   // En algunas bases antiguas el área de las atendedoras quedó vacía o con otra etiqueta.
   // La Jefa de Isla nunca debe recibir una grilla vacía por ese dato heredado.
@@ -10666,7 +10666,7 @@ function renderPlanning(){updateSelectionBar();
 function renderPlanningInsights(prefix,days){
   const box=document.getElementById('planningInsights');
   if(!box)return;
-  const active=state.employees.filter(e=>e.active);
+  const active=EmployeeModule.getAll().filter(e=>e.active);
   const monthPlans=state.plans.filter(p=>p.date.startsWith(prefix));
   const unplanned=active.reduce((total,e)=>{
     let missing=0;
@@ -11012,7 +11012,7 @@ function renderActualCalendar(){
   const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('actualAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('actualEmployeeFilter')?.value||'';
 
-  const employees=state.employees.filter(item=>
+  const employees=EmployeeModule.getAll().filter(item=>
     item.active&&
     (!area||item.area===area)&&
     (!employeeFilter||item.id===employeeFilter)
@@ -11118,7 +11118,7 @@ function renderWeekly(){
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d.toISOString().slice(0,10))}
   const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
-  const list=state.employees.filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
+  const list=EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
   list.forEach(e=>{
     const weeklyDetail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(e.shift||'—'):(e.area||'');
@@ -11199,7 +11199,7 @@ function renderExecution(){
   eLate.textContent=execs.filter(e=>e.status==='Atrasado').length;
   eAbsent.textContent=execs.filter(e=>e.status==='Ausente').length;
 
-  executionTable.innerHTML=state.employees.filter(e=>e.active).map(empObj=>{
+  executionTable.innerHTML=EmployeeModule.getAll().filter(e=>e.active).map(empObj=>{
     const p=state.plans.find(p=>p.employeeId===empObj.id&&p.date===date);
     const x=state.executions.find(x=>x.employeeId===empObj.id&&x.date===date);
     const incoming=state.executions.filter(v=>v.date===date&&v.replacementId===empObj.id);
@@ -11287,7 +11287,7 @@ function todayPlannedRows(date){
 function loadTodayBaseSchedule(){
   const date=todayUI.date.value||isoToday;
   const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
-  const active=state.employees.filter(e=>e.active).filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla');
+  const active=EmployeeModule.getAll().filter(e=>e.active).filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla');
   if(!active.length)return alert('No hay trabajadores activos.');
   snapshot();
   let created=0;
@@ -11612,7 +11612,7 @@ function syncAllSundayPayments(){
 }
 function sundayMonthSummary(prefix){
   const threshold=Number(state.settings.sundayThreshold||0);
-  return state.employees.map(e=>{
+  return EmployeeModule.getAll().map(e=>{
     const worked=workedSundayExecutions(e.id,prefix);
     const special=Math.max(0,worked.length-threshold);
     const generated=state.additional.filter(a=>a.source==='sunday'&&a.employeeId===e.id&&a.date.startsWith(prefix));
@@ -12538,7 +12538,7 @@ function loadTariffs(){
   tariffC.value=getTariff('C');
 }
 function replacementCandidates(employeeId,date,shift){
-  return state.employees.filter(e=>e.active&&e.id!==employeeId).map(e=>{
+  return EmployeeModule.getAll().filter(e=>e.active&&e.id!==employeeId).map(e=>{
     const plan=state.plans.find(p=>p.employeeId===e.id&&p.date===date);
     const execution=state.executions.find(x=>x.employeeId===e.id&&x.date===date);
     const abs=state.absences.some(a=>a.employeeId===e.id&&date>=a.from&&date<=a.to);
@@ -12572,7 +12572,7 @@ function markAllPresent(){
   save();renderAll();toast(`${added} trabajadores marcados presentes`);
 }
 function openPatternModal(){
-  patternEmployees.innerHTML=state.employees.filter(e=>e.active).map(e=>`<option value="${e.id}">${e.name} · ${e.area}</option>`).join('');
+  patternEmployees.innerHTML=EmployeeModule.getAll().filter(e=>e.active).map(e=>`<option value="${e.id}">${e.name} · ${e.area}</option>`).join('');
   patternSelect.innerHTML=state.settings.patterns.map(p=>`<option value="${p.id}">${p.name} · ${p.sequence.join('-')}</option>`).join('');
   const prefix=periodPrefix();
   patternFrom.value=prefix+'-01';
@@ -12936,7 +12936,7 @@ function renderEmployees(){
     </article>`;
   }).join(''):'<div class="v37-employee-empty">No hay trabajadores que coincidan con la búsqueda.</div>';
   if(total){
-    const active=state.employees.filter(e=>e.active!==false).length;
+    const active=EmployeeModule.getAll().filter(e=>e.active!==false).length;
     total.innerHTML=`<span>♙</span> ${list.length} mostrado${list.length===1?'':'s'} · ${active} activos`;
   }
 }
@@ -12950,7 +12950,7 @@ employeeForm.addEventListener('submit',e=>{
   const name=document.getElementById('employeeName').value.trim();
 
   if(!name)return alert('Ingresa el nombre del trabajador.');
-  if(rut&&state.employees.some(x=>x.rut===rut&&x.id!==id)){
+  if(rut&&EmployeeModule.getAll().some(x=>x.rut===rut&&x.id!==id)){
     return alert('Ya existe un trabajador con ese RUT.');
   }
 
@@ -12970,7 +12970,7 @@ employeeForm.addEventListener('submit',e=>{
   };
 
   state.employees=id
-    ? state.employees.map(x=>x.id===id?data:x)
+    ? EmployeeModule.getAll().map(x=>x.id===id?data:x)
     : [...state.employees,data];
 
   log(`${id?'Trabajador editado':'Trabajador agregado'}: ${data.name}`);
@@ -13031,7 +13031,7 @@ function accountingRows(){
 
   const prefix=`${yearEl.value}-${monthEl.value}`;
 
-  return state.employees.map(worker=>{
+  return EmployeeModule.getAll().map(worker=>{
     const executions=state.executions.filter(x=>x.employeeId===worker.id&&x.date.startsWith(prefix));
 
     const attendance=executions.filter(x=>['Presente','Atrasado'].includes(x.status));
@@ -13329,7 +13329,7 @@ function renderProfessionalPrintReports(){
 
   const plans=state.plans.filter(x=>String(x.date||'').startsWith(ctx.prefix));
   const execs=state.executions.filter(x=>String(x.date||'').startsWith(ctx.prefix));
-  const activeWorkers=state.employees.filter(x=>x.active!==false);
+  const activeWorkers=EmployeeModule.getAll().filter(x=>x.active!==false);
   const operationalRows=activeWorkers.map(worker=>{
     const workerPlans=plans.filter(x=>x.employeeId===worker.id);
     const workerExecs=execs.filter(x=>x.employeeId===worker.id);
@@ -13389,7 +13389,7 @@ function renderReports(){
   if(absentMetric)absentMetric.textContent=execs.filter(x=>x.status==='Ausente').length;
   if(additionalMetric)additionalMetric.textContent=adds.length;
 
-  reportBody.innerHTML=state.employees.map(e=>{
+  reportBody.innerHTML=EmployeeModule.getAll().map(e=>{
     const ep=plans.filter(x=>x.employeeId===e.id);
     const ex=execs.filter(x=>x.employeeId===e.id);
     const ad=adds.filter(x=>x.employeeId===e.id);
@@ -14681,7 +14681,7 @@ function resetSystem(){if(!confirm('Esto borrará todos los datos. ¿Continuar?'
 function buildAlerts(){
   const list=[];
   const prefix=periodPrefix();
-  const active=state.employees.filter(e=>e.active);
+  const active=EmployeeModule.getAll().filter(e=>e.active);
   active.forEach(e=>{
     if(!state.plans.some(p=>p.employeeId===e.id&&p.date.startsWith(prefix)))list.push({level:'Pendiente',text:`${e.name} no tiene planificación en ${prefix}`,action:()=>{planEmployeeFilter.value=e.id;renderPlanning();}});
   });
@@ -14815,7 +14815,7 @@ function importEmployeesCSV(event){
       rows.forEach(r=>{
         const rut=(r[idx('rut')]||'').trim();
         const name=(r[idx('nombre')]||'').trim();
-        if(!name||state.employees.some(e=>(rut&&e.rut===rut)||e.name===name)){skipped++;return}
+        if(!name||EmployeeModule.getAll().some(e=>(rut&&e.rut===rut)||e.name===name)){skipped++;return}
         const shift=(r[idx('turno')]||'A').trim().toUpperCase();
         state.employees.push({
           id:safeRandomUUID(),name,rut,
@@ -15382,7 +15382,7 @@ function assignAttendanceCoverage(id){
   
   const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;
   const absent=EmployeeModule.find(item.employeeId);
-  const candidates=state.employees.filter(e=>e.active&&e.id!==item.employeeId);
+  const candidates=EmployeeModule.getAll().filter(e=>e.active&&e.id!==item.employeeId);
   const names=candidates.map((e,i)=>`${i+1}. ${e.name}`).join('\n');
   const selected=prompt(`Selecciona número de reemplazo para ${absent?.name||'la trabajadora'}:\n${names}`);
   const candidate=candidates[Number(selected)-1];if(!candidate)return;
@@ -15960,7 +15960,7 @@ function financeStore(){
     const parsed=JSON.parse(localStorage.getItem(FINANCE_KEY)||'null');
     if(parsed&&Array.isArray(parsed.shortages)&&Array.isArray(parsed.reconciliations)&&Array.isArray(parsed.expenses))return parsed;
   }catch(_error){}
-  const employees=state.employees.filter(e=>e.active!==false);
+  const employees=EmployeeModule.getAll().filter(e=>e.active!==false);
   const sample={
     shortages:[
       {id:safeRandomUUID(),date:isoToday,employeeId:employees[0]?.id||'',shift:'A',amount:25000,reason:'Error de vuelto',status:'Pendiente',notes:'Diferencia detectada durante la cuadratura.',fileName:'',createdAt:new Date().toISOString()},
@@ -16197,7 +16197,7 @@ function openFinanceEntry(type){
 }
 function populateFinanceEmployees(){
   const select=document.getElementById('financeEntryEmployee');
-  if(select)select.innerHTML=state.employees.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${opsEsc(e.name)}</option>`).join('');
+  if(select)select.innerHTML=EmployeeModule.getAll().filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${opsEsc(e.name)}</option>`).join('');
 }
 function configureFinanceModal(type){
   const titles={shortage:'Registrar faltante de caja',reconciliation:'Nueva cuadratura de caja',expense:'Registrar gasto operativo'};
@@ -16324,7 +16324,7 @@ function depositStore(){
     const rows=JSON.parse(localStorage.getItem(DEPOSIT_KEY)||'null');
     if(Array.isArray(rows))return rows;
   }catch(_error){}
-  const workers=state.employees.filter(e=>e.active!==false);
+  const workers=EmployeeModule.getAll().filter(e=>e.active!==false);
   const seed=[
     {id:safeRandomUUID(),date:isoToday,shift:'A',type:'itam',employeeId:workers[0]?.id||'',amount:545300,time:'14:00',reference:'ITAM-A',status:'Registrado',notes:'Efectivo informado por iTam.',fileName:'',createdAt:new Date().toISOString()},
     {id:safeRandomUUID(),date:isoToday,shift:'A',type:'safe',employeeId:workers[0]?.id||'',amount:120000,time:'14:10',reference:'CF-A',status:'Guardado',notes:'Monto guardado para depósito del día siguiente.',fileName:'',createdAt:new Date().toISOString()},
