@@ -45,7 +45,15 @@ window.ShiftControlState = {
 
   syncLegacyState(){
 
-    if(window.state){
+    if(this.data){
+
+      window.state = this.data;
+
+      console.log(
+        "[ShiftControl V31] Estado nuevo sincronizado al legacy"
+      );
+
+    }else if(window.state){
 
       this.data = window.state;
 
