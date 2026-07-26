@@ -2886,6 +2886,7 @@ body[data-role="chief"] #today table td:nth-child(2){
   display:grid;
   gap:16px;
 }
+.login-form[hidden]{display:none}
 
 .login-form label>span{
   display:block;
@@ -5201,8 +5202,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <div class="login-card-head">
         <div class="login-mark">SC</div>
         <div>
-          <h2>Iniciar sesión</h2>
-          <p>Accede con tu cuenta de ShiftControl.</p>
+          <h2 id="loginTitle">Iniciar sesión</h2>
+          <p id="loginSubtitle">Accede con tu cuenta de ShiftControl.</p>
         </div>
       </div>
 
@@ -5224,6 +5225,19 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </label>
         <div id="loginError" class="login-error" role="alert"></div>
         <button class="login-submit" type="submit">Ingresar</button>
+      </form>
+
+      <form id="invitePasswordForm" class="login-form" autocomplete="on" hidden>
+        <label>
+          <span>Nueva contraseña</span>
+          <input id="invitePassword" name="new-password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        </label>
+        <label>
+          <span>Confirmar contraseña</span>
+          <input id="invitePasswordConfirm" name="confirm-password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        </label>
+        <div id="invitePasswordError" class="login-error" role="alert"></div>
+        <button class="login-submit" type="submit">Crear contraseña</button>
       </form>
 
       <p class="login-security-note">Las cuentas y contraseñas se validan de forma segura mediante Supabase Auth.</p>
@@ -16004,9 +16018,37 @@ function showLoginScreen(message=''){
     screen.classList.remove('hidden');
     screen.setAttribute('aria-hidden','false');
   }
+  const loginForm=document.getElementById('loginForm');
+  const invitationForm=document.getElementById('invitePasswordForm');
+  if(loginForm)loginForm.hidden=false;
+  if(invitationForm)invitationForm.hidden=true;
+  const title=document.getElementById('loginTitle');
+  const subtitle=document.getElementById('loginSubtitle');
+  if(title)title.textContent='Iniciar sesión';
+  if(subtitle)subtitle.textContent='Accede con tu cuenta de ShiftControl.';
   const error=document.getElementById('loginError');
   if(error)error.textContent=message;
   setTimeout(()=>document.getElementById('loginUsername')?.focus(),80);
+}
+function showInvitationScreen(message=''){
+  document.body.dataset.authenticated='false';
+  document.body.classList.add('auth-locked');
+  const screen=document.getElementById('loginScreen');
+  if(screen){
+    screen.classList.remove('hidden');
+    screen.setAttribute('aria-hidden','false');
+  }
+  const loginForm=document.getElementById('loginForm');
+  const invitationForm=document.getElementById('invitePasswordForm');
+  if(loginForm)loginForm.hidden=true;
+  if(invitationForm)invitationForm.hidden=false;
+  const title=document.getElementById('loginTitle');
+  const subtitle=document.getElementById('loginSubtitle');
+  if(title)title.textContent='Activa tu cuenta';
+  if(subtitle)subtitle.textContent='Crea una contraseña para aceptar la invitación.';
+  const error=document.getElementById('invitePasswordError');
+  if(error)error.textContent=message;
+  setTimeout(()=>document.getElementById('invitePassword')?.focus(),80);
 }
 async function loginShiftControl(event){
   event?.preventDefault();
@@ -16042,8 +16084,46 @@ async function logoutShiftControl(){
   if(password)password.value='';
   showLoginScreen('Sesión cerrada correctamente.');
 }
+async function acceptShiftControlInvitation(event){
+  event?.preventDefault();
+  const password=document.getElementById('invitePassword')?.value||'';
+  const confirmation=document.getElementById('invitePasswordConfirm')?.value||'';
+  const error=document.getElementById('invitePasswordError');
+  const submit=document.querySelector('#invitePasswordForm .login-submit');
+
+  if(password!==confirmation){
+    if(error)error.textContent='Las contraseñas no coinciden.';
+    document.getElementById('invitePasswordConfirm')?.focus();
+    return false;
+  }
+
+  if(submit)submit.disabled=true;
+  if(error)error.textContent='';
+
+  try{
+    await window.ShiftControlAuth.acceptInvitation(password);
+    const user=authenticatedUser();
+    applyAuthenticatedIdentity(user);
+    if(typeof showToast==='function')showToast('Cuenta activada correctamente');
+  }catch(invitationError){
+    const message=invitationError?.message||'No fue posible establecer la contraseña.';
+    if(window.ShiftControlAuth?.isInvitationPending()){
+      showInvitationScreen(message);
+    }else{
+      showLoginScreen(message);
+    }
+  }finally{
+    if(submit)submit.disabled=false;
+  }
+
+  return false;
+}
 async function initializeShiftControlAuth(){
   document.getElementById('loginForm')?.addEventListener('submit',loginShiftControl);
+  document.getElementById('invitePasswordForm')?.addEventListener(
+    'submit',
+    acceptShiftControlInvitation
+  );
   document.getElementById('toggleLoginPassword')?.addEventListener('click',()=>{
     const input=document.getElementById('loginPassword');
     const button=document.getElementById('toggleLoginPassword');
@@ -16055,6 +16135,10 @@ async function initializeShiftControlAuth(){
   });
   try{
     await window.ShiftControlAuth.initialize();
+    if(window.ShiftControlAuth.isInvitationPending()){
+      showInvitationScreen();
+      return;
+    }
     const user=authenticatedUser();
     if(user)applyAuthenticatedIdentity(user);
     else showLoginScreen();

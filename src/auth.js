@@ -9,10 +9,70 @@
   ];
   const SESSION_ONLY_KEY='shiftcontrol_auth_session_only_v1';
   const SESSION_TAB_KEY='shiftcontrol_auth_session_tab_v1';
+  const INVITATION_PENDING_KEY='shiftcontrol_auth_invitation_pending_v1';
   let client=null;
   let currentContext=null;
   let initialized=false;
   let initializePromise=null;
+  let invitationPending=captureInvitationCallback();
+
+  function hasInvitationType(params){
+    return params.get('type')==='invite';
+  }
+
+  function captureInvitationCallback(){
+    try{
+      const searchParams=new URLSearchParams(window.location.search||'');
+      const hashParams=new URLSearchParams(
+        String(window.location.hash||'').replace(/^#/,'')
+      );
+      const detected=
+        hasInvitationType(searchParams)||
+        hasInvitationType(hashParams);
+
+      if(detected){
+        sessionStorage.setItem(INVITATION_PENDING_KEY,'true');
+      }
+
+      return (
+        detected||
+        sessionStorage.getItem(INVITATION_PENDING_KEY)==='true'
+      );
+    }catch(_error){
+      return false;
+    }
+  }
+
+  function clearInvitationCallback(){
+    invitationPending=false;
+
+    try{
+      sessionStorage.removeItem(INVITATION_PENDING_KEY);
+
+      if(!window.history?.replaceState||!window.location)return;
+
+      const url=new URL(window.location.href);
+      [
+        'type',
+        'token',
+        'token_hash',
+        'access_token',
+        'refresh_token',
+        'expires_in',
+        'expires_at',
+        'token_type',
+        'error',
+        'error_code',
+        'error_description'
+      ].forEach(key=>url.searchParams.delete(key));
+      url.hash='';
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${url.search}`
+      );
+    }catch(_error){}
+  }
 
   function getClient(){
     if(client)return client;
@@ -27,7 +87,14 @@
 
     client=window.supabase.createClient(
       config.supabaseUrl,
-      config.supabasePublishableKey
+      config.supabasePublishableKey,
+      {
+        auth:{
+          autoRefreshToken:true,
+          persistSession:true,
+          detectSessionInUrl:true
+        }
+      }
     );
 
     return client;
@@ -165,12 +232,30 @@
     if(initializePromise)return initializePromise;
 
     initializePromise=(async()=>{
-      await enforceSessionPreference();
+      if(invitationPending){
+        setPersistencePreference(true);
+      }else{
+        await enforceSessionPreference();
+      }
 
       const {data,error}=await getClient().auth.getSession();
       if(error)throw error;
 
       initialized=true;
+
+      if(invitationPending){
+        if(!data.session?.user){
+          clearInvitationCallback();
+          throw accessError(
+            'La invitación no es válida o ya expiró.',
+            'AUTH_INVITATION_INVALID'
+          );
+        }
+
+        currentContext=null;
+        return null;
+      }
+
       return activate(data.session?.user||null);
     })();
 
@@ -209,6 +294,29 @@
     if(error)throw error;
   }
 
+  async function acceptInvitation(password){
+    if(!invitationPending){
+      throw accessError(
+        'No hay una invitación pendiente.',
+        'AUTH_INVITATION_NOT_PENDING'
+      );
+    }
+
+    const {data,error}=await getClient().auth.updateUser({password});
+    if(error)throw error;
+
+    clearInvitationCallback();
+
+    try{
+      initialized=true;
+      return await activate(data.user);
+    }catch(error){
+      await getClient().auth.signOut({scope:'local'});
+      currentContext=null;
+      throw error;
+    }
+  }
+
   function legacyUser(){
     const context=currentContext;
     if(!context)return null;
@@ -226,7 +334,8 @@
   window.AuthContext=Object.freeze({
     get:()=>currentContext,
     isReady:()=>initialized,
-    hasCompany:()=>Boolean(currentContext?.companyId)
+    hasCompany:()=>Boolean(currentContext?.companyId),
+    isInvitationPending:()=>invitationPending
   });
 
   window.ShiftControlAuth=Object.freeze({
@@ -234,6 +343,8 @@
     initialize,
     signIn,
     signOut,
+    acceptInvitation,
+    isInvitationPending:()=>invitationPending,
     legacyUser
   });
 })();
