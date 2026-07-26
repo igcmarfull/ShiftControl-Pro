@@ -10414,6 +10414,11 @@ function fillPeriods(){
   ['planYear','reportYear'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){for(let y=today.getFullYear()+1;y>=today.getFullYear()-5;y--)e.innerHTML+=`<option value="${y}">${y}</option>`;e.value=cy}});
 }
 function fillEmployeeSelects(){
+  if(!window.EmployeeModule){
+    console.warn('[ShiftControl] fillEmployeeSelects esperando EmployeeModule');
+    return;
+  }
+
   const active=window.EmployeeModule.getAll().filter(e=>e.active);
   const opts=active.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   ['dailyEmployee','additionalEmployee','bulkEmployees','absenceEmployee'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts});
