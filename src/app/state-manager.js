@@ -4,17 +4,27 @@ window.ShiftControlState = {
 
   data:null,
 
+  replace(nextState){
+
+    state = nextState;
+
+    window.state = nextState;
+
+    this.data = nextState;
+
+    return nextState;
+
+  },
+
   initialize(defaultState){
 
-    window.state = defaultState;
-
-    this.data = window.state;
+    const currentState = this.replace(defaultState);
 
     console.log(
       "[ShiftControl V31] State Manager inicializado"
     );
 
-    return this.data;
+    return currentState;
 
   },
 
@@ -26,9 +36,7 @@ window.ShiftControlState = {
 
   set(data){
 
-    window.state = data;
-
-    this.data = window.state;
+    return this.replace(data);
 
   },
 
@@ -51,7 +59,7 @@ window.ShiftControlState = {
 
     if(this.data){
 
-      window.state = this.data;
+      this.replace(this.data);
 
       console.log(
         "[ShiftControl V31] Estado nuevo sincronizado al legacy"
@@ -59,7 +67,7 @@ window.ShiftControlState = {
 
     }else if(window.state){
 
-      this.data = window.state;
+      this.replace(window.state);
 
       console.log(
         "[ShiftControl V31] Estado antiguo conectado"

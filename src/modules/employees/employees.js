@@ -2,6 +2,12 @@
 
 window.EmployeeModule = {
 
+  _getState(){
+
+    return window.ShiftControlState?.get?.() || null;
+
+  },
+
   getAll(){
 
     if(!window.ShiftControlState){
@@ -9,7 +15,7 @@ window.EmployeeModule = {
       return [];
     }
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     return state?.employees || [];
 
@@ -34,7 +40,7 @@ window.EmployeeModule = {
 
   create(data){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     if(!state.employees){
       state.employees=[];
@@ -74,7 +80,7 @@ window.EmployeeModule = {
 
   update(id,data){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.employees = state.employees.map(
       employee =>
@@ -94,7 +100,7 @@ window.EmployeeModule = {
 
   remove(id){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.employees =
       state.employees.filter(
@@ -112,7 +118,7 @@ window.EmployeeModule = {
 
   addDocument(id,document){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.employees =
       state.employees.map(employee=>{
@@ -136,7 +142,7 @@ window.EmployeeModule = {
 
   removeDocument(id,index){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.employees =
       state.employees.map(employee=>{

@@ -42,12 +42,14 @@
     }
 
     try {
+      const currentState = window.ShiftControlState.get();
+
       const { error } = await getClient()
         .from('app_state')
         .upsert(
           {
             key: config.stateKey,
-            data: state,
+            data: currentState,
             updated_at: new Date().toISOString()
           },
           { onConflict: 'key' }
@@ -79,19 +81,9 @@
 
       if (data?.data) {
 
-        Object.keys(state).forEach(key=>{
-          delete state[key];
-        });
+        const currentState = window.ShiftControlState.replace(data.data);
 
-        Object.assign(state, data.data);
-
-        window.state = state;
-
-        if(window.ShiftControlState){
-          window.ShiftControlState.set(state);
-        }
-
-        localStorage.setItem(KEYS.data, JSON.stringify(state));
+        localStorage.setItem(KEYS.data, JSON.stringify(currentState));
         localStorage.setItem(
           LOCAL_SYNC_KEY,
           data.updated_at || new Date().toISOString()

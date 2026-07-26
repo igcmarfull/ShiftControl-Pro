@@ -2,9 +2,15 @@
 
 window.AttendanceModule = {
 
+  _getState(){
+
+    return window.ShiftControlState?.get?.() || null;
+
+  },
+
   getAll(){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     return state.executions || [];
 
@@ -24,7 +30,7 @@ window.AttendanceModule = {
 
   create(data){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     if(!state.executions){
       state.executions=[];
@@ -66,7 +72,7 @@ window.AttendanceModule = {
 
   remove(id){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.executions =
       state.executions.filter(
@@ -83,7 +89,7 @@ window.AttendanceModule = {
 
   clearDate(date){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.executions =
       state.executions.filter(
@@ -100,7 +106,7 @@ window.AttendanceModule = {
 
   removeWhere(callback){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.executions =
       state.executions.filter(
@@ -117,7 +123,7 @@ window.AttendanceModule = {
 
   removeGeneratedByAbsence(absenceId){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.executions =
       state.executions.filter(
@@ -134,7 +140,7 @@ window.AttendanceModule = {
 
   removeEmployee(employeeId){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.executions =
       state.executions.filter(
@@ -151,7 +157,7 @@ window.AttendanceModule = {
 
   removeEmployeeReferences(employeeId){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.executions =
       state.executions

@@ -10084,6 +10084,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
   </button>
 </nav>
 
+<script src="src/app/state-manager.js"></script>
 <script src="src/modules/additional/additional.js"></script>
 <script src="src/modules/absences/absences.js"></script>
 <script src="src/modules/holidays/holidays.js"></script>
@@ -10245,7 +10246,7 @@ let state=JSON.parse(localStorage.getItem(KEYS.data)||'null')||{
   audit:[]
 };
 
-window.state = state;
+window.ShiftControlState.initialize(state);
 
 
 state.employees=Array.isArray(state.employees)?state.employees:[];
@@ -10402,8 +10403,7 @@ if(!state.demoRealistaJunio2026){
 }
 
 function save(){
-  const currentState = window.ShiftControlState?.get?.() || state;
-  window.state = currentState;
+  const currentState = window.ShiftControlState.get();
   localStorage.setItem(KEYS.data, JSON.stringify(currentState));
 }
 save();
@@ -10424,13 +10424,13 @@ function snapshot(){
 function undoAction(){
   if(!undoStack.length)return toast('Nada que deshacer');
   redoStack.push(JSON.stringify(state));
-  state=JSON.parse(undoStack.pop());
+  window.ShiftControlState.replace(JSON.parse(undoStack.pop()));
   save();renderAll();toast('Cambio deshecho');
 }
 function redoAction(){
   if(!redoStack.length)return toast('Nada que rehacer');
   undoStack.push(JSON.stringify(state));
-  state=JSON.parse(redoStack.pop());
+  window.ShiftControlState.replace(JSON.parse(redoStack.pop()));
   save();renderAll();toast('Cambio rehecho');
 }
 
@@ -14901,7 +14901,7 @@ document.getElementById('settingsForm')?.addEventListener('submit',e=>{
   toast('Configuración guardada');
 });
 function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`shiftcontrol_respaldo_${isoToday}.json`;a.click();URL.revokeObjectURL(a.href)}
-function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{state=JSON.parse(reader.result);save();renderAll();toast('Respaldo importado')}catch{alert('El archivo no es válido.')}};reader.readAsText(file)}
+function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{window.ShiftControlState.replace(JSON.parse(reader.result));save();renderAll();toast('Respaldo importado')}catch{alert('El archivo no es válido.')}};reader.readAsText(file)}
 function resetSystem(){if(!confirm('Esto borrará todos los datos. ¿Continuar?'))return;localStorage.removeItem(KEYS.data);location.reload()}
 
 function buildAlerts(){
@@ -17075,7 +17075,6 @@ body[data-role="chief"] .v17-chief-today{display:block}
 
 <script src="src/app/state.js"></script>
 <script src="src/app/bridge.js"></script>
-<script src="src/app/state-manager.js"></script>
 
 <script>
 window.EmployeeModule = window.EmployeeModule || {

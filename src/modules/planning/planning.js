@@ -2,6 +2,12 @@
 
 window.PlanningModule = {
 
+  _getState(){
+
+    return window.ShiftControlState?.get?.() || null;
+
+  },
+
   getAll(){
 
     if(!window.ShiftControlState){
@@ -9,7 +15,7 @@ window.PlanningModule = {
       return [];
     }
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     return state?.plans || [];
 
@@ -29,7 +35,7 @@ window.PlanningModule = {
 
   create(data){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     if(!state.plans){
       state.plans=[];
@@ -71,7 +77,7 @@ window.PlanningModule = {
 
   remove(id){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.plans =
       state.plans.filter(
@@ -90,7 +96,7 @@ window.PlanningModule = {
 
   clearEmployee(employeeId,date){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.plans =
       state.plans.filter(
@@ -108,7 +114,7 @@ window.PlanningModule = {
 
   removeEmployeePlans(employeeId){
 
-    const state = window.ShiftControlState.get();
+    const state = this._getState();
 
     state.plans =
       state.plans.filter(
