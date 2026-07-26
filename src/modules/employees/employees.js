@@ -24,6 +24,13 @@ window.EmployeeModule = {
       employee => employee.id === id
     ) || null;
 
+  },
+
+
+  count(){
+
+    return this.getAll().length;
+
   }
 
 
