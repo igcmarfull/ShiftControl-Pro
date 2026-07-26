@@ -11276,7 +11276,7 @@ const todayUI={
 };
 function todayPlannedRows(date){
   const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
-  return state.employees
+  return window.EmployeeModule.getAll()
     .filter(e=>e.active!==false)
     .filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla')
     .map(emp=>{
