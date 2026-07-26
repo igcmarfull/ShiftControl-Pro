@@ -5208,8 +5208,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
       <form id="loginForm" class="login-form" autocomplete="on">
         <label>
-          <span>Usuario</span>
-          <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="administrador" required>
+          <span>Correo electrónico</span>
+          <input id="loginUsername" name="email" type="email" autocomplete="username" placeholder="nombre@empresa.cl" required>
         </label>
         <label>
           <span>Contraseña</span>
@@ -5226,13 +5226,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <button class="login-submit" type="submit">Ingresar</button>
       </form>
 
-      <div class="login-demo">
-        <strong>Accesos iniciales</strong>
-        <button type="button" onclick="fillDemoLogin('admin')"><span>Administrador</span><small>admin / admin123</small></button>
-        <button type="button" onclick="fillDemoLogin('chief')"><span>Jefa de isla</span><small>jefa / jefa123</small></button>
-      </div>
-
-      <p class="login-security-note">Esta versión usa acceso local para pruebas. Al conectarla a Supabase, las cuentas y contraseñas se validarán en el servidor.</p>
+      <p class="login-security-note">Las cuentas y contraseñas se validan de forma segura mediante Supabase Auth.</p>
     </section>
   </div>
 </div>
@@ -15430,6 +15424,8 @@ applyDensity();
 // ROLE_KEY y LEGACY_ROLE_KEYS se inicializan al comienzo del archivo (V9).
 function getAppRole(){
   const validRoles=['admin','chief'];
+  const authenticatedRole=window.AuthContext?.get()?.legacyRole;
+  if(validRoles.includes(authenticatedRole))return authenticatedRole;
   const currentKey=(typeof ROLE_KEY==='string'&&ROLE_KEY)?ROLE_KEY:'shiftcontrol_app_role_v11';
   const legacyKeys=Array.isArray(LEGACY_ROLE_KEYS)?LEGACY_ROLE_KEYS:[];
   let role=null;
@@ -15448,7 +15444,10 @@ function getAppRole(){
   return role;
 }
 function setAppRole(role){
-  const next=['admin','chief'].includes(role)?role:'admin';
+  const authenticatedRole=window.AuthContext?.get()?.legacyRole;
+  const next=['admin','chief'].includes(authenticatedRole)
+    ?authenticatedRole
+    :(['admin','chief'].includes(role)?role:'admin');
   try{localStorage.setItem(ROLE_KEY,next)}catch(_error){}
   applyAppRole(true);
 }
@@ -15967,50 +15966,9 @@ document.querySelectorAll('.nav-btn').forEach(button=>{
 
 // V51 · Launcher compacto: solo icono, con cambio a cerrar al abrir el Centro.
 
-// --- V14.15 Login local de prueba ---
-const AUTH_USERS_KEY='shiftcontrol_auth_users_v1415';
-const AUTH_SESSION_KEY='shiftcontrol_auth_session_v1415';
-const AUTH_SESSION_TEMP_KEY='shiftcontrol_auth_session_temp_v1415';
-
-function defaultAuthUsers(){
-  return [
-    {id:'admin-local',username:'admin',password:'admin123',name:'Sebastián Correa',role:'admin',active:true},
-    {id:'chief-local',username:'jefa',password:'jefa123',name:'María González',role:'chief',active:true}
-  ];
-}
-function getAuthUsers(){
-  try{
-    const stored=JSON.parse(localStorage.getItem(AUTH_USERS_KEY));
-    if(Array.isArray(stored)&&stored.length)return stored;
-  }catch(_error){}
-  const initial=defaultAuthUsers();
-  try{localStorage.setItem(AUTH_USERS_KEY,JSON.stringify(initial))}catch(_error){}
-  return initial;
-}
-function getAuthSession(){
-  try{
-    return JSON.parse(sessionStorage.getItem(AUTH_SESSION_TEMP_KEY)||localStorage.getItem(AUTH_SESSION_KEY)||'null');
-  }catch(_error){return null}
-}
-function saveAuthSession(user,remember){
-  const value=JSON.stringify({userId:user.id,username:user.username,name:user.name,role:user.role,createdAt:new Date().toISOString()});
-  try{
-    sessionStorage.removeItem(AUTH_SESSION_TEMP_KEY);
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    if(remember)localStorage.setItem(AUTH_SESSION_KEY,value);
-    else sessionStorage.setItem(AUTH_SESSION_TEMP_KEY,value);
-  }catch(_error){}
-}
-function clearAuthSession(){
-  try{
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    sessionStorage.removeItem(AUTH_SESSION_TEMP_KEY);
-  }catch(_error){}
-}
+// --- Supabase Auth + contexto de empresa ---
 function authenticatedUser(){
-  const session=getAuthSession();
-  if(!session)return null;
-  return getAuthUsers().find(user=>user.id===session.userId&&user.active!==false)||null;
+  return window.ShiftControlAuth?.legacyUser()||null;
 }
 function applyAuthenticatedIdentity(user){
   if(!user)return;
@@ -16050,40 +16008,41 @@ function showLoginScreen(message=''){
   if(error)error.textContent=message;
   setTimeout(()=>document.getElementById('loginUsername')?.focus(),80);
 }
-function loginShiftControl(event){
+async function loginShiftControl(event){
   event?.preventDefault();
-  const username=(document.getElementById('loginUsername')?.value||'').trim().toLowerCase();
+  const email=(document.getElementById('loginUsername')?.value||'').trim().toLowerCase();
   const password=document.getElementById('loginPassword')?.value||'';
   const remember=document.getElementById('loginRemember')?.checked!==false;
-  const user=getAuthUsers().find(item=>item.active!==false&&item.username.toLowerCase()===username&&item.password===password);
-  if(!user){
-    showLoginScreen('Usuario o contraseña incorrectos.');
+  const submit=document.querySelector('#loginForm .login-submit');
+  if(submit)submit.disabled=true;
+
+  try{
+    await window.ShiftControlAuth.signIn(email,password,{remember});
+    const user=authenticatedUser();
+    applyAuthenticatedIdentity(user);
+    if(typeof showToast==='function')showToast(`Bienvenido, ${user.name}`);
+  }catch(error){
+    const message=String(error?.code||'').startsWith('AUTH_')
+      ?error.message
+      :'Correo o contraseña incorrectos.';
+    showLoginScreen(message);
     const passwordInput=document.getElementById('loginPassword');
     if(passwordInput){passwordInput.value='';passwordInput.focus()}
-    return false;
+  }finally{
+    if(submit)submit.disabled=false;
   }
-  saveAuthSession(user,remember);
-  applyAuthenticatedIdentity(user);
-  if(typeof showToast==='function')showToast(`Bienvenido, ${user.name}`);
+
   return false;
 }
-function logoutShiftControl(){
-  clearAuthSession();
+async function logoutShiftControl(){
+  try{
+    await window.ShiftControlAuth?.signOut();
+  }catch(_error){}
   const password=document.getElementById('loginPassword');
   if(password)password.value='';
   showLoginScreen('Sesión cerrada correctamente.');
 }
-function fillDemoLogin(role){
-  const values=role==='chief'?['jefa','jefa123']:['admin','admin123'];
-  const username=document.getElementById('loginUsername');
-  const password=document.getElementById('loginPassword');
-  if(username)username.value=values[0];
-  if(password)password.value=values[1];
-  document.getElementById('loginError').textContent='';
-  password?.focus();
-}
-function initializeShiftControlAuth(){
-  getAuthUsers();
+async function initializeShiftControlAuth(){
   document.getElementById('loginForm')?.addEventListener('submit',loginShiftControl);
   document.getElementById('toggleLoginPassword')?.addEventListener('click',()=>{
     const input=document.getElementById('loginPassword');
@@ -16094,9 +16053,17 @@ function initializeShiftControlAuth(){
     button.textContent=visible?'Ver':'Ocultar';
     button.setAttribute('aria-label',visible?'Mostrar contraseña':'Ocultar contraseña');
   });
-  const user=authenticatedUser();
-  if(user)applyAuthenticatedIdentity(user);
-  else showLoginScreen();
+  try{
+    await window.ShiftControlAuth.initialize();
+    const user=authenticatedUser();
+    if(user)applyAuthenticatedIdentity(user);
+    else showLoginScreen();
+  }catch(error){
+    const message=String(error?.code||'').startsWith('AUTH_')
+      ?error.message
+      :'No fue posible validar la sesión. Intenta nuevamente.';
+    showLoginScreen(message);
+  }
 }
 window.addEventListener('DOMContentLoaded',initializeShiftControlAuth);
 
@@ -17132,6 +17099,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="src/config.js"></script>
+<script src="src/auth.js"></script>
 <script src="src/v20-interface.js"></script>
 <script src="src/storage.js"></script>
 
