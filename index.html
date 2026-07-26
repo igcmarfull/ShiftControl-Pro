@@ -14923,6 +14923,8 @@ function renderAll(){
 
   bindUnifiedPeriodControls();
 }
+window.addEventListener('DOMContentLoaded',()=>{
+setTimeout(()=>{
 try{
   renderAll();
 
@@ -14948,6 +14950,8 @@ try{
     </div>`;
   }
 }
+},300);
+});
 
 document.getElementById('holidayForm')?.addEventListener('submit',event=>{
   event.preventDefault();
