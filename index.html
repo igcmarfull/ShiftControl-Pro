@@ -15416,7 +15416,7 @@ function v12Activity(action,detail=''){
   const rows=v12Read(V12_ACTIVITY_KEY,[]);rows.unshift({id:safeRandomUUID(),action,detail,role:getAppRole(),at:new Date().toISOString()});v12Write(V12_ACTIVITY_KEY,rows.slice(0,200));
   try{renderV12ApprovalCenter()}catch{}
 }
-function v12EmployeeName(id){return state.employees.find(e=>e.id===id)?.name||'Trabajadora'}
+function v12EmployeeName(id){return EmployeeModule.find(id)?.name||'Trabajadora'}
 function v12PendingEvaluations(){return opsRead(EVAL_KEY,[]).filter(x=>x.status==='submitted')}
 function v12ProblemChecklists(){return Object.values(opsChecklistStore()).filter(x=>x.completed&&x.reviewStatus!=='reviewed'&&(Object.values(x.items||{}).includes('issue')||(x.notes||'').trim()))}
 function v12PendingExtras(){return (state.additional||[]).filter(x=>x.paid!=='Pagado')}
