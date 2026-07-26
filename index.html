@@ -16060,6 +16060,7 @@ async function loginShiftControl(event){
 
   try{
     await window.ShiftControlAuth.signIn(email,password,{remember});
+    await window.ShiftControlStorage?.bootstrap();
     const user=authenticatedUser();
     applyAuthenticatedIdentity(user);
     if(typeof showToast==='function')showToast(`Bienvenido, ${user.name}`);
@@ -16102,6 +16103,7 @@ async function acceptShiftControlInvitation(event){
 
   try{
     await window.ShiftControlAuth.acceptInvitation(password);
+    await window.ShiftControlStorage?.bootstrap();
     const user=authenticatedUser();
     applyAuthenticatedIdentity(user);
     if(typeof showToast==='function')showToast('Cuenta activada correctamente');
@@ -16140,7 +16142,10 @@ async function initializeShiftControlAuth(){
       return;
     }
     const user=authenticatedUser();
-    if(user)applyAuthenticatedIdentity(user);
+    if(user){
+      await window.ShiftControlStorage?.bootstrap();
+      applyAuthenticatedIdentity(user);
+    }
     else showLoginScreen();
   }catch(error){
     const message=String(error?.code||'').startsWith('AUTH_')
