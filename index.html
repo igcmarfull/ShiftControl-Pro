@@ -2886,6 +2886,7 @@ body[data-role="chief"] #today table td:nth-child(2){
   display:grid;
   gap:16px;
 }
+.login-form[hidden]{display:none}
 
 .login-form label>span{
   display:block;
@@ -5201,15 +5202,15 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <div class="login-card-head">
         <div class="login-mark">SC</div>
         <div>
-          <h2>Iniciar sesión</h2>
-          <p>Accede con tu cuenta de ShiftControl.</p>
+          <h2 id="loginTitle">Iniciar sesión</h2>
+          <p id="loginSubtitle">Accede con tu cuenta de ShiftControl.</p>
         </div>
       </div>
 
       <form id="loginForm" class="login-form" autocomplete="on">
         <label>
-          <span>Usuario</span>
-          <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="administrador" required>
+          <span>Correo electrónico</span>
+          <input id="loginUsername" name="email" type="email" autocomplete="username" placeholder="nombre@empresa.cl" required>
         </label>
         <label>
           <span>Contraseña</span>
@@ -5226,13 +5227,20 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <button class="login-submit" type="submit">Ingresar</button>
       </form>
 
-      <div class="login-demo">
-        <strong>Accesos iniciales</strong>
-        <button type="button" onclick="fillDemoLogin('admin')"><span>Administrador</span><small>admin / admin123</small></button>
-        <button type="button" onclick="fillDemoLogin('chief')"><span>Jefa de isla</span><small>jefa / jefa123</small></button>
-      </div>
+      <form id="invitePasswordForm" class="login-form" autocomplete="on" hidden>
+        <label>
+          <span>Nueva contraseña</span>
+          <input id="invitePassword" name="new-password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        </label>
+        <label>
+          <span>Confirmar contraseña</span>
+          <input id="invitePasswordConfirm" name="confirm-password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        </label>
+        <div id="invitePasswordError" class="login-error" role="alert"></div>
+        <button class="login-submit" type="submit">Crear contraseña</button>
+      </form>
 
-      <p class="login-security-note">Esta versión usa acceso local para pruebas. Al conectarla a Supabase, las cuentas y contraseñas se validarán en el servidor.</p>
+      <p class="login-security-note">Las cuentas y contraseñas se validan de forma segura mediante Supabase Auth.</p>
     </section>
   </div>
 </div>
@@ -10084,6 +10092,18 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
   </button>
 </nav>
 
+<script src="src/app/state-manager.js"></script>
+<script src="src/modules/employees/employees.js"></script>
+<script src="src/modules/settings/settings.js"></script>
+<script src="src/modules/additional/additional.js"></script>
+<script src="src/modules/absences/absences.js"></script>
+<script src="src/modules/holidays/holidays.js"></script>
+<script src="src/modules/audit/audit.js"></script>
+<script src="src/modules/daily-closures/daily-closures.js"></script>
+<script src="src/modules/planning/planning.js"></script>
+<script src="src/modules/month-closures/month-closures.js"></script>
+<script src="src/modules/attendance/attendance.js"></script>
+
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
 // Evita el fallo de Safari al consultar roles antes de llegar al bloque de perfiles.
@@ -10239,22 +10259,36 @@ let state=JSON.parse(localStorage.getItem(KEYS.data)||'null')||{
   closedMonths:[],
   audit:[]
 };
+
+window.ShiftControlState.initialize(state);
+
+
 state.employees=Array.isArray(state.employees)?state.employees:[];
 state.employees=state.employees.map(e=>({...e,active:e.active!==false,shift:e.shift||'A'}));
 state.plans=Array.isArray(state.plans)?state.plans:[];
-state.executions=Array.isArray(state.executions)?state.executions:[];
-state.additional=Array.isArray(state.additional)?state.additional:[];
-state.audit=Array.isArray(state.audit)?state.audit:[];
-state.holidays=state.holidays||[];state.absences=state.absences||[];
-state.settings=state.settings||{};
-state.settings.tariffs=state.settings.tariffs||{A:30000,B:35000,C:45000};
-state.settings.patterns=state.settings.patterns||[
+AttendanceModule.replaceAll(
+  Array.isArray(state.executions)?state.executions:[],
+  {save:false}
+);
+AdditionalModule.replaceAll(
+  Array.isArray(state.additional)?state.additional:[],
+  {save:false}
+);
+AuditModule.replaceAll(
+  Array.isArray(state.audit)?state.audit:[],
+  {save:false}
+);
+HolidayModule.replaceAll(state.holidays||[],{save:false});
+AbsenceModule.replaceAll(state.absences||[],{save:false});
+SettingsModule.replaceAll(state.settings||{},{save:false});
+SettingsModule.set('tariffs',state.settings.tariffs||{A:30000,B:35000,C:45000},{save:false});
+SettingsModule.set('patterns',state.settings.patterns||[
   {id:'fixed-a',name:'Turno fijo A',sequence:['A','A','A','A','A','D','D']},
   {id:'fixed-b',name:'Turno fijo B',sequence:['B','B','B','B','B','D','D']},
   {id:'fixed-c',name:'Turno fijo C',sequence:['C','C','C','C','C','D','D']},
   {id:'rot-4x4',name:'Rotación 4x4',sequence:['A','A','B','B','C','C','D','D']},
   {id:'six-one',name:'6x1',sequence:['A','A','A','A','A','A','D']}
-];
+],{save:false});
 const demoEmployees=[
   {name:'Juan Herrera',rut:'16.111.111-1',role:'Operador',area:'Operaciones',shift:'A'},
   {name:'Pedro Muñoz',rut:'16.222.222-2',role:'Operador',area:'Operaciones',shift:'B'},
@@ -10269,25 +10303,39 @@ const demoEmployees=[
 ];
 demoEmployees.forEach(d=>{
   if(!state.employees.some(e=>e.rut===d.rut||e.name===d.name)){
-    state.employees.push({id:safeRandomUUID(),...d,start:isoToday,active:true});
+    EmployeeModule.create({
+      ...d,
+      start:isoToday
+    });
   }
 });
-state.settings=state.settings||{};
-if(!state.settings.theme)state.settings.theme='dark';
-if(state.settings.sundayThreshold==null)state.settings.sundayThreshold=2;
-if(state.settings.defaultExtraPayment==null)state.settings.defaultExtraPayment=30000;
-if(state.settings.sundayNormalAmount==null)state.settings.sundayNormalAmount=0;
-if(state.settings.sundaySpecialAmount==null)state.settings.sundaySpecialAmount=50000;
-if(state.settings.sundayAutoGenerate==null)state.settings.sundayAutoGenerate=true;
+SettingsModule.replaceAll(state.settings||{},{save:false});
+if(!state.settings.theme)SettingsModule.set('theme','dark',{save:false});
+if(state.settings.sundayThreshold==null)SettingsModule.set('sundayThreshold',2,{save:false});
+if(state.settings.defaultExtraPayment==null)SettingsModule.set('defaultExtraPayment',30000,{save:false});
+if(state.settings.sundayNormalAmount==null)SettingsModule.set('sundayNormalAmount',0,{save:false});
+if(state.settings.sundaySpecialAmount==null)SettingsModule.set('sundaySpecialAmount',50000,{save:false});
+if(state.settings.sundayAutoGenerate==null)SettingsModule.set('sundayAutoGenerate',true,{save:false});
 state.plans=(state.plans||[]).map(p=>({...p,code:p.code==='Licencia'?'L':p.code==='Vacaciones'?'V':p.code==='Permiso'?'P':p.code==='Ausente'||p.code==='Ausencia'?'X':p.code}));
 
-state.settings.sundayAutoGenerate=false;
+SettingsModule.set('sundayAutoGenerate',false,{save:false});
 if(!state.demoRealistaJunio2026){
   const prefix='2026-06';
   state.plans=state.plans.filter(x=>!x.date.startsWith(prefix));
-  state.executions=state.executions.filter(x=>!x.date.startsWith(prefix));
-  state.additional=state.additional.filter(x=>!x.date.startsWith(prefix));
-  state.absences=state.absences.filter(x=>!x.start?.startsWith(prefix)&&!x.date?.startsWith(prefix));
+  AttendanceModule.replaceAll(
+    state.executions.filter(x=>!x.date.startsWith(prefix)),
+    {save:false}
+  );
+  AdditionalModule.replaceAll(
+    state.additional.filter(x=>!x.date.startsWith(prefix)),
+    {save:false}
+  );
+  AbsenceModule.replaceAll(
+    AbsenceModule.getAll().filter(
+      item=>!item.start?.startsWith(prefix)&&!item.date?.startsWith(prefix)
+    ),
+    {save:false}
+  );
 
   const employees=state.employees.filter(e=>e.active).slice(0,13);
   employees.forEach((e,index)=>{
@@ -10297,18 +10345,29 @@ if(!state.demoRealistaJunio2026){
       const dow=new Date(date+'T12:00:00').getDay();
       const code=dow===6?'D':(e.shift||['A','B','C'][index%3]);
       state.plans.push({id:safeRandomUUID(),employeeId:e.id,date,code});
-      if(code!=='D')state.executions.push({id:safeRandomUUID(),employeeId:e.id,date,status:'Presente',replacementId:'',note:'Asistencia demo junio 2026'});
+      if(code!=='D')AttendanceModule.add(
+        {id:safeRandomUUID(),employeeId:e.id,date,status:'Presente',replacementId:'',note:'Asistencia demo junio 2026'},
+        {save:false}
+      );
     }
   });
 
   const E=i=>employees[i%employees.length];
   const execution=(i,date)=>state.executions.find(x=>x.employeeId===E(i).id&&x.date===date);
   const setStatus=(i,date,status,note,replacementId='')=>{
-    const x=execution(i,date); if(x){x.status=status;x.note=note;x.replacementId=replacementId;}
+    const x=execution(i,date);
+    if(x)AttendanceModule.patch(
+      x.id,
+      {status,note,replacementId},
+      {save:false}
+    );
   };
   const replacement=(absentIndex,replIndex,date,note,amount)=>{
     setStatus(absentIndex,date,'Ausente',note,E(replIndex).id);
-    state.additional.push({id:safeRandomUUID(),employeeId:E(replIndex).id,date,shift:E(replIndex).shift||'A',reason:`Reemplazo de ${E(absentIndex).name}`,amount,paid:'Pendiente',paidDate:'',source:'replacement',replacedEmployeeId:E(absentIndex).id});
+    AdditionalModule.add(
+      {id:safeRandomUUID(),employeeId:E(replIndex).id,date,shift:E(replIndex).shift||'A',reason:`Reemplazo de ${E(absentIndex).name}`,amount,paid:'Pendiente',paidDate:'',source:'replacement',replacedEmployeeId:E(absentIndex).id},
+      {save:false}
+    );
   };
 
   // Atrasos
@@ -10325,32 +10384,56 @@ if(!state.demoRealistaJunio2026){
   // Licencias médicas
   ['2026-06-08','2026-06-09','2026-06-10'].forEach(d=>setStatus(3,d,'Licencia','Licencia médica de tres días'));
   ['2026-06-25','2026-06-26'].forEach(d=>setStatus(12,d,'Licencia','Reposo médico'));
-  state.absences.push({id:safeRandomUUID(),employeeId:E(3).id,type:'Licencia',start:'2026-06-08',end:'2026-06-10',note:'Licencia médica de tres días'});
-  state.absences.push({id:safeRandomUUID(),employeeId:E(12).id,type:'Licencia',start:'2026-06-25',end:'2026-06-26',note:'Reposo médico'});
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(3).id,type:'Licencia',start:'2026-06-08',end:'2026-06-10',note:'Licencia médica de tres días'},
+    {save:false}
+  );
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(12).id,type:'Licencia',start:'2026-06-25',end:'2026-06-26',note:'Reposo médico'},
+    {save:false}
+  );
 
   // Vacaciones
   ['2026-06-15','2026-06-16','2026-06-17','2026-06-18','2026-06-19'].forEach(d=>setStatus(0,d,'Vacaciones','Vacaciones programadas'));
-  state.absences.push({id:safeRandomUUID(),employeeId:E(0).id,type:'Vacaciones',start:'2026-06-15',end:'2026-06-19',note:'Vacaciones programadas'});
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(0).id,type:'Vacaciones',start:'2026-06-15',end:'2026-06-19',note:'Vacaciones programadas'},
+    {save:false}
+  );
 
   // Permisos
   setStatus(10,'2026-06-12','Permiso','Permiso administrativo');
   setStatus(11,'2026-06-29','Permiso','Trámite personal');
-  state.absences.push({id:safeRandomUUID(),employeeId:E(10).id,type:'Permiso',start:'2026-06-12',end:'2026-06-12',note:'Permiso administrativo'});
+  AbsenceModule.add(
+    {id:safeRandomUUID(),employeeId:E(10).id,type:'Permiso',start:'2026-06-12',end:'2026-06-12',note:'Permiso administrativo'},
+    {save:false}
+  );
 
   // Jornadas adicionales
-  state.additional.push({id:safeRandomUUID(),employeeId:E(5).id,date:'2026-06-13',shift:E(5).shift||'C',reason:'Apoyo extraordinario en inventario',amount:30000,paid:'Pagado',paidDate:'2026-06-20',source:'manual'});
-  state.additional.push({id:safeRandomUUID(),employeeId:E(9).id,date:'2026-06-20',shift:E(9).shift||'A',reason:'Cobertura extraordinaria',amount:35000,paid:'Pendiente',paidDate:'',source:'manual'});
+  AdditionalModule.add(
+    {id:safeRandomUUID(),employeeId:E(5).id,date:'2026-06-13',shift:E(5).shift||'C',reason:'Apoyo extraordinario en inventario',amount:30000,paid:'Pagado',paidDate:'2026-06-20',source:'manual'},
+    {save:false}
+  );
+  AdditionalModule.add(
+    {id:safeRandomUUID(),employeeId:E(9).id,date:'2026-06-20',shift:E(9).shift||'A',reason:'Cobertura extraordinaria',amount:35000,paid:'Pendiente',paidDate:'',source:'manual'},
+    {save:false}
+  );
 
-  state.dailyClosures=[];
+  DailyClosureModule.replaceAll([],{save:false});
   for(let day=1;day<=27;day++){
     const date=`2026-06-${String(day).padStart(2,'0')}`;
-    if(new Date(date+'T12:00:00').getDay()!==6)state.dailyClosures.push(date);
+    if(new Date(date+'T12:00:00').getDay()!==6)DailyClosureModule.add(date,{save:false});
   }
-  state.audit.unshift({id:safeRandomUUID(),date:new Date().toISOString(),action:'Demo realista de junio 2026 cargada'});
+  AuditModule.add(
+    {id:safeRandomUUID(),date:new Date().toISOString(),action:'Demo realista de junio 2026 cargada'},
+    {save:false}
+  );
   state.demoRealistaJunio2026=true;
 }
 
-function save(){localStorage.setItem(KEYS.data,JSON.stringify(state))}
+function save(){
+  const currentState = window.ShiftControlState.get();
+  localStorage.setItem(KEYS.data, JSON.stringify(currentState));
+}
 save();
 
 let selectedCells=[];
@@ -10369,17 +10452,23 @@ function snapshot(){
 function undoAction(){
   if(!undoStack.length)return toast('Nada que deshacer');
   redoStack.push(JSON.stringify(state));
-  state=JSON.parse(undoStack.pop());
+  window.ShiftControlState.replace(JSON.parse(undoStack.pop()));
   save();renderAll();toast('Cambio deshecho');
 }
 function redoAction(){
   if(!redoStack.length)return toast('Nada que rehacer');
   undoStack.push(JSON.stringify(state));
-  state=JSON.parse(redoStack.pop());
+  window.ShiftControlState.replace(JSON.parse(redoStack.pop()));
   save();renderAll();toast('Cambio rehecho');
 }
 
-function employee(id){return state.employees.find(e=>e.id===id)}
+function employee(id){
+  if(window.EmployeeModule){
+    return window.EmployeeModule.find(id);
+  }
+
+  return state.employees.find(e=>e.id===id);
+}
 function initials(name){return(name||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}
 
 function escapeHtml(value){
@@ -10397,16 +10486,30 @@ function fmt(d){return d?new Date(d+'T12:00:00').toLocaleDateString('es-CL'):'�
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1600)}
-function log(action){state.audit.unshift({id:safeRandomUUID(),date:new Date().toISOString(),action});state.audit=state.audit.slice(0,250)}
+function log(action){
+  AuditModule.add(
+    {id:safeRandomUUID(),date:new Date().toISOString(),action},
+    {save:false}
+  );
+  AuditModule.replaceAll(
+    AuditModule.getAll().slice(0,250),
+    {save:false}
+  );
+}
 function periodPrefix(monthId='planMonth',yearId='planYear'){return document.getElementById(yearId).value+'-'+document.getElementById(monthId).value}
-function isClosed(prefix){return state.closedMonths.includes(prefix)}
+function isClosed(prefix){return MonthClosureModule.isClosed(prefix)}
 function fillPeriods(){
   const cm=String(today.getMonth()+1).padStart(2,'0'),cy=String(today.getFullYear());
   ['planMonth','reportMonth'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){e.innerHTML=monthNames.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');e.value=cm}});
   ['planYear','reportYear'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){for(let y=today.getFullYear()+1;y>=today.getFullYear()-5;y--)e.innerHTML+=`<option value="${y}">${y}</option>`;e.value=cy}});
 }
 function fillEmployeeSelects(){
-  const active=state.employees.filter(e=>e.active);
+  if(!window.EmployeeModule){
+    console.warn('[ShiftControl] fillEmployeeSelects esperando EmployeeModule');
+    return;
+  }
+
+  const active=window.EmployeeModule.getAll().filter(e=>e.active);
   const opts=active.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   ['dailyEmployee','additionalEmployee','bulkEmployees','absenceEmployee'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts});
   const repl=document.getElementById('dailyReplacement');repl.innerHTML='<option value="">Sin reemplazo</option>'+opts;
@@ -10459,10 +10562,15 @@ document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',
 }));
 
 function renderDashboard(){
+  if(!window.EmployeeModule){
+    console.warn('[ShiftControl] EmployeeModule aún no disponible, esperando carga');
+    return;
+  }
+
   const referenceDate=document.getElementById('todayDate')?.value||isoToday;
   document.getElementById('todayText').innerHTML=`Operación de <strong>${fmt(referenceDate)}</strong>`;
 
-  const active=state.employees.filter(e=>e.active!==false);
+  const active=window.EmployeeModule.getAll().filter(e=>e.active!==false);
   const planned=state.plans.filter(p=>p.date===referenceDate&&['A','B','C'].includes(p.code));
   const executions=state.executions.filter(e=>e.date===referenceDate);
   const confirmed=executions.filter(e=>['Presente','Atrasado'].includes(e.status));
@@ -10472,9 +10580,9 @@ function renderDashboard(){
   const pendingWorkers=planned.filter(p=>!executions.some(e=>e.employeeId===p.employeeId));
   const uncovered=executions.filter(e=>!['Presente','Atrasado'].includes(e.status)&&!e.replacementId);
   const licenseIssues=licenseCoverageAlerts(referenceDate);
-  const dayClosed=(state.dailyClosures||[]).includes(referenceDate);
+  const dayClosed=DailyClosureModule.isClosed(referenceDate);
 
-  const evals=typeof opsRead==='function'?opsRead(EVAL_KEY,[]):[];
+  const evals=typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(window.EVAL_KEY,[]):[];
   const submittedEvaluations=evals.filter(e=>e.status==='submitted');
 
   const checklistStore=typeof opsChecklistStore==='function'?opsChecklistStore():{};
@@ -10618,7 +10726,7 @@ function renderPlanning(){updateSelectionBar();
   const areaFilter=isChief?'Isla':(document.getElementById('planAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('planEmployeeFilter')?.value||'';
   const normalizeArea=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-  const activeEmployees=state.employees.filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
+  const activeEmployees=window.EmployeeModule.getAll().filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
   let visibleEmployees=activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
   // En algunas bases antiguas el área de las atendedoras quedó vacía o con otra etiqueta.
   // La Jefa de Isla nunca debe recibir una grilla vacía por ese dato heredado.
@@ -10658,7 +10766,7 @@ function renderPlanning(){updateSelectionBar();
 function renderPlanningInsights(prefix,days){
   const box=document.getElementById('planningInsights');
   if(!box)return;
-  const active=state.employees.filter(e=>e.active);
+  const active=window.EmployeeModule.getAll().filter(e=>e.active);
   const monthPlans=state.plans.filter(p=>p.date.startsWith(prefix));
   const unplanned=active.reduce((total,e)=>{
     let missing=0;
@@ -10700,15 +10808,20 @@ function duplicatePreviousMonth(){snapshot();
     const maxDay=new Date(y,m,0).getDate();
     if(Number(day)>maxDay)return;
     const date=`${current}-${day}`;
-    const existing=state.plans.find(x=>x.employeeId===p.employeeId&&x.date===date);
-    const data={id:existing?.id||safeRandomUUID(),employeeId:p.employeeId,date,code:p.code};
-    state.plans=existing?state.plans.map(x=>x.id===existing.id?data:x):[...state.plans,data];
+    const existing=PlanningModule.find(p.employeeId,date);
+    const data={
+      id:existing?.id||safeRandomUUID(),
+      employeeId:p.employeeId,
+      date,
+      code:p.code
+    };
+    PlanningModule.create(data);
   });
   log(`Planificación duplicada desde ${prev} a ${current}`);
   save();renderAll();toast('Mes anterior duplicado');
 }
 function moveMonth(delta){let m=Number(planMonth.value),y=Number(planYear.value);m+=delta;if(m<1){m=12;y--}if(m>12){m=1;y++}planMonth.value=String(m).padStart(2,'0');if(![...planYear.options].some(o=>Number(o.value)===y))planYear.innerHTML+=`<option value="${y}">${y}</option>`;planYear.value=y;renderPlanning()}
-function toggleMonthClose(){snapshot();const p=periodPrefix();if(isClosed(p)){state.closedMonths=state.closedMonths.filter(x=>x!==p);log(`Mes ${p} reabierto`)}else{state.closedMonths.push(p);log(`Mes ${p} cerrado`)}save();renderAll()}
+function toggleMonthClose(){snapshot();const p=periodPrefix();if(isClosed(p)){MonthClosureModule.remove(p,{save:false});log(`Mes ${p} reabierto`)}else{MonthClosureModule.add(p,{save:false});log(`Mes ${p} cerrado`)}save();renderAll()}
 function cellMouseDown(event,employeeId,date){
   if(event.button!==0)return;
   if(event.detail===2){openCell(employeeId,date);return}
@@ -10746,6 +10859,31 @@ function updateSelectionBar(){
   bar.classList.toggle('show',selectedCells.length>0);
   document.getElementById('selectionCount').textContent=`${selectedCells.length} celda(s) seleccionada(s)`;
 }
+function validatePlanRemoval(targets){
+  const blockers=(targets||[]).filter(cell=>
+    PlanningModule.find(cell.employeeId,cell.date) &&
+    AttendanceModule.find(cell.employeeId,cell.date)
+  );
+
+  if(!blockers.length)return true;
+
+  if(blockers.length===1){
+    const blocked=blockers[0];
+    alert(
+      `No se puede eliminar el turno de ${employee(blocked.employeeId)?.name||'este trabajador'} `
+      +`el ${fmt(blocked.date)} porque ya tiene una ejecución registrada. `
+      +'Corrige primero la asistencia desde Operación diaria.'
+    );
+  }else{
+    alert(
+      `No se puede completar la operación porque ${blockers.length} turnos `
+      +'ya tienen una ejecución registrada. Corrige primero esas asistencias '
+      +'desde Operación diaria.'
+    );
+  }
+
+  return false;
+}
 function applyToSelection(code){
   /*
     Fuente de verdad: las celdas realmente seleccionadas en pantalla.
@@ -10770,6 +10908,8 @@ function applyToSelection(code){
   const prefix=periodPrefix();
   if(isClosed(prefix))return alert('El mes está cerrado.');
 
+  if(code==='Eliminar'&&!validatePlanRemoval(targets))return;
+
   snapshot();
 
   const targetKeys=new Set(
@@ -10777,9 +10917,16 @@ function applyToSelection(code){
   );
 
   if(code==='Eliminar'){
-    state.plans=state.plans.filter(plan=>
-      !targetKeys.has(`${plan.employeeId}|${plan.date}`)
-    );
+    targets.forEach(cell=>{
+      const existing=PlanningModule.find(
+        cell.employeeId,
+        cell.date
+      );
+
+      if(existing){
+        PlanningModule.remove(existing.id);
+      }
+    });
   }else{
     /*
       Conserva toda la planificación y reemplaza/agrega únicamente
@@ -10798,11 +10945,7 @@ function applyToSelection(code){
         code
       };
 
-      if(index>=0){
-        state.plans[index]=record;
-      }else{
-        state.plans.push(record);
-      }
+      PlanningModule.create(record);
     });
   }
 
@@ -10865,15 +11008,31 @@ function copySelection(){
 }
 function pasteSelection(){
   if(!clipboardCells.length||!selectedCells.length)return toast('Copia y selecciona un destino');
-  snapshot();
   const codes=clipboardCells.map(c=>c.code);
+  const removalTargets=selectedCells.filter((c,i)=>!codes[i%codes.length]);
+  if(!validatePlanRemoval(removalTargets))return;
+  snapshot();
   selectedCells.forEach((c,i)=>{
     const code=codes[i%codes.length];
-    const existing=state.plans.find(p=>p.employeeId===c.employeeId&&p.date===c.date);
-    if(!code)state.plans=state.plans.filter(p=>!(p.employeeId===c.employeeId&&p.date===c.date));
-    else{
-      const data={id:existing?.id||safeRandomUUID(),employeeId:c.employeeId,date:c.date,code};
-      state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data];
+    const existing=PlanningModule.find(c.employeeId,c.date);
+
+    if(!code){
+
+      if(existing){
+        PlanningModule.remove(existing.id);
+      }
+
+    }else{
+
+      const data={
+        id:existing?.id||safeRandomUUID(),
+        employeeId:c.employeeId,
+        date:c.date,
+        code
+      };
+
+      PlanningModule.create(data);
+
     }
   });
   log(`Se pegaron ${selectedCells.length} celda(s)`);
@@ -10893,9 +11052,52 @@ function applyContext(code){
 }
 document.addEventListener('click',e=>{if(!e.target.closest('#contextMenu'))document.getElementById('contextMenu')?.classList.remove('open')});
 function openCell(employeeId,date){cellEmployee.value=employeeId;cellDate.value=date;cellTitle.textContent=`${employee(employeeId)?.name} · ${fmt(date)}`;openModal('cellModal')}
-function savePlanCell(code){snapshot();const employeeId=cellEmployee.value,date=cellDate.value,prefix=date.slice(0,7);if(isClosed(prefix))return alert('El mes está cerrado.');const existing=state.plans.find(p=>p.employeeId===employeeId&&p.date===date);const compact=code==='Licencia'?'L':code==='Vacaciones'?'V':code==='Permiso'?'P':code==='Ausente'||code==='Ausencia'?'X':code;if(compact==='Eliminar')state.plans=state.plans.filter(p=>!(p.employeeId===employeeId&&p.date===date));else{const data={id:existing?.id||safeRandomUUID(),employeeId,date,code:compact};state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data]}log(`Planificación actualizada para ${employee(employeeId)?.name} el ${fmt(date)}`);save();closeModal('cellModal');renderAll()}
+function savePlanCell(code){
+  const employeeId=cellEmployee.value;
+  const date=cellDate.value;
+  const prefix=date.slice(0,7);
+
+  if(isClosed(prefix))
+    return alert('El mes está cerrado.');
+
+  const compact=
+    code==='Licencia'?'L':
+    code==='Vacaciones'?'V':
+    code==='Permiso'?'P':
+    code==='Ausente'||code==='Ausencia'?'X':
+    code;
+
+  const existing=PlanningModule.find(employeeId,date);
+
+  if(compact==='Eliminar'&&!validatePlanRemoval([{employeeId,date}]))return;
+
+  snapshot();
+
+  if(compact==='Eliminar'){
+
+    if(existing){
+      PlanningModule.remove(existing.id);
+    }
+
+  }else{
+
+    PlanningModule.create({
+      id:existing?.id||safeRandomUUID(),
+      employeeId,
+      date,
+      code:compact
+    });
+
+  }
+
+  log(`Planificación actualizada para ${employee(employeeId)?.name} el ${fmt(date)}`);
+
+  save();
+  closeModal('cellModal');
+  renderAll();
+}
 function openBulkModal(){fillEmployeeSelects();const p=periodPrefix();bulkFrom.value=p+'-01';bulkTo.value=p+'-'+String(new Date(Number(p.slice(0,4)),Number(p.slice(5,7)),0).getDate()).padStart(2,'0');openModal('bulkModal')}
-bulkForm.addEventListener('submit',e=>{e.preventDefault();snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=state.plans.find(p=>p.employeeId===id&&p.date===date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data];i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
+bulkForm.addEventListener('submit',e=>{e.preventDefault();snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=PlanningModule.find(id,date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};PlanningModule.create(data);i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
 
 function weekMonday(dateStr){
   const d=new Date((dateStr||isoToday)+'T12:00:00');
@@ -11004,7 +11206,7 @@ function renderActualCalendar(){
   const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('actualAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('actualEmployeeFilter')?.value||'';
 
-  const employees=state.employees.filter(item=>
+  const employees=window.EmployeeModule.getAll().filter(item=>
     item.active&&
     (!area||item.area===area)&&
     (!employeeFilter||item.id===employeeFilter)
@@ -11110,7 +11312,7 @@ function renderWeekly(){
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d.toISOString().slice(0,10))}
   const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
-  const list=state.employees.filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
+  const list=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
   list.forEach(e=>{
     const weeklyDetail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(e.shift||'—'):(e.area||'');
@@ -11170,7 +11372,7 @@ function showWeeklyEmployee(event,employeeId){
   event.preventDefault();
   event.stopPropagation();
   document.querySelectorAll('.weekly-person-popover').forEach(el=>el.remove());
-  const employee=state.employees.find(item=>item.id===employeeId);
+  const employee=window.EmployeeModule.find(employeeId);
   const name=employee?.name||'Trabajadora';
   const detail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(employee?.shift||'—'):(employee?.area||'');
   const target=event.currentTarget;
@@ -11191,7 +11393,7 @@ function renderExecution(){
   eLate.textContent=execs.filter(e=>e.status==='Atrasado').length;
   eAbsent.textContent=execs.filter(e=>e.status==='Ausente').length;
 
-  executionTable.innerHTML=state.employees.filter(e=>e.active).map(empObj=>{
+  executionTable.innerHTML=window.EmployeeModule.getAll().filter(e=>e.active).map(empObj=>{
     const p=state.plans.find(p=>p.employeeId===empObj.id&&p.date===date);
     const x=state.executions.find(x=>x.employeeId===empObj.id&&x.date===date);
     const incoming=state.executions.filter(v=>v.date===date&&v.replacementId===empObj.id);
@@ -11250,28 +11452,30 @@ const todayUI={
   exceptionNote:document.getElementById('todayExceptionNote')
 };
 function todayPlannedRows(date){
-  const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
-  return state.employees
+  const role=typeof getAppRole==='function'
+    ? getAppRole()
+    : (document.body.dataset.role||'admin');
+
+  return window.EmployeeModule.getAll()
     .filter(e=>e.active!==false)
     .filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla')
     .map(emp=>{
-      const explicit=state.plans.find(p=>p.employeeId===emp.id&&p.date===date);
 
-      // Si existe una ausencia planificada, no se muestra como turno normal.
-      if(explicit&&['D','P','L','V','X'].includes(explicit.code))return null;
+      const explicit=state.plans.find(
+        p=>p.employeeId===emp.id && p.date===date
+      );
+
+      if(!explicit) return null;
+
+      if(['D','P','L','V','X'].includes(explicit.code)){
+        return null;
+      }
 
       return {
-        plan: explicit&&['A','B','C'].includes(explicit.code)
-          ? explicit
-          : {
-              id:`virtual-${emp.id}-${date}`,
-              employeeId:emp.id,
-              date,
-              code:emp.shift||'A',
-              virtual:true
-            },
-        employee:emp
+        plan: explicit,
+        employee: emp
       };
+
     })
     .filter(Boolean);
 }
@@ -11279,14 +11483,14 @@ function todayPlannedRows(date){
 function loadTodayBaseSchedule(){
   const date=todayUI.date.value||isoToday;
   const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
-  const active=state.employees.filter(e=>e.active).filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla');
+  const active=window.EmployeeModule.getAll().filter(e=>e.active).filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla');
   if(!active.length)return alert('No hay trabajadores activos.');
   snapshot();
   let created=0;
   active.forEach(emp=>{
     const existing=state.plans.find(p=>p.employeeId===emp.id&&p.date===date);
     if(!existing){
-      state.plans.push({
+      PlanningModule.create({
         id:safeRandomUUID(),
         employeeId:emp.id,
         date,
@@ -11309,7 +11513,7 @@ function applyTheme(){
 }
 function setTheme(theme){
   if(theme!=='light'&&theme!=='dark')return;
-  state.settings.theme=theme;
+  SettingsModule.set('theme',theme,{save:false});
   save();applyTheme();
   toast(theme==='light'?'Tema claro activado':'Tema oscuro activado');
 }
@@ -11323,7 +11527,7 @@ function renderTodayIntelligence(date,rows,execs){
 
   coverage.innerHTML=['A','B','C'].map(code=>{
     const planned=rows.filter(r=>r.plan.code===code).length;
-    const reviewed=rows.filter(r=>r.plan.code===code&&execs.some(x=>x.employeeId===r.employee.id)).length;
+    const reviewed=rows.filter(r=>r.plan.code===code&&execs.some(x=>x.employeeId===r.employee.id&&['Presente','Atrasado'].includes(x.status))).length;
     const pct=planned?Math.round(reviewed/planned*100):100;
     return `<div class="coverage-row">
       <strong>Turno ${code}</strong>
@@ -11384,7 +11588,7 @@ function workerProfileData(id,monthOverride=''){
   const extras=state.additional.filter(x=>x.employeeId===id&&x.date.startsWith(month));
   const absencesAll=state.absences.filter(x=>x.employeeId===id);
   const absencesMonth=absencesAll.filter(x=>(x.from||x.start||'').startsWith(month)||(x.to||x.end||'').startsWith(month));
-  const evals=(typeof opsRead==='function'?opsRead(EVAL_KEY,[]):[]).filter(x=>x.employeeId===id&&(!x.period||x.period.startsWith(month)));
+  const evals=(typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(window.EVAL_KEY,[]):[]).filter(x=>x.employeeId===id&&(!x.period||x.period.startsWith(month)));
   const incidents=(typeof opsIncidents==='function'?opsIncidents():[]).filter(x=>{
     const incidentDate=(x.createdAt||x.date||'').slice(0,10);
     const haystack=[x.reporter,x.owner,x.description,x.title].filter(Boolean).join(' ').toLowerCase();
@@ -11525,13 +11729,20 @@ function addWorkerDocument(id){
   const name=document.getElementById('workerDocName')?.value.trim();
   const type=document.getElementById('workerDocType')?.value||'Otro';
   if(!name)return alert('Escribe el nombre del documento.');
-  state.employees=state.employees.map(x=>x.id===id?{...x,documents:[...(x.documents||[]),{name,type,date:isoToday}]}:x);
-  save();renderWorkerProfile(id);toast('Documento agregado a la ficha');
+  EmployeeModule.addDocument(id,{
+    name,
+    type,
+    date:isoToday
+  });
+
+  renderWorkerProfile(id);
+  toast('Documento agregado a la ficha');
 }
 function removeWorkerDocument(id,index){
   if(!confirm('¿Eliminar esta referencia documental?'))return;
-  state.employees=state.employees.map(x=>x.id===id?{...x,documents:(x.documents||[]).filter((_,i)=>i!==index)}:x);
-  save();renderWorkerProfile(id);
+  EmployeeModule.removeDocument(id,index);
+
+  renderWorkerProfile(id);
 }
 
 function closeWorkerDrawer(){
@@ -11570,7 +11781,12 @@ function syncSundayPayment(employeeId,date){
   const execution=state.executions.find(x=>x.employeeId===employeeId&&x.date===date&&['Presente','Atrasado'].includes(x.status));
   const existing=state.additional.find(a=>a.source==='sunday'&&a.employeeId===employeeId&&a.date===date);
   if(!execution){
-    if(existing)state.additional=state.additional.filter(a=>a.id!==existing.id);
+    if(existing){
+      AdditionalModule.replaceAll(
+        AdditionalModule.getAll().filter(a=>a.id!==existing.id),
+        {save:false}
+      );
+    }
     return;
   }
   const ordinal=sundayOrdinal(employeeId,date);
@@ -11588,8 +11804,14 @@ function syncSundayPayment(employeeId,date){
     sundayOrdinal:ordinal,
     sundaySpecial:special
   };
-  if(existing)state.additional=state.additional.map(a=>a.id===existing.id?data:a);
-  else if(amount>0)state.additional.push(data);
+  if(existing){
+    AdditionalModule.replaceAll(
+      AdditionalModule.getAll().map(a=>a.id===existing.id?data:a),
+      {save:false}
+    );
+  }else if(amount>0){
+    AdditionalModule.add(data,{save:false});
+  }
 }
 function syncSundayPaymentsForDate(date){
   if(!isSunday(date)||state.settings.sundayAutoGenerate===false)return;
@@ -11604,7 +11826,7 @@ function syncAllSundayPayments(){
 }
 function sundayMonthSummary(prefix){
   const threshold=Number(state.settings.sundayThreshold||0);
-  return state.employees.map(e=>{
+  return window.EmployeeModule.getAll().map(e=>{
     const worked=workedSundayExecutions(e.id,prefix);
     const special=Math.max(0,worked.length-threshold);
     const generated=state.additional.filter(a=>a.source==='sunday'&&a.employeeId===e.id&&a.date.startsWith(prefix));
@@ -11612,10 +11834,10 @@ function sundayMonthSummary(prefix){
   });
 }
 function saveSundaySettings(){
-  state.settings.sundayThreshold=Math.max(0,Number(sundayThreshold.value||0));
-  state.settings.sundayNormalAmount=Math.max(0,Number(sundayNormalAmount.value||0));
-  state.settings.sundaySpecialAmount=Math.max(0,Number(sundaySpecialAmount.value||0));
-  state.settings.sundayAutoGenerate=sundayAutoGenerate.value==='true';
+  SettingsModule.set('sundayThreshold',Math.max(0,Number(sundayThreshold.value||0)),{save:false});
+  SettingsModule.set('sundayNormalAmount',Math.max(0,Number(sundayNormalAmount.value||0)),{save:false});
+  SettingsModule.set('sundaySpecialAmount',Math.max(0,Number(sundaySpecialAmount.value||0)),{save:false});
+  SettingsModule.set('sundayAutoGenerate',sundayAutoGenerate.value==='true',{save:false});
   log('Regla de domingos actualizada');
   save();renderAll();toast('Regla dominical guardada');
 }
@@ -11798,7 +12020,7 @@ function renderTodayMobileShiftView(date,rows,execs){
   const host=document.getElementById('todayMobileShiftView');
   if(!host)return;
 
-  const closed=(state.dailyClosures||[]).includes(date);
+  const closed=DailyClosureModule.isClosed(date);
   const reviewed=rows.filter(({employee:emp})=>execs.some(e=>e.employeeId===emp.id)).length;
   const pending=Math.max(0,rows.length-reviewed);
   const present=execs.filter(e=>e.status==='Presente').length;
@@ -11818,7 +12040,7 @@ function renderTodayMobileShiftView(date,rows,execs){
 
   const coverageHtml=shiftOrder.filter(code=>groups[code]?.length).map(code=>{
     const people=groups[code];
-    const confirmed=people.filter(({employee:emp})=>execs.some(e=>e.employeeId===emp.id)).length;
+    const confirmed=people.filter(({employee:emp})=>execs.some(e=>e.employeeId===emp.id&&['Presente','Atrasado'].includes(e.status))).length;
     const pct=people.length?Math.round((confirmed/people.length)*100):0;
     return `<div class="today-mobile-coverage-row shift-${code}">
       <span>${shiftNames[code]}</span>
@@ -11915,24 +12137,25 @@ function quickPresent(employeeId,date){
     id:existing?.id||safeRandomUUID(),
     employeeId,date,status:'Presente',replacementId:'',note:'Confirmado desde Operación del día'
   };
-  state.executions=existing
-    ? state.executions.map(x=>x.id===existing.id?data:x)
-    : [...state.executions,data];
-  state.additional=state.additional.filter(a=>a.generatedFromExecutionId!==data.id);
+  AttendanceModule.create(data);
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(a=>a.generatedFromExecutionId!==data.id),
+    {save:false}
+  );
   save();renderAll();toast('Trabajador confirmado presente');
 }
 
 function markPendingPresent(){
   const lockedDate=todayUI.date.value||isoToday;
-  if((state.dailyClosures||[]).includes(lockedDate))return toast('La jornada está cerrada. Debes reabrirla para editar');
+  if(DailyClosureModule.isClosed(lockedDate))return toast('La jornada está cerrada. Debes reabrirla para editar');
   const date=todayUI.date.value||isoToday;
-  if((state.dailyClosures||[]).includes(date))return toast('La jornada ya está cerrada');
+  if(DailyClosureModule.isClosed(date))return toast('La jornada ya está cerrada');
   const rows=todayPlannedRows(date);
   const pending=rows.filter(r=>!state.executions.some(x=>x.employeeId===r.employee.id&&x.date===date));
   if(!pending.length)return toast('No hay pendientes');
   snapshot();
   pending.forEach(r=>{
-    state.executions.push({
+    AttendanceModule.create({
       id:safeRandomUUID(),
       employeeId:r.employee.id,
       date,
@@ -11947,7 +12170,7 @@ function markPendingPresent(){
 
 
 function renderTodayCloseState(date){
-  const closed=(state.dailyClosures||[]).includes(date);
+  const closed=DailyClosureModule.isClosed(date);
   const box=document.getElementById('todayCloseState');
   const reopen=document.getElementById('reopenTodayBtn');
   if(box)box.innerHTML=`<span class="close-state ${closed?'closed':'open'}">${closed?'✓ Jornada cerrada':'○ Jornada abierta'}</span>`;
@@ -11955,10 +12178,10 @@ function renderTodayCloseState(date){
 }
 function reopenToday(){
   const date=todayUI.date.value||isoToday;
-  if(!(state.dailyClosures||[]).includes(date))return toast('La jornada ya está abierta');
+  if(!DailyClosureModule.isClosed(date))return toast('La jornada ya está abierta');
   if(!confirm(`¿Reabrir la jornada del ${fmt(date)}? Los cambios posteriores quedarán registrados.`))return;
   snapshot();
-  state.dailyClosures=state.dailyClosures.filter(d=>d!==date);
+  DailyClosureModule.remove(date,{save:false});
   log(`Jornada reabierta para ${date}`);
   save();renderAll();toast('Jornada reabierta');
 }
@@ -11983,7 +12206,7 @@ function confirmToday(){
   if(warnings.length&&!confirm(`Antes de cerrar:\n\n• ${warnings.join('\n• ')}\n\n¿Deseas continuar?`))return;
 
   snapshot();
-  pending.forEach(r=>state.executions.push({
+  pending.forEach(r=>AttendanceModule.create({
     id:safeRandomUUID(),
     employeeId:r.employee.id,
     date,
@@ -11994,8 +12217,7 @@ function confirmToday(){
 
   syncSundayPaymentsForDate(date);
 
-  state.dailyClosures=state.dailyClosures||[];
-  if(!state.dailyClosures.includes(date))state.dailyClosures.push(date);
+  DailyClosureModule.add(date,{save:false});
   log(`Jornada cerrada para ${date}${isSunday(date)?' · control dominical actualizado':''}`);
   save();renderAll();
   toast(isSunday(date)?'Jornada cerrada y domingos actualizados':'Jornada cerrada correctamente');
@@ -12006,9 +12228,15 @@ function clearTodayExecutions(){
   if(!confirm('¿Eliminar todos los registros de ejecución y reemplazos automáticos de este día?'))return;
   snapshot();
   const ids=state.executions.filter(x=>x.date===date).map(x=>x.id);
-  state.executions=state.executions.filter(x=>x.date!==date);
-  state.additional=state.additional.filter(a=>!ids.includes(a.generatedFromExecutionId)&&!(a.source==='sunday'&&a.date===date));
-  state.dailyClosures=(state.dailyClosures||[]).filter(d=>d!==date);
+  AttendanceModule.clearDate(date);
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(a=>
+      !ids.includes(a.generatedFromExecutionId)
+      &&!(a.source==='sunday'&&a.date===date)
+    ),
+    {save:false}
+  );
+  DailyClosureModule.remove(date,{save:false});
   log(`Se reinició la operación del día ${date}`);
   save();renderAll();toast('Día reiniciado');
 }
@@ -12289,7 +12517,7 @@ function runReplacementAssistant(){
 }
 
 function acceptAssistantReplacement(executionId,replacementId,date){
-  const absence=state.executions.find(item=>item.id===executionId);
+  const absence=AttendanceModule.findById(executionId);
   if(!absence)return alert('La ausencia ya no existe.');
   if(absence.replacementId)return alert('Esta ausencia ya tiene reemplazante.');
   if(replacementUnavailable(replacementId,date))return alert('El reemplazante ya no está disponible.');
@@ -12297,8 +12525,10 @@ function acceptAssistantReplacement(executionId,replacementId,date){
   const shift=plannedShiftFor(absence.employeeId,date);
   snapshot();
 
-  absence.replacementId=replacementId;
-  absence.note=[absence.note,'Reemplazo sugerido por asistente'].filter(Boolean).join(' · ');
+  AttendanceModule.patch(executionId,{
+    replacementId,
+    note:[absence.note,'Reemplazo sugerido por asistente'].filter(Boolean).join(' · ')
+  },{save:false});
 
   const attendanceResult=ensureReplacementPresent({
     executionId,
@@ -12314,9 +12544,12 @@ function acceptAssistantReplacement(executionId,replacementId,date){
     return alert(attendanceResult.message);
   }
 
-  state.additional=state.additional.filter(item=>item.generatedFromExecutionId!==executionId);
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(item=>item.generatedFromExecutionId!==executionId),
+    {save:false}
+  );
 
-  state.additional.push({
+  AdditionalModule.add({
     id:safeRandomUUID(),
     employeeId:replacementId,
     date,
@@ -12328,7 +12561,7 @@ function acceptAssistantReplacement(executionId,replacementId,date){
     source:'replacement',
     replacedEmployeeId:absence.employeeId,
     generatedFromExecutionId:executionId
-  });
+  },{save:false});
 
   log(`Asistente: ${employee(replacementId)?.name||'Reemplazante'} reemplazó a ${employee(absence.employeeId)?.name||'trabajador titular'} el ${date}, turno ${shift}.`);
   save();
@@ -12353,12 +12586,17 @@ function replacementUnavailable(employeeId,date){
 }
 
 function clearGeneratedReplacementAttendance(executionId,replacementId=''){
-  state.executions=state.executions.filter(item=>{
-    if(item.source!=='replacement-attendance')return true;
-    if(item.generatedFromExecutionId!==executionId)return true;
-    if(replacementId&&item.employeeId===replacementId)return true;
-    return false;
+
+  AttendanceModule.removeWhere(item=>{
+
+    if(item.source!=='replacement-attendance')return false;
+    if(item.generatedFromExecutionId!==executionId)return false;
+    if(replacementId&&item.employeeId===replacementId)return false;
+
+    return true;
+
   });
+
 }
 
 function ensureReplacementPresent({
@@ -12397,13 +12635,15 @@ function ensureReplacementPresent({
     }
 
     if(!String(existing.note||'').includes(coverageNote)){
-      existing.note=[existing.note,coverageNote].filter(Boolean).join(' · ');
+      AttendanceModule.patch(existing.id,{
+        note:[existing.note,coverageNote].filter(Boolean).join(' · ')
+      },{save:false});
     }
 
     return {ok:true,created:false,status:existing.status};
   }
 
-  state.executions.push({
+  AttendanceModule.create({
     id:safeRandomUUID(),
     employeeId:replacementId,
     date,
@@ -12453,12 +12693,13 @@ function saveTodayException(){
     note:noteParts.filter(Boolean).join(' · ')
   };
 
-  state.executions=existing
-    ?state.executions.map(item=>item.id===existing.id?data:item)
-    :[...state.executions,data];
+  AttendanceModule.create(data);
 
-  state.additional=state.additional.filter(item=>
-    item.generatedFromExecutionId!==executionId
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(item=>
+      item.generatedFromExecutionId!==executionId
+    ),
+    {save:false}
   );
 
   clearGeneratedReplacementAttendance(executionId,replacementId);
@@ -12480,7 +12721,7 @@ function saveTodayException(){
       return alert(attendanceResult.message);
     }
 
-    state.additional.push({
+    AdditionalModule.add({
       id:safeRandomUUID(),
       employeeId:replacementId,
       date,
@@ -12492,7 +12733,7 @@ function saveTodayException(){
       source:'replacement',
       replacedEmployeeId:employeeId,
       generatedFromExecutionId:executionId
-    });
+    },{save:false});
 
     log(
       `${employee(replacementId)?.name||'Reemplazante'} reemplazó a `
@@ -12516,11 +12757,11 @@ function getTariff(shift){
   return Number(state.settings?.tariffs?.[shift]||0);
 }
 function saveTariffs(){
-  state.settings.tariffs={
+  SettingsModule.set('tariffs',{
     A:Number(tariffA.value||0),
     B:Number(tariffB.value||0),
     C:Number(tariffC.value||0)
-  };
+  },{save:false});
   save();toast('Tarifas guardadas');
 }
 function loadTariffs(){
@@ -12530,7 +12771,7 @@ function loadTariffs(){
   tariffC.value=getTariff('C');
 }
 function replacementCandidates(employeeId,date,shift){
-  return state.employees.filter(e=>e.active&&e.id!==employeeId).map(e=>{
+  return window.EmployeeModule.getAll().filter(e=>e.active&&e.id!==employeeId).map(e=>{
     const plan=state.plans.find(p=>p.employeeId===e.id&&p.date===date);
     const execution=state.executions.find(x=>x.employeeId===e.id&&x.date===date);
     const abs=state.absences.some(a=>a.employeeId===e.id&&date>=a.from&&date<=a.to);
@@ -12553,9 +12794,13 @@ function markAllPresent(){
   planned.forEach(p=>{
     const existing=state.executions.find(x=>x.employeeId===p.employeeId&&x.date===date);
     if(!existing){
-      state.executions.push({
-        id:safeRandomUUID(),employeeId:p.employeeId,date,status:'Presente',
-        replacementId:'',note:'Marcado masivamente como presente'
+      AttendanceModule.create({
+        id:safeRandomUUID(),
+        employeeId:p.employeeId,
+        date,
+        status:'Presente',
+        replacementId:'',
+        note:'Marcado masivamente como presente'
       });
       added++;
     }
@@ -12564,11 +12809,12 @@ function markAllPresent(){
   save();renderAll();toast(`${added} trabajadores marcados presentes`);
 }
 function openPatternModal(){
-  patternEmployees.innerHTML=state.employees.filter(e=>e.active).map(e=>`<option value="${e.id}">${e.name} · ${e.area}</option>`).join('');
+  patternEmployees.innerHTML=window.EmployeeModule.getAll().filter(e=>e.active).map(e=>`<option value="${e.id}">${e.name} · ${e.area}</option>`).join('');
   patternSelect.innerHTML=state.settings.patterns.map(p=>`<option value="${p.id}">${p.name} · ${p.sequence.join('-')}</option>`).join('');
   const prefix=periodPrefix();
   patternFrom.value=prefix+'-01';
-  patternTo.value=prefix+'-'+String(daysInMonth(prefix)).padStart(2,'0');
+  const [py,pm]=prefix.split('-').map(Number);
+  patternTo.value=prefix+'-'+String(new Date(py,pm,0).getDate()).padStart(2,'0');
   openModal('patternModal');
 }
 function applyPattern(){
@@ -12584,10 +12830,17 @@ function applyPattern(){
   while(date<=end){
     const iso=date.toISOString().slice(0,10);
     ids.forEach(id=>{
-      const existing=state.plans.find(p=>p.employeeId===id&&p.date===iso);
+      const existing=PlanningModule.find(id,iso);
       if(patternKeepExceptions.checked&&existing&&exceptions.includes(existing.code))return;
-      const data={id:existing?.id||safeRandomUUID(),employeeId:id,date:iso,code:pattern.sequence[index%pattern.sequence.length]};
-      state.plans=existing?state.plans.map(p=>p.id===existing.id?data:p):[...state.plans,data];
+
+      const data={
+        id:existing?.id||safeRandomUUID(),
+        employeeId:id,
+        date:iso,
+        code:pattern.sequence[index%pattern.sequence.length]
+      };
+
+      PlanningModule.create(data);
       count++;
     });
     date.setDate(date.getDate()+1);index++;
@@ -12640,12 +12893,13 @@ function saveQuickReplacement(){
     note:quickReplacementNote.value.trim()||'Reemplazo rápido desde calendario'
   };
 
-  state.executions=existing
-    ?state.executions.map(item=>item.id===existing.id?data:item)
-    :[...state.executions,data];
+  AttendanceModule.create(data);
 
-  state.additional=state.additional.filter(item=>
-    item.generatedFromExecutionId!==executionId
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(item=>
+      item.generatedFromExecutionId!==executionId
+    ),
+    {save:false}
   );
 
   const attendanceResult=ensureReplacementPresent({
@@ -12662,7 +12916,7 @@ function saveQuickReplacement(){
     return alert(attendanceResult.message);
   }
 
-  state.additional.push({
+  AdditionalModule.add({
     id:safeRandomUUID(),
     employeeId:replacementId,
     date,
@@ -12674,7 +12928,7 @@ function saveQuickReplacement(){
     source:'replacement',
     replacedEmployeeId:employeeId,
     generatedFromExecutionId:executionId
-  });
+  },{save:false});
 
   log(
     `${employee(replacementId)?.name||'Reemplazante'} reemplazó a `
@@ -12717,7 +12971,7 @@ function openDailyModal(employeeId='',date=isoToday){
   dailyForm.reset();
   dailyId.value='';
   dailyDate.value=date;
-  dailyEmployee.value=employeeId||state.employees.find(e=>e.active)?.id||'';
+  dailyEmployee.value=employeeId||window.EmployeeModule.getAll().find(e=>e.active)?.id||'';
   replacementCreatesAdditional.checked=true;
   replacementAmount.value=getAppRole()==='chief'
     ?Number(state.settings.defaultExtraPayment||30000)
@@ -12775,12 +13029,13 @@ dailyForm.addEventListener('submit',e=>{
     note:dailyNote.value.trim()
   };
 
-  state.executions=existing
-    ?state.executions.map(item=>item.id===existing.id?data:item)
-    :[...state.executions,data];
+  AttendanceModule.create(data);
 
-  state.additional=state.additional.filter(item=>
-    item.generatedFromExecutionId!==executionId
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(item=>
+      item.generatedFromExecutionId!==executionId
+    ),
+    {save:false}
   );
 
   clearGeneratedReplacementAttendance(executionId,replacementId);
@@ -12804,7 +13059,7 @@ dailyForm.addEventListener('submit',e=>{
   }
 
   if(replacementId&&replacementCreatesAdditional.checked){
-    state.additional.push({
+    AdditionalModule.add({
       id:safeRandomUUID(),
       employeeId:replacementId,
       date:dailyDate.value,
@@ -12818,7 +13073,7 @@ dailyForm.addEventListener('submit',e=>{
       source:'replacement',
       replacedEmployeeId:dailyEmployee.value,
       generatedFromExecutionId:executionId
-    });
+    },{save:false});
   }
 
   if(replacementId){
@@ -12880,7 +13135,7 @@ function renderEmployees(){
   if(!table&&!cards)return;
 
   const q=(search?.value||'').trim().toLowerCase();
-  const list=state.employees
+  const list=window.EmployeeModule.getAll()
     .filter(e=>{
       const status=v37EmployeeStatus(e);
       const scope=v37EmployeeFilter==='all'
@@ -12928,7 +13183,7 @@ function renderEmployees(){
     </article>`;
   }).join(''):'<div class="v37-employee-empty">No hay trabajadores que coincidan con la búsqueda.</div>';
   if(total){
-    const active=state.employees.filter(e=>e.active!==false).length;
+    const active=window.EmployeeModule.getAll().filter(e=>e.active!==false).length;
     total.innerHTML=`<span>♙</span> ${list.length} mostrado${list.length===1?'':'s'} · ${active} activos`;
   }
 }
@@ -12942,7 +13197,7 @@ employeeForm.addEventListener('submit',e=>{
   const name=document.getElementById('employeeName').value.trim();
 
   if(!name)return alert('Ingresa el nombre del trabajador.');
-  if(rut&&state.employees.some(x=>x.rut===rut&&x.id!==id)){
+  if(rut&&window.EmployeeModule.getAll().some(x=>x.rut===rut&&x.id!==id)){
     return alert('Ya existe un trabajador con ese RUT.');
   }
 
@@ -12961,9 +13216,11 @@ employeeForm.addEventListener('submit',e=>{
     active:document.getElementById('employeeActive').value!=='false'
   };
 
-  state.employees=id
-    ? state.employees.map(x=>x.id===id?data:x)
-    : [...state.employees,data];
+  if(id){
+    EmployeeModule.update(id,data);
+  }else{
+    EmployeeModule.create(data);
+  }
 
   log(`${id?'Trabajador editado':'Trabajador agregado'}: ${data.name}`);
   save();
@@ -12974,7 +13231,32 @@ employeeForm.addEventListener('submit',e=>{
   showView('employees');
   toast(id?'Trabajador actualizado':'Trabajador agregado correctamente');
 });
-function deleteEmployee(id){if(!confirm('¿Eliminar trabajador y todos sus registros?'))return;const name=employee(id)?.name;state.employees=state.employees.filter(e=>e.id!==id);state.plans=state.plans.filter(p=>p.employeeId!==id);state.executions=state.executions.filter(x=>x.employeeId!==id).map(x=>x.replacementId===id?{...x,replacementId:''}:x);state.additional=state.additional.filter(a=>a.employeeId!==id&&a.replacedEmployeeId!==id);log(`Trabajador eliminado: ${name}`);save();renderAll()}
+function deleteEmployee(id){
+
+  if(!confirm('¿Eliminar trabajador y todos sus registros?'))return;
+
+  const name=employee(id)?.name;
+
+  EmployeeModule.remove(id);
+
+  PlanningModule.removeEmployeePlans(id);
+
+  AttendanceModule.removeEmployeeReferences(id);
+
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(
+      a=>a.employeeId!==id&&a.replacedEmployeeId!==id
+    ),
+    {save:false}
+  );
+
+  log(`Trabajador eliminado: ${name}`);
+
+  save();
+
+  renderAll();
+
+}
 
 
 
@@ -13023,7 +13305,7 @@ function accountingRows(){
 
   const prefix=`${yearEl.value}-${monthEl.value}`;
 
-  return state.employees.map(worker=>{
+  return window.EmployeeModule.getAll().map(worker=>{
     const executions=state.executions.filter(x=>x.employeeId===worker.id&&x.date.startsWith(prefix));
 
     const attendance=executions.filter(x=>['Presente','Atrasado'].includes(x.status));
@@ -13321,7 +13603,7 @@ function renderProfessionalPrintReports(){
 
   const plans=state.plans.filter(x=>String(x.date||'').startsWith(ctx.prefix));
   const execs=state.executions.filter(x=>String(x.date||'').startsWith(ctx.prefix));
-  const activeWorkers=state.employees.filter(x=>x.active!==false);
+  const activeWorkers=window.EmployeeModule.getAll().filter(x=>x.active!==false);
   const operationalRows=activeWorkers.map(worker=>{
     const workerPlans=plans.filter(x=>x.employeeId===worker.id);
     const workerExecs=execs.filter(x=>x.employeeId===worker.id);
@@ -13381,7 +13663,7 @@ function renderReports(){
   if(absentMetric)absentMetric.textContent=execs.filter(x=>x.status==='Ausente').length;
   if(additionalMetric)additionalMetric.textContent=adds.length;
 
-  reportBody.innerHTML=state.employees.map(e=>{
+  reportBody.innerHTML=window.EmployeeModule.getAll().map(e=>{
     const ep=plans.filter(x=>x.employeeId===e.id);
     const ex=execs.filter(x=>x.employeeId===e.id);
     const ad=adds.filter(x=>x.employeeId===e.id);
@@ -13537,7 +13819,12 @@ function markSelectedPaymentsPaid(){
   if(!confirm(`¿Marcar ${selected.length} pago(s) como pagados por ${money(total)}?`))return;
 
   snapshot();
-  state.additional=state.additional.map(item=>selectedPayments.has(item.id)?{...item,paid:'Pagado',paidDate}:item);
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().map(item=>
+      selectedPayments.has(item.id)?{...item,paid:'Pagado',paidDate}:item
+    ),
+    {save:false}
+  );
   log(`${selected.length} pago(s) marcados como pagados`);
   selectedPayments.clear();
   save();
@@ -13590,16 +13877,20 @@ function editAdditional(id){
 
 function toggleAdditionalPaid(id){
   if(getAppRole()!=='admin')return alert('Solo el administrador puede modificar el estado de pago.');
-  const item=state.additional.find(row=>row.id===id);
+  const item=AdditionalModule.findById(id);
   if(!item)return;
 
   snapshot();
   if(item.paid==='Pagado'){
-    item.paid='Pendiente';
-    item.paidDate='';
+    AdditionalModule.patch(id,{
+      paid:'Pendiente',
+      paidDate:''
+    },{save:false});
   }else{
-    item.paid='Pagado';
-    item.paidDate=isoToday;
+    AdditionalModule.patch(id,{
+      paid:'Pagado',
+      paidDate:isoToday
+    },{save:false});
   }
 
   log(`Estado de pago actualizado: ${employee(item.employeeId)?.name||'Trabajador'}`);
@@ -13614,7 +13905,10 @@ function deleteAdditional(id){
   if(!confirm(`¿Eliminar la jornada adicional de ${employee(item.employeeId)?.name||'este trabajador'}?`))return;
 
   snapshot();
-  state.additional=state.additional.filter(row=>row.id!==id);
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(row=>row.id!==id),
+    {save:false}
+  );
   selectedPayments.delete(id);
   log(`Jornada adicional eliminada: ${employee(item.employeeId)?.name||'Trabajador'}`);
   save();
@@ -13682,21 +13976,21 @@ document.getElementById('additionalForm')?.addEventListener('submit',event=>{
   snapshot();
 
   if(id){
-    const item=state.additional.find(row=>row.id===id);
+    const item=AdditionalModule.findById(id);
     if(!item)return;
-    Object.assign(item,{
+    AdditionalModule.patch(id,{
       employeeId,date,shift,reason,amount,paid,
       paidDate:paid==='Pagado'?paidDate:'',
       source:item.source||'manual'
-    });
+    },{save:false});
     log(`Jornada adicional actualizada: ${employee(employeeId)?.name||'Trabajador'}`);
   }else{
-    state.additional.unshift({
+    AdditionalModule.add({
       id:safeRandomUUID(),
       employeeId,date,shift,reason,amount,paid,
       paidDate:paid==='Pagado'?paidDate:'',
       source:'manual'
-    });
+    },{prepend:true,save:false});
     log(`Jornada adicional registrada: ${employee(employeeId)?.name||'Trabajador'}`);
   }
 
@@ -13771,7 +14065,7 @@ function clearAudit(){
   if(!(state.audit||[]).length)return toast('El historial ya está vacío');
   if(!confirm('¿Eliminar todo el historial? Esta acción no se puede deshacer.'))return;
 
-  state.audit=[];
+  AuditModule.replaceAll([],{save:false});
   save();
   renderAudit();
   toast('Historial eliminado');
@@ -13815,9 +14109,9 @@ function generatedExecutionsForAbsence(absenceId){
 }
 
 function removeGeneratedAbsenceExecutions(absenceId){
-  state.executions=state.executions.filter(item=>
-    !(item.source==='absence-period'&&item.absenceId===absenceId)
-  );
+
+  AttendanceModule.removeGeneratedByAbsence(absenceId);
+
 }
 
 function absenceExecutionConflicts(employeeId,dates,absenceId=''){
@@ -13860,7 +14154,10 @@ function synchronizeAbsenceExecutions(absenceRecord){
 
   if(conflicts.length){
     const conflictIds=new Set(conflicts.map(item=>item.id));
-    state.executions=state.executions.filter(item=>!conflictIds.has(item.id));
+
+    AttendanceModule.removeWhere(
+      item=>conflictIds.has(item.id)
+    );
   }
 
   const status=normalizedAbsenceStatus(absenceRecord.type);
@@ -13871,7 +14168,7 @@ function synchronizeAbsenceExecutions(absenceRecord){
       item.date===date
     );
 
-    state.executions.push({
+    AttendanceModule.create({
       id:safeRandomUUID(),
       employeeId:absenceRecord.employeeId,
       date,
@@ -14183,7 +14480,7 @@ function filterReplacementCandidates(listId,searchId,toggleId){
 }
 
 function assignReplacementCore(executionId,replacementId,date,{silent=false}={}){
-  const execution=state.executions.find(item=>item.id===executionId);
+  const execution=AttendanceModule.findById(executionId);
 
   if(!execution){
     return {ok:false,message:'No existe un registro real para ese turno.'};
@@ -14198,11 +14495,13 @@ function assignReplacementCore(executionId,replacementId,date,{silent=false}={})
   }
 
   const shift=plannedShiftFor(execution.employeeId,date);
-  execution.replacementId=replacementId;
-  execution.note=[
-    execution.note,
-    'Reemplazo asignado desde Licencias'
-  ].filter(Boolean).join(' · ');
+  AttendanceModule.patch(executionId,{
+    replacementId,
+    note:[
+      execution.note,
+      'Reemplazo asignado desde Licencias'
+    ].filter(Boolean).join(' · ')
+  },{save:false});
 
   const attendanceResult=ensureReplacementPresent({
     executionId,
@@ -14213,15 +14512,20 @@ function assignReplacementCore(executionId,replacementId,date,{silent=false}={})
   });
 
   if(!attendanceResult.ok){
-    execution.replacementId='';
+    AttendanceModule.patch(executionId,{
+      replacementId:''
+    },{save:false});
     return {ok:false,message:attendanceResult.message};
   }
 
-  state.additional=state.additional.filter(item=>
-    item.generatedFromExecutionId!==executionId
+  AdditionalModule.replaceAll(
+    AdditionalModule.getAll().filter(item=>
+      item.generatedFromExecutionId!==executionId
+    ),
+    {save:false}
   );
 
-  state.additional.push({
+  AdditionalModule.add({
     id:safeRandomUUID(),
     employeeId:replacementId,
     date,
@@ -14233,7 +14537,7 @@ function assignReplacementCore(executionId,replacementId,date,{silent=false}={})
     source:'replacement',
     replacedEmployeeId:execution.employeeId,
     generatedFromExecutionId:executionId
-  });
+  },{save:false});
 
   if(!silent){
     log(
@@ -14599,12 +14903,12 @@ function openAbsenceModal(){
 }
 
 function deleteHoliday(id){
-  const item=(state.holidays||[]).find(row=>row.id===id);
+  const item=HolidayModule.findById(id);
   if(!item)return;
   if(!confirm(`¿Eliminar el feriado "${item.name||item.title||'Feriado'}"?`))return;
 
   snapshot();
-  state.holidays=state.holidays.filter(row=>row.id!==id);
+  HolidayModule.remove(id,{save:false});
   log(`Feriado eliminado: ${item.name||item.title||'Feriado'}`);
   save();
   renderAll();
@@ -14612,7 +14916,7 @@ function deleteHoliday(id){
 }
 
 function deleteAbsence(id){
-  const item=(state.absences||[]).find(row=>row.id===id);
+  const item=AbsenceModule.findById(id);
   if(!item)return;
 
   if(!confirm('¿Eliminar este registro? Los estados automáticos también desaparecerán del calendario real.'))return;
@@ -14621,7 +14925,7 @@ function deleteAbsence(id){
 
   const removedExecutions=generatedExecutionsForAbsence(id).length;
   removeGeneratedAbsenceExecutions(id);
-  state.absences=state.absences.filter(row=>row.id!==id);
+  AbsenceModule.remove(id,{save:false});
 
   log(
     `${item.type||'Ausencia'} eliminada: `
@@ -14653,27 +14957,27 @@ function renderSettings(){
 document.getElementById('settingsForm')?.addEventListener('submit',e=>{
   e.preventDefault();
   snapshot();
-  state.settings={
+  SettingsModule.replaceAll({
     ...state.settings,
     company:document.getElementById('companyName').value.trim(),
     A:document.getElementById('shiftA').value.trim(),
     B:document.getElementById('shiftB').value.trim(),
     C:document.getElementById('shiftC').value.trim(),
     defaultExtraPayment:Math.max(0,Number(document.getElementById('defaultExtraPayment')?.value||30000))
-  };
+  },{save:false});
   log('Configuración actualizada');
   save();
   renderAll();
   toast('Configuración guardada');
 });
 function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`shiftcontrol_respaldo_${isoToday}.json`;a.click();URL.revokeObjectURL(a.href)}
-function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{state=JSON.parse(reader.result);save();renderAll();toast('Respaldo importado')}catch{alert('El archivo no es válido.')}};reader.readAsText(file)}
+function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{window.ShiftControlState.replace(JSON.parse(reader.result));save();renderAll();toast('Respaldo importado')}catch{alert('El archivo no es válido.')}};reader.readAsText(file)}
 function resetSystem(){if(!confirm('Esto borrará todos los datos. ¿Continuar?'))return;localStorage.removeItem(KEYS.data);location.reload()}
 
 function buildAlerts(){
   const list=[];
   const prefix=periodPrefix();
-  const active=state.employees.filter(e=>e.active);
+  const active=window.EmployeeModule.getAll().filter(e=>e.active);
   active.forEach(e=>{
     if(!state.plans.some(p=>p.employeeId===e.id&&p.date.startsWith(prefix)))list.push({level:'Pendiente',text:`${e.name} no tiene planificación en ${prefix}`,action:()=>{planEmployeeFilter.value=e.id;renderPlanning();}});
   });
@@ -14807,10 +15111,11 @@ function importEmployeesCSV(event){
       rows.forEach(r=>{
         const rut=(r[idx('rut')]||'').trim();
         const name=(r[idx('nombre')]||'').trim();
-        if(!name||state.employees.some(e=>(rut&&e.rut===rut)||e.name===name)){skipped++;return}
+        if(!name||window.EmployeeModule.getAll().some(e=>(rut&&e.rut===rut)||e.name===name)){skipped++;return}
         const shift=(r[idx('turno')]||'A').trim().toUpperCase();
-        state.employees.push({
-          id:safeRandomUUID(),name,rut,
+        EmployeeModule.create({
+          name,
+          rut,
           role:(r[idx('cargo')]||'').trim(),
           area:(r[idx('area')]||'').trim(),
           shift:['A','B','C'].includes(shift)?shift:'A',
@@ -14905,7 +15210,15 @@ function renderAll(){
 
   bindUnifiedPeriodControls();
 }
+window.addEventListener('DOMContentLoaded',()=>{
+setTimeout(()=>{
 try{
+
+  if(window.ShiftControlState){
+    window.ShiftControlState.initialize(state);
+    console.log("[ShiftControl V31] Estado principal conectado");
+  }
+
   renderAll();
 
   const savedPeriod=localStorage.getItem('shiftcontrol_active_period');
@@ -14930,6 +15243,8 @@ try{
     </div>`;
   }
 }
+},300);
+});
 
 document.getElementById('holidayForm')?.addEventListener('submit',event=>{
   event.preventDefault();
@@ -14945,15 +15260,17 @@ document.getElementById('holidayForm')?.addEventListener('submit',event=>{
   snapshot();
 
   if(id){
-    const item=state.holidays.find(row=>row.id===id);
-    if(item)Object.assign(item,{date,name,type});
+    HolidayModule.update(id,{date,name,type},{save:false});
   }else{
-    state.holidays.push({
-      id:safeRandomUUID(),
-      date,
-      name,
-      type
-    });
+    HolidayModule.add(
+      {
+        id:safeRandomUUID(),
+        date,
+        name,
+        type
+      },
+      {save:false}
+    );
   }
 
   log(`Feriado registrado: ${name}`);
@@ -14981,7 +15298,7 @@ document.getElementById('absenceForm')?.addEventListener('submit',event=>{
   snapshot();
 
   const existing=id
-    ?state.absences.find(item=>item.id===id)
+    ?AbsenceModule.findById(id)
     :null;
 
   const absenceRecord={
@@ -15018,9 +15335,9 @@ document.getElementById('absenceForm')?.addEventListener('submit',event=>{
   }
 
   if(existing){
-    Object.assign(existing,absenceRecord);
+    AbsenceModule.update(existing.id,absenceRecord,{save:false});
   }else{
-    state.absences.push(absenceRecord);
+    AbsenceModule.add(absenceRecord,{save:false});
   }
 
   log(
@@ -15121,6 +15438,8 @@ applyDensity();
 // ROLE_KEY y LEGACY_ROLE_KEYS se inicializan al comienzo del archivo (V9).
 function getAppRole(){
   const validRoles=['admin','chief'];
+  const authenticatedRole=window.AuthContext?.get()?.legacyRole;
+  if(validRoles.includes(authenticatedRole))return authenticatedRole;
   const currentKey=(typeof ROLE_KEY==='string'&&ROLE_KEY)?ROLE_KEY:'shiftcontrol_app_role_v11';
   const legacyKeys=Array.isArray(LEGACY_ROLE_KEYS)?LEGACY_ROLE_KEYS:[];
   let role=null;
@@ -15139,7 +15458,10 @@ function getAppRole(){
   return role;
 }
 function setAppRole(role){
-  const next=['admin','chief'].includes(role)?role:'admin';
+  const authenticatedRole=window.AuthContext?.get()?.legacyRole;
+  const next=['admin','chief'].includes(authenticatedRole)
+    ?authenticatedRole
+    :(['admin','chief'].includes(role)?role:'admin');
   try{localStorage.setItem(ROLE_KEY,next)}catch(_error){}
   applyAppRole(true);
 }
@@ -15230,21 +15552,21 @@ function exportOpsIncidentsCSV(){
 }
 document.addEventListener('keydown',event=>{if(event.key==='Escape')closeIncidentActionsSheet()});
 
-const OPS_INCIDENTS_KEY='shiftcontrol_ops_incidents_v5', OPS_CHECKLISTS_KEY='shiftcontrol_ops_checklists_v5', HANDOFF_KEY='shiftcontrol_handoffs_v5', EVAL_KEY='shiftcontrol_evaluations_v5';
+window.OPS_INCIDENTS_KEY='shiftcontrol_ops_incidents_v5'; window.OPS_CHECKLISTS_KEY='shiftcontrol_ops_checklists_v5'; window.HANDOFF_KEY='shiftcontrol_handoffs_v5'; window.EVAL_KEY='shiftcontrol_evaluations_v5';
 const OPS_CHECKLIST_ITEMS=[['personal','Personal completo','Dotación y reemplazos confirmados'],['uniformes','Presentación y uniforme','Equipo preparado para iniciar el turno'],['surtidores','Surtidores operativos','Sin equipos bloqueados o con fallas visibles'],['banos','Baños revisados','Limpieza e insumos básicos disponibles'],['patio','Patio e islas limpios','Área operativa ordenada'],['instalaciones','Instalaciones revisadas','Iluminación, señalética y accesos en condiciones'],['entrega','Novedades y entrega de turno','Pendientes informados al siguiente responsable']];
 const EVAL_CRITERIA={Asistencia:['Puntualidad','Asistencia','Cumplimiento de turnos'],Trabajo:['Desempeño general','Atención al cliente','Protocolo de atención','Trabajo en equipo','Responsabilidad','Iniciativa'],Actitud:['Disposición','Respeto','Comunicación']};
 let opsIncidentFilter='all', currentEvaluation={scores:{}};
 function opsRead(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}} function opsWrite(k,v){localStorage.setItem(k,JSON.stringify(v))} function opsEsc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function opsIncidents(){return opsRead(OPS_INCIDENTS_KEY,[])}
-function seedOpsModules(){if(!localStorage.getItem(OPS_INCIDENTS_KEY)){const now=new Date();opsWrite(OPS_INCIDENTS_KEY,[{id:safeRandomUUID(),title:'Surtidor 3 presenta intermitencia',type:'Equipo',priority:'Alta',shift:'Mañana',reporter:'María González',owner:'Mantención',dueDate:isoToday,description:'Se bloqueó preventivamente y se informó al servicio técnico.',file:'foto-surtidor.jpg',status:'review',archived:false,createdAt:new Date(now-45*60000).toISOString(),createdBy:'Jefa de isla',updates:[]}])}}
+function opsIncidents(){return opsRead(window.OPS_INCIDENTS_KEY,[])}
+function seedOpsModules(){if(!localStorage.getItem(window.OPS_INCIDENTS_KEY)){const now=new Date();opsWrite(window.OPS_INCIDENTS_KEY,[{id:safeRandomUUID(),title:'Surtidor 3 presenta intermitencia',type:'Equipo',priority:'Alta',shift:'Mañana',reporter:'María González',owner:'Mantención',dueDate:isoToday,description:'Se bloqueó preventivamente y se informó al servicio técnico.',file:'foto-surtidor.jpg',status:'review',archived:false,createdAt:new Date(now-45*60000).toISOString(),createdBy:'Jefa de isla',updates:[]}])}}
 function ensureIncidentPermission(){return true}
-function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],list=opsIncidents();list.unshift({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||'Jefa de isla',owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,createdAt:new Date().toISOString(),createdBy:getAppRole()==='admin'?'Administrador':'Jefa de isla',updates:[]});opsWrite(OPS_INCIDENTS_KEY,list);event.target.reset();incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
-function showToast(msg){if(!window.toast)return;toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1800)}
+function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],list=opsIncidents();list.unshift({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||'Jefa de isla',owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,createdAt:new Date().toISOString(),createdBy:getAppRole()==='admin'?'Administrador':'Jefa de isla',updates:[]});opsWrite(window.OPS_INCIDENTS_KEY,list);event.target.reset();incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
+function showToast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
 function filterOpsIncidents(f,b){opsIncidentFilter=f;document.querySelectorAll('[data-incident-filter]').forEach(x=>x.classList.toggle('active',x.dataset.incidentFilter===f));renderOpsIncidents()}
-function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const list=opsIncidents(),x=list.find(i=>i.id===id);if(!x)return;x.status=status;x.updates=x.updates||[];x.updates.push({at:new Date().toISOString(),text:`Estado cambiado a ${status}`});if(status==='resolved')x.resolvedAt=new Date().toISOString();opsWrite(OPS_INCIDENTS_KEY,list);renderOpsIncidents()}
-function archiveOpsIncident(id){if(!ensureIncidentPermission()||!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const list=opsIncidents(),x=list.find(i=>i.id===id);if(x)x.archived=true;opsWrite(OPS_INCIDENTS_KEY,list);renderOpsIncidents()}
+function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const list=opsIncidents(),x=list.find(i=>i.id===id);if(!x)return;x.status=status;x.updates=x.updates||[];x.updates.push({at:new Date().toISOString(),text:`Estado cambiado a ${status}`});if(status==='resolved')x.resolvedAt=new Date().toISOString();opsWrite(window.OPS_INCIDENTS_KEY,list);renderOpsIncidents()}
+function archiveOpsIncident(id){if(!ensureIncidentPermission()||!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const list=opsIncidents(),x=list.find(i=>i.id===id);if(x)x.archived=true;opsWrite(window.OPS_INCIDENTS_KEY,list);renderOpsIncidents()}
 function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'};root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`}<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button></div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
-function opsChecklistKey(){return `${checklistDate?.value||isoToday}|${checklistShift?.value||'Mañana'}`} function opsChecklistStore(){return opsRead(OPS_CHECKLISTS_KEY,{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:k.split('|')[0],shift:k.split('|')[1],items:{},notes:'',completed:false}} function saveOpsChecklist(d){const s=opsChecklistStore();s[opsChecklistKey()]=d;opsWrite(OPS_CHECKLISTS_KEY,s)}
+function opsChecklistKey(){return `${checklistDate?.value||isoToday}|${checklistShift?.value||'Mañana'}`} function opsChecklistStore(){return opsRead(window.OPS_CHECKLISTS_KEY,{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:k.split('|')[0],shift:k.split('|')[1],items:{},notes:'',completed:false}} function saveOpsChecklist(d){const s=opsChecklistStore();s[opsChecklistKey()]=d;opsWrite(window.OPS_CHECKLISTS_KEY,s)}
 function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
 function saveOpsChecklistNotes(){const d=getOpsChecklist();d.notes=checklistNotes.value;saveOpsChecklist(d)}
 function createIncidentFromChecklist(id,title){if(!ensureIncidentPermission())return;showView('incidents');setTimeout(()=>{incidentTitle.value=`Checklist: ${title}`;incidentDescription.value=`Problema detectado en ${title}, durante el turno ${checklistShift.value}.`;incidentShift.value=checklistShift.value;incidentType.value=id==='surtidores'?'Equipo':'Instalaciones';incidentTitle.focus()},80)}
@@ -15282,47 +15604,47 @@ function renderOpsChecklist(){
 function absenceMobileGo(target,btn){document.querySelectorAll('.absence-mobile-tabs button').forEach(x=>x.classList.toggle('active',x===btn));const el=target==='detail'?document.getElementById('absenceControlCard'):document.getElementById('absenceStatsGrid');el?.scrollIntoView({behavior:'smooth',block:'start'})}
 function absenceMobilePending(){const f=document.getElementById('absenceCoverageFilter');if(f){f.value='pending';renderAbsencePanel()}absenceMobileGo('detail')}
 function renderOpsChecklistHistory(){const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.values(opsChecklistStore()).filter(x=>x.completed).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt)).slice(0,8);root.innerHTML=rows.length?rows.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)} · ${opsEsc(x.shift)}</strong><span>${opsEsc(x.completedBy)} · ${new Date(x.completedAt).toLocaleString('es-CL')}</span></div>`).join(''):'<div class="ops-empty">Todavía no hay checklists confirmados.</div>'}
-function saveHandoff(){const from=handoffFrom.value.trim(),to=handoffTo.value.trim();if(!from||!to)return alert('Indica quién entrega y quién recibe.');const list=opsRead(HANDOFF_KEY,[]);list.unshift({id:safeRandomUUID(),date:handoffDate.value||isoToday,shift:handoffShift.value,from,to,notes:handoffNotes.value.trim(),createdAt:new Date().toISOString(),received:true});opsWrite(HANDOFF_KEY,list);handoffNotes.value='';renderHandoffs();showToast('Turno entregado y recibido')}
-function renderHandoffs(){const root=document.getElementById('handoffHistory');if(!root)return;const list=opsRead(HANDOFF_KEY,[]);root.innerHTML=list.length?list.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)} · ${opsEsc(x.shift)}</strong><span>${opsEsc(x.from)} → ${opsEsc(x.to)}</span><small>${opsEsc(x.notes||'Sin observaciones')}</small></div>`).join(''):'<div class="ops-empty">Todavía no hay entregas registradas.</div>'}
+function saveHandoff(){const from=handoffFrom.value.trim(),to=handoffTo.value.trim();if(!from||!to)return alert('Indica quién entrega y quién recibe.');const list=opsRead(window.HANDOFF_KEY,[]);list.unshift({id:safeRandomUUID(),date:handoffDate.value||isoToday,shift:handoffShift.value,from,to,notes:handoffNotes.value.trim(),createdAt:new Date().toISOString(),received:true});opsWrite(window.HANDOFF_KEY,list);handoffNotes.value='';renderHandoffs();showToast('Turno entregado y recibido')}
+function renderHandoffs(){const root=document.getElementById('handoffHistory');if(!root)return;const list=opsRead(window.HANDOFF_KEY,[]);root.innerHTML=list.length?list.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)} · ${opsEsc(x.shift)}</strong><span>${opsEsc(x.from)} → ${opsEsc(x.to)}</span><small>${opsEsc(x.notes||'Sin observaciones')}</small></div>`).join(''):'<div class="ops-empty">Todavía no hay entregas registradas.</div>'}
 function employeesForEval(){return (state?.employees||[]).filter(x=>x.active!==false)}
 function initEvaluationUI(){const m=document.getElementById('evaluationMonth'),p=document.getElementById('evaluationPeriod');if(!m)return;const now=new Date(),opts=[];for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1),v=d.toISOString().slice(0,7),label=d.toLocaleDateString('es-CL',{month:'long',year:'numeric'});opts.push(`<option value="${v}">${label}</option>`)}m.innerHTML=opts.join('');p.value=m.value;renderEvaluationEmployeeOptions();renderEvaluationCriteria();renderEvaluations()}
 function renderEvaluationEmployeeOptions(){const el=document.getElementById('evaluationEmployee');if(el)el.innerHTML=employeesForEval().map(x=>`<option value="${x.id}">${opsEsc(x.name)}</option>`).join('')}
 function renderEvaluationCriteria(){const root=document.getElementById('evaluationCriteria');if(!root)return;root.innerHTML=Object.entries(EVAL_CRITERIA).map(([section,items])=>`<div class="evaluation-block"><h4>${section}</h4>${items.map(item=>`<div class="evaluation-row"><strong>${item}</strong><div class="eval-options">${[['green','🟢 Destacado'],['yellow','🟡 Cumple'],['red','🔴 Requiere apoyo']].map(([v,l])=>`<button class="eval-option ${currentEvaluation.scores?.[item]===v?'active':''}" data-value="${v}" onclick="setEvaluationScore('${item}','${v}')">${l}</button>`).join('')}</div></div>`).join('')}</div>`).join('')}
 function setEvaluationScore(item,value){currentEvaluation.scores=currentEvaluation.scores||{};currentEvaluation.scores[item]=value;renderEvaluationCriteria()}
 function newEvaluation(){currentEvaluation={id:'',scores:{},status:'draft'};evaluationId.value='';evaluationPeriod.value=evaluationMonth.value;evaluationStrengths.value='';evaluationImprovements.value='';evaluationGoal.value='';evaluationContext.textContent='Nueva evaluación mensual';evaluationStatusPill.textContent='Borrador';renderEvaluationCriteria()}
-function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=opsRead(EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||'Jefa de isla',scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(EVAL_KEY,list);evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
-function openEvaluation(id){const x=opsRead(EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation=x;evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;renderEvaluationCriteria()}
-function renderEvaluations(){const root=document.getElementById('evaluationList');if(!root)return;const period=evaluationMonth.value,list=opsRead(EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);root.innerHTML=list.length?list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<div class="eval-card" onclick="openEvaluation('${x.id}')"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small></div>`}).join(''):'<div class="ops-empty">No hay evaluaciones para este mes.</div>'}
+function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||'Jefa de isla',scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
+function openEvaluation(id){const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation=x;evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;renderEvaluationCriteria()}
+function renderEvaluations(){const root=document.getElementById('evaluationList');if(!root)return;const period=evaluationMonth.value,list=opsRead(window.EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);root.innerHTML=list.length?list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<div class="eval-card" onclick="openEvaluation('${x.id}')"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small></div>`}).join(''):'<div class="ops-empty">No hay evaluaciones para este mes.</div>'}
 function renderOpsModules(){renderOpsIncidents();renderOpsChecklist();renderHandoffs();renderEvaluations()}
 seedOpsModules();window.addEventListener('DOMContentLoaded',()=>{if(checklistDate&&!checklistDate.value)checklistDate.value=isoToday;if(handoffDate&&!handoffDate.value)handoffDate.value=isoToday;setTimeout(()=>{renderOpsModules();initEvaluationUI()},0)});
 
 // --- V6: evaluaciones independientes + portal personal de atendedora ---
 var ATTENDANT_NOTICE_KEY='shiftcontrol_attendant_notices_v6';
 function attendantEmployee(){
-  return state.employees.find(e=>e.name==='Valentina Vega') || state.employees.find(e=>/operador|operadora|atendedor|atendedora/i.test(e.role||'')) || state.employees.find(e=>e.active);
+  return window.EmployeeModule.getAll().find(e=>e.name==='Valentina Vega') || window.EmployeeModule.getAll().find(e=>/operador|operadora|atendedor|atendedora/i.test(e.role||'')) || window.EmployeeModule.getAll().find(e=>e.active);
 }
 // applyAppRole usa el aislamiento estricto definido en la sección de perfiles.
 function closeEvaluationEditor(){const el=document.getElementById('evaluationEditor');if(el)el.hidden=true}
 function newEvaluation(){
  currentEvaluation={id:'',scores:{},status:'draft'};evaluationId.value='';evaluationPeriod.value=evaluationMonth.value;
  evaluationStrengths.value='';evaluationImprovements.value='';evaluationGoal.value='';evaluationContext.textContent='Nueva evaluación mensual';evaluationStatusPill.textContent='Borrador';
- const used=new Set(opsRead(EVAL_KEY,[]).filter(x=>x.period===evaluationPeriod.value).map(x=>x.employeeId));
+ const used=new Set(opsRead(window.EVAL_KEY,[]).filter(x=>x.period===evaluationPeriod.value).map(x=>x.employeeId));
  const first=employeesForEval().find(x=>!used.has(x.id))||employeesForEval()[0]; if(first)evaluationEmployee.value=first.id;
  document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function saveEvaluation(status){
  const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');
- const list=opsRead(EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID();
+ const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID();
  const duplicate=list.find(x=>x.employeeId===employeeId&&x.period===period&&x.id!==id);
  if(duplicate){alert('Ya existe una evaluación para esta trabajadora en ese mes. Ábrela desde el listado para continuar.');return openEvaluation(duplicate.id)}
  const idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||'Jefa de isla',scores:{...(currentEvaluation.scores||{})},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};
- if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(EVAL_KEY,list);currentEvaluation=record;evaluationId.value=id;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada');closeEvaluationEditor();
+ if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);currentEvaluation=record;evaluationId.value=id;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada');closeEvaluationEditor();
 }
 function openEvaluation(id){
- const x=opsRead(EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation={...x,scores:{...(x.scores||{})}};evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
+ const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation={...x,scores:{...(x.scores||{})}};evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderEvaluations(){
- const root=document.getElementById('evaluationList');if(!root||!document.getElementById('evaluationMonth'))return;const period=evaluationMonth.value,list=opsRead(EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();
+ const root=document.getElementById('evaluationList');if(!root||!document.getElementById('evaluationMonth'))return;const period=evaluationMonth.value,list=opsRead(window.EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();
  evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);
  const cards=list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<button class="eval-card" onclick="openEvaluation('${x.id}')"><div class="eval-card-top"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span></div><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small><span class="muted">Abrir evaluación independiente</span></button>`});
  const evaluated=new Set(list.map(x=>x.employeeId));workers.filter(w=>!evaluated.has(w.id)).forEach(w=>cards.push(`<button class="eval-card" onclick="newEvaluationFor('${w.id}')"><div class="eval-card-top"><strong>${opsEsc(w.name)}</strong><span class="eval-status">Pendiente</span></div><small>Sin evaluación para ${opsEsc(period)}</small><span class="muted">Crear evaluación</span></button>`));
@@ -15352,7 +15674,7 @@ function renderAttendanceNoticeInbox(){
  const root=document.getElementById('attendanceNoticeInbox');if(!root)return;
  
  const notices=opsRead(ATTENDANT_NOTICE_KEY,[]).filter(x=>!x.validated).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
- root.innerHTML=notices.length?notices.map(n=>{const worker=state.employees.find(e=>e.id===n.employeeId);const label={confirmed:'Confirmó asistencia',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;return `<div class="ops-list-item"><div><strong>${opsEsc(worker?.name||'Trabajadora')}</strong><span>${opsEsc(label)} · ${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL')}</span>${n.reason?`<small>Motivo: ${opsEsc(n.reason)}</small>`:''}</div><button class="btn" onclick="validateAttendanceNotice('${n.id}')">Revisado</button></div>`}).join(''):'<div class="ops-empty">No hay avisos pendientes de las atendedoras.</div>';
+ root.innerHTML=notices.length?notices.map(n=>{const worker=window.EmployeeModule.find(n.employeeId);const label={confirmed:'Confirmó asistencia',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;return `<div class="ops-list-item"><div><strong>${opsEsc(worker?.name||'Trabajadora')}</strong><span>${opsEsc(label)} · ${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL')}</span>${n.reason?`<small>Motivo: ${opsEsc(n.reason)}</small>`:''}</div><button class="btn" onclick="validateAttendanceNotice('${n.id}')">Revisado</button></div>`}).join(''):'<div class="ops-empty">No hay avisos pendientes de las atendedoras.</div>';
 }
 function validateAttendanceNotice(id){
  
@@ -15373,8 +15695,8 @@ function attendanceNoticeStatusText(n){
 function assignAttendanceCoverage(id){
   
   const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;
-  const absent=state.employees.find(e=>e.id===item.employeeId);
-  const candidates=state.employees.filter(e=>e.active&&e.id!==item.employeeId);
+  const absent=window.EmployeeModule.find(item.employeeId);
+  const candidates=window.EmployeeModule.getAll().filter(e=>e.active&&e.id!==item.employeeId);
   const names=candidates.map((e,i)=>`${i+1}. ${e.name}`).join('\n');
   const selected=prompt(`Selecciona número de reemplazo para ${absent?.name||'la trabajadora'}:\n${names}`);
   const candidate=candidates[Number(selected)-1];if(!candidate)return;
@@ -15392,7 +15714,7 @@ function renderAttendanceNoticeInbox(){
   
   const notices=opsRead(ATTENDANT_NOTICE_KEY,[]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
   const pending=notices.filter(x=>!x.validated||x.status==='absent'&&x.coverageStatus!=='resolved');if(count)count.textContent=String(pending.length);
-  root.innerHTML=notices.length?notices.slice(0,12).map(n=>{const worker=state.employees.find(e=>e.id===n.employeeId);const label={confirmed:'Confirmó que asistirá',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;const status=attendanceNoticeStatusText(n);return `<article class="notification-item ${n.status==='absent'&&n.coverageStatus!=='resolved'?'urgent':''}"><div><span class="notice-status ${n.validated?'reviewed':''}">${opsEsc(status)}</span><h4>${opsEsc(worker?.name||'Trabajadora')} · ${opsEsc(label)}</h4><p>${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}${n.reason?` · Motivo: ${opsEsc(n.reason)}`:''}</p><small>Enviado a ${attendanceNoticeRecipientText()} · ${new Date(n.createdAt).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</small></div><div class="notification-actions">${!n.validated?`<button class="btn small" onclick="validateAttendanceNotice('${n.id}')">Marcar revisado</button>`:''}${n.status==='absent'&&n.coverageStatus!=='assigned'&&n.coverageStatus!=='resolved'?`<button class="btn small primary" onclick="assignAttendanceCoverage('${n.id}')">Asignar reemplazo</button>`:''}${n.status==='absent'&&n.coverageStatus!=='resolved'?`<button class="btn small" onclick="resolveAttendanceNotice('${n.id}')">Resolver</button>`:''}</div></article>`}).join(''):'<div class="ops-empty">No hay avisos enviados por las atendedoras.</div>';
+  root.innerHTML=notices.length?notices.slice(0,12).map(n=>{const worker=window.EmployeeModule.find(n.employeeId);const label={confirmed:'Confirmó que asistirá',absent:'Informó que no asistirá',arrived:'Informó su llegada'}[n.status]||n.status;const status=attendanceNoticeStatusText(n);return `<article class="notification-item ${n.status==='absent'&&n.coverageStatus!=='resolved'?'urgent':''}"><div><span class="notice-status ${n.validated?'reviewed':''}">${opsEsc(status)}</span><h4>${opsEsc(worker?.name||'Trabajadora')} · ${opsEsc(label)}</h4><p>${new Date(n.date+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}${n.reason?` · Motivo: ${opsEsc(n.reason)}`:''}</p><small>Enviado a ${attendanceNoticeRecipientText()} · ${new Date(n.createdAt).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</small></div><div class="notification-actions">${!n.validated?`<button class="btn small" onclick="validateAttendanceNotice('${n.id}')">Marcar revisado</button>`:''}${n.status==='absent'&&n.coverageStatus!=='assigned'&&n.coverageStatus!=='resolved'?`<button class="btn small primary" onclick="assignAttendanceCoverage('${n.id}')">Asignar reemplazo</button>`:''}${n.status==='absent'&&n.coverageStatus!=='resolved'?`<button class="btn small" onclick="resolveAttendanceNotice('${n.id}')">Resolver</button>`:''}</div></article>`}).join(''):'<div class="ops-empty">No hay avisos enviados por las atendedoras.</div>';
 }
 // Sobrescribe la vista personal para mostrar destinatario y estado de recepción.
 const _renderMyShiftV9=renderMyShift;
@@ -15414,8 +15736,8 @@ function v12Activity(action,detail=''){
   const rows=v12Read(V12_ACTIVITY_KEY,[]);rows.unshift({id:safeRandomUUID(),action,detail,role:getAppRole(),at:new Date().toISOString()});v12Write(V12_ACTIVITY_KEY,rows.slice(0,200));
   try{renderV12ApprovalCenter()}catch{}
 }
-function v12EmployeeName(id){return state.employees.find(e=>e.id===id)?.name||'Trabajadora'}
-function v12PendingEvaluations(){return opsRead(EVAL_KEY,[]).filter(x=>x.status==='submitted')}
+function v12EmployeeName(id){return window.EmployeeModule.find(id)?.name||'Trabajadora'}
+function v12PendingEvaluations(){return opsRead(window.EVAL_KEY,[]).filter(x=>x.status==='submitted')}
 function v12ProblemChecklists(){return Object.values(opsChecklistStore()).filter(x=>x.completed&&x.reviewStatus!=='reviewed'&&(Object.values(x.items||{}).includes('issue')||(x.notes||'').trim()))}
 function v12PendingExtras(){return (state.additional||[]).filter(x=>x.paid!=='Pagado')}
 
@@ -15429,7 +15751,7 @@ function renderV12ApprovalCenter(){
    <div class="v12-task"><div class="v12-task-main"><span class="v12-task-icon">💰</span><div><strong>Pagos pendientes de turnos extra</strong><small>Información financiera visible solo para administración.</small></div></div><div class="v12-actions"><span class="v12-badge ${extras.length?'danger':'success'}">${extras.length}</span><button class="btn small" onclick="openV12Payments()">Revisar pagos</button></div></div>
    <div class="v12-task"><div class="v12-task-main"><span class="v12-task-icon">✓</span><div><strong>Checklists con observaciones</strong><small>Los checklists conformes se archivan automáticamente.</small></div></div><div class="v12-actions"><span class="v12-badge ${checks.length?'warning':'success'}">${checks.length}</span><button class="btn small" onclick="showView('checklists')">Revisar</button></div></div>`;
  }else{
-   const drafts=opsRead(EVAL_KEY,[]).filter(x=>x.status==='draft').length;
+   const drafts=opsRead(window.EVAL_KEY,[]).filter(x=>x.status==='draft').length;
    root.classList.add('v12-center');
    root.innerHTML=`
    <div class="v12-task"><div class="v12-task-main"><span class="v12-task-icon">✓</span><div><strong>Registrar asistencia del día</strong><small>Confirma presentes, atrasos, ausencias y reemplazos.</small></div></div><button class="btn small" onclick="showView('today')">Abrir</button></div>
@@ -15451,8 +15773,8 @@ function renderV12Payments(){
  const root=document.getElementById('v12PaymentsList');if(!root)return;const rows=state.additional||[];
  root.innerHTML=rows.length?rows.map(x=>`<div class="v12-payment-row"><div class="v12-payment-head"><div><strong>${opsEsc(v12EmployeeName(x.employeeId))}</strong><p>${opsEsc(x.date)} · Turno ${opsEsc(x.shift||'—')} · ${opsEsc(x.reason||'Turno extra')}</p></div><strong>${money(Number(x.amount||0))}</strong></div><div class="v12-actions"><span class="ops-pill">${opsEsc(x.paid||'Pendiente')}</span>${x.paid!=='Pagado'?`<button class="btn small" onclick="approveExtraV12('${x.id}')">Aprobar para pago</button><button class="btn primary small" onclick="payExtraV12('${x.id}')">Marcar pagado</button>`:''}</div></div>`).join(''):'<div class="ops-empty">No hay turnos extra registrados.</div>';
 }
-function approveExtraV12(id){if(getAppRole()!=='admin')return;const x=state.additional.find(r=>r.id===id);if(!x)return;x.paid='Aprobado para pago';x.approvedForPaymentAt=new Date().toISOString();save();renderAll();v12Activity('Turno extra aprobado para pago',`${v12EmployeeName(x.employeeId)} · ${x.date}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago aprobado')}
-function payExtraV12(id){if(getAppRole()!=='admin')return;const x=state.additional.find(r=>r.id===id);if(!x)return;x.paid='Pagado';x.paidDate=isoToday;save();renderAll();v12Activity('Turno extra marcado como pagado',`${v12EmployeeName(x.employeeId)} · ${money(Number(x.amount||0))}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago registrado')}
+function approveExtraV12(id){if(getAppRole()!=='admin')return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Aprobado para pago',approvedForPaymentAt:new Date().toISOString()},{save:false});save();renderAll();v12Activity('Turno extra aprobado para pago',`${v12EmployeeName(x.employeeId)} · ${x.date}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago aprobado')}
+function payExtraV12(id){if(getAppRole()!=='admin')return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Pagado',paidDate:isoToday},{save:false});save();renderAll();v12Activity('Turno extra marcado como pagado',`${v12EmployeeName(x.employeeId)} · ${money(Number(x.amount||0))}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago registrado')}
 
 // Reemplaza confirmación por envío y archiva automáticamente los checklists sin excepciones.
 completeOpsChecklist=function(){
@@ -15463,7 +15785,7 @@ completeOpsChecklist=function(){
  d.reviewStatus=hasIssue?'pending_review':'auto_archived';d.reviewedAt=hasIssue?'':new Date().toISOString();d.reviewedBy=hasIssue?'':'Sistema';
  saveOpsChecklist(d);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist enviado',`${d.date} · ${d.shift}${hasIssue?' · Con observaciones':' · Sin observaciones'}`);showToast(hasIssue?'Checklist enviado para revisión':'Checklist recibido sin observaciones');
 }
-function reviewChecklistV12(key){if(getAppRole()!=='admin')return;const store=opsChecklistStore(),d=store[key];if(!d)return;d.reviewStatus='reviewed';d.reviewedAt=new Date().toISOString();d.reviewedBy='Sebastián Correa';opsWrite(OPS_CHECKLISTS_KEY,store);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist marcado como revisado',`${d.date} · ${d.shift}`);showToast('Checklist revisado')}
+function reviewChecklistV12(key){if(getAppRole()!=='admin')return;const store=opsChecklistStore(),d=store[key];if(!d)return;d.reviewStatus='reviewed';d.reviewedAt=new Date().toISOString();d.reviewedBy='Sebastián Correa';opsWrite(window.OPS_CHECKLISTS_KEY,store);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist marcado como revisado',`${d.date} · ${d.shift}`);showToast('Checklist revisado')}
 const _renderOpsChecklistHistoryV11=renderOpsChecklistHistory;
 renderOpsChecklistHistory=function(){
  const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([,x])=>x.completed).sort((a,b)=>new Date(b[1].completedAt)-new Date(a[1].completedAt)).slice(0,10);
@@ -15478,14 +15800,14 @@ saveEvaluation=function(status){
  renderV12ApprovalCenter();
 }
 function approveEvaluationV12(){
- if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden aprobar evaluaciones enviadas a revisión.');
- x.status='approved';x.approvedAt=new Date().toISOString();x.approvedBy='Sebastián Correa';x.updatedAt=x.approvedAt;opsWrite(EVAL_KEY,list);currentEvaluation=x;evaluationStatusPill.textContent='Aprobada';renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación aprobada',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación aprobada');closeEvaluationEditor();
+ if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden aprobar evaluaciones enviadas a revisión.');
+ x.status='approved';x.approvedAt=new Date().toISOString();x.approvedBy='Sebastián Correa';x.updatedAt=x.approvedAt;opsWrite(window.EVAL_KEY,list);currentEvaluation=x;evaluationStatusPill.textContent='Aprobada';renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación aprobada',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación aprobada');closeEvaluationEditor();
 }
 function returnEvaluationV12(){
- if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;x.status='draft';x.returnNote=note.trim();x.returnedAt=new Date().toISOString();x.returnedBy='Sebastián Correa';x.updatedAt=x.returnedAt;opsWrite(EVAL_KEY,list);renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
+ if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;x.status='draft';x.returnNote=note.trim();x.returnedAt=new Date().toISOString();x.returnedBy='Sebastián Correa';x.updatedAt=x.returnedAt;opsWrite(window.EVAL_KEY,list);renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
 }
 const _openEvaluationV11=openEvaluation;
-openEvaluation=function(id){_openEvaluationV11(id);const x=opsRead(EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;const editor=document.getElementById('evaluationEditor');if(x.returnNote){let note=editor.querySelector('.v12-review-note');if(!note){note=document.createElement('div');note.className='v12-review-note';editor.querySelector('.ops-panel-head')?.after(note)}note.textContent=`Corrección solicitada: ${x.returnNote}`}else editor.querySelector('.v12-review-note')?.remove();const locked=x.status==='approved';editor.querySelectorAll('input,textarea,select').forEach(el=>el.disabled=locked||getAppRole()==='admin');}
+openEvaluation=function(id){_openEvaluationV11(id);const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;const editor=document.getElementById('evaluationEditor');if(x.returnNote){let note=editor.querySelector('.v12-review-note');if(!note){note=document.createElement('div');note.className='v12-review-note';editor.querySelector('.ops-panel-head')?.after(note)}note.textContent=`Corrección solicitada: ${x.returnNote}`}else editor.querySelector('.v12-review-note')?.remove();const locked=x.status==='approved';editor.querySelectorAll('input,textarea,select').forEach(el=>el.disabled=locked||getAppRole()==='admin');}
 
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{renderV12ApprovalCenter();renderOpsChecklistHistory();},250));
 const _applyAppRoleV11=applyAppRole;
@@ -15658,50 +15980,9 @@ document.querySelectorAll('.nav-btn').forEach(button=>{
 
 // V51 · Launcher compacto: solo icono, con cambio a cerrar al abrir el Centro.
 
-// --- V14.15 Login local de prueba ---
-const AUTH_USERS_KEY='shiftcontrol_auth_users_v1415';
-const AUTH_SESSION_KEY='shiftcontrol_auth_session_v1415';
-const AUTH_SESSION_TEMP_KEY='shiftcontrol_auth_session_temp_v1415';
-
-function defaultAuthUsers(){
-  return [
-    {id:'admin-local',username:'admin',password:'admin123',name:'Sebastián Correa',role:'admin',active:true},
-    {id:'chief-local',username:'jefa',password:'jefa123',name:'María González',role:'chief',active:true}
-  ];
-}
-function getAuthUsers(){
-  try{
-    const stored=JSON.parse(localStorage.getItem(AUTH_USERS_KEY));
-    if(Array.isArray(stored)&&stored.length)return stored;
-  }catch(_error){}
-  const initial=defaultAuthUsers();
-  try{localStorage.setItem(AUTH_USERS_KEY,JSON.stringify(initial))}catch(_error){}
-  return initial;
-}
-function getAuthSession(){
-  try{
-    return JSON.parse(sessionStorage.getItem(AUTH_SESSION_TEMP_KEY)||localStorage.getItem(AUTH_SESSION_KEY)||'null');
-  }catch(_error){return null}
-}
-function saveAuthSession(user,remember){
-  const value=JSON.stringify({userId:user.id,username:user.username,name:user.name,role:user.role,createdAt:new Date().toISOString()});
-  try{
-    sessionStorage.removeItem(AUTH_SESSION_TEMP_KEY);
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    if(remember)localStorage.setItem(AUTH_SESSION_KEY,value);
-    else sessionStorage.setItem(AUTH_SESSION_TEMP_KEY,value);
-  }catch(_error){}
-}
-function clearAuthSession(){
-  try{
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    sessionStorage.removeItem(AUTH_SESSION_TEMP_KEY);
-  }catch(_error){}
-}
+// --- Supabase Auth + contexto de empresa ---
 function authenticatedUser(){
-  const session=getAuthSession();
-  if(!session)return null;
-  return getAuthUsers().find(user=>user.id===session.userId&&user.active!==false)||null;
+  return window.ShiftControlAuth?.legacyUser()||null;
 }
 function applyAuthenticatedIdentity(user){
   if(!user)return;
@@ -15737,45 +16018,112 @@ function showLoginScreen(message=''){
     screen.classList.remove('hidden');
     screen.setAttribute('aria-hidden','false');
   }
+  const loginForm=document.getElementById('loginForm');
+  const invitationForm=document.getElementById('invitePasswordForm');
+  if(loginForm)loginForm.hidden=false;
+  if(invitationForm)invitationForm.hidden=true;
+  const title=document.getElementById('loginTitle');
+  const subtitle=document.getElementById('loginSubtitle');
+  if(title)title.textContent='Iniciar sesión';
+  if(subtitle)subtitle.textContent='Accede con tu cuenta de ShiftControl.';
   const error=document.getElementById('loginError');
   if(error)error.textContent=message;
   setTimeout(()=>document.getElementById('loginUsername')?.focus(),80);
 }
-function loginShiftControl(event){
+function showInvitationScreen(message=''){
+  document.body.dataset.authenticated='false';
+  document.body.classList.add('auth-locked');
+  const screen=document.getElementById('loginScreen');
+  if(screen){
+    screen.classList.remove('hidden');
+    screen.setAttribute('aria-hidden','false');
+  }
+  const loginForm=document.getElementById('loginForm');
+  const invitationForm=document.getElementById('invitePasswordForm');
+  if(loginForm)loginForm.hidden=true;
+  if(invitationForm)invitationForm.hidden=false;
+  const title=document.getElementById('loginTitle');
+  const subtitle=document.getElementById('loginSubtitle');
+  if(title)title.textContent='Activa tu cuenta';
+  if(subtitle)subtitle.textContent='Crea una contraseña para aceptar la invitación.';
+  const error=document.getElementById('invitePasswordError');
+  if(error)error.textContent=message;
+  setTimeout(()=>document.getElementById('invitePassword')?.focus(),80);
+}
+async function loginShiftControl(event){
   event?.preventDefault();
-  const username=(document.getElementById('loginUsername')?.value||'').trim().toLowerCase();
+  const email=(document.getElementById('loginUsername')?.value||'').trim().toLowerCase();
   const password=document.getElementById('loginPassword')?.value||'';
   const remember=document.getElementById('loginRemember')?.checked!==false;
-  const user=getAuthUsers().find(item=>item.active!==false&&item.username.toLowerCase()===username&&item.password===password);
-  if(!user){
-    showLoginScreen('Usuario o contraseña incorrectos.');
+  const submit=document.querySelector('#loginForm .login-submit');
+  if(submit)submit.disabled=true;
+
+  try{
+    await window.ShiftControlAuth.signIn(email,password,{remember});
+    const user=authenticatedUser();
+    applyAuthenticatedIdentity(user);
+    if(typeof showToast==='function')showToast(`Bienvenido, ${user.name}`);
+  }catch(error){
+    const message=String(error?.code||'').startsWith('AUTH_')
+      ?error.message
+      :'Correo o contraseña incorrectos.';
+    showLoginScreen(message);
     const passwordInput=document.getElementById('loginPassword');
     if(passwordInput){passwordInput.value='';passwordInput.focus()}
-    return false;
+  }finally{
+    if(submit)submit.disabled=false;
   }
-  saveAuthSession(user,remember);
-  applyAuthenticatedIdentity(user);
-  if(typeof showToast==='function')showToast(`Bienvenido, ${user.name}`);
+
   return false;
 }
-function logoutShiftControl(){
-  clearAuthSession();
+async function logoutShiftControl(){
+  try{
+    await window.ShiftControlAuth?.signOut();
+  }catch(_error){}
   const password=document.getElementById('loginPassword');
   if(password)password.value='';
   showLoginScreen('Sesión cerrada correctamente.');
 }
-function fillDemoLogin(role){
-  const values=role==='chief'?['jefa','jefa123']:['admin','admin123'];
-  const username=document.getElementById('loginUsername');
-  const password=document.getElementById('loginPassword');
-  if(username)username.value=values[0];
-  if(password)password.value=values[1];
-  document.getElementById('loginError').textContent='';
-  password?.focus();
+async function acceptShiftControlInvitation(event){
+  event?.preventDefault();
+  const password=document.getElementById('invitePassword')?.value||'';
+  const confirmation=document.getElementById('invitePasswordConfirm')?.value||'';
+  const error=document.getElementById('invitePasswordError');
+  const submit=document.querySelector('#invitePasswordForm .login-submit');
+
+  if(password!==confirmation){
+    if(error)error.textContent='Las contraseñas no coinciden.';
+    document.getElementById('invitePasswordConfirm')?.focus();
+    return false;
+  }
+
+  if(submit)submit.disabled=true;
+  if(error)error.textContent='';
+
+  try{
+    await window.ShiftControlAuth.acceptInvitation(password);
+    const user=authenticatedUser();
+    applyAuthenticatedIdentity(user);
+    if(typeof showToast==='function')showToast('Cuenta activada correctamente');
+  }catch(invitationError){
+    const message=invitationError?.message||'No fue posible establecer la contraseña.';
+    if(window.ShiftControlAuth?.isInvitationPending()){
+      showInvitationScreen(message);
+    }else{
+      showLoginScreen(message);
+    }
+  }finally{
+    if(submit)submit.disabled=false;
+  }
+
+  return false;
 }
-function initializeShiftControlAuth(){
-  getAuthUsers();
+async function initializeShiftControlAuth(){
   document.getElementById('loginForm')?.addEventListener('submit',loginShiftControl);
+  document.getElementById('invitePasswordForm')?.addEventListener(
+    'submit',
+    acceptShiftControlInvitation
+  );
   document.getElementById('toggleLoginPassword')?.addEventListener('click',()=>{
     const input=document.getElementById('loginPassword');
     const button=document.getElementById('toggleLoginPassword');
@@ -15785,9 +16133,21 @@ function initializeShiftControlAuth(){
     button.textContent=visible?'Ver':'Ocultar';
     button.setAttribute('aria-label',visible?'Mostrar contraseña':'Ocultar contraseña');
   });
-  const user=authenticatedUser();
-  if(user)applyAuthenticatedIdentity(user);
-  else showLoginScreen();
+  try{
+    await window.ShiftControlAuth.initialize();
+    if(window.ShiftControlAuth.isInvitationPending()){
+      showInvitationScreen();
+      return;
+    }
+    const user=authenticatedUser();
+    if(user)applyAuthenticatedIdentity(user);
+    else showLoginScreen();
+  }catch(error){
+    const message=String(error?.code||'').startsWith('AUTH_')
+      ?error.message
+      :'No fue posible validar la sesión. Intenta nuevamente.';
+    showLoginScreen(message);
+  }
 }
 window.addEventListener('DOMContentLoaded',initializeShiftControlAuth);
 
@@ -15806,7 +16166,7 @@ function evaluationScoreMeta(value){
   }[value]||{label:'Sin responder',short:'Pendiente',icon:'○',points:0};
 }
 function updateEvaluationPersonCard(){
-  const worker=state.employees.find(e=>e.id===document.getElementById('evaluationEmployee')?.value);
+  const worker=window.EmployeeModule.find(document.getElementById('evaluationEmployee')?.value);
   const avatar=document.getElementById('evaluationPersonAvatar');
   const role=document.getElementById('evaluationPersonRole');
   if(avatar)avatar.textContent=(worker?.name||'TR').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
@@ -15889,7 +16249,7 @@ function evaluationScoreSummary(){
 function renderEvaluationReviewSummary(){
   const root=document.getElementById('evaluationReviewSummary');
   if(!root)return;
-  const worker=state.employees.find(e=>e.id===evaluationEmployee.value);
+  const worker=window.EmployeeModule.find(evaluationEmployee.value);
   const summary=evaluationScoreSummary();
   const grouped={};
   summary.rows.forEach(({section,item})=>{
@@ -15952,7 +16312,7 @@ function financeStore(){
     const parsed=JSON.parse(localStorage.getItem(FINANCE_KEY)||'null');
     if(parsed&&Array.isArray(parsed.shortages)&&Array.isArray(parsed.reconciliations)&&Array.isArray(parsed.expenses))return parsed;
   }catch(_error){}
-  const employees=state.employees.filter(e=>e.active!==false);
+  const employees=window.EmployeeModule.getAll().filter(e=>e.active!==false);
   const sample={
     shortages:[
       {id:safeRandomUUID(),date:isoToday,employeeId:employees[0]?.id||'',shift:'A',amount:25000,reason:'Error de vuelto',status:'Pendiente',notes:'Diferencia detectada durante la cuadratura.',fileName:'',createdAt:new Date().toISOString()},
@@ -15973,7 +16333,7 @@ function saveFinanceStore(store){
   localStorage.setItem(FINANCE_KEY,JSON.stringify(store));
 }
 function financeEmployeeName(id){
-  return state.employees.find(e=>e.id===id)?.name||'Sin trabajador';
+  return window.EmployeeModule.find(id)?.name||'Sin trabajador';
 }
 function financeMonthValue(){
   return document.getElementById('financeMonth')?.value||isoToday.slice(0,7);
@@ -16189,7 +16549,7 @@ function openFinanceEntry(type){
 }
 function populateFinanceEmployees(){
   const select=document.getElementById('financeEntryEmployee');
-  if(select)select.innerHTML=state.employees.filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${opsEsc(e.name)}</option>`).join('');
+  if(select)select.innerHTML=window.EmployeeModule.getAll().filter(e=>e.active!==false).map(e=>`<option value="${e.id}">${opsEsc(e.name)}</option>`).join('');
 }
 function configureFinanceModal(type){
   const titles={shortage:'Registrar faltante de caja',reconciliation:'Nueva cuadratura de caja',expense:'Registrar gasto operativo'};
@@ -16316,7 +16676,7 @@ function depositStore(){
     const rows=JSON.parse(localStorage.getItem(DEPOSIT_KEY)||'null');
     if(Array.isArray(rows))return rows;
   }catch(_error){}
-  const workers=state.employees.filter(e=>e.active!==false);
+  const workers=window.EmployeeModule.getAll().filter(e=>e.active!==false);
   const seed=[
     {id:safeRandomUUID(),date:isoToday,shift:'A',type:'itam',employeeId:workers[0]?.id||'',amount:545300,time:'14:00',reference:'ITAM-A',status:'Registrado',notes:'Efectivo informado por iTam.',fileName:'',createdAt:new Date().toISOString()},
     {id:safeRandomUUID(),date:isoToday,shift:'A',type:'safe',employeeId:workers[0]?.id||'',amount:120000,time:'14:10',reference:'CF-A',status:'Guardado',notes:'Monto guardado para depósito del día siguiente.',fileName:'',createdAt:new Date().toISOString()},
@@ -16573,7 +16933,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const notices=getNotices(); const pct=planned.length?Math.round(confirmed.length/planned.length*100):100; const metrics=[['Personal',`${confirmed.length}/${planned.length||st.employees?.filter(e=>e.active!==false).length||0}`,'presentes / planificados'],['Ausencias',abs.length,'registradas hoy'],['Reemplazos',repl.length,'movimientos vinculados'],['Cobertura',`${pct}%`,'dotación confirmada'],['Turnos extra',add.length,'jornadas del día'],['Alertas',notices.length,'requieren revisión']]; root.innerHTML=metrics.map(m=>`<article class="v16-station-metric"><span>${m[0]}</span><strong>${m[1]}</strong><small>${m[2]}</small></article>`).join('');
     const health=document.getElementById('v16Health'); health.textContent=notices.some(n=>n.sev==='high')?'Requiere atención':'Operación estable'; health.className='v16-health '+(notices.some(n=>n.sev==='high')?'warn':'good');
     const pieces=[]; pieces.push(`<strong>${confirmed.length}</strong> trabajador(es) confirmados de <strong>${planned.length||0}</strong> planificados.`); pieces.push(abs.length?`Se registran <strong>${abs.length} excepción(es)</strong>.`:'No hay excepciones registradas.'); pieces.push(repl.length?`Hay <strong>${repl.length} reemplazo(s)</strong> vinculados a la jornada.`:'No se registran reemplazos hoy.'); pieces.push(activeAbs.length?`Existen <strong>${activeAbs.length} ausencia(s) activa(s)</strong>.`:'No existen ausencias prolongadas activas.'); pieces.push(notices.length?`El sistema detecta <strong>${notices.length} asunto(s)</strong> que conviene revisar.`:'Todos los controles principales están al día.'); document.getElementById('v16DailySummary').innerHTML=pieces.join(' ');
-    const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===date):[]; const checklistDone=checklist.some(x=>x.completed); const closure=(st.dailyClosures||[]).includes(date); const workflows=[['Inicio de turno','Confirmar asistencia y resolver excepciones',planned.length?Math.round(ex.length/planned.length*100):0,'today'],['Control operativo','Completar checklist de la Jefa de Isla',checklistDone?100:0,'checklists'],['Cierre de turno','Conciliar, registrar entrega y cerrar jornada',closure?100:0,'handoff']]; document.getElementById('v16Workflows').innerHTML=workflows.map(w=>`<article class="v16-workflow" onclick="v16Go('${w[3]}')"><b>${w[0]}</b><small>${w[1]}</small><div class="v16-workflow-progress"><i style="width:${Math.max(0,Math.min(100,w[2]))}%"></i></div><small>${w[2]}% completado</small></article>`).join('');
+    const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===date):[]; const checklistDone=checklist.some(x=>x.completed); const closure=DailyClosureModule.isClosed(date); const workflows=[['Inicio de turno','Confirmar asistencia y resolver excepciones',planned.length?Math.round(ex.length/planned.length*100):0,'today'],['Control operativo','Completar checklist de la Jefa de Isla',checklistDone?100:0,'checklists'],['Cierre de turno','Conciliar, registrar entrega y cerrar jornada',closure?100:0,'handoff']]; document.getElementById('v16Workflows').innerHTML=workflows.map(w=>`<article class="v16-workflow" onclick="v16Go('${w[3]}')"><b>${w[0]}</b><small>${w[1]}</small><div class="v16-workflow-progress"><i style="width:${Math.max(0,Math.min(100,w[2]))}%"></i></div><small>${w[2]}% completado</small></article>`).join('');
     const count=document.getElementById('v16NotificationCount'); if(count){count.textContent=notices.length;count.style.display=notices.length?'inline-grid':'none'}
   }
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();v16OpenSearch()}if(e.key==='Escape')v16CloseOverlay()});
@@ -16773,7 +17133,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
   function renderNotificationDrawer(){const all=normalizedNotices(),items=filteredNotices();const filters=[['all','Todas'],['urgent','Urgentes'],['people','Personal'],['operations','Operación'],['finance','Finanzas']];document.getElementById('v17NoticeFilters').innerHTML=filters.map(f=>`<button class="v17-filter ${currentFilter===f[0]?'active':''}" onclick="v17SetFilter('${f[0]}')">${f[1]}</button>`).join('');document.getElementById('v17DrawerSubtitle').textContent=`${all.length} asunto(s) detectado(s)`;document.getElementById('v17NotificationList').innerHTML=items.length?items.map(n=>`<article class="v17-notice" style="${n.reviewed?'opacity:.58':''}" onclick="v17OpenNotice('${n.id}','${n.view}')"><div class="v17-notice-icon">${n.icon}</div><div><strong>${esc(n.title)}</strong><small>${esc(n.detail)}</small></div><span class="go">↗</span></article>`).join(''):'<div class="task-empty">No hay notificaciones en este filtro.</div>'}
   window.v17OpenNotice=(id,view)=>{const r=load(REVIEW_KEY,[]);if(!r.includes(id)){r.push(id);save(REVIEW_KEY,r)}audit('Revisó una notificación',view);v17CloseNotificationDrawer();if(typeof window.showView==='function')window.showView(view)};
   window.v17MarkNotificationsReviewed=()=>{save(REVIEW_KEY,normalizedNotices().map(n=>n.id));renderNotificationDrawer();toast('Notificaciones revisadas','Se conservarán para consulta, pero quedarán atenuadas.');audit('Marcó todas las notificaciones como revisadas')};
-  function generatedTasks(){const s=st(),d=date(),tasks=[];const ex=(s.executions||[]).filter(x=>x.date===d);const uncovered=ex.filter(x=>!['Presente','Atrasado'].includes(x.status)&&!x.replacementId&&!x.coveredByEmployeeId);if(uncovered.length)tasks.push({id:'cover-'+d,title:`Asignar ${uncovered.length} reemplazo(s)`,sub:'Hay ausencias sin cobertura vinculada.',view:'today'});const add=(s.additional||[]).filter(x=>x.date===d&&!(x.paid||x.status==='Pagado'));if(add.length)tasks.push({id:'pay-'+d,title:`Revisar ${add.length} jornada(s) extra`,sub:'Existen pagos o validaciones pendientes.',view:'additional'});const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===d):[];if(!checklist.some(x=>x.completed))tasks.push({id:'check-'+d,title:'Completar checklist operativo',sub:'Control diario de la Jefa de Isla.',view:'checklists'});if(!(s.dailyClosures||[]).includes(d))tasks.push({id:'close-'+d,title:'Cerrar y entregar el turno',sub:'La jornada todavía no figura como cerrada.',view:'handoff'});return tasks}
+  function generatedTasks(){const s=st(),d=date(),tasks=[];const ex=(s.executions||[]).filter(x=>x.date===d);const uncovered=ex.filter(x=>!['Presente','Atrasado'].includes(x.status)&&!x.replacementId&&!x.coveredByEmployeeId);if(uncovered.length)tasks.push({id:'cover-'+d,title:`Asignar ${uncovered.length} reemplazo(s)`,sub:'Hay ausencias sin cobertura vinculada.',view:'today'});const add=(s.additional||[]).filter(x=>x.date===d&&!(x.paid||x.status==='Pagado'));if(add.length)tasks.push({id:'pay-'+d,title:`Revisar ${add.length} jornada(s) extra`,sub:'Existen pagos o validaciones pendientes.',view:'additional'});const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===d):[];if(!checklist.some(x=>x.completed))tasks.push({id:'check-'+d,title:'Completar checklist operativo',sub:'Control diario de la Jefa de Isla.',view:'checklists'});if(!DailyClosureModule.isClosed(d))tasks.push({id:'close-'+d,title:'Cerrar y entregar el turno',sub:'La jornada todavía no figura como cerrada.',view:'handoff'});return tasks}
   function taskState(){return load(TASK_KEY,{done:[],custom:[]})}
   window.v17ToggleTask=id=>{const t=taskState(),before=JSON.parse(JSON.stringify(t));t.done=t.done.includes(id)?t.done.filter(x=>x!==id):[...t.done,id];save(TASK_KEY,t);lastUndo=()=>save(TASK_KEY,before);toast(t.done.includes(id)?'Pendiente completado':'Pendiente reabierto','Puedes deshacer este cambio.',true);audit(t.done.includes(id)?'Completó un pendiente':'Reabrió un pendiente',id);renderV17()};
   window.v17RemoveTask=id=>{const t=taskState(),before=JSON.parse(JSON.stringify(t));t.custom=t.custom.filter(x=>x.id!==id);save(TASK_KEY,t);lastUndo=()=>save(TASK_KEY,before);toast('Pendiente eliminado','Puedes recuperarlo durante unos segundos.',true);audit('Eliminó un pendiente',id);renderV17()};
@@ -16787,7 +17147,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
     ['Revisar incidencias',incidents.length===0,'incidents',incidents.length?`${incidents.length} incidencia(s) abierta(s)`:'Sin incidencias abiertas'],
     ['Conciliar caja',finance.length>0,'finance','Validar movimiento financiero diario'],
     ['Confirmar depósito',finance.some(x=>x.deposit||x.deposited||x.status==='Depositado'),'finance','Verificar entrega o depósito'],
-    ['Entregar turno',(s.dailyClosures||[]).includes(d),'handoff','Cerrar formalmente la jornada']
+    ['Entregar turno',DailyClosureModule.isClosed(d),'handoff','Cerrar formalmente la jornada']
   ]}
   function renderCloseFlow(){const root=document.getElementById('v17CloseFlow');if(!root)return;const steps=closeSteps();document.getElementById('v17CloseProgress').textContent=`${steps.filter(x=>x[1]).length}/${steps.length}`;root.innerHTML=steps.map((x,i)=>`<div class="v17-close-step ${x[1]?'complete':''}" onclick="showView('${x[2]}')"><span class="num">${x[1]?'✓':i+1}</span><div><strong>${x[0]}</strong><small>${esc(x[3])}</small></div><span class="status">${x[1]?'LISTO':'PENDIENTE'}</span></div>`).join('')}
   function integrity(){const s=st(),d=date(),issues=[];const ex=(s.executions||[]).filter(x=>x.date===d);const plans=(s.plans||[]).filter(x=>x.date===d);const doubles={};plans.forEach(p=>{const k=`${p.employeeId}-${p.date}-${p.code}`;doubles[k]=(doubles[k]||0)+1});if(Object.values(doubles).some(n=>n>1))issues.push(['bad','Asignaciones duplicadas','Un trabajador aparece más de una vez en el mismo turno.','weekly']);const uncovered=ex.filter(x=>!['Presente','Atrasado'].includes(x.status)&&!x.replacementId&&!x.coveredByEmployeeId);if(uncovered.length)issues.push(['warn','Ausencias sin cobertura',`${uncovered.length} registro(s) requieren reemplazo.`,'today']);const add=(s.additional||[]).filter(a=>a.date===d);const orphan=add.filter(a=>!a.employeeId||!(s.employees||[]).some(e=>e.id===a.employeeId));if(orphan.length)issues.push(['bad','Jornadas extra incompletas',`${orphan.length} pago(s) sin trabajador válido.`,'additional']);const contracts=(s.employees||[]).filter(e=>e.active!==false&&e.contractEnd&&e.contractEnd<d);if(contracts.length)issues.push(['warn','Contratos vencidos',`${contracts.length} trabajador(es) siguen activos.`,'employees']);const evals=s.evaluations||[];const seen=new Set(),dup=evals.filter(e=>{const k=`${e.employeeId}-${(e.date||e.createdAt||'').slice(0,10)}`;if(seen.has(k))return true;seen.add(k);return false});if(dup.length)issues.push(['warn','Evaluaciones posiblemente duplicadas',`${dup.length} registro(s) comparten trabajador y fecha.`,'evaluations']);if(!issues.length)issues.push(['ok','Integridad correcta','No se detectaron inconsistencias críticas.','dashboard']);return issues}
@@ -16821,9 +17181,38 @@ body[data-role="chief"] .v17-chief-today{display:block}
 })();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="src/config.js"></script>
+<script src="src/auth.js"></script>
 <script src="src/v20-interface.js"></script>
+<script src="src/storage.js"></script>
 
+<script src="src/app/state.js"></script>
+<script src="src/app/bridge.js"></script>
 
+<script>
+window.EmployeeModule = window.EmployeeModule || {
+  getAll(){
+    return [];
+  },
+  find(){
+    return null;
+  },
+  count(){
+    return 0;
+  }
+};
+</script>
+
+<script src="src/app/app.js"></script>
+
+<script>
+window.addEventListener("DOMContentLoaded",()=>{
+  if(typeof initApp === "function"){
+    initApp();
+  }
+});
+</script>
 <script id="v52-architecture-ux-script">
 (function(){
   function mountWorkCenter(){

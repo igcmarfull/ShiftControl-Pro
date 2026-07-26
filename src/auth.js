@@ -1,0 +1,350 @@
+(function(){
+  'use strict';
+
+  const config=window.SHIFTCONTROL_CONFIG;
+  const LEGACY_AUTH_KEYS=[
+    'shiftcontrol_auth_users_v1415',
+    'shiftcontrol_auth_session_v1415',
+    'shiftcontrol_auth_session_temp_v1415'
+  ];
+  const SESSION_ONLY_KEY='shiftcontrol_auth_session_only_v1';
+  const SESSION_TAB_KEY='shiftcontrol_auth_session_tab_v1';
+  const INVITATION_PENDING_KEY='shiftcontrol_auth_invitation_pending_v1';
+  let client=null;
+  let currentContext=null;
+  let initialized=false;
+  let initializePromise=null;
+  let invitationPending=captureInvitationCallback();
+
+  function hasInvitationType(params){
+    return params.get('type')==='invite';
+  }
+
+  function captureInvitationCallback(){
+    try{
+      const searchParams=new URLSearchParams(window.location.search||'');
+      const hashParams=new URLSearchParams(
+        String(window.location.hash||'').replace(/^#/,'')
+      );
+      const detected=
+        hasInvitationType(searchParams)||
+        hasInvitationType(hashParams);
+
+      if(detected){
+        sessionStorage.setItem(INVITATION_PENDING_KEY,'true');
+      }
+
+      return (
+        detected||
+        sessionStorage.getItem(INVITATION_PENDING_KEY)==='true'
+      );
+    }catch(_error){
+      return false;
+    }
+  }
+
+  function clearInvitationCallback(){
+    invitationPending=false;
+
+    try{
+      sessionStorage.removeItem(INVITATION_PENDING_KEY);
+
+      if(!window.history?.replaceState||!window.location)return;
+
+      const url=new URL(window.location.href);
+      [
+        'type',
+        'token',
+        'token_hash',
+        'access_token',
+        'refresh_token',
+        'expires_in',
+        'expires_at',
+        'token_type',
+        'error',
+        'error_code',
+        'error_description'
+      ].forEach(key=>url.searchParams.delete(key));
+      url.hash='';
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${url.search}`
+      );
+    }catch(_error){}
+  }
+
+  function getClient(){
+    if(client)return client;
+
+    if(!config?.supabaseUrl||!config?.supabasePublishableKey){
+      throw new Error('Falta la configuración de Supabase.');
+    }
+
+    if(!window.supabase?.createClient){
+      throw new Error('No se cargó la librería de Supabase.');
+    }
+
+    client=window.supabase.createClient(
+      config.supabaseUrl,
+      config.supabasePublishableKey,
+      {
+        auth:{
+          autoRefreshToken:true,
+          persistSession:true,
+          detectSessionInUrl:true
+        }
+      }
+    );
+
+    return client;
+  }
+
+  function clearLegacyAuth(){
+    try{
+      LEGACY_AUTH_KEYS.forEach(key=>localStorage.removeItem(key));
+      LEGACY_AUTH_KEYS.forEach(key=>sessionStorage.removeItem(key));
+    }catch(_error){}
+  }
+
+  function setPersistencePreference(remember){
+    try{
+      if(remember){
+        localStorage.removeItem(SESSION_ONLY_KEY);
+        sessionStorage.removeItem(SESSION_TAB_KEY);
+      }else{
+        localStorage.setItem(SESSION_ONLY_KEY,'true');
+        sessionStorage.setItem(SESSION_TAB_KEY,'true');
+      }
+    }catch(_error){}
+  }
+
+  async function enforceSessionPreference(){
+    try{
+      const sessionOnly=localStorage.getItem(SESSION_ONLY_KEY)==='true';
+      const currentTab=sessionStorage.getItem(SESSION_TAB_KEY)==='true';
+
+      if(sessionOnly&&!currentTab){
+        await getClient().auth.signOut({scope:'local'});
+        localStorage.removeItem(SESSION_ONLY_KEY);
+      }
+    }catch(_error){}
+  }
+
+  function accessError(message,code){
+    const error=new Error(message);
+    error.code=code;
+    return error;
+  }
+
+  function legacyRole(role){
+    return role==='CHIEF'?'chief':'admin';
+  }
+
+  function freezeContext(user,profile,membership,company){
+    const context={
+      userId:user.id,
+      email:user.email||'',
+      displayName:profile.display_name,
+      companyId:company.id,
+      companyName:company.name,
+      role:membership.role,
+      legacyRole:legacyRole(membership.role)
+    };
+
+    return Object.freeze(context);
+  }
+
+  async function loadContext(user){
+    const supabaseClient=getClient();
+    const profileResult=await supabaseClient
+      .from('profiles')
+      .select('id, display_name, active')
+      .eq('id',user.id)
+      .maybeSingle();
+
+    if(profileResult.error)throw profileResult.error;
+    if(!profileResult.data||profileResult.data.active!==true){
+      throw accessError(
+        'Tu perfil no está habilitado.',
+        'AUTH_PROFILE_INACTIVE'
+      );
+    }
+
+    const membershipResult=await supabaseClient
+      .from('company_memberships')
+      .select('company_id, user_id, role, active')
+      .eq('user_id',user.id)
+      .eq('active',true);
+
+    if(membershipResult.error)throw membershipResult.error;
+
+    const memberships=membershipResult.data||[];
+    if(memberships.length!==1){
+      throw accessError(
+        'Tu cuenta no tiene una empresa activa asignada.',
+        'AUTH_COMPANY_MEMBERSHIP_INVALID'
+      );
+    }
+
+    const membership=memberships[0];
+    if(!['ADMIN','CHIEF'].includes(membership.role)){
+      throw accessError(
+        'Tu cuenta no tiene un rol válido.',
+        'AUTH_ROLE_INVALID'
+      );
+    }
+
+    const companyResult=await supabaseClient
+      .from('companies')
+      .select('id, name, active')
+      .eq('id',membership.company_id)
+      .maybeSingle();
+
+    if(companyResult.error)throw companyResult.error;
+    if(!companyResult.data||companyResult.data.active!==true){
+      throw accessError(
+        'La empresa asociada a tu cuenta no está habilitada.',
+        'AUTH_COMPANY_INACTIVE'
+      );
+    }
+
+    return freezeContext(
+      user,
+      profileResult.data,
+      membership,
+      companyResult.data
+    );
+  }
+
+  async function activate(user){
+    if(!user){
+      currentContext=null;
+      return null;
+    }
+
+    currentContext=await loadContext(user);
+    clearLegacyAuth();
+    return currentContext;
+  }
+
+  async function initialize(){
+    if(initializePromise)return initializePromise;
+
+    initializePromise=(async()=>{
+      if(invitationPending){
+        setPersistencePreference(true);
+      }else{
+        await enforceSessionPreference();
+      }
+
+      const {data,error}=await getClient().auth.getSession();
+      if(error)throw error;
+
+      initialized=true;
+
+      if(invitationPending){
+        if(!data.session?.user){
+          clearInvitationCallback();
+          throw accessError(
+            'La invitación no es válida o ya expiró.',
+            'AUTH_INVITATION_INVALID'
+          );
+        }
+
+        currentContext=null;
+        return null;
+      }
+
+      return activate(data.session?.user||null);
+    })();
+
+    try{
+      return await initializePromise;
+    }finally{
+      initializePromise=null;
+    }
+  }
+
+  async function signIn(email,password,options={}){
+    setPersistencePreference(options.remember!==false);
+
+    const {data,error}=await getClient().auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if(error)throw error;
+
+    try{
+      initialized=true;
+      return await activate(data.user);
+    }catch(error){
+      await getClient().auth.signOut({scope:'local'});
+      currentContext=null;
+      throw error;
+    }
+  }
+
+  async function signOut(){
+    const {error}=await getClient().auth.signOut({scope:'local'});
+    currentContext=null;
+    setPersistencePreference(true);
+    clearLegacyAuth();
+    if(error)throw error;
+  }
+
+  async function acceptInvitation(password){
+    if(!invitationPending){
+      throw accessError(
+        'No hay una invitación pendiente.',
+        'AUTH_INVITATION_NOT_PENDING'
+      );
+    }
+
+    const {data,error}=await getClient().auth.updateUser({password});
+    if(error)throw error;
+
+    clearInvitationCallback();
+
+    try{
+      initialized=true;
+      return await activate(data.user);
+    }catch(error){
+      await getClient().auth.signOut({scope:'local'});
+      currentContext=null;
+      throw error;
+    }
+  }
+
+  function legacyUser(){
+    const context=currentContext;
+    if(!context)return null;
+
+    return {
+      id:context.userId,
+      username:context.email,
+      email:context.email,
+      name:context.displayName,
+      role:context.legacyRole,
+      active:true
+    };
+  }
+
+  window.AuthContext=Object.freeze({
+    get:()=>currentContext,
+    isReady:()=>initialized,
+    hasCompany:()=>Boolean(currentContext?.companyId),
+    isInvitationPending:()=>invitationPending
+  });
+
+  window.ShiftControlAuth=Object.freeze({
+    getClient,
+    initialize,
+    signIn,
+    signOut,
+    acceptInvitation,
+    isInvitationPending:()=>invitationPending,
+    legacyUser
+  });
+})();
