@@ -121,6 +121,35 @@ window.AdditionalModule = {
     return state?.additional || [];
   },
 
+  findById(id){
+    const state = this._getState();
+
+    return (state?.additional || []).find(
+      item=>item.id===id
+    ) || null;
+  },
+
+  patch(id, changes, {save=true}={}){
+    const state = this._getState();
+
+    if(!state){
+      return null;
+    }
+
+    const existing=(state.additional || []).find(
+      item=>item.id===id
+    ) || null;
+
+    if(!existing){
+      return null;
+    }
+
+    Object.assign(existing,changes);
+    this._saveIfNeeded(save);
+
+    return existing;
+  },
+
   replaceAll(records, {save=true}={}){
     const state = this._getState();
 

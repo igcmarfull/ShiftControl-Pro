@@ -13816,16 +13816,20 @@ function editAdditional(id){
 
 function toggleAdditionalPaid(id){
   if(getAppRole()!=='admin')return alert('Solo el administrador puede modificar el estado de pago.');
-  const item=state.additional.find(row=>row.id===id);
+  const item=AdditionalModule.findById(id);
   if(!item)return;
 
   snapshot();
   if(item.paid==='Pagado'){
-    item.paid='Pendiente';
-    item.paidDate='';
+    AdditionalModule.patch(id,{
+      paid:'Pendiente',
+      paidDate:''
+    },{save:false});
   }else{
-    item.paid='Pagado';
-    item.paidDate=isoToday;
+    AdditionalModule.patch(id,{
+      paid:'Pagado',
+      paidDate:isoToday
+    },{save:false});
   }
 
   log(`Estado de pago actualizado: ${employee(item.employeeId)?.name||'Trabajador'}`);
@@ -13911,13 +13915,13 @@ document.getElementById('additionalForm')?.addEventListener('submit',event=>{
   snapshot();
 
   if(id){
-    const item=state.additional.find(row=>row.id===id);
+    const item=AdditionalModule.findById(id);
     if(!item)return;
-    Object.assign(item,{
+    AdditionalModule.patch(id,{
       employeeId,date,shift,reason,amount,paid,
       paidDate:paid==='Pagado'?paidDate:'',
       source:item.source||'manual'
-    });
+    },{save:false});
     log(`Jornada adicional actualizada: ${employee(employeeId)?.name||'Trabajador'}`);
   }else{
     AdditionalModule.add({
@@ -15699,8 +15703,8 @@ function renderV12Payments(){
  const root=document.getElementById('v12PaymentsList');if(!root)return;const rows=state.additional||[];
  root.innerHTML=rows.length?rows.map(x=>`<div class="v12-payment-row"><div class="v12-payment-head"><div><strong>${opsEsc(v12EmployeeName(x.employeeId))}</strong><p>${opsEsc(x.date)} · Turno ${opsEsc(x.shift||'—')} · ${opsEsc(x.reason||'Turno extra')}</p></div><strong>${money(Number(x.amount||0))}</strong></div><div class="v12-actions"><span class="ops-pill">${opsEsc(x.paid||'Pendiente')}</span>${x.paid!=='Pagado'?`<button class="btn small" onclick="approveExtraV12('${x.id}')">Aprobar para pago</button><button class="btn primary small" onclick="payExtraV12('${x.id}')">Marcar pagado</button>`:''}</div></div>`).join(''):'<div class="ops-empty">No hay turnos extra registrados.</div>';
 }
-function approveExtraV12(id){if(getAppRole()!=='admin')return;const x=state.additional.find(r=>r.id===id);if(!x)return;x.paid='Aprobado para pago';x.approvedForPaymentAt=new Date().toISOString();save();renderAll();v12Activity('Turno extra aprobado para pago',`${v12EmployeeName(x.employeeId)} · ${x.date}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago aprobado')}
-function payExtraV12(id){if(getAppRole()!=='admin')return;const x=state.additional.find(r=>r.id===id);if(!x)return;x.paid='Pagado';x.paidDate=isoToday;save();renderAll();v12Activity('Turno extra marcado como pagado',`${v12EmployeeName(x.employeeId)} · ${money(Number(x.amount||0))}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago registrado')}
+function approveExtraV12(id){if(getAppRole()!=='admin')return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Aprobado para pago',approvedForPaymentAt:new Date().toISOString()},{save:false});save();renderAll();v12Activity('Turno extra aprobado para pago',`${v12EmployeeName(x.employeeId)} · ${x.date}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago aprobado')}
+function payExtraV12(id){if(getAppRole()!=='admin')return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Pagado',paidDate:isoToday},{save:false});save();renderAll();v12Activity('Turno extra marcado como pagado',`${v12EmployeeName(x.employeeId)} · ${money(Number(x.amount||0))}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago registrado')}
 
 // Reemplaza confirmación por envío y archiva automáticamente los checklists sin excepciones.
 completeOpsChecklist=function(){
