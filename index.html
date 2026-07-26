@@ -10089,6 +10089,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/absences/absences.js"></script>
 <script src="src/modules/holidays/holidays.js"></script>
 <script src="src/modules/audit/audit.js"></script>
+<script src="src/modules/daily-closures/daily-closures.js"></script>
 
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
@@ -10390,10 +10391,10 @@ if(!state.demoRealistaJunio2026){
     {save:false}
   );
 
-  state.dailyClosures=[];
+  DailyClosureModule.replaceAll([],{save:false});
   for(let day=1;day<=27;day++){
     const date=`2026-06-${String(day).padStart(2,'0')}`;
-    if(new Date(date+'T12:00:00').getDay()!==6)state.dailyClosures.push(date);
+    if(new Date(date+'T12:00:00').getDay()!==6)DailyClosureModule.add(date,{save:false});
   }
   AuditModule.add(
     {id:safeRandomUUID(),date:new Date().toISOString(),action:'Demo realista de junio 2026 cargada'},
@@ -10552,7 +10553,7 @@ function renderDashboard(){
   const pendingWorkers=planned.filter(p=>!executions.some(e=>e.employeeId===p.employeeId));
   const uncovered=executions.filter(e=>!['Presente','Atrasado'].includes(e.status)&&!e.replacementId);
   const licenseIssues=licenseCoverageAlerts(referenceDate);
-  const dayClosed=(state.dailyClosures||[]).includes(referenceDate);
+  const dayClosed=DailyClosureModule.isClosed(referenceDate);
 
   const evals=typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(window.EVAL_KEY,[]):[];
   const submittedEvaluations=evals.filter(e=>e.status==='submitted');
@@ -11961,7 +11962,7 @@ function renderTodayMobileShiftView(date,rows,execs){
   const host=document.getElementById('todayMobileShiftView');
   if(!host)return;
 
-  const closed=(state.dailyClosures||[]).includes(date);
+  const closed=DailyClosureModule.isClosed(date);
   const reviewed=rows.filter(({employee:emp})=>execs.some(e=>e.employeeId===emp.id)).length;
   const pending=Math.max(0,rows.length-reviewed);
   const present=execs.filter(e=>e.status==='Presente').length;
@@ -12088,9 +12089,9 @@ function quickPresent(employeeId,date){
 
 function markPendingPresent(){
   const lockedDate=todayUI.date.value||isoToday;
-  if((state.dailyClosures||[]).includes(lockedDate))return toast('La jornada está cerrada. Debes reabrirla para editar');
+  if(DailyClosureModule.isClosed(lockedDate))return toast('La jornada está cerrada. Debes reabrirla para editar');
   const date=todayUI.date.value||isoToday;
-  if((state.dailyClosures||[]).includes(date))return toast('La jornada ya está cerrada');
+  if(DailyClosureModule.isClosed(date))return toast('La jornada ya está cerrada');
   const rows=todayPlannedRows(date);
   const pending=rows.filter(r=>!state.executions.some(x=>x.employeeId===r.employee.id&&x.date===date));
   if(!pending.length)return toast('No hay pendientes');
@@ -12111,7 +12112,7 @@ function markPendingPresent(){
 
 
 function renderTodayCloseState(date){
-  const closed=(state.dailyClosures||[]).includes(date);
+  const closed=DailyClosureModule.isClosed(date);
   const box=document.getElementById('todayCloseState');
   const reopen=document.getElementById('reopenTodayBtn');
   if(box)box.innerHTML=`<span class="close-state ${closed?'closed':'open'}">${closed?'✓ Jornada cerrada':'○ Jornada abierta'}</span>`;
@@ -12119,10 +12120,10 @@ function renderTodayCloseState(date){
 }
 function reopenToday(){
   const date=todayUI.date.value||isoToday;
-  if(!(state.dailyClosures||[]).includes(date))return toast('La jornada ya está abierta');
+  if(!DailyClosureModule.isClosed(date))return toast('La jornada ya está abierta');
   if(!confirm(`¿Reabrir la jornada del ${fmt(date)}? Los cambios posteriores quedarán registrados.`))return;
   snapshot();
-  state.dailyClosures=state.dailyClosures.filter(d=>d!==date);
+  DailyClosureModule.remove(date,{save:false});
   log(`Jornada reabierta para ${date}`);
   save();renderAll();toast('Jornada reabierta');
 }
@@ -12158,8 +12159,7 @@ function confirmToday(){
 
   syncSundayPaymentsForDate(date);
 
-  state.dailyClosures=state.dailyClosures||[];
-  if(!state.dailyClosures.includes(date))state.dailyClosures.push(date);
+  DailyClosureModule.add(date,{save:false});
   log(`Jornada cerrada para ${date}${isSunday(date)?' · control dominical actualizado':''}`);
   save();renderAll();
   toast(isSunday(date)?'Jornada cerrada y domingos actualizados':'Jornada cerrada correctamente');
@@ -12178,7 +12178,7 @@ function clearTodayExecutions(){
     ),
     {save:false}
   );
-  state.dailyClosures=(state.dailyClosures||[]).filter(d=>d!==date);
+  DailyClosureModule.remove(date,{save:false});
   log(`Se reinició la operación del día ${date}`);
   save();renderAll();toast('Día reiniciado');
 }
@@ -16820,7 +16820,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const notices=getNotices(); const pct=planned.length?Math.round(confirmed.length/planned.length*100):100; const metrics=[['Personal',`${confirmed.length}/${planned.length||st.employees?.filter(e=>e.active!==false).length||0}`,'presentes / planificados'],['Ausencias',abs.length,'registradas hoy'],['Reemplazos',repl.length,'movimientos vinculados'],['Cobertura',`${pct}%`,'dotación confirmada'],['Turnos extra',add.length,'jornadas del día'],['Alertas',notices.length,'requieren revisión']]; root.innerHTML=metrics.map(m=>`<article class="v16-station-metric"><span>${m[0]}</span><strong>${m[1]}</strong><small>${m[2]}</small></article>`).join('');
     const health=document.getElementById('v16Health'); health.textContent=notices.some(n=>n.sev==='high')?'Requiere atención':'Operación estable'; health.className='v16-health '+(notices.some(n=>n.sev==='high')?'warn':'good');
     const pieces=[]; pieces.push(`<strong>${confirmed.length}</strong> trabajador(es) confirmados de <strong>${planned.length||0}</strong> planificados.`); pieces.push(abs.length?`Se registran <strong>${abs.length} excepción(es)</strong>.`:'No hay excepciones registradas.'); pieces.push(repl.length?`Hay <strong>${repl.length} reemplazo(s)</strong> vinculados a la jornada.`:'No se registran reemplazos hoy.'); pieces.push(activeAbs.length?`Existen <strong>${activeAbs.length} ausencia(s) activa(s)</strong>.`:'No existen ausencias prolongadas activas.'); pieces.push(notices.length?`El sistema detecta <strong>${notices.length} asunto(s)</strong> que conviene revisar.`:'Todos los controles principales están al día.'); document.getElementById('v16DailySummary').innerHTML=pieces.join(' ');
-    const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===date):[]; const checklistDone=checklist.some(x=>x.completed); const closure=(st.dailyClosures||[]).includes(date); const workflows=[['Inicio de turno','Confirmar asistencia y resolver excepciones',planned.length?Math.round(ex.length/planned.length*100):0,'today'],['Control operativo','Completar checklist de la Jefa de Isla',checklistDone?100:0,'checklists'],['Cierre de turno','Conciliar, registrar entrega y cerrar jornada',closure?100:0,'handoff']]; document.getElementById('v16Workflows').innerHTML=workflows.map(w=>`<article class="v16-workflow" onclick="v16Go('${w[3]}')"><b>${w[0]}</b><small>${w[1]}</small><div class="v16-workflow-progress"><i style="width:${Math.max(0,Math.min(100,w[2]))}%"></i></div><small>${w[2]}% completado</small></article>`).join('');
+    const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===date):[]; const checklistDone=checklist.some(x=>x.completed); const closure=DailyClosureModule.isClosed(date); const workflows=[['Inicio de turno','Confirmar asistencia y resolver excepciones',planned.length?Math.round(ex.length/planned.length*100):0,'today'],['Control operativo','Completar checklist de la Jefa de Isla',checklistDone?100:0,'checklists'],['Cierre de turno','Conciliar, registrar entrega y cerrar jornada',closure?100:0,'handoff']]; document.getElementById('v16Workflows').innerHTML=workflows.map(w=>`<article class="v16-workflow" onclick="v16Go('${w[3]}')"><b>${w[0]}</b><small>${w[1]}</small><div class="v16-workflow-progress"><i style="width:${Math.max(0,Math.min(100,w[2]))}%"></i></div><small>${w[2]}% completado</small></article>`).join('');
     const count=document.getElementById('v16NotificationCount'); if(count){count.textContent=notices.length;count.style.display=notices.length?'inline-grid':'none'}
   }
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();v16OpenSearch()}if(e.key==='Escape')v16CloseOverlay()});
@@ -17020,7 +17020,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
   function renderNotificationDrawer(){const all=normalizedNotices(),items=filteredNotices();const filters=[['all','Todas'],['urgent','Urgentes'],['people','Personal'],['operations','Operación'],['finance','Finanzas']];document.getElementById('v17NoticeFilters').innerHTML=filters.map(f=>`<button class="v17-filter ${currentFilter===f[0]?'active':''}" onclick="v17SetFilter('${f[0]}')">${f[1]}</button>`).join('');document.getElementById('v17DrawerSubtitle').textContent=`${all.length} asunto(s) detectado(s)`;document.getElementById('v17NotificationList').innerHTML=items.length?items.map(n=>`<article class="v17-notice" style="${n.reviewed?'opacity:.58':''}" onclick="v17OpenNotice('${n.id}','${n.view}')"><div class="v17-notice-icon">${n.icon}</div><div><strong>${esc(n.title)}</strong><small>${esc(n.detail)}</small></div><span class="go">↗</span></article>`).join(''):'<div class="task-empty">No hay notificaciones en este filtro.</div>'}
   window.v17OpenNotice=(id,view)=>{const r=load(REVIEW_KEY,[]);if(!r.includes(id)){r.push(id);save(REVIEW_KEY,r)}audit('Revisó una notificación',view);v17CloseNotificationDrawer();if(typeof window.showView==='function')window.showView(view)};
   window.v17MarkNotificationsReviewed=()=>{save(REVIEW_KEY,normalizedNotices().map(n=>n.id));renderNotificationDrawer();toast('Notificaciones revisadas','Se conservarán para consulta, pero quedarán atenuadas.');audit('Marcó todas las notificaciones como revisadas')};
-  function generatedTasks(){const s=st(),d=date(),tasks=[];const ex=(s.executions||[]).filter(x=>x.date===d);const uncovered=ex.filter(x=>!['Presente','Atrasado'].includes(x.status)&&!x.replacementId&&!x.coveredByEmployeeId);if(uncovered.length)tasks.push({id:'cover-'+d,title:`Asignar ${uncovered.length} reemplazo(s)`,sub:'Hay ausencias sin cobertura vinculada.',view:'today'});const add=(s.additional||[]).filter(x=>x.date===d&&!(x.paid||x.status==='Pagado'));if(add.length)tasks.push({id:'pay-'+d,title:`Revisar ${add.length} jornada(s) extra`,sub:'Existen pagos o validaciones pendientes.',view:'additional'});const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===d):[];if(!checklist.some(x=>x.completed))tasks.push({id:'check-'+d,title:'Completar checklist operativo',sub:'Control diario de la Jefa de Isla.',view:'checklists'});if(!(s.dailyClosures||[]).includes(d))tasks.push({id:'close-'+d,title:'Cerrar y entregar el turno',sub:'La jornada todavía no figura como cerrada.',view:'handoff'});return tasks}
+  function generatedTasks(){const s=st(),d=date(),tasks=[];const ex=(s.executions||[]).filter(x=>x.date===d);const uncovered=ex.filter(x=>!['Presente','Atrasado'].includes(x.status)&&!x.replacementId&&!x.coveredByEmployeeId);if(uncovered.length)tasks.push({id:'cover-'+d,title:`Asignar ${uncovered.length} reemplazo(s)`,sub:'Hay ausencias sin cobertura vinculada.',view:'today'});const add=(s.additional||[]).filter(x=>x.date===d&&!(x.paid||x.status==='Pagado'));if(add.length)tasks.push({id:'pay-'+d,title:`Revisar ${add.length} jornada(s) extra`,sub:'Existen pagos o validaciones pendientes.',view:'additional'});const checklist=typeof window.opsChecklistStore==='function'?Object.values(window.opsChecklistStore()||{}).filter(x=>x.date===d):[];if(!checklist.some(x=>x.completed))tasks.push({id:'check-'+d,title:'Completar checklist operativo',sub:'Control diario de la Jefa de Isla.',view:'checklists'});if(!DailyClosureModule.isClosed(d))tasks.push({id:'close-'+d,title:'Cerrar y entregar el turno',sub:'La jornada todavía no figura como cerrada.',view:'handoff'});return tasks}
   function taskState(){return load(TASK_KEY,{done:[],custom:[]})}
   window.v17ToggleTask=id=>{const t=taskState(),before=JSON.parse(JSON.stringify(t));t.done=t.done.includes(id)?t.done.filter(x=>x!==id):[...t.done,id];save(TASK_KEY,t);lastUndo=()=>save(TASK_KEY,before);toast(t.done.includes(id)?'Pendiente completado':'Pendiente reabierto','Puedes deshacer este cambio.',true);audit(t.done.includes(id)?'Completó un pendiente':'Reabrió un pendiente',id);renderV17()};
   window.v17RemoveTask=id=>{const t=taskState(),before=JSON.parse(JSON.stringify(t));t.custom=t.custom.filter(x=>x.id!==id);save(TASK_KEY,t);lastUndo=()=>save(TASK_KEY,before);toast('Pendiente eliminado','Puedes recuperarlo durante unos segundos.',true);audit('Eliminó un pendiente',id);renderV17()};
@@ -17034,7 +17034,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
     ['Revisar incidencias',incidents.length===0,'incidents',incidents.length?`${incidents.length} incidencia(s) abierta(s)`:'Sin incidencias abiertas'],
     ['Conciliar caja',finance.length>0,'finance','Validar movimiento financiero diario'],
     ['Confirmar depósito',finance.some(x=>x.deposit||x.deposited||x.status==='Depositado'),'finance','Verificar entrega o depósito'],
-    ['Entregar turno',(s.dailyClosures||[]).includes(d),'handoff','Cerrar formalmente la jornada']
+    ['Entregar turno',DailyClosureModule.isClosed(d),'handoff','Cerrar formalmente la jornada']
   ]}
   function renderCloseFlow(){const root=document.getElementById('v17CloseFlow');if(!root)return;const steps=closeSteps();document.getElementById('v17CloseProgress').textContent=`${steps.filter(x=>x[1]).length}/${steps.length}`;root.innerHTML=steps.map((x,i)=>`<div class="v17-close-step ${x[1]?'complete':''}" onclick="showView('${x[2]}')"><span class="num">${x[1]?'✓':i+1}</span><div><strong>${x[0]}</strong><small>${esc(x[3])}</small></div><span class="status">${x[1]?'LISTO':'PENDIENTE'}</span></div>`).join('')}
   function integrity(){const s=st(),d=date(),issues=[];const ex=(s.executions||[]).filter(x=>x.date===d);const plans=(s.plans||[]).filter(x=>x.date===d);const doubles={};plans.forEach(p=>{const k=`${p.employeeId}-${p.date}-${p.code}`;doubles[k]=(doubles[k]||0)+1});if(Object.values(doubles).some(n=>n>1))issues.push(['bad','Asignaciones duplicadas','Un trabajador aparece más de una vez en el mismo turno.','weekly']);const uncovered=ex.filter(x=>!['Presente','Atrasado'].includes(x.status)&&!x.replacementId&&!x.coveredByEmployeeId);if(uncovered.length)issues.push(['warn','Ausencias sin cobertura',`${uncovered.length} registro(s) requieren reemplazo.`,'today']);const add=(s.additional||[]).filter(a=>a.date===d);const orphan=add.filter(a=>!a.employeeId||!(s.employees||[]).some(e=>e.id===a.employeeId));if(orphan.length)issues.push(['bad','Jornadas extra incompletas',`${orphan.length} pago(s) sin trabajador válido.`,'additional']);const contracts=(s.employees||[]).filter(e=>e.active!==false&&e.contractEnd&&e.contractEnd<d);if(contracts.length)issues.push(['warn','Contratos vencidos',`${contracts.length} trabajador(es) siguen activos.`,'employees']);const evals=s.evaluations||[];const seen=new Set(),dup=evals.filter(e=>{const k=`${e.employeeId}-${(e.date||e.createdAt||'').slice(0,10)}`;if(seen.has(k))return true;seen.add(k);return false});if(dup.length)issues.push(['warn','Evaluaciones posiblemente duplicadas',`${dup.length} registro(s) comparten trabajador y fecha.`,'evaluations']);if(!issues.length)issues.push(['ok','Integridad correcta','No se detectaron inconsistencias críticas.','dashboard']);return issues}
