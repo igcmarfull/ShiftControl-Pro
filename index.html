@@ -10469,7 +10469,7 @@ function log(action){
   );
 }
 function periodPrefix(monthId='planMonth',yearId='planYear'){return document.getElementById(yearId).value+'-'+document.getElementById(monthId).value}
-function isClosed(prefix){return state.closedMonths.includes(prefix)}
+function isClosed(prefix){return MonthClosureModule.isClosed(prefix)}
 function fillPeriods(){
   const cm=String(today.getMonth()+1).padStart(2,'0'),cy=String(today.getFullYear());
   ['planMonth','reportMonth'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){e.innerHTML=monthNames.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');e.value=cm}});
@@ -10793,7 +10793,7 @@ function duplicatePreviousMonth(){snapshot();
   save();renderAll();toast('Mes anterior duplicado');
 }
 function moveMonth(delta){let m=Number(planMonth.value),y=Number(planYear.value);m+=delta;if(m<1){m=12;y--}if(m>12){m=1;y++}planMonth.value=String(m).padStart(2,'0');if(![...planYear.options].some(o=>Number(o.value)===y))planYear.innerHTML+=`<option value="${y}">${y}</option>`;planYear.value=y;renderPlanning()}
-function toggleMonthClose(){snapshot();const p=periodPrefix();if(isClosed(p)){state.closedMonths=state.closedMonths.filter(x=>x!==p);log(`Mes ${p} reabierto`)}else{state.closedMonths.push(p);log(`Mes ${p} cerrado`)}save();renderAll()}
+function toggleMonthClose(){snapshot();const p=periodPrefix();if(isClosed(p)){MonthClosureModule.remove(p,{save:false});log(`Mes ${p} reabierto`)}else{MonthClosureModule.add(p,{save:false});log(`Mes ${p} cerrado`)}save();renderAll()}
 function cellMouseDown(event,employeeId,date){
   if(event.button!==0)return;
   if(event.detail===2){openCell(employeeId,date);return}
@@ -17093,6 +17093,7 @@ window.EmployeeModule = window.EmployeeModule || {
 
 <script src="src/modules/employees/employees.js"></script>
 <script src="src/modules/planning/planning.js"></script>
+<script src="src/modules/month-closures/month-closures.js"></script>
 <script src="src/modules/attendance/attendance.js"></script>
 
 <script src="src/app/app.js"></script>
