@@ -10482,7 +10482,7 @@ function renderDashboard(){
   const licenseIssues=licenseCoverageAlerts(referenceDate);
   const dayClosed=(state.dailyClosures||[]).includes(referenceDate);
 
-  const evals=typeof opsRead==='function'?opsRead(EVAL_KEY,[]):[];
+  const evals=typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(EVAL_KEY,[]):[];
   const submittedEvaluations=evals.filter(e=>e.status==='submitted');
 
   const checklistStore=typeof opsChecklistStore==='function'?opsChecklistStore():{};
@@ -11392,7 +11392,7 @@ function workerProfileData(id,monthOverride=''){
   const extras=state.additional.filter(x=>x.employeeId===id&&x.date.startsWith(month));
   const absencesAll=state.absences.filter(x=>x.employeeId===id);
   const absencesMonth=absencesAll.filter(x=>(x.from||x.start||'').startsWith(month)||(x.to||x.end||'').startsWith(month));
-  const evals=(typeof opsRead==='function'?opsRead(EVAL_KEY,[]):[]).filter(x=>x.employeeId===id&&(!x.period||x.period.startsWith(month)));
+  const evals=(typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(EVAL_KEY,[]):[]).filter(x=>x.employeeId===id&&(!x.period||x.period.startsWith(month)));
   const incidents=(typeof opsIncidents==='function'?opsIncidents():[]).filter(x=>{
     const incidentDate=(x.createdAt||x.date||'').slice(0,10);
     const haystack=[x.reporter,x.owner,x.description,x.title].filter(Boolean).join(' ').toLowerCase();
