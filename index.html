@@ -10271,7 +10271,10 @@ const demoEmployees=[
 ];
 demoEmployees.forEach(d=>{
   if(!state.employees.some(e=>e.rut===d.rut||e.name===d.name)){
-    state.employees.push({id:safeRandomUUID(),...d,start:isoToday,active:true});
+    EmployeeModule.create({
+      ...d,
+      start:isoToday
+    });
   }
 });
 state.settings=state.settings||{};
@@ -11543,13 +11546,20 @@ function addWorkerDocument(id){
   const name=document.getElementById('workerDocName')?.value.trim();
   const type=document.getElementById('workerDocType')?.value||'Otro';
   if(!name)return alert('Escribe el nombre del documento.');
-  state.employees=state.employees.map(x=>x.id===id?{...x,documents:[...(x.documents||[]),{name,type,date:isoToday}]}:x);
-  save();renderWorkerProfile(id);toast('Documento agregado a la ficha');
+  EmployeeModule.addDocument(id,{
+    name,
+    type,
+    date:isoToday
+  });
+
+  renderWorkerProfile(id);
+  toast('Documento agregado a la ficha');
 }
 function removeWorkerDocument(id,index){
   if(!confirm('¿Eliminar esta referencia documental?'))return;
-  state.employees=state.employees.map(x=>x.id===id?{...x,documents:(x.documents||[]).filter((_,i)=>i!==index)}:x);
-  save();renderWorkerProfile(id);
+  EmployeeModule.removeDocument(id,index);
+
+  renderWorkerProfile(id);
 }
 
 function closeWorkerDrawer(){
@@ -12979,9 +12989,11 @@ employeeForm.addEventListener('submit',e=>{
     active:document.getElementById('employeeActive').value!=='false'
   };
 
-  state.employees=id
-    ? window.EmployeeModule.getAll().map(x=>x.id===id?data:x)
-    : [...state.employees,data];
+  if(id){
+    EmployeeModule.update(id,data);
+  }else{
+    EmployeeModule.create(data);
+  }
 
   log(`${id?'Trabajador editado':'Trabajador agregado'}: ${data.name}`);
   save();
@@ -12992,7 +13004,36 @@ employeeForm.addEventListener('submit',e=>{
   showView('employees');
   toast(id?'Trabajador actualizado':'Trabajador agregado correctamente');
 });
-function deleteEmployee(id){if(!confirm('¿Eliminar trabajador y todos sus registros?'))return;const name=employee(id)?.name;state.employees=state.employees.filter(e=>e.id!==id);state.plans=state.plans.filter(p=>p.employeeId!==id);state.executions=state.executions.filter(x=>x.employeeId!==id).map(x=>x.replacementId===id?{...x,replacementId:''}:x);state.additional=state.additional.filter(a=>a.employeeId!==id&&a.replacedEmployeeId!==id);log(`Trabajador eliminado: ${name}`);save();renderAll()}
+function deleteEmployee(id){
+
+  if(!confirm('¿Eliminar trabajador y todos sus registros?'))return;
+
+  const name=employee(id)?.name;
+
+  EmployeeModule.remove(id);
+
+  state.plans=state.plans.filter(
+    p=>p.employeeId!==id
+  );
+
+  state.executions=state.executions
+    .filter(x=>x.employeeId!==id)
+    .map(x=>x.replacementId===id
+      ? {...x,replacementId:''}
+      : x
+    );
+
+  state.additional=state.additional.filter(
+    a=>a.employeeId!==id&&a.replacedEmployeeId!==id
+  );
+
+  log(`Trabajador eliminado: ${name}`);
+
+  save();
+
+  renderAll();
+
+}
 
 
 
@@ -14827,8 +14868,9 @@ function importEmployeesCSV(event){
         const name=(r[idx('nombre')]||'').trim();
         if(!name||window.EmployeeModule.getAll().some(e=>(rut&&e.rut===rut)||e.name===name)){skipped++;return}
         const shift=(r[idx('turno')]||'A').trim().toUpperCase();
-        state.employees.push({
-          id:safeRandomUUID(),name,rut,
+        EmployeeModule.create({
+          name,
+          rut,
           role:(r[idx('cargo')]||'').trim(),
           area:(r[idx('area')]||'').trim(),
           shift:['A','B','C'].includes(shift)?shift:'A',
