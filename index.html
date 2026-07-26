@@ -12719,7 +12719,7 @@ function openDailyModal(employeeId='',date=isoToday){
   dailyForm.reset();
   dailyId.value='';
   dailyDate.value=date;
-  dailyEmployee.value=employeeId||state.employees.find(e=>e.active)?.id||'';
+  dailyEmployee.value=employeeId||EmployeeModule.getAll().find(e=>e.active)?.id||'';
   replacementCreatesAdditional.checked=true;
   replacementAmount.value=getAppRole()==='chief'
     ?Number(state.settings.defaultExtraPayment||30000)
