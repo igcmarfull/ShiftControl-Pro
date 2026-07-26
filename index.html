@@ -12908,7 +12908,7 @@ function renderEmployees(){
   if(!table&&!cards)return;
 
   const q=(search?.value||'').trim().toLowerCase();
-  const list=state.employees
+  const list=window.EmployeeModule.getAll()
     .filter(e=>{
       const status=v37EmployeeStatus(e);
       const scope=v37EmployeeFilter==='all'
