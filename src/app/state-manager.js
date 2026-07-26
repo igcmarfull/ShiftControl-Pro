@@ -6,7 +6,9 @@ window.ShiftControlState = {
 
   initialize(defaultState){
 
-    this.data = defaultState;
+    window.state = defaultState;
+
+    this.data = window.state;
 
     console.log(
       "[ShiftControl V31] State Manager inicializado"
@@ -24,7 +26,9 @@ window.ShiftControlState = {
 
   set(data){
 
-    this.data = data;
+    window.state = data;
+
+    this.data = window.state;
 
   },
 
