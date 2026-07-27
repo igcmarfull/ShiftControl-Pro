@@ -4576,7 +4576,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 @media print{.v18-notification-fab,.v18-station-context{display:none!important}}
 </style>
 
-<link rel="stylesheet" href="src/v20-interface.css">
+<link rel="stylesheet" href="src/v20-interface.css?v=20260727-operational-home">
 
 
 <style id="v35-reportes-impresion-profesional">
@@ -5285,7 +5285,9 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <nav class="nav">
   <div class="nav-group">
     <div class="nav-group-title">Operación</div>
-    <button class="nav-btn active role-admin-visible role-chief-visible" data-view="today"><span>◉</span>Operación del día</button>
+    <button class="nav-btn active role-chief-visible" data-view="operational-home"><span>◆</span>Inicio operativo</button>
+    <button class="nav-btn role-admin-visible" data-view="admin-inbox"><span>▧</span>Bandeja ADMIN</button>
+    <button class="nav-btn role-admin-visible role-chief-visible" data-view="today"><span>◉</span>Operación del día</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="dashboard"><span>◫</span>Centro ejecutivo</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="workcenter"><span>▣</span>Centro de trabajo <span id="workcenterNavBadge" class="v52-nav-badge">0</span></button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="actual"><span>◷</span>Registro real</button>
@@ -5324,11 +5326,35 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
   <main class="main">
 
-    <section id="today" class="view active">
+    <section id="operational-home" class="view v14-operational-home active">
+      <div class="topbar">
+        <div>
+          <h2>Inicio operativo</h2>
+          <p>Resumen de lectura para orientar el turno antes de entrar a los módulos de detalle.</p>
+        </div>
+      </div>
+
+      <div id="operationalHomeRoot" class="v14-shell">
+        <div class="ops-empty">Cargando inicio operativo…</div>
+      </div>
+    </section>
+
+    <section id="admin-inbox" class="view v14-admin-inbox">
+      <div class="topbar">
+        <div>
+          <h2>Bandeja ADMIN</h2>
+        </div>
+      </div>
+
+      <div id="adminInboxRoot" class="v14-shell">
+        <div class="ops-empty">Cargando bandeja administrativa…</div>
+      </div>
+    </section>
+
+    <section id="today" class="view">
       <div class="topbar">
         <div>
           <h2>Operación del día</h2>
-          <p>Confirma la jornada completa y registra únicamente las excepciones.</p>
         </div>
         <div class="actions"><button type="button" class="btn global-period-btn" title="Volver al período actual">◎ Hoy</button>
           <input class="field" type="date" id="todayDate" onchange="renderToday()" data-period-bound="true">
@@ -5592,7 +5618,6 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <section id="dashboard" class="view dashboard-view">
       <div class="dashboard-hero">
         <div class="dashboard-heading">
-          <div class="eyebrow"><span class="live-dot"></span> Vista del administrador</div>
           <h2>Centro ejecutivo</h2>
           <p id="todayText">Operación del día</p>
         </div>
@@ -5707,9 +5732,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <section id="workcenter" class="view v52-workcenter-view">
       <div class="topbar v52-workcenter-head">
         <div>
-          <div class="eyebrow"><span class="live-dot"></span> Trabajo operativo</div>
           <h2>Centro de trabajo</h2>
-          <p>Todo lo que requiere una acción, separado de la lectura ejecutiva.</p>
         </div>
         <div class="actions">
           <button type="button" class="btn global-period-btn" title="Volver al período actual">◎ Hoy</button>
@@ -8071,7 +8094,9 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
         <div class="payment-mobile-footer" data-permission-action="payments.manage">
           <div><span>Total pendiente</span><strong id="paymentMobileTotal">$0</strong></div>
-          <button class="btn primary" type="button" onclick="markSelectedPaymentsPaid()">Marcar como pagados (<span id="paymentMobileSelectedCount">0</span>)</button>
+          <p class="payment-mobile-empty-state">Selecciona jornadas para marcar como pagadas</p>
+          <p class="payment-mobile-selected-state"><span id="paymentMobileSelectedCount">0</span> jornadas seleccionadas</p>
+          <button class="btn primary" type="button" onclick="markSelectedPaymentsPaid()">✓ Marcar pagadas</button>
         </div>
       </div>
     </section>
@@ -9592,9 +9617,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <section id="checklists" class="view ops-module-view">
   <div class="topbar">
     <div>
-      <div class="eyebrow"><span class="live-dot"></span> Control por turno</div>
       <h2>Checklist operativo</h2>
-      <p>Confirma condiciones básicas de operación sin incluir caja ni procesos financieros.</p>
     </div>
     <div class="actions"><input class="field" type="date" id="checklistDate" onchange="renderOpsChecklist()"><select class="select" id="checklistShift" onchange="renderOpsChecklist()"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div>
   </div>
@@ -9631,7 +9654,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </section>
 
 <section id="evaluations" class="view ops-module-view">
-  <div class="topbar"><div><div class="eyebrow"><span class="live-dot"></span> Gestión del desempeño</div><h2>Evaluación mensual del personal</h2><p>La jefa de isla evalúa con criterios simples; el administrador revisa y aprueba.</p></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn primary" onclick="newEvaluation()">＋ Nueva evaluación</button></div></div>
+  <div class="topbar"><div><h2>Evaluación mensual del personal</h2></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn primary" onclick="newEvaluation()">＋ Nueva evaluación</button></div></div>
   <div class="ops-summary-grid"><article class="ops-summary-card success"><span>Completadas</span><strong id="evalCompletedCount">0</strong><small>Evaluaciones cerradas</small></article><article class="ops-summary-card warning"><span>Borradores</span><strong id="evalDraftCount">0</strong><small>Pendientes de revisión</small></article><article class="ops-summary-card danger"><span>Sin evaluar</span><strong id="evalPendingCount">0</strong><small>Personal activo pendiente</small></article></div>
   <div class="evaluation-workspace">
     <article class="ops-panel evaluation-editor evaluation-wizard" id="evaluationEditor" hidden>
@@ -15036,6 +15059,462 @@ function openAlerts(){
 }
 function closeAlerts(){alertDrawer.classList.remove('open')}
 function runAlert(i){window.currentAlerts[i]?.action?.();closeAlerts()}
+
+function v14Esc(value){
+  return String(value??'').replace(/[&<>"']/g,character=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[character]));
+}
+function v14State(){
+  return window.ShiftControlState?.get?.() || state || {};
+}
+function v14Today(){
+  const selected=document.getElementById('todayDate')?.value;
+  return /^\d{4}-\d{2}-\d{2}$/.test(selected||'')?selected:isoToday;
+}
+function v14CurrentShift(){
+  const hour=new Date().getHours();
+  if(hour<14)return 'Mañana';
+  if(hour<22)return 'Tarde';
+  return 'Noche';
+}
+function v14Workers(){
+  return typeof window.EmployeeModule?.getActive==='function'
+    ?window.EmployeeModule.getActive()
+    :(v14State().employees||[]).filter(worker=>worker.active!==false);
+}
+function v14ChecklistStore(){
+  if(typeof window.opsChecklistStore==='function')return window.opsChecklistStore() || {};
+  return window.ChecklistModule?.getAll?.() || {};
+}
+function v14Incidents(){
+  const list=typeof window.opsIncidents==='function'
+    ?window.opsIncidents()
+    :(window.IncidentModule?.getAll?.() || v14State().incidents || []);
+  return Array.isArray(list)?list:[];
+}
+function v14Evaluations(){
+  const list=window.EvaluationModule?.getAll?.() || v14State().evaluations || [];
+  return Array.isArray(list)?list:[];
+}
+function v14TodayRows(date){
+  if(typeof todayPlannedRows==='function')return todayPlannedRows(date);
+  const employees=v14Workers();
+  return (v14State().plans||[])
+    .filter(plan=>plan.date===date&&plan.code!=='D')
+    .map(plan=>({plan,employee:employees.find(worker=>worker.id===plan.employeeId)}))
+    .filter(row=>row.employee);
+}
+function v14DailySnapshot(){
+  const currentState=v14State();
+  const date=v14Today();
+  const rows=v14TodayRows(date);
+  const executions=(currentState.executions||[]).filter(item=>item.date===date);
+  const executionFor=employeeId=>executions.find(item=>item.employeeId===employeeId);
+  const planned=rows.length;
+  const present=executions.filter(item=>['Presente','Atrasado'].includes(item.status)).length;
+  const pending=rows.filter(row=>!executionFor(row.employee.id));
+  const exceptions=executions.filter(item=>!['Presente','Atrasado'].includes(item.status));
+  const uncovered=exceptions.filter(item=>!item.replacementId&&!item.coveredByEmployeeId);
+  const grouped={
+    pending:[],
+    problem:[],
+    covered:[],
+    present:[]
+  };
+  rows.forEach(row=>{
+    const execution=executionFor(row.employee.id);
+    const item={row,execution};
+    if(!execution)grouped.pending.push(item);
+    else if(['Presente','Atrasado'].includes(execution.status))grouped.present.push(item);
+    else if(execution.replacementId||execution.coveredByEmployeeId)grouped.covered.push(item);
+    else grouped.problem.push(item);
+  });
+  const checklists=Object.values(v14ChecklistStore()).filter(item=>item.date===date);
+  const completedChecklist=checklists.find(item=>item.completed) || null;
+  const checklistWithNotes=checklists.filter(item=>item.completed&&(item.notes||'').trim());
+  const openIncidents=v14Incidents().filter(item=>!item.archived&&item.status!=='resolved');
+  const submittedEvaluations=v14Evaluations().filter(item=>item.status==='submitted');
+  return {
+    date,
+    rows,
+    executions,
+    planned,
+    present,
+    pending,
+    exceptions,
+    uncovered,
+    grouped,
+    checklists,
+    completedChecklist,
+    checklistWithNotes,
+    openIncidents,
+    submittedEvaluations
+  };
+}
+function v14WorkerList(title,items,emptyText){
+  return `<article class="v14-panel"><div class="v14-panel-head"><h3>${v14Esc(title)}</h3><span>${items.length}</span></div><div class="v14-worker-list">${
+    items.length
+      ?items.map(({row,execution})=>`<div class="v14-worker-item"><div><strong>${v14Esc(row.employee.name)}</strong><small>${v14Esc(row.plan?.code||'Turno')} · ${v14Esc(row.employee.role||row.employee.area||'Equipo')}</small></div><span class="status ${execution?(['Presente','Atrasado'].includes(execution.status)?'s-ok':'s-warn'):'s-info'}">${v14Esc(execution?.status||'Sin revisar')}</span></div>`).join('')
+      :`<div class="ops-empty">${v14Esc(emptyText)}</div>`
+  }</div></article>`;
+}
+function adminInboxOpenChecklist(){
+  showView('checklists');
+}
+function adminInboxOpenIncident(id){
+  showView('incidents');
+  setTimeout(()=>{
+    if(typeof filterOpsIncidents==='function')filterOpsIncidents('all');
+    document.getElementById('incidentList')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+function adminInboxOpenEvaluation(){
+  showView('evaluations');
+}
+function adminInboxOpenOperational(){
+  showView('today');
+  setTimeout(()=>{
+    if(window.todayDate)todayDate.value=v14Today();
+    if(typeof renderToday==='function')renderToday();
+    document.getElementById('today')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+function adminInboxOpenAbsences(){
+  showView('absences');
+  setTimeout(()=>document.getElementById('absences')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
+function adminInboxOpenView(view){
+  showView(view);
+}
+function adminInboxOpenPrimary(kind,id){
+  if(kind==='checklist')return adminInboxOpenChecklist(id);
+  if(kind==='incident')return adminInboxOpenIncident(id);
+  if(kind==='evaluation')return adminInboxOpenEvaluation(id);
+  if(kind==='absence')return adminInboxOpenOperational();
+  return adminInboxOpenOperational();
+}
+function adminInboxToggleAll(){
+  const panel=document.getElementById('adminRoomAll');
+  if(!panel)return;
+  panel.hidden=!panel.hidden;
+  if(!panel.hidden)panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function chiefHomeOpenToday(){
+  showView('today');
+  setTimeout(()=>{
+    if(window.todayDate)todayDate.value=v14Today();
+    if(typeof renderToday==='function')renderToday();
+    document.getElementById('today')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+function chiefHomeOpenChecklist(){
+  const checklistEntries=Object.entries(v14ChecklistStore());
+  const pending=checklistEntries.find(([,item])=>item.date===v14Today()&&!item.completed)
+    || checklistEntries.find(([,item])=>item.date===v14Today())
+    || checklistEntries.find(([,item])=>!item.completed);
+  showView('checklists');
+  setTimeout(()=>{
+    if(pending){
+      const [,item]=pending;
+      if(window.checklistDate)checklistDate.value=item.date||v14Today();
+      if(window.checklistShift)checklistShift.value=item.shift||v14CurrentShift();
+    }else if(window.checklistDate){
+      checklistDate.value=v14Today();
+    }
+    if(typeof renderOpsChecklist==='function')renderOpsChecklist();
+    document.getElementById('checklists')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+function chiefHomeOpenIncidents(){
+  showView('incidents');
+  setTimeout(()=>{
+    if(typeof filterOpsIncidents==='function')filterOpsIncidents('all');
+    document.getElementById('incidentList')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+function chiefHomeOpenAbsences(){
+  showView('absences');
+  setTimeout(()=>document.getElementById('absences')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
+function chiefHomeOpenView(view){
+  showView(view);
+}
+function renderOperationalHome(){
+  const root=document.getElementById('operationalHomeRoot');
+  if(!root)return;
+  const snapshot=v14DailySnapshot();
+  const issues=snapshot.uncovered.length+snapshot.openIncidents.length+(snapshot.completedChecklist?0:1);
+  const healthStatus=issues>=3
+    ?{tone:'critical',label:'Operación crítica',message:'Hay puntos operativos que requieren atención inmediata.',score:38}
+    :issues>0
+      ?{tone:'warning',label:'Atención requerida',message:'El turno avanza, pero hay pendientes importantes por revisar.',score:68}
+      :{tone:'stable',label:'Operación estable',message:'Todo listo para comenzar.',score:94};
+  const shiftClosed=!!window.DailyClosureModule?.isClosed?.(snapshot.date);
+  const shiftStatus=shiftClosed?'Turno cerrado':'Operación en curso';
+  const stationName=window.AuthContext?.get?.()?.companyName || v14State().settings?.stationName || 'Estación Coltauco';
+  const shiftHours={Mañana:'07:00 - 15:00',Tarde:'15:00 - 23:00',Noche:'23:00 - 07:00'}[v14CurrentShift()] || 'Turno operativo';
+  const teamReviewed=Math.max(0,snapshot.planned-snapshot.pending.length);
+  const teamProgress=snapshot.planned?Math.round(teamReviewed/snapshot.planned*100):0;
+  const checklistProgress=snapshot.completedChecklist?100:0;
+  const incidentProgress=snapshot.openIncidents.length?Math.max(15,100-Math.min(100,snapshot.openIncidents.length*28)):100;
+  const coverageTotal=snapshot.exceptions.length||snapshot.uncovered.length;
+  const coveredCount=Math.max(0,coverageTotal-snapshot.uncovered.length);
+  const coverageProgress=coverageTotal?Math.round(coveredCount/coverageTotal*100):100;
+  const important=[
+    {icon:'attendance',title:'Revisar asistencia',description:`${snapshot.pending.length} trabajador(es) pendiente(s) de revisión.`,status:snapshot.pending.length?'Pendiente':'Al día',tone:snapshot.pending.length?'warning':'stable',action:'chiefHomeOpenToday()'},
+    {icon:'checklist',title:'Completar checklist',description:snapshot.completedChecklist?'Checklist enviado para este turno.':'Control operativo pendiente de envío.',status:snapshot.completedChecklist?'Enviado':'Pendiente',tone:snapshot.completedChecklist?'stable':'warning',action:'chiefHomeOpenChecklist()'},
+    {icon:'incident',title:'Resolver incidencias',description:snapshot.openIncidents.length?'Hay novedades que requieren seguimiento.':'Sin incidencias abiertas para revisar.',status:`${snapshot.openIncidents.length} abierta(s)`,tone:snapshot.openIncidents.length?'warning':'stable',action:'chiefHomeOpenIncidents()'},
+    {icon:'handoff',title:'Entregar turno',description:shiftClosed?'Turno cerrado y listo para revisión.':'Preparar cierre cuando termine la operación.',status:shiftClosed?'Cerrado':'Disponible',tone:shiftClosed?'stable':'neutral',action:"chiefHomeOpenView('handoff')"}
+  ];
+  const presentTeam=snapshot.grouped.present.slice(0,4);
+  const extraPresent=Math.max(0,snapshot.grouped.present.length-presentTeam.length);
+  const audit=(v14State().audit||[])
+    .slice()
+    .sort((a,b)=>String(b.date||b.at||'').localeCompare(String(a.date||a.at||'')))
+    .slice(0,5);
+  const icon={
+    attendance:'<svg viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/><path d="M17 8l2 2 4-5"/></svg>',
+    checklist:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
+    incident:'<svg viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4z"/><path d="M12 9v5M12 18h.01"/></svg>',
+    coverage:'<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/><path d="M18 7l-3 3M6 17l3-3"/></svg>',
+    handoff:'<svg viewBox="0 0 24 24"><path d="M8 7h8M8 12h8M8 17h5"/><path d="M5 3h14v18H5z"/></svg>',
+    employees:'<svg viewBox="0 0 24 24"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',
+    planning:'<svg viewBox="0 0 24 24"><path d="M8 3v4M16 3v4M4 9h16"/><path d="M5 5h14v16H5z"/></svg>',
+    evaluations:'<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.2 1 6-5.4-2.9-5.4 2.9 1-6-4.4-4.2 6.1-.9L12 3z"/></svg>',
+    audit:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><path d="M18 16l2 2-2 2"/></svg>',
+    more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
+    arrow:'<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    sync:'<svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M7 9a7 7 0 0 1 11-2l2 2"/><path d="M17 15a7 7 0 0 1-11 2l-2-2"/></svg>'
+  };
+  const secondary=[
+    {label:'Trabajadores',icon:'employees',action:"chiefHomeOpenView('employees')"},
+    {label:'Planificación',icon:'planning',action:"chiefHomeOpenView('planning')"},
+    {label:'Evaluaciones',icon:'evaluations',action:"chiefHomeOpenView('evaluations')"},
+    {label:'Historial',icon:'audit',action:"chiefHomeOpenView('audit')"},
+    {label:'Más',icon:'more',action:"chiefHomeOpenView('workcenter')"}
+  ];
+  root.innerHTML=`
+    <div class="chief-home">
+      <section class="chief-home-hero ${healthStatus.tone}">
+        <div class="chief-home-hero-media" aria-hidden="true"></div>
+        <div class="chief-home-hero-overlay"></div>
+        <div class="chief-home-tools" aria-hidden="true"><span>◴</span><span>☷</span></div>
+        <div class="chief-home-greeting">
+          <span class="chief-home-kicker">Control room</span>
+          <h3>${v14Esc(stationName)}</h3>
+          <p>Turno ${v14Esc(v14CurrentShift())} · ${v14Esc(shiftHours)}</p>
+          <div class="chief-home-hero-meta">
+            <span>${fmt(snapshot.date)}</span>
+            <span class="chief-home-shift-state"><i></i>${v14Esc(healthStatus.label)}</span>
+            <span>${v14Esc(shiftStatus)}</span>
+            <span>${snapshot.present}/${snapshot.planned} presentes</span>
+            <span>Actualizado ${audit[0]?.date?new Date(audit[0].date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'—'}</span>
+          </div>
+        </div>
+        <div class="chief-home-score" style="--v14-score:${healthStatus.score}">
+          <strong>${healthStatus.score}%</strong>
+          <span>Salud del turno</span>
+          <em>${v14Esc(healthStatus.label.replace('Operación ',''))}</em>
+        </div>
+      </section>
+
+      <section class="chief-home-main-cards" aria-label="Resumen rápido del turno">
+        <article class="chief-home-card">
+          <span>${icon.attendance}</span>
+          <div><h4>Asistencia</h4><strong>${snapshot.present}/${snapshot.planned}</strong><p>${snapshot.pending.length?`${snapshot.pending.length} pendiente(s)`:'Cobertura lista'}</p></div>
+          <div class="chief-card-progress"><i style="width:${teamProgress}%"></i></div>
+          <button type="button" onclick="chiefHomeOpenToday()">Ver asistencia ${icon.arrow}</button>
+        </article>
+        <article class="chief-home-card">
+          <span>${icon.checklist}</span>
+          <div><h4>Checklist diario</h4><strong>${checklistProgress}%</strong><p>${snapshot.completedChecklist?'Completado':'Pendiente'}</p></div>
+          <div class="chief-card-progress"><i style="width:${checklistProgress}%"></i></div>
+          <button type="button" onclick="chiefHomeOpenChecklist()">Abrir checklist ${icon.arrow}</button>
+        </article>
+        <article class="chief-home-card ${snapshot.openIncidents.length?'warning':''}">
+          <span>${icon.incident}</span>
+          <div><h4>Incidencias</h4><strong>${snapshot.openIncidents.length}</strong><p>Abiertas</p></div>
+          <div class="chief-card-progress"><i style="width:${incidentProgress}%"></i></div>
+          <button type="button" onclick="chiefHomeOpenIncidents()">Ver incidencias ${icon.arrow}</button>
+        </article>
+        <article class="chief-home-card ${snapshot.uncovered.length?'critical':''}">
+          <span>${icon.coverage}</span>
+          <div><h4>Reemplazos</h4><strong>${snapshot.uncovered.length?'Pendiente':'Cubierto'}</strong><p>${snapshot.uncovered.length} sin cobertura</p></div>
+          <div class="chief-card-progress"><i style="width:${coverageProgress}%"></i></div>
+          <button type="button" onclick="chiefHomeOpenAbsences()">Ver cobertura ${icon.arrow}</button>
+        </article>
+      </section>
+
+      <section class="chief-home-command">
+        <section class="chief-home-work">
+          <div class="chief-home-section-title">
+            <span>★ Qué debo hacer ahora</span>
+          </div>
+          <div class="chief-home-task-list">
+            ${important.map(item=>`<button type="button" class="chief-home-task ${item.tone}" onclick="${item.action}"><span>${icon[item.icon]||icon.checklist}</span><div><strong>${v14Esc(item.title)}</strong><p>${v14Esc(item.description)}</p></div><em>${v14Esc(item.status)}</em><b>${item.title==='Entregar turno'?'Preparar':'Ver'} ${icon.arrow}</b></button>`).join('')}
+          </div>
+        </section>
+
+        <section class="chief-home-shift-panel">
+          <div class="chief-home-panel-head"><h3>Estado del turno</h3></div>
+          <div class="chief-home-shift-list">
+            <div><span>${icon.sync}</span><strong>Inicio del turno</strong><em>${v14Esc(shiftHours.split(' - ')[0]||'--:--')}</em></div>
+            <div><span>${icon.attendance}</span><strong>Equipo presente</strong><em>${snapshot.present}/${snapshot.planned}</em></div>
+            <div><span>${icon.sync}</span><strong>Última actualización</strong><em>${audit[0]?.date?new Date(audit[0].date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'—'}</em></div>
+            <div><span>${icon.incident}</span><strong>Incidencias críticas</strong><em>${snapshot.openIncidents.filter(item=>item.priority==='Alta').length||'Sin incidencias'}</em></div>
+          </div>
+          <div class="chief-home-all-good"><span>✓</span>${issues?'Atención requerida':'Todo bajo control'}</div>
+        </section>
+      </section>
+
+      <section class="chief-home-lower">
+        <article class="chief-home-panel">
+          <div class="chief-home-panel-head"><h3>Actividad reciente</h3><span>${audit.length}</span></div>
+          <div class="chief-home-timeline">
+            ${audit.length?audit.map(item=>{const activityDate=item.date||item.at;return `<div><time>${activityDate?new Date(activityDate).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'--:--'}</time><span></span><p><strong>${v14Esc(item.action||'Actividad')}</strong><small>${v14Esc(item.user||item.detail||item.role||'Sistema')} · ${activityDate?new Date(activityDate).toLocaleDateString('es-CL'):'Sin fecha'}</small></p></div>`}).join(''):'<div class="ops-empty">No hay actividad reciente registrada.</div>'}
+          </div>
+        </article>
+
+        <article class="chief-home-panel">
+          <div class="chief-home-panel-head"><h3>Equipo presente</h3><span>${snapshot.grouped.present.length}</span></div>
+          <div class="chief-home-team">
+            ${presentTeam.length?presentTeam.map(({row,execution})=>`<div class="chief-home-person"><span>${v14Esc(row.employee.name||'T').slice(0,2).toUpperCase()}</span><div><strong>${v14Esc(row.employee.name)}</strong><small>${v14Esc(row.employee.role||row.employee.area||'Equipo')}</small></div><em>${v14Esc(execution?.status||'Presente')}</em></div>`).join(''):'<div class="ops-empty">Aún no hay presentes registrados.</div>'}
+            ${extraPresent?`<div class="chief-home-more">+${extraPresent} más presentes</div>`:''}
+          </div>
+          <button type="button" class="chief-home-panel-link" onclick="chiefHomeOpenView('employees')">Ver equipo completo ${icon.arrow}</button>
+        </article>
+      </section>
+
+      <section class="chief-home-secondary" aria-label="Accesos secundarios">
+        ${secondary.map(item=>`<button type="button" onclick="${item.action}"><span>${icon[item.icon]}</span>${v14Esc(item.label)}</button>`).join('')}
+      </section>
+    </div>
+  `;
+}
+function renderAdminInbox(){
+  const root=document.getElementById('adminInboxRoot');
+  if(!root)return;
+  const snapshot=v14DailySnapshot();
+  const problematicChecklists=Object.values(v14ChecklistStore()).filter(item=>
+    item.completed&&item.reviewStatus!=='reviewed'&&(
+      Object.values(item.items||{}).includes('issue')||(item.notes||'').trim()
+    )
+  );
+  const openIncidents=v14Incidents().filter(item=>!item.archived&&item.status!=='resolved');
+  const pendingEvaluations=v14Evaluations().filter(item=>item.status==='submitted');
+  const highIncidents=openIncidents.filter(item=>item.priority==='Alta');
+  const critical=[
+    {kind:'checklist',title:'Revisión checklist diario',count:problematicChecklists.length,view:'checklists',detail:'Checklist enviado con observaciones',tone:'review',icon:'clipboard'},
+    {kind:'absence',title:'Ausencias sin reemplazo',count:snapshot.uncovered.length,view:'today',detail:'Cobertura pendiente en operación diaria',tone:'danger',icon:'exchange'},
+    {kind:'incident',title:'Incidencias abiertas',count:openIncidents.length,view:'incidents',detail:'Eventos operativos activos',tone:highIncidents.length?'danger':'warning',icon:'alert'},
+    {kind:'evaluation',title:'Evaluaciones pendientes de aprobación',count:pendingEvaluations.length,view:'evaluations',detail:'Requieren revisión administrativa',tone:'review',icon:'userCheck'}
+  ];
+  const totalPending=critical.reduce((sum,item)=>sum+item.count,0);
+  const requireAction=snapshot.uncovered.length+highIncidents.length;
+  const inReview=problematicChecklists.length+pendingEvaluations.length;
+  const audit=(v14State().audit||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
+  const activeCritical=critical.filter(item=>item.count>0);
+  const primaryCritical=activeCritical[0] || critical[0];
+  const icon={
+    clipboard:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
+    alert:'<svg viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4z"/><path d="M12 9v5M12 18h.01"/></svg>',
+    eye:'<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    check:'<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/><circle cx="12" cy="12" r="10"/></svg>',
+    clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    arrow:'<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    exchange:'<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/><path d="M18 7l-3 3M6 17l3-3"/></svg>',
+    userCheck:'<svg viewBox="0 0 24 24"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="4"/><path d="M16 11l2 2 4-5"/></svg>',
+    shield:'<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-5"/></svg>',
+    list:'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'
+  };
+  const operationalRows=[
+    {label:'Checklists',value:`${Object.values(v14ChecklistStore()).length} recibidos`,tone:'info',icon:'clipboard',view:'checklists'},
+    {label:'Incidencias',value:`${openIncidents.length} abiertas`,tone:openIncidents.length?'warning':'muted',icon:'alert',view:'incidents'},
+    {label:'Evaluaciones',value:`${pendingEvaluations.length} por revisar`,tone:pendingEvaluations.length?'review':'muted',icon:'userCheck',view:'evaluations'},
+    {label:'Reemplazos',value:snapshot.uncovered.length?'Pendiente':'Cubierto',tone:snapshot.uncovered.length?'warning':'success',icon:'exchange',view:'absences'},
+    {label:'Integridad',value:snapshot.pending.length?'En revisión':'Correcta',tone:snapshot.pending.length?'warning':'success',icon:'shield',view:'today'}
+  ];
+  const checklistEntries=Object.entries(v14ChecklistStore()).filter(([,item])=>
+    item.completed&&item.reviewStatus!=='reviewed'&&(
+      Object.values(item.items||{}).includes('issue')||(item.notes||'').trim()
+    )
+  );
+  const pendingItems=[
+    ...checklistEntries.map(([key,item])=>({kind:'checklist',id:key,title:'Revisión checklist diario',detail:`${item.date||'Sin fecha'} · ${item.shift||'Turno'} · ${item.completedBy||'Jefa de Isla'}`,action:'Revisar checklist'})),
+    ...openIncidents.map(item=>({kind:'incident',id:item.id,title:item.title||'Incidencia abierta',detail:`${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,action:'Ver incidencias'})),
+    ...pendingEvaluations.map(item=>({kind:'evaluation',id:item.id,title:'Evaluaciones pendientes de aprobación',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.period||'Período'} · ${item.evaluator||'Sin evaluador'}`,action:'Revisar evaluaciones'})),
+    ...snapshot.uncovered.map(item=>({kind:'absence',id:item.id||item.employeeId,title:'Ausencia sin cobertura',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.date||snapshot.date} · ${item.status||'Ausencia'}`,action:'Ver operación'})),
+    ...snapshot.pending.map(row=>({kind:'absence',id:row.employee?.id,title:'Trabajador sin revisión',detail:`${row.employee?.name||'Trabajador'} · Turno ${row.plan?.code||'—'}`,action:'Ver operación'}))
+  ];
+  const jsArg=value=>JSON.stringify(String(value||''));
+  const viewOnclick=view=>`showView('${v14Esc(view)}')`;
+  root.innerHTML=`
+    <div class="admin-room">
+      <section class="admin-room-header">
+        <div>
+          <h3>Bandeja ADMIN</h3>
+        </div>
+        <div class="admin-room-status">
+          <div><span>${icon.clock}</span><strong>${fmt(snapshot.date)}</strong><small>${v14Esc(v14CurrentShift())}</small></div>
+          <div class="stable"><span>${icon.check}</span><strong>Operación estable</strong><small>Sincronización visual</small></div>
+        </div>
+      </section>
+
+      <section class="admin-room-metrics" aria-label="Resumen administrativo">
+        <article class="info"><span>${icon.clipboard}</span><strong>${totalPending}</strong><div><b>Pendientes</b><small>Elementos por resolver</small></div></article>
+        <article class="${requireAction?'danger':'info'}"><span>${icon.alert}</span><strong>${requireAction}</strong><div><b>Requieren acción</b><small>Atención inmediata</small></div></article>
+        <article class="review"><span>${icon.eye}</span><strong>${inReview}</strong><div><b>En revisión</b><small>Pendientes de revisión</small></div></article>
+      </section>
+
+      <section class="admin-room-main">
+        <article class="admin-room-panel admin-room-critical">
+          <div class="admin-room-panel-head"><h4>Requiere atención</h4><span>${activeCritical.length||0}</span></div>
+          <button type="button" class="admin-room-focus ${primaryCritical.count?'active '+primaryCritical.tone:''}" onclick="${viewOnclick(primaryCritical.view)}">
+            <span class="admin-room-focus-icon">${icon[primaryCritical.icon]||icon.alert}</span>
+            <div>
+              <strong>${v14Esc(primaryCritical.title)}</strong>
+              <p>${v14Esc(primaryCritical.detail)}</p>
+              <small>${primaryCritical.count?primaryCritical.count+' elemento(s) detectado(s)':'Sin acciones críticas abiertas'}</small>
+            </div>
+            <time>${primaryCritical.count?(primaryCritical.kind==='checklist'?'Revisar checklist':primaryCritical.kind==='incident'?'Ver incidencias':primaryCritical.kind==='evaluation'?'Revisar evaluaciones':'Ver operación'):'Al día'}</time>
+          </button>
+          <div class="admin-room-pending-list">
+            ${critical.map(item=>`<button type="button" class="${item.count?'needs-review '+item.tone:''}" onclick="${viewOnclick(item.view)}"><span>${icon[item.icon]||icon.list}</span><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(item.detail)}</small></div><b>${item.count}</b></button>`).join('')}
+          </div>
+          <button type="button" class="admin-room-link" onclick="adminInboxToggleAll()"><span>Ver todos los pendientes (${pendingItems.length})</span>${icon.arrow}</button>
+        </article>
+
+        <article class="admin-room-panel admin-room-operational">
+          <div class="admin-room-panel-head"><h4>Estado operacional</h4><span>${fmt(snapshot.date)}</span></div>
+          <div class="admin-room-ops-list">
+            ${operationalRows.map(item=>`<button type="button" class="${item.tone}" onclick="${viewOnclick(item.view)}"><span>${icon[item.icon]||icon.list}</span><strong>${v14Esc(item.label)}</strong><b>${v14Esc(item.value)}</b></button>`).join('')}
+          </div>
+          <button type="button" class="admin-room-link" onclick="showView('today')"><span>Ir a revisión operacional</span>${icon.arrow}</button>
+        </article>
+      </section>
+
+      <section id="adminRoomAll" class="admin-room-panel admin-room-all" hidden>
+        <div class="admin-room-panel-head"><h4>Pendientes administrativos</h4><span>${pendingItems.length}</span></div>
+        <div class="admin-room-all-list">
+          ${pendingItems.length?pendingItems.map(item=>`<article><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(item.detail)}</small></div><button type="button" onclick="${viewOnclick(item.kind==='checklist'?'checklists':item.kind==='evaluation'?'evaluations':item.kind==='incident'?'incidents':'today')}">${v14Esc(item.action)}</button></article>`).join(''):'<div class="ops-empty">No hay pendientes administrativos.</div>'}
+        </div>
+      </section>
+
+      <section class="admin-room-panel admin-room-activity">
+        <div class="admin-room-panel-head"><h4>Actividad reciente</h4><span>${audit.length}</span></div>
+        <div class="admin-room-timeline">
+          ${audit.length?audit.map(item=>`<button type="button" onclick="showView('audit')"><time>${item.date?new Date(item.date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'--:--'}</time><span></span><div><strong>${v14Esc(item.action||'Actividad')}</strong><small>${item.date?new Date(item.date).toLocaleDateString('es-CL'):'Sin fecha'}</small></div></button>`).join(''):'<div class="ops-empty">No hay actividad reciente registrada.</div>'}
+        </div>
+        <button type="button" class="admin-room-link" onclick="showView('audit')"><span>Ver toda la actividad</span>${icon.arrow}</button>
+      </section>
+    </div>
+  `;
+}
 function showView(id){
   const role=typeof getAppRole==='function'?getAppRole():'admin';
   if(typeof roleCanOpenView==='function'&&!roleCanOpenView(role,id)){
@@ -15045,11 +15524,15 @@ function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.style.removeProperty('display'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id&&(!roleCanOpenView||roleCanOpenView(role,v.id))));
+  if(id==='operational-home')renderOperationalHome();
+  if(id==='admin-inbox')renderAdminInbox();
   if(id==='incidents'||id==='checklists')setTimeout(()=>window.renderOpsModules?.(),0);
   if(id==='myshift'&&typeof renderMyShift==='function')renderMyShift();
   if(id==='today'&&typeof renderAttendanceNoticeInbox==='function')renderAttendanceNoticeInbox();
 }
 const commands=[
+  {name:'Ir a Inicio operativo',view:'operational-home',run:()=>showView('operational-home')},
+  {name:'Ir a Bandeja ADMIN',view:'admin-inbox',run:()=>showView('admin-inbox')},
   {name:'Ir al Centro ejecutivo',view:'dashboard',run:()=>showView('dashboard')},
   {name:'Ir al Centro de trabajo',view:'workcenter',run:()=>showView('workcenter')},
   {name:'Ir a Operación del día',view:'today',run:()=>showView('today')},
@@ -15217,6 +15700,8 @@ function renderAll(){
 
   const rendererNames=[
     'loadTariffs',
+    'renderOperationalHome',
+    'renderAdminInbox',
     'renderToday',
     'fillPeriods',
     'fillEmployeeSelects',
@@ -15526,8 +16011,8 @@ function roleCanOpenView(_role,viewId){
 }
 function roleHomeView(){
   return window.ShiftControlPermissions?.getRole?.()==='ADMIN'
-    ?'dashboard'
-    :'today';
+    ?'admin-inbox'
+    :'operational-home';
 }
 function requireAppPermission(action,message){
   return window.ShiftControlPermissions?.requireAction?.(action,message)===true;
@@ -15576,6 +16061,12 @@ function applyRoleViewIsolation(role){
     if(!allowed)view.classList.remove('active');
   });
 }
+function shouldCorrectInitialRoleView(role,active){
+  if(!active)return true;
+  if(!roleCanOpenView(role,active.id))return true;
+  if(window.__shiftControlInitialRoleViewChecked)return false;
+  return role==='admin'&&active.id==='operational-home';
+}
 function applyAppRole(forceView=true){
  if(document.body.classList.contains('auth-locked')&&!authenticatedUser?.())return;
  const role=getAppRole();document.body.dataset.role=role;
@@ -15609,7 +16100,8 @@ function applyAppRole(forceView=true){
  if(replacementPaidInput)replacementPaidInput.disabled=role==='chief';
  applyRoleViewIsolation(role);
  const active=document.querySelector('.view.active');
- if(forceView||!active||!roleCanOpenView(role,active.id))showView(roleHomeView(role));
+ if(forceView||shouldCorrectInitialRoleView(role,active))showView(roleHomeView(role));
+ if(!forceView)window.__shiftControlInitialRoleViewChecked=true;
  renderDashboard();
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>applyAppRole(false),0));
@@ -16142,7 +16634,7 @@ function validateAttendanceNotice(id){
  const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;item.validated=true;item.validatedAt=new Date().toISOString();item.validatedBy=authenticatedDisplayName();opsWrite(ATTENDANT_NOTICE_KEY,list);renderAttendanceNoticeInbox();showToast('Aviso marcado como revisado');
 }
 
-window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{closeEvaluationEditor();applyAppRole(true)},100));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{closeEvaluationEditor();applyAppRole(false)},100));
 
 
 // --- V10: centro de notificaciones y flujo de cobertura ---
@@ -16349,6 +16841,7 @@ function syncMobileNavigation(viewId){
 document.querySelectorAll('.mobile-nav-btn').forEach(button=>{
   button.addEventListener('click',()=>{
     const view=button.dataset.mobileView;
+    if(!view)return;
     if(typeof showView==='function')showView(view);
     else document.querySelector(`.nav-btn[data-view="${view}"]`)?.click();
     syncMobileNavigation(view);

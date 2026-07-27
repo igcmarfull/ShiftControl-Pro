@@ -20,32 +20,43 @@
   function render(){
     const n=noticeCount(),t=taskCount(),total=n+t,badge=$('v19CommandBadge');if(badge){badge.textContent=total;badge.style.display=total?'grid':'none'}
     const title=$('v50CenterTitle');if(title){const h=new Date().getHours();const greeting=h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';const name=($('roleName')?.textContent||'').trim().split(' ')[0];title.textContent=name?`${greeting}, ${name}`:greeting}
+    const role=window.ShiftControlPermissions?.getRole?.();
+    const home=role==='ADMIN'
+      ?{view:'admin-inbox',label:'Bandeja ADMIN',description:'Pendientes críticos y revisión operacional'}
+      :{view:'operational-home',label:'Inicio operativo',description:'Estado del turno y alertas clave'};
+    const canOpen=view=>window.ShiftControlPermissions?.canOpenView?.(view)===true;
+    const showOperationalHome=home.view!=='operational-home'&&canOpen('operational-home');
+    const group=(title,items)=>{
+      const buttons=items.filter(item=>canOpen(item.view)).map(item=>`<button class="v50-center-item" onclick="v19Go('${item.view}')"><span>${item.icon}</span><strong>${esc(item.label)}</strong><small>${esc(item.description)}</small></button>`).join('');
+      return buttons?`<div class="v50-center-group"><div class="v50-center-group-title">${esc(title)}</div><div class="v50-center-list">${buttons}</div></div>`:'';
+    };
     const actions=$('v19PaneActions');if(actions)actions.innerHTML=`
       <div class="v50-center-greeting"><strong>Centro de control</strong><small>Todos los módulos importantes, reunidos en un solo lugar.</small></div>
       <div class="v50-center-group"><div class="v50-center-group-title">Inicio</div><div class="v50-center-list">
-        <button class="v50-center-item v50-wide" onclick="v19Go('today')"><span>◉</span><div><strong>Operación del día</strong><small>Volver al estado actual de la estación</small></div><span class="v50-center-arrow">›</span></button>
+        <button class="v50-center-item v50-wide" onclick="v19Go('${home.view}')"><span>◆</span><div><strong>${esc(home.label)}</strong><small>${esc(home.description)}</small></div><span class="v50-center-arrow">›</span></button>
+        ${showOperationalHome?`<button class="v50-center-item v50-wide" onclick="v19Go('operational-home')"><span>◆</span><div><strong>Inicio operativo</strong><small>Centro operacional del turno</small></div><span class="v50-center-arrow">›</span></button>`:''}
       </div></div>
-      <div class="v50-center-group"><div class="v50-center-group-title">Operación</div><div class="v50-center-list">
-        <button class="v50-center-item" onclick="v19Go('actual')"><span>◷</span><strong>Asistencia</strong><small>Registro real y excepciones</small></button>
-        <button class="v50-center-item" onclick="v19Go('checklists')"><span>✓</span><strong>Checklist</strong><small>Control de Jefa de Isla</small></button>
-        <button class="v50-center-item" onclick="v19Go('incidents')"><span>!</span><strong>Incidencias</strong><small>Registrar y dar seguimiento</small></button>
-        <button class="v50-center-item" onclick="v19Go('handoff')"><span>⇄</span><strong>Entrega de turno</strong><small>Cierre y traspaso operacional</small></button>
-      </div></div>
-      <div class="v50-center-group"><div class="v50-center-group-title">Personal</div><div class="v50-center-list">
-        <button class="v50-center-item" onclick="v19Go('employees')"><span>◉</span><strong>Trabajadores</strong><small>Fichas y datos del equipo</small></button>
-        <button class="v50-center-item" onclick="v19Go('planning')"><span>▦</span><strong>Planificación</strong><small>Turnos y descansos</small></button>
-        <button class="v50-center-item" onclick="v19Go('absences')"><span>✚</span><strong>Ausencias</strong><small>Cobertura y reemplazos</small></button>
-        <button class="v50-center-item" onclick="v19Go('evaluations')"><span>★</span><strong>Evaluaciones</strong><small>Desempeño mensual</small></button>
-      </div></div>
-      <div class="v50-center-group"><div class="v50-center-group-title">Administración</div><div class="v50-center-list">
-        <button class="v50-center-item" onclick="v19Go('finance')"><span>$</span><strong>Finanzas</strong><small>Caja, ventas y depósitos</small></button>
-        <button class="v50-center-item" onclick="v19Go('additional')"><span>＋</span><strong>Jornadas adicionales</strong><small>Turnos extra y pagos</small></button>
-        <button class="v50-center-item" onclick="v19Go('reports')"><span>↗</span><strong>Reportes</strong><small>Informes y exportaciones</small></button>
-        <button class="v50-center-item" onclick="v19Go('settings')"><span>⚙</span><strong>Configuración</strong><small>Preferencias del sistema</small></button>
-      </div></div>
+      ${group('Operación',[
+        {view:'actual',icon:'◷',label:'Asistencia',description:'Registro real y excepciones'},
+        {view:'checklists',icon:'✓',label:'Checklist',description:'Control de Jefa de Isla'},
+        {view:'incidents',icon:'!',label:'Incidencias',description:'Registrar y dar seguimiento'},
+        {view:'handoff',icon:'⇄',label:'Entrega de turno',description:'Cierre y traspaso operacional'}
+      ])}
+      ${group('Personal',[
+        {view:'employees',icon:'◉',label:'Trabajadores',description:'Fichas y datos del equipo'},
+        {view:'planning',icon:'▦',label:'Planificación',description:'Turnos y descansos'},
+        {view:'absences',icon:'✚',label:'Ausencias',description:'Cobertura y reemplazos'},
+        {view:'evaluations',icon:'★',label:'Evaluaciones',description:'Desempeño mensual'}
+      ])}
+      ${group('Administración',[
+        {view:'finance',icon:'$',label:'Finanzas',description:'Caja, ventas y depósitos'},
+        {view:'additional',icon:'＋',label:'Jornadas adicionales',description:'Turnos extra y pagos'},
+        {view:'reports',icon:'↗',label:'Reportes',description:'Informes y exportaciones'},
+        {view:'settings',icon:'⚙',label:'Configuración',description:'Preferencias del sistema'}
+      ])}
       <div class="v19-section-title">Trabajo pendiente</div><div class="v19-summary-list"><div class="v19-summary-item" onclick="v19Action('notifications')"><span class="v19-summary-icon">🔔</span><div><strong>Notificaciones</strong><small>Alertas e información del sistema</small></div><span class="v19-count-chip">${n}</span></div><div class="v19-summary-item" onclick="v19Action('task')"><span class="v19-summary-icon">☑</span><div><strong>Pendientes</strong><small>Tareas que requieren una acción</small></div><span class="v19-count-chip">${t}</span></div></div>`;
     const notices=$('v19PaneNotices');if(notices)notices.innerHTML=`<div class="v19-section-title">Resumen</div><div class="v19-summary-list"><div class="v19-summary-item" onclick="v19Action('notifications')"><span class="v19-summary-icon">🔔</span><div><strong>${n?n+' asunto(s) por revisar':'Todo al día'}</strong><small>${n?'Abrir el centro completo de notificaciones':'No hay alertas relevantes'}</small></div><span>↗</span></div><div class="v19-summary-item" onclick="v19Action('task')"><span class="v19-summary-icon">☑</span><div><strong>${t?t+' pendiente(s)':'Sin pendientes manuales'}</strong><small>Crear o revisar tareas operativas</small></div><span>↗</span></div></div>`;
-    const nav=$('v19PaneNavigate');if(nav){const links=[['◉','Operación del día','today'],['◫','Centro ejecutivo','dashboard'],['◷','Registro real','actual'],['▦','Planificación','planning'],['◉','Trabajadores','employees'],['$','Finanzas','finance'],['↗','Reportes','reports'],['≡','Historial de actividad','audit'],['⚙','Configuración','settings']];nav.innerHTML=`<div class="v19-section-title">Accesos rápidos</div><div class="v19-nav-list">${links.map(x=>`<div class="v19-nav-item" onclick="v19Go('${x[2]}')"><span class="v19-summary-icon">${x[0]}</span><div><strong>${esc(x[1])}</strong><small>Abrir módulo</small></div><span>↗</span></div>`).join('')}</div>`}
+    const nav=$('v19PaneNavigate');if(nav){const links=[[role==='ADMIN'?'▧':'◆',home.label,home.view],...(showOperationalHome?[['◆','Inicio operativo','operational-home']]:[]),['◉','Operación del día','today'],['◫','Centro ejecutivo','dashboard'],['◷','Registro real','actual'],['▦','Planificación','planning'],['◉','Trabajadores','employees'],['$','Finanzas','finance'],['↗','Reportes','reports'],['≡','Historial de actividad','audit'],['⚙','Configuración','settings']].filter(x=>canOpen(x[2]));nav.innerHTML=`<div class="v19-section-title">Accesos rápidos</div><div class="v19-nav-list">${links.map(x=>`<div class="v19-nav-item" onclick="v19Go('${x[2]}')"><span class="v19-summary-icon">${x[0]}</span><div><strong>${esc(x[1])}</strong><small>Abrir módulo</small></div><span>↗</span></div>`).join('')}</div>`}
   }
   window.v19Go=go;
   function installWorkerSearch(){const sec=$('employees');if(!sec||sec.querySelector('.v19-worker-toolbar'))return;const input=$('employeeSearch');if(!input)return;const wrap=document.createElement('div');wrap.className='v19-worker-toolbar';const toggle=document.createElement('button');toggle.className='v19-search-toggle';toggle.type='button';toggle.title='Buscar trabajador';toggle.setAttribute('aria-label','Buscar trabajador');toggle.textContent='⌕';toggle.onclick=()=>{wrap.classList.toggle('search-open');if(wrap.classList.contains('search-open'))setTimeout(()=>input.focus(),20);else{input.value='';if(typeof window.renderEmployees==='function')window.renderEmployees()}};input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);wrap.appendChild(toggle)}
