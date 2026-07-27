@@ -8,6 +8,7 @@
     }),
     CHIEF:Object.freeze({
       views:Object.freeze([
+        'operational-home',
         'today',
         'actual',
         'execution',
@@ -41,8 +42,15 @@
     return window.AuthContext?.get?.() || null;
   }
 
+  function normalizeRole(role){
+    const normalized=String(role||'').trim().toUpperCase();
+    if(normalized==='ADMIN')return 'ADMIN';
+    if(normalized==='CHIEF')return 'CHIEF';
+    return null;
+  }
+
   function getRole(){
-    return getContext()?.role || null;
+    return normalizeRole(getContext()?.role);
   }
 
   function getLegacyRole(){
