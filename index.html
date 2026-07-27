@@ -10103,6 +10103,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/planning/planning.js"></script>
 <script src="src/modules/month-closures/month-closures.js"></script>
 <script src="src/modules/attendance/attendance.js"></script>
+<script src="src/modules/shortages/shortages.js"></script>
 
 <script>
 // V9: constantes críticas disponibles antes de cualquier inicialización o evento.
@@ -16310,15 +16311,24 @@ openEvaluation=function(id){
 
 // --- V14.17 · Administración financiera exclusiva del administrador ---
 const FINANCE_KEY='shiftcontrol_finance_v1417';
+const CASH_SHORTAGES_MIGRATION_KEY='shiftcontrol_v101_cash_shortages_migrated';
+const CASH_SHORTAGES_LEGACY_OWNER_KEY='shiftcontrol_v101_cash_shortages_legacy_company';
+const CASH_SHORTAGES_LEGACY_COMPANY_ID=
+  localStorage.getItem(CASH_SHORTAGES_LEGACY_OWNER_KEY)
+  ||localStorage.getItem('shiftcontrol_local_state_company_v1')
+  ||'';
 let financeActiveTab='summary';
 
-function financeStore(){
+function readLegacyFinanceStore(){
   try{
     const parsed=JSON.parse(localStorage.getItem(FINANCE_KEY)||'null');
     if(parsed&&Array.isArray(parsed.shortages)&&Array.isArray(parsed.reconciliations)&&Array.isArray(parsed.expenses))return parsed;
   }catch(_error){}
+  return null;
+}
+function createFinanceSample(){
   const employees=window.EmployeeModule.getAll().filter(e=>e.active!==false);
-  const sample={
+  return {
     shortages:[
       {id:safeRandomUUID(),date:isoToday,employeeId:employees[0]?.id||'',shift:'A',amount:25000,reason:'Error de vuelto',status:'Pendiente',notes:'Diferencia detectada durante la cuadratura.',fileName:'',createdAt:new Date().toISOString()},
       {id:safeRandomUUID(),date:isoToday,employeeId:employees[1]?.id||'',shift:'B',amount:15000,reason:'Diferencia de efectivo',status:'Recuperado',notes:'Monto recuperado en el turno siguiente.',fileName:'',createdAt:new Date(Date.now()-86400000).toISOString()}
@@ -16331,12 +16341,114 @@ function financeStore(){
       {id:safeRandomUUID(),date:isoToday,employeeId:'',shift:'B',amount:32000,category:'Mantención',status:'Pendiente',notes:'Reparación menor de surtidor.',fileName:'',createdAt:new Date(Date.now()-3600000).toISOString()}
     ]
   };
-  localStorage.setItem(FINANCE_KEY,JSON.stringify(sample));
-  return sample;
+}
+function financeStore(){
+  const legacy=readLegacyFinanceStore();
+  const store=legacy||createFinanceSample();
+
+  if(!legacy){
+    localStorage.setItem(FINANCE_KEY,JSON.stringify(store));
+  }
+
+  const currentState=window.ShiftControlState?.get?.();
+  if(Array.isArray(currentState?.cashShortages)){
+    store.shortages=ShortageModule.getAll();
+  }
+
+  return store;
 }
 function saveFinanceStore(store){
   localStorage.setItem(FINANCE_KEY,JSON.stringify(store));
 }
+function persistCashShortages(store){
+  store.shortages=ShortageModule.getAll();
+  saveFinanceStore(store);
+  save();
+}
+function mergeCashShortages(current,legacy){
+  const knownIds=new Set(current.map(item=>item.id));
+  return current.concat(
+    legacy.filter(item=>!knownIds.has(item.id))
+  );
+}
+async function migrateLegacyCashShortages(){
+  try{
+    const context=window.AuthContext?.get?.();
+    const currentState=window.ShiftControlState?.get?.();
+
+    if(!context?.companyId||!currentState){
+      return false;
+    }
+
+    const migrationKey=`${CASH_SHORTAGES_MIGRATION_KEY}:${context.companyId}`;
+    if(
+      localStorage.getItem(migrationKey)==='1'
+      &&Array.isArray(currentState.cashShortages)
+    ){
+      return true;
+    }
+
+    const legacy=readLegacyFinanceStore();
+    const canImportLegacy=
+      !CASH_SHORTAGES_LEGACY_COMPANY_ID
+      ||CASH_SHORTAGES_LEGACY_COMPANY_ID===context.companyId;
+    const hadCanonicalCollection=Array.isArray(currentState.cashShortages);
+    const current=hadCanonicalCollection
+      ?currentState.cashShortages
+      :[];
+    let next=current;
+    let backup=legacy;
+
+    if(canImportLegacy){
+      backup=backup||createFinanceSample();
+      next=hadCanonicalCollection
+        ?mergeCashShortages(current,backup.shortages)
+        :backup.shortages;
+    }
+
+    const changed=
+      !hadCanonicalCollection
+      ||next.length!==current.length;
+
+    if(changed){
+      ShortageModule.replaceAll(next,{save:false});
+    }
+
+    if(canImportLegacy){
+      backup.shortages=ShortageModule.getAll();
+      saveFinanceStore(backup);
+    }
+
+    if(changed){
+      save();
+      if(typeof renderAll==='function'){
+        renderAll();
+      }
+
+      const synced=await window.ShiftControlStorage?.pushState?.();
+      if(!synced){
+        return false;
+      }
+    }
+
+    localStorage.setItem(migrationKey,'1');
+    if(!CASH_SHORTAGES_LEGACY_COMPANY_ID&&canImportLegacy){
+      localStorage.setItem(
+        CASH_SHORTAGES_LEGACY_OWNER_KEY,
+        context.companyId
+      );
+    }
+
+    return true;
+  }catch(error){
+    console.warn(
+      '[ShiftControl V1.0.1] No fue posible migrar los faltantes legacy.',
+      error
+    );
+    return false;
+  }
+}
+window.migrateLegacyCashShortages=migrateLegacyCashShortages;
 function financeEmployeeName(id){
   return window.EmployeeModule.find(id)?.name||'Sin trabajador';
 }
@@ -16621,9 +16733,18 @@ function saveFinanceEntry(event){
     row={...base,systemSales:Number(financeSystemSales.value||0),expectedCash,countedCash,cards:Number(financeCards.value||0),otherPayments:Number(financeOtherPayments.value||0),difference:countedCash-expectedCash};
   }
   if(type==='expense')row={...base,amount:Number(financeExpenseAmount.value||0),category:financeExpenseCategory.value};
-  const index=store[collection].findIndex(item=>item.id===id);
-  if(index>=0)store[collection][index]=row;else store[collection].unshift(row);
-  saveFinanceStore(store);
+  if(type==='shortage'){
+    if(existing){
+      ShortageModule.update(id,row,{save:false});
+    }else{
+      ShortageModule.add(row,{prepend:true,save:false});
+    }
+    persistCashShortages(store);
+  }else{
+    const index=store[collection].findIndex(item=>item.id===id);
+    if(index>=0)store[collection][index]=row;else store[collection].unshift(row);
+    saveFinanceStore(store);
+  }
   closeFinanceEntry();
   renderFinance();
   showToast('Registro financiero guardado');
@@ -16631,13 +16752,27 @@ function saveFinanceEntry(event){
 function deleteFinanceEntry(type,id){
   if(!confirm('¿Eliminar este registro financiero?'))return;
   const store=financeStore(),collection=financeCollection(type);
-  store[collection]=store[collection].filter(row=>row.id!==id);
-  saveFinanceStore(store);renderFinance();showToast('Registro eliminado');
+  if(type==='shortage'){
+    ShortageModule.remove(id,{save:false});
+    persistCashShortages(store);
+  }else{
+    store[collection]=store[collection].filter(row=>row.id!==id);
+    saveFinanceStore(store);
+  }
+  renderFinance();showToast('Registro eliminado');
 }
 function advanceFinanceStatus(type,id){
   const store=financeStore(),collection=financeCollection(type),row=store[collection].find(item=>item.id===id);
   if(!row)return;
-  if(type==='shortage')row.status=row.status==='Recuperado'?'Pendiente':'Recuperado';
+  if(type==='shortage'){
+    ShortageModule.patch(id,{
+      status:row.status==='Recuperado'?'Pendiente':'Recuperado',
+      updatedAt:new Date().toISOString()
+    },{save:false});
+    persistCashShortages(store);
+    renderFinance();
+    return;
+  }
   if(type==='reconciliation')row.status=row.status==='Aprobado'?'Pendiente':'Aprobado';
   if(type==='expense')row.status=row.status==='Rendido'?'Pendiente':'Rendido';
   row.updatedAt=new Date().toISOString();
@@ -16646,13 +16781,26 @@ function advanceFinanceStatus(type,id){
 function approveFinanceEntry(type,id){
   const store=financeStore(),collection=financeCollection(type),row=store[collection].find(item=>item.id===id);
   if(!row)return;
-  row.status=type==='expense'?'Rendido':type==='shortage'?'Recuperado':'Aprobado';
-  saveFinanceStore(store);renderFinance();showToast('Registro aprobado');
+  if(type==='shortage'){
+    ShortageModule.patch(id,{status:'Recuperado'},{save:false});
+    persistCashShortages(store);
+  }else{
+    row.status=type==='expense'?'Rendido':'Aprobado';
+    saveFinanceStore(store);
+  }
+  renderFinance();showToast('Registro aprobado');
 }
 function rejectFinanceEntry(type,id){
   const store=financeStore(),collection=financeCollection(type),row=store[collection].find(item=>item.id===id);
   if(!row)return;
-  row.status='Rechazado';saveFinanceStore(store);renderFinance();showToast('Registro rechazado');
+  if(type==='shortage'){
+    ShortageModule.patch(id,{status:'Rechazado'},{save:false});
+    persistCashShortages(store);
+  }else{
+    row.status='Rechazado';
+    saveFinanceStore(store);
+  }
+  renderFinance();showToast('Registro rechazado');
 }
 function exportFinanceCSV(){
   const store=financeStore(),month=financeMonthValue();

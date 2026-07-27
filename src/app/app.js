@@ -12,6 +12,10 @@ async function initApp(){
     window.ShiftControlState.syncLegacyState();
   }
 
+  if(window.migrateLegacyCashShortages){
+    await window.migrateLegacyCashShortages();
+  }
+
   if(window.AppState){
     AppState.initialized = true;
   }
