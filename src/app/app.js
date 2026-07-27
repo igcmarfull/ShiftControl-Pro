@@ -24,6 +24,10 @@ async function initApp(){
     await window.migrateLegacyEvaluations();
   }
 
+  if(window.migrateLegacyChecklists){
+    await window.migrateLegacyChecklists();
+  }
+
   if(window.AppState){
     AppState.initialized = true;
   }

@@ -41,7 +41,8 @@ ShiftControl Pro es una aplicación web de una sola página, ejecutada directame
 │   │   ├── audit/                # state.audit
 │   │   ├── settings/             # state.settings
 │   │   ├── month-closures/       # state.closedMonths
-│   │   └── daily-closures/       # state.dailyClosures
+│   │   ├── daily-closures/       # state.dailyClosures
+│   │   └── checklists/           # state.checklists
 │   └── storage/
 │       ├── local.js              # adaptador presente, no cargado
 │       ├── supabase.js           # adaptador presente, no cargado
@@ -84,8 +85,9 @@ El navegador procesa el marcado, los estilos y varios scripts inline incluidos e
 
 Antes del bloque monolítico se cargan `ShiftControlState`, `EmployeeModule`,
 `SettingsModule`, `AdditionalModule`, `AbsenceModule`, `HolidayModule`,
-`AuditModule`, `DailyClosureModule`, `PlanningModule`, `MonthClosureModule` y
-`AttendanceModule`. Así, todos los módulos de estado existen antes de la
+`AuditModule`, `DailyClosureModule`, `PlanningModule`, `MonthClosureModule`,
+`AttendanceModule`, `ShortageModule`, `IncidentModule`, `EvaluationModule` y
+`ChecklistModule`. Así, los módulos de estado requeridos existen antes de la
 normalización, los datos demo y cualquier renderizado.
 
 ### 3. Creación del estado legacy
@@ -190,7 +192,6 @@ El monolito mantiene además claves separadas para:
 - rol y roles legacy;
 - período activo y ajustes auxiliares;
 - incidencias operativas;
-- checklists;
 - entregas de turno;
 - evaluaciones;
 - avisos de asistencia;

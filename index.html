@@ -10105,6 +10105,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/shortages/shortages.js"></script>
 <script src="src/modules/incidents/incidents.js"></script>
 <script src="src/modules/evaluations/evaluations.js"></script>
+<script src="src/modules/checklists/checklists.js"></script>
 
 <script>
 // ShiftControl Pro · lógica extraída sin alterar comportamiento
@@ -15619,6 +15620,12 @@ const EVALUATIONS_LEGACY_COMPANY_ID=
   localStorage.getItem(EVALUATIONS_LEGACY_OWNER_KEY)
   ||localStorage.getItem('shiftcontrol_local_state_company_v1')
   ||'';
+const CHECKLISTS_MIGRATION_KEY='shiftcontrol_v111_checklists_migrated';
+const CHECKLISTS_LEGACY_OWNER_KEY='shiftcontrol_v111_checklists_legacy_company';
+const CHECKLISTS_LEGACY_COMPANY_ID=
+  localStorage.getItem(CHECKLISTS_LEGACY_OWNER_KEY)
+  ||localStorage.getItem('shiftcontrol_local_state_company_v1')
+  ||'';
 const OPS_CHECKLIST_ITEMS=[['personal','Personal completo','Dotación y reemplazos confirmados'],['uniformes','Presentación y uniforme','Equipo preparado para iniciar el turno'],['surtidores','Surtidores operativos','Sin equipos bloqueados o con fallas visibles'],['banos','Baños revisados','Limpieza e insumos básicos disponibles'],['patio','Patio e islas limpios','Área operativa ordenada'],['instalaciones','Instalaciones revisadas','Iluminación, señalética y accesos en condiciones'],['entrega','Novedades y entrega de turno','Pendientes informados al siguiente responsable']];
 const EVAL_CRITERIA={Asistencia:['Puntualidad','Asistencia','Cumplimiento de turnos'],Trabajo:['Desempeño general','Atención al cliente','Protocolo de atención','Trabajo en equipo','Responsabilidad','Iniciativa'],Actitud:['Disposición','Respeto','Comunicación']};
 let opsIncidentFilter='all', currentEvaluation={scores:{}};
@@ -15858,7 +15865,119 @@ function filterOpsIncidents(f,b){opsIncidentFilter=f;document.querySelectorAll('
 function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const x=IncidentModule.findById(id);if(!x)return;const role=getAppRole(),chiefReview=role==='chief'&&x.status==='open'&&status==='review';if(role!=='admin'&&!chiefReview)return alert('Solo el administrador puede resolver o reabrir incidencias.');const changes={status,updates:[...(x.updates||[]),{at:new Date().toISOString(),text:`Estado cambiado a ${status}`}]};if(status==='resolved')changes.resolvedAt=new Date().toISOString();IncidentModule.patch(id,changes,{save:false});persistOpsIncidents();renderOpsIncidents()}
 function archiveOpsIncident(id){if(!ensureIncidentPermission())return;if(getAppRole()!=='admin')return alert('Solo el administrador puede archivar incidencias.');if(!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const x=IncidentModule.patch(id,{archived:true},{save:false});if(x)persistOpsIncidents();renderOpsIncidents()}
 function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'},isAdmin=getAppRole()==='admin';root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
-function opsChecklistKey(){return `${checklistDate?.value||isoToday}|${checklistShift?.value||'Mañana'}`} function opsChecklistStore(){return opsRead(window.OPS_CHECKLISTS_KEY,{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:k.split('|')[0],shift:k.split('|')[1],items:{},notes:'',completed:false}} function saveOpsChecklist(d){const s=opsChecklistStore();s[opsChecklistKey()]=d;opsWrite(window.OPS_CHECKLISTS_KEY,s)}
+function readLegacyChecklists(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(window.OPS_CHECKLISTS_KEY)||'null');
+    return parsed&&!Array.isArray(parsed)&&typeof parsed==='object'?parsed:null;
+  }catch(_error){
+    return null;
+  }
+}
+function mergeLegacyChecklists(current,legacy){
+  return Object.assign({},legacy,current);
+}
+function checklistStoreChanged(current,next){
+  const currentKeys=Object.keys(current);
+  const nextKeys=Object.keys(next);
+
+  return currentKeys.length!==nextKeys.length
+    ||nextKeys.some(key=>current[key]!==next[key]);
+}
+function refreshChecklistConsumers(){
+  if(typeof renderOpsChecklist==='function'){
+    renderOpsChecklist();
+  }
+  if(typeof renderOpsChecklistHistory==='function'){
+    renderOpsChecklistHistory();
+  }
+  if(typeof renderV12ApprovalCenter==='function'){
+    renderV12ApprovalCenter();
+  }
+}
+async function migrateLegacyChecklists(){
+  try{
+    const context=window.AuthContext?.get?.();
+    const currentState=window.ShiftControlState?.get?.();
+
+    if(!context?.companyId||!currentState){
+      return false;
+    }
+
+    const migrationKey=`${CHECKLISTS_MIGRATION_KEY}:${context.companyId}`;
+    if(
+      localStorage.getItem(migrationKey)==='1'
+      &&currentState.checklists
+      &&!Array.isArray(currentState.checklists)
+      &&typeof currentState.checklists==='object'
+    ){
+      refreshChecklistConsumers();
+      return true;
+    }
+
+    const legacy=readLegacyChecklists();
+    const canImportLegacy=
+      !CHECKLISTS_LEGACY_COMPANY_ID
+      ||CHECKLISTS_LEGACY_COMPANY_ID===context.companyId;
+    const hadCanonicalCollection=
+      currentState.checklists
+      &&!Array.isArray(currentState.checklists)
+      &&typeof currentState.checklists==='object';
+    const current=hadCanonicalCollection
+      ?currentState.checklists
+      :{};
+    let next=current;
+
+    if(canImportLegacy){
+      next=hadCanonicalCollection
+        ?mergeLegacyChecklists(current,legacy||{})
+        :(legacy||{});
+    }
+
+    const changed=
+      !hadCanonicalCollection
+      ||checklistStoreChanged(current,next);
+
+    if(changed){
+      ChecklistModule.replaceAll(next,{save:false});
+    }
+
+    if(canImportLegacy){
+      opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());
+    }
+
+    refreshChecklistConsumers();
+
+    if(changed){
+      save();
+      if(typeof renderAll==='function'){
+        renderAll();
+      }
+
+      const synced=await window.ShiftControlStorage?.pushState?.();
+      if(!synced){
+        return false;
+      }
+    }
+
+    localStorage.setItem(migrationKey,'1');
+    if(!CHECKLISTS_LEGACY_COMPANY_ID&&canImportLegacy){
+      localStorage.setItem(
+        CHECKLISTS_LEGACY_OWNER_KEY,
+        context.companyId
+      );
+    }
+
+    return true;
+  }catch(error){
+    console.warn(
+      '[ShiftControl V1.1.1] No fue posible migrar los checklists legacy.',
+      error
+    );
+    return false;
+  }
+}
+window.migrateLegacyChecklists=migrateLegacyChecklists;
+function opsChecklistKey(){return `${checklistDate?.value||isoToday}|${checklistShift?.value||'Mañana'}`} function opsChecklistStore(){const currentState=window.ShiftControlState?.get?.();return currentState?.checklists&&!Array.isArray(currentState.checklists)&&typeof currentState.checklists==='object'?ChecklistModule.getAll():(readLegacyChecklists()||{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:k.split('|')[0],shift:k.split('|')[1],items:{},notes:'',completed:false}} function saveOpsChecklist(d){const k=opsChecklistKey();ChecklistModule.set(k,d,{save:false});opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());save()}
 function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
 function saveOpsChecklistNotes(){const d=getOpsChecklist();d.notes=checklistNotes.value;saveOpsChecklist(d)}
 function createIncidentFromChecklist(id,title){if(!ensureIncidentPermission())return;showView('incidents');setTimeout(()=>{incidentTitle.value=`Checklist: ${title}`;incidentDescription.value=`Problema detectado en ${title}, durante el turno ${checklistShift.value}.`;incidentShift.value=checklistShift.value;incidentType.value=id==='surtidores'?'Equipo':'Instalaciones';incidentTitle.focus()},80)}
@@ -16077,7 +16196,7 @@ completeOpsChecklist=function(){
  d.reviewStatus=hasIssue?'pending_review':'auto_archived';d.reviewedAt=hasIssue?'':new Date().toISOString();d.reviewedBy=hasIssue?'':'Sistema';
  saveOpsChecklist(d);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist enviado',`${d.date} · ${d.shift}${hasIssue?' · Con observaciones':' · Sin observaciones'}`);showToast(hasIssue?'Checklist enviado para revisión':'Checklist recibido sin observaciones');
 }
-function reviewChecklistV12(key){if(getAppRole()!=='admin')return;const store=opsChecklistStore(),d=store[key];if(!d)return;d.reviewStatus='reviewed';d.reviewedAt=new Date().toISOString();d.reviewedBy=authenticatedDisplayName();opsWrite(window.OPS_CHECKLISTS_KEY,store);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist marcado como revisado',`${d.date} · ${d.shift}`);showToast('Checklist revisado')}
+function reviewChecklistV12(key){if(getAppRole()!=='admin')return;const store=opsChecklistStore(),d=store[key];if(!d)return;d.reviewStatus='reviewed';d.reviewedAt=new Date().toISOString();d.reviewedBy=authenticatedDisplayName();ChecklistModule.set(key,d,{save:false});opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());save();renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist marcado como revisado',`${d.date} · ${d.shift}`);showToast('Checklist revisado')}
 const _renderOpsChecklistHistoryV11=renderOpsChecklistHistory;
 renderOpsChecklistHistory=function(){
  const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([,x])=>x.completed).sort((a,b)=>new Date(b[1].completedAt)-new Date(a[1].completedAt)).slice(0,10);

@@ -161,6 +161,16 @@ Expone `getAll()`, `isClosed()`, `add()`, `remove()` y `replaceAll()` sobre
 `state.dailyClosures`. Attendance, pagos dominicales, auditoría y la interfaz
 Today permanecen fuera del módulo.
 
+### Checklists operativos
+
+Archivo activo: `src/modules/checklists/checklists.js`.
+
+Expone `getAll()`, `get()`, `set()`, `patch()` y `replaceAll()` sobre
+`state.checklists`. Conserva la estructura indexada por `fecha|turno` y la
+clave legacy `shiftcontrol_ops_checklists_v5` como respaldo local. La vista,
+los estados de revisión, el centro ADMIN y las reglas de aprobación permanecen
+en `index.html`.
+
 ### Configuración
 
 Archivo activo: `src/modules/settings/settings.js`.
@@ -184,6 +194,7 @@ permanecen fuera del módulo.
 | `settings` | `SettingsModule` |
 | `closedMonths` | `MonthClosureModule` |
 | `dailyClosures` | `DailyClosureModule` |
+| `checklists` | `ChecklistModule` |
 
 Los módulos son propietarios de las mutaciones runtime de estas colecciones.
 Las lecturas y la coordinación entre dominios continúan en `index.html`. El
@@ -251,7 +262,7 @@ Las siguientes vistas y flujos existen hoy, pero no están extraídos como módu
 | Auditoría | Vista `audit`, más una auditoría auxiliar en clave local separada |
 | Ausencias | Vista `absences`, sincronización de ejecuciones y cobertura de reemplazos |
 | Incidencias | Vista `incidents`, clave local independiente |
-| Checklists | Vista `checklists`, clave local independiente |
+| Checklists | Vista `checklists`, persistencia mediante `ChecklistModule` y respaldo legacy |
 | Entrega de turno | Vista `handoff`, clave local independiente |
 | Evaluaciones | Vista `evaluations`, clave local independiente |
 | Configuración | Vista `settings` |
