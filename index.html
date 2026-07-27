@@ -1377,7 +1377,6 @@ body[data-theme="dark"] .replacement-panel,
 body.dark .replacement-panel{background:var(--surface-2);border-color:var(--border)}
 .ops-check-item button:disabled,.check-state:disabled{cursor:not-allowed;opacity:.72}
 #checklistNotes:disabled{background:var(--surface-2);color:var(--muted);cursor:not-allowed}
-body[data-role="chief"] [data-view="additional"]{display:none!important}
 \n\n/* ==============================\n   ShiftControl Pro V14 · Mobile-first layer\n   ============================== */\n.mobile-nav{display:none}\n.money-field-wrap{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;margin-top:8px}.money-field-wrap>span{font-weight:800;font-size:18px;color:var(--muted)}.money-field-wrap .field{margin:0}.field-help{display:block;margin-top:7px;color:var(--muted);font-weight:500;line-height:1.4}\n\n@media(max-width:820px){\n  body{padding-bottom:78px}\n  .sidebar{display:none!important}\n  .main{margin-left:0!important;width:100%!important;padding:14px 12px 24px!important}\n  .view{padding-bottom:22px}\n  .topbar{align-items:flex-start;gap:12px;margin-bottom:14px}\n  .topbar,.topbar .actions,.panel-head,.card-head{flex-direction:column}\n  .topbar .actions,.panel-head .actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}\n  .topbar .actions>*{width:100%;min-width:0}\n  .topbar h2{font-size:26px;line-height:1.1}\n  .topbar p{font-size:13px;line-height:1.45}\n  .cards,.dashboard-kpis,.ops-summary-grid{grid-template-columns:1fr 1fr!important;gap:10px}\n  .card,.ops-panel,.dashboard-panel{border-radius:16px;padding:14px}\n  .metric-value,.ops-summary-card strong{font-size:28px}\n  .table-wrap{overflow:visible;background:transparent;border:0;box-shadow:none}\n  .table-wrap table{display:block}\n  .table-wrap thead{display:none}\n  .table-wrap tbody{display:grid;gap:10px}\n  .table-wrap tr{display:block;border:1px solid var(--line);border-radius:15px;padding:12px;background:var(--panel);box-shadow:var(--shadow)}\n  .table-wrap td{display:grid;grid-template-columns:minmax(92px,.42fr) minmax(0,1fr);gap:10px;align-items:center;border:0!important;padding:7px 0!important;text-align:left!important}\n  .table-wrap td:before{content:attr(data-label);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}\n  .table-wrap td:last-child{display:block;padding-top:10px!important}\n  .table-wrap td:last-child:before{display:none}\n  .table-wrap .actions,.table-wrap .row-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}\n  .table-wrap .btn,.table-wrap .icon-btn{min-height:44px;width:100%}\n  .form-grid,.ops-form{grid-template-columns:1fr!important}\n  .form-grid .full{grid-column:auto!important}\n  .field,.btn,select,textarea,input{min-height:44px}\n  .btn{justify-content:center}\n  .demo-banner{font-size:12px;line-height:1.45}\n  .today-intelligence,.ops-two-column,.ops-checklist-layout{grid-template-columns:1fr!important}\n  .mobile-nav{position:fixed;z-index:1000;display:grid;grid-template-columns:repeat(5,1fr);left:0;right:0;bottom:0;min-height:68px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--panel) 94%,transparent);border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.12);backdrop-filter:blur(18px)}\n  .mobile-nav-btn{position:relative;border:0;background:transparent;color:var(--muted);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:12px;min-width:0;cursor:pointer}\n  .mobile-nav-btn>span{font-size:20px;line-height:1}.mobile-nav-btn>small{font-size:10px;font-weight:800}.mobile-nav-btn.active{color:var(--text);background:var(--soft)}\n  .mobile-nav-primary>span{width:40px;height:40px;border-radius:14px;background:var(--accent,#2563eb);color:white;display:grid;place-items:center;margin-top:-22px;box-shadow:0 8px 20px rgba(37,99,235,.32)}\n  .mobile-nav-primary>small{margin-top:2px}\n}\n\n@media(max-width:430px){\n  .cards,.dashboard-kpis,.ops-summary-grid{grid-template-columns:1fr!important}\n  .topbar .actions,.table-wrap .actions,.table-wrap .row-actions{grid-template-columns:1fr}\n  .main{padding-left:10px!important;padding-right:10px!important}\n}\n
 /* =====================================================
    V14.1 · Navegación adaptativa real
@@ -5278,7 +5277,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <div class="role-card">
       <div class="role-avatar" id="roleAvatar">SC</div>
       <div class="role-copy">
-        <strong id="roleName">Sebastián Correa</strong>
+        <strong id="roleName">Usuario</strong>
         <span id="roleTitle">Administrador</span>
       </div>
     </div>
@@ -7994,36 +7993,36 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       </div>
       <div class="cards">
         <div class="card"><div class="metric-label">Registros del mes</div><div class="metric-value" id="aCount">3</div></div>
-        <div class="card"><div class="metric-label">Pagadas</div><div class="metric-value" id="aPaidCount">3</div></div>
-        <div class="card"><div class="metric-label">Pendientes</div><div class="metric-value" id="aPendingCount">0</div></div>
-        <div class="card"><div class="metric-label">Monto pendiente</div><div class="metric-value" id="aPendingAmount">$0</div></div>
+        <div class="card" data-permission-action="payments.manage"><div class="metric-label">Pagadas</div><div class="metric-value" id="aPaidCount">3</div></div>
+        <div class="card" data-permission-action="payments.manage"><div class="metric-label">Pendientes</div><div class="metric-value" id="aPendingCount">0</div></div>
+        <div class="card" data-permission-action="payments.manage"><div class="metric-label">Monto pendiente</div><div class="metric-value" id="aPendingAmount">$0</div></div>
       </div>
       <div class="card">
         <div class="payment-toolbar">
           <div class="filters">
             <select class="select" id="paymentMonth" onchange="renderAdditional()" data-period-bound="true"><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select>
             <select class="select" id="paymentYear" onchange="renderAdditional()" data-period-bound="true"><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
-            <select class="select" id="paymentStatusFilter" onchange="renderAdditional()">
+            <select class="select" id="paymentStatusFilter" onchange="renderAdditional()" data-permission-action="payments.manage">
               <option value="">Todos los estados</option>
               <option value="Pendiente">Pendientes</option>
               <option value="Pagado">Pagados</option>
             </select>
             <input class="field" id="paymentSearch" placeholder="Buscar trabajador o motivo..." oninput="renderAdditional()">
           </div>
-          <div class="payment-selection">
+          <div class="payment-selection" data-permission-action="payments.manage">
             <span class="muted" id="paymentSelectedText">0 seleccionado(s)</span>
             <button class="btn small" onclick="selectAllPendingPayments()">Seleccionar pendientes</button>
             <button class="btn small primary" onclick="markSelectedPaymentsPaid()">Marcar pagados</button>
           </div>
         </div>
-        <div class="financial-strip">
+        <div class="financial-strip" data-permission-action="payments.manage">
           <div class="financial-box"><span>Total listado</span><strong id="paymentListedTotal">$85.000</strong></div>
           <div class="financial-box"><span>Seleccionado</span><strong id="paymentSelectedTotal">$0</strong></div>
           <div class="financial-box"><span>Registros visibles</span><strong id="paymentVisibleCount">3</strong></div>
         </div>
         <div class="table-wrap" style="box-shadow:none">
           <table>
-            <thead><tr><th><input class="payment-check" type="checkbox" id="paymentMasterCheck" onchange="toggleVisiblePayments(this.checked)"></th><th>Trabajador</th><th>Fecha</th><th>Turno</th><th>Motivo</th><th>Monto</th><th>Pago</th><th>Acciones</th></tr></thead>
+            <thead><tr><th data-permission-action="payments.manage"><input class="payment-check" type="checkbox" id="paymentMasterCheck" onchange="toggleVisiblePayments(this.checked)"></th><th>Trabajador</th><th>Fecha</th><th>Turno</th><th>Motivo</th><th data-permission-action="payments.manage">Monto</th><th data-permission-action="payments.manage">Pago</th><th data-permission-action="payments.manage">Acciones</th></tr></thead>
             <tbody id="additionalTable"><tr>
     <td><input class="payment-check" type="checkbox" onchange="togglePaymentSelection(&#39;e3b919ab-88f4-410e-9f58-a102b161bc8a&#39;,this.checked)"></td>
     <td><button class="worker-link" onclick="openWorkerDrawer(&#39;8e5e6ab8-8a19-4467-aaae-c1c126a5bf9d&#39;)">Ayleen Pizarro</button></td>
@@ -8066,11 +8065,11 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
   </tr></tbody>
           </table>
         </div>
-        <div class="payment-mobile-list-head" aria-hidden="true">
+        <div class="payment-mobile-list-head" aria-hidden="true" data-permission-action="payments.manage">
           <strong><span id="paymentMobilePendingCount">0</span> jornadas pendientes</strong>
           <button type="button" class="payment-mobile-select-all" onclick="selectAllPendingPayments()">Seleccionar pendientes</button>
         </div>
-        <div class="payment-mobile-footer">
+        <div class="payment-mobile-footer" data-permission-action="payments.manage">
           <div><span>Total pendiente</span><strong id="paymentMobileTotal">$0</strong></div>
           <button class="btn primary" type="button" onclick="markSelectedPaymentsPaid()">Marcar como pagados (<span id="paymentMobileSelectedCount">0</span>)</button>
         </div>
@@ -8317,7 +8316,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
       <div class="report-tabs reports-v32-tabs">
         <button class="report-tab active" id="tabOperationalReport" onclick="switchReportTab(&#39;operational&#39;)">Reporte operativo</button>
-        <button class="report-tab" id="tabAccountingReport" onclick="switchReportTab(&#39;accounting&#39;)">Reporte contabilidad</button>
+        <button class="report-tab" id="tabAccountingReport" onclick="switchReportTab(&#39;accounting&#39;)" data-permission-action="reports.financial">Reporte contabilidad</button>
       </div>
 
       <div id="operationalReportPanel" class="report-panel active reports-v32-operational">
@@ -8353,7 +8352,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
                 <th>A</th><th>B</th><th>C</th><th>Descanso</th>
                 <th>Presente</th><th>Atrasado</th><th>Ausente</th>
                 <th>Licencia</th><th>Vacaciones</th><th>Permisos</th>
-                <th>Adicionales</th><th>Pendiente</th>
+                <th>Adicionales</th><th data-permission-action="reports.financial">Pendiente</th>
               </tr>
             </thead>
             <tbody id="reportTable"><tr>
@@ -8566,7 +8565,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
                 <tr>
                   <th>Mes</th><th>Planificados</th><th>Asistencias</th>
                   <th>Ausencias</th><th>Adicionales</th>
-                  <th>Pagado</th><th>Pendiente</th>
+                  <th data-permission-action="reports.financial">Pagado</th><th data-permission-action="reports.financial">Pendiente</th>
                 </tr>
               </thead>
               <tbody id="annualTable"><tr>
@@ -8671,7 +8670,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
       </div>
 
-      <div id="accountingReportPanel" class="report-panel reports-v34-accounting">
+      <div id="accountingReportPanel" class="report-panel reports-v34-accounting" data-permission-action="reports.financial">
         <section class="report-print-sheet" id="accountingPrintSheet" aria-hidden="true">
           <header class="print-doc-header">
             <div class="print-brand"><div class="print-brand-mark">SC</div><div class="print-brand-copy"><strong>ShiftControl Pro</strong><span>Gestión de personal y operación</span></div></div>
@@ -9572,7 +9571,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <div class="form-group"><label>Tipo</label><select class="select" id="incidentType"><option>Equipo</option><option>Personal</option><option>Instalaciones</option><option>Combustible</option><option>Cliente</option><option>Otro</option></select></div>
         <div class="form-group"><label>Prioridad</label><select class="select" id="incidentPriority"><option value="Alta">Alta</option><option value="Media" selected>Media</option><option value="Baja">Baja</option></select></div>
         <div class="form-group"><label>Turno</label><select class="select" id="incidentShift"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div>
-        <div class="form-group"><label>Reportada por</label><input class="field" id="incidentReporter" value="Jefa de isla"></div>
+        <div class="form-group"><label>Reportada por</label><input class="field" id="incidentReporter"></div>
         <div class="form-group"><label>Asignada a</label><input class="field" id="incidentOwner" placeholder="Sin asignar"></div>
         <div class="form-group"><label>Fecha compromiso</label><input class="field" type="date" id="incidentDueDate"></div>
         <div class="form-group full"><label>Descripción</label><textarea id="incidentDescription" rows="4" placeholder="Describe qué ocurrió, dónde y qué acción inmediata se tomó" required></textarea></div>
@@ -10107,11 +10106,6 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/incidents/incidents.js"></script>
 
 <script>
-// V9: constantes críticas disponibles antes de cualquier inicialización o evento.
-// Evita el fallo de Safari al consultar roles antes de llegar al bloque de perfiles.
-var ROLE_KEY = 'shiftcontrol_app_role_v11';
-var LEGACY_ROLE_KEYS = ['shiftcontrol_app_role_v9','shiftcontrol_app_role_v8','shiftcontrol_app_role_v7','shiftcontrol_app_role_v5'];
-
 // ShiftControl Pro · lógica extraída sin alterar comportamiento
 
 // ========================================
@@ -10823,7 +10817,7 @@ function duplicatePreviousMonth(){snapshot();
   save();renderAll();toast('Mes anterior duplicado');
 }
 function moveMonth(delta){let m=Number(planMonth.value),y=Number(planYear.value);m+=delta;if(m<1){m=12;y--}if(m>12){m=1;y++}planMonth.value=String(m).padStart(2,'0');if(![...planYear.options].some(o=>Number(o.value)===y))planYear.innerHTML+=`<option value="${y}">${y}</option>`;planYear.value=y;renderPlanning()}
-function toggleMonthClose(){snapshot();const p=periodPrefix();if(isClosed(p)){MonthClosureModule.remove(p,{save:false});log(`Mes ${p} reabierto`)}else{MonthClosureModule.add(p,{save:false});log(`Mes ${p} cerrado`)}save();renderAll()}
+function toggleMonthClose(){if(!requireAppPermission('month-closures.manage'))return;snapshot();const p=periodPrefix();if(isClosed(p)){MonthClosureModule.remove(p,{save:false});log(`Mes ${p} reabierto`)}else{MonthClosureModule.add(p,{save:false});log(`Mes ${p} cerrado`)}save();renderAll()}
 function cellMouseDown(event,employeeId,date){
   if(event.button!==0)return;
   if(event.detail===2){openCell(employeeId,date);return}
@@ -11514,6 +11508,7 @@ function applyTheme(){
   document.getElementById('themeOptionDark')?.classList.toggle('active',!light);
 }
 function setTheme(theme){
+  if(!requireAppPermission('settings.manage'))return;
   if(theme!=='light'&&theme!=='dark')return;
   SettingsModule.set('theme',theme,{save:false});
   save();applyTheme();
@@ -11820,6 +11815,7 @@ function syncSundayPaymentsForDate(date){
   state.employees.forEach(e=>syncSundayPayment(e.id,date));
 }
 function syncAllSundayPayments(){
+  if(!requireAppPermission('payments.manage'))return;
   snapshot();
   const sundayDates=[...new Set(state.executions.filter(x=>isSunday(x.date)).map(x=>x.date))];
   sundayDates.forEach(syncSundayPaymentsForDate);
@@ -11836,6 +11832,7 @@ function sundayMonthSummary(prefix){
   });
 }
 function saveSundaySettings(){
+  if(!requireAppPermission('settings.manage'))return;
   SettingsModule.set('sundayThreshold',Math.max(0,Number(sundayThreshold.value||0)),{save:false});
   SettingsModule.set('sundayNormalAmount',Math.max(0,Number(sundayNormalAmount.value||0)),{save:false});
   SettingsModule.set('sundaySpecialAmount',Math.max(0,Number(sundaySpecialAmount.value||0)),{save:false});
@@ -13265,6 +13262,9 @@ function deleteEmployee(id){
 let activeReportTab='operational';
 
 function switchReportTab(tab){
+  if(tab==='accounting'&&!canUseAppPermission('reports.financial')){
+    tab='operational';
+  }
   activeReportTab=tab;
   const operational=tab==='operational';
   document.getElementById('operationalReportPanel')?.classList.toggle('active',operational);
@@ -13446,6 +13446,7 @@ function downloadCSV(rows,filename){
 }
 
 function monthlyOperationalRows(){
+  const includeFinancial=canUseAppPermission('reports.financial');
   const month=document.getElementById('reportMonth')?.value
     ||String(new Date().getMonth()+1).padStart(2,'0');
   const year=document.getElementById('reportYear')?.value
@@ -13473,7 +13474,7 @@ function monthlyOperationalRows(){
         .filter(item=>item.paid==='Pendiente')
         .reduce((sum,item)=>sum+Number(item.amount||0),0);
 
-      return [
+      const row=[
         worker.name||'',
         worker.rut||'',
         worker.role||'',
@@ -13491,36 +13492,41 @@ function monthlyOperationalRows(){
         workerAdditional.length,
         pendingAmount
       ];
+
+      return includeFinancial?row:row.slice(0,-1);
     });
+
+  const headers=[
+    'Trabajador',
+    'RUT',
+    'Cargo',
+    'Área',
+    'Turnos A',
+    'Turnos B',
+    'Turnos C',
+    'Descansos',
+    'Presente',
+    'Atrasado',
+    'Ausente',
+    'Licencia',
+    'Vacaciones',
+    'Permisos',
+    'Jornadas adicionales',
+    'Monto pendiente'
+  ];
 
   return {
     month,
     year,
     rows:[
-      [
-        'Trabajador',
-        'RUT',
-        'Cargo',
-        'Área',
-        'Turnos A',
-        'Turnos B',
-        'Turnos C',
-        'Descansos',
-        'Presente',
-        'Atrasado',
-        'Ausente',
-        'Licencia',
-        'Vacaciones',
-        'Permisos',
-        'Jornadas adicionales',
-        'Monto pendiente'
-      ],
+      includeFinancial?headers:headers.slice(0,-1),
       ...rows
     ]
   };
 }
 
 function exportMonthlyCSV(){
+  if(!requireAppPermission('reports.operational'))return;
   const report=monthlyOperationalRows();
 
   if(report.rows.length<=1){
@@ -13541,6 +13547,7 @@ function exportMonthlyCSV(){
 }
 
 function exportAccountingCSV(){
+  if(!requireAppPermission('reports.financial'))return;
   const rows=accountingRows();
   const month=document.getElementById('reportMonth')?.value||'';
   const year=document.getElementById('reportYear')?.value||'';
@@ -13686,7 +13693,7 @@ function renderReports(){
       <td>${ex.filter(x=>x.status==='Vacaciones').length}</td>
       <td>${ex.filter(x=>x.status==='Permiso').length}</td>
       <td>${ad.length}</td>
-      <td>${money(pending)}</td>
+      <td data-permission-action="reports.financial">${money(pending)}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="13"><div class="empty">Sin datos para este período.</div></td></tr>';
 
@@ -13710,12 +13717,17 @@ function renderReports(){
       <td>${monthExecs.filter(x=>['Presente','Atrasado'].includes(x.status)).length}</td>
       <td>${monthExecs.filter(x=>x.status==='Ausente').length}</td>
       <td>${monthAdds.length}</td>
-      <td>${money(paid)}</td>
-      <td>${money(pending)}</td>
+      <td data-permission-action="reports.financial">${money(paid)}</td>
+      <td data-permission-action="reports.financial">${money(pending)}</td>
     </tr>`;
   }).join('');
 
-  renderAccountingReport();
+  if(canUseAppPermission('reports.financial')){
+    renderAccountingReport();
+  }else{
+    switchReportTab('operational');
+  }
+  applyPermissionVisibility(document.getElementById('reports'));
 }
 
 let selectedPayments=new Set();
@@ -13810,6 +13822,7 @@ function selectAllPendingPayments(){
 }
 
 function markSelectedPaymentsPaid(){
+  if(!requireAppPermission('payments.manage'))return;
   const selected=state.additional.filter(item=>selectedPayments.has(item.id)&&item.paid==='Pendiente');
   if(!selected.length)return toast('Selecciona pagos pendientes');
 
@@ -13844,7 +13857,7 @@ function unlockAdditionalForm(){
 }
 
 function openAdditionalModal(){
-  if(getAppRole()!=='admin')return alert('La jefa de isla registra reemplazos desde Operación del día. Los pagos son exclusivos del administrador.');
+  if(!requireAppPermission('additional.create'))return;
   fillEmployeeSelects();
   unlockAdditionalForm();
   document.getElementById('additionalForm')?.reset();
@@ -13858,7 +13871,7 @@ function openAdditionalModal(){
 }
 
 function editAdditional(id){
-  if(getAppRole()!=='admin')return alert('Solo el administrador puede editar información financiera.');
+  if(!requireAppPermission('payments.manage','Solo el administrador puede editar información financiera.'))return;
   const item=state.additional.find(row=>row.id===id);
   if(!item)return toast('No se encontró la jornada');
 
@@ -13878,7 +13891,7 @@ function editAdditional(id){
 }
 
 function toggleAdditionalPaid(id){
-  if(getAppRole()!=='admin')return alert('Solo el administrador puede modificar el estado de pago.');
+  if(!requireAppPermission('payments.manage','Solo el administrador puede modificar el estado de pago.'))return;
   const item=AdditionalModule.findById(id);
   if(!item)return;
 
@@ -13902,6 +13915,7 @@ function toggleAdditionalPaid(id){
 }
 
 function deleteAdditional(id){
+  if(!requireAppPermission('payments.manage'))return;
   const item=state.additional.find(row=>row.id===id);
   if(!item)return;
   if(!confirm(`¿Eliminar la jornada adicional de ${employee(item.employeeId)?.name||'este trabajador'}?`))return;
@@ -13940,14 +13954,14 @@ function renderAdditional(){
   if(!table)return;
 
   table.innerHTML=list.map(item=>`<tr>
-    <td><input class="payment-check" type="checkbox" ${selectedPayments.has(item.id)?'checked':''} onchange="togglePaymentSelection('${item.id}',this.checked)"></td>
+    <td data-permission-action="payments.manage"><input class="payment-check" type="checkbox" ${selectedPayments.has(item.id)?'checked':''} onchange="togglePaymentSelection('${item.id}',this.checked)"></td>
     <td><button class="worker-link" onclick="openWorkerDrawer('${item.employeeId}')">${employee(item.employeeId)?.name||'Eliminado'}</button></td>
     <td>${fmt(item.date)}</td>
     <td><span class="badge b${item.shift}">${item.shift||'—'}</span></td>
     <td>${item.reason||'—'}${item.source==='replacement'?'<br><span class="status s-info">Reemplazo automático</span>':''}</td>
-    <td><strong>${money(item.amount)}</strong></td>
-    <td><span class="status ${item.paid==='Pagado'?'s-ok':'s-late'}">${item.paid||'Pendiente'}</span>${item.paidDate?`<br><span class="muted">${fmt(item.paidDate)}</span>`:''}</td>
-    <td><div class="row-actions">
+    <td data-permission-action="payments.manage"><strong>${money(item.amount)}</strong></td>
+    <td data-permission-action="payments.manage"><span class="status ${item.paid==='Pagado'?'s-ok':'s-late'}">${item.paid||'Pendiente'}</span>${item.paidDate?`<br><span class="muted">${fmt(item.paidDate)}</span>`:''}</td>
+    <td data-permission-action="payments.manage"><div class="row-actions">
       <button type="button" class="icon-btn" onclick="editAdditional('${item.id}')">Editar</button>
       <button type="button" class="icon-btn" onclick="toggleAdditionalPaid('${item.id}')">${item.paid==='Pagado'?'Volver a pendiente':'Marcar pagado'}</button>
       <button type="button" class="icon-btn" onclick="deleteAdditional('${item.id}')">Eliminar</button>
@@ -13961,6 +13975,7 @@ document.getElementById('additionalForm')?.addEventListener('submit',event=>{
   event.preventDefault();
 
   const id=document.getElementById('additionalId').value;
+  if(!requireAppPermission(id?'payments.manage':'additional.create'))return;
   const employeeId=document.getElementById('additionalEmployee').value;
   const date=document.getElementById('additionalDate').value;
   const shift=document.getElementById('additionalShift').value;
@@ -14049,6 +14064,7 @@ function renderAudit(){
 }
 
 function exportAuditCSV(){
+  if(!requireAppPermission('audit.manage'))return;
   const rows=[
     ['Fecha','Acción','Detalle'],
     ...(state.audit||[]).map(item=>[
@@ -14064,6 +14080,7 @@ function exportAuditCSV(){
 }
 
 function clearAudit(){
+  if(!requireAppPermission('audit.manage'))return;
   if(!(state.audit||[]).length)return toast('El historial ya está vacío');
   if(!confirm('¿Eliminar todo el historial? Esta acción no se puede deshacer.'))return;
 
@@ -14877,6 +14894,7 @@ function renderSpecials(){
 }
 
 function openHolidayModal(){
+  if(!requireAppPermission('settings.manage'))return;
   const form=document.getElementById('holidayForm');
   form?.reset();
 
@@ -14905,6 +14923,7 @@ function openAbsenceModal(){
 }
 
 function deleteHoliday(id){
+  if(!requireAppPermission('settings.manage'))return;
   const item=HolidayModule.findById(id);
   if(!item)return;
   if(!confirm(`¿Eliminar el feriado "${item.name||item.title||'Feriado'}"?`))return;
@@ -14958,6 +14977,7 @@ function renderSettings(){
 }
 document.getElementById('settingsForm')?.addEventListener('submit',e=>{
   e.preventDefault();
+  if(!requireAppPermission('settings.manage'))return;
   snapshot();
   SettingsModule.replaceAll({
     ...state.settings,
@@ -14972,9 +14992,9 @@ document.getElementById('settingsForm')?.addEventListener('submit',e=>{
   renderAll();
   toast('Configuración guardada');
 });
-function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`shiftcontrol_respaldo_${isoToday}.json`;a.click();URL.revokeObjectURL(a.href)}
-function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{window.ShiftControlState.replace(JSON.parse(reader.result));save();renderAll();toast('Respaldo importado')}catch{alert('El archivo no es válido.')}};reader.readAsText(file)}
-function resetSystem(){if(!confirm('Esto borrará todos los datos. ¿Continuar?'))return;localStorage.removeItem(KEYS.data);location.reload()}
+function exportBackup(){if(!requireAppPermission('backups.manage'))return;const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`shiftcontrol_respaldo_${isoToday}.json`;a.click();URL.revokeObjectURL(a.href)}
+function importBackup(event){if(!requireAppPermission('backups.manage')){if(event?.target)event.target.value='';return}const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{window.ShiftControlState.replace(JSON.parse(reader.result));save();renderAll();toast('Respaldo importado')}catch{alert('El archivo no es válido.')}};reader.readAsText(file)}
+function resetSystem(){if(!requireAppPermission('backups.manage'))return;if(!confirm('Esto borrará todos los datos. ¿Continuar?'))return;localStorage.removeItem(KEYS.data);location.reload()}
 
 function buildAlerts(){
   const list=[];
@@ -15017,31 +15037,36 @@ function showView(id){
   if(id==='today'&&typeof renderAttendanceNoticeInbox==='function')renderAttendanceNoticeInbox();
 }
 const commands=[
-  {name:'Ir al Centro ejecutivo',run:()=>showView('dashboard')},
-  {name:'Ir al Centro de trabajo',run:()=>showView('workcenter')},
-  {name:'Ir a Operación del día',run:()=>showView('today')},
-  {name:'Ir a planificación',run:()=>showView('planning')},
-  {name:'Ir a vista semanal',run:()=>showView('weekly')},
-  {name:'Registrar jornada',run:()=>openDailyModal()},
-  {name:'Marcar todos presentes',run:()=>markAllPresent()},
-  {name:'Confirmar jornada del día',run:()=>confirmToday()},
-  {name:'Registrar excepción del día',run:()=>openTodayExceptions()},
-  {name:'Aplicar patrón de turnos',run:()=>openPatternModal()},
-  {name:'Agregar trabajador',run:()=>openEmployeeModal()},
-  {name:'Registrar jornada adicional',run:()=>openAdditionalModal()},
-  {name:'Abrir centro de alertas',run:()=>openAlerts()},
-  {name:'Exportar respaldo',run:()=>exportBackup()},
-  {name:'Deshacer último cambio',run:()=>undoAction()},
-  {name:'Rehacer cambio',run:()=>redoAction()},
+  {name:'Ir al Centro ejecutivo',view:'dashboard',run:()=>showView('dashboard')},
+  {name:'Ir al Centro de trabajo',view:'workcenter',run:()=>showView('workcenter')},
+  {name:'Ir a Operación del día',view:'today',run:()=>showView('today')},
+  {name:'Ir a planificación',view:'planning',run:()=>showView('planning')},
+  {name:'Ir a vista semanal',view:'weekly',run:()=>showView('weekly')},
+  {name:'Registrar jornada',action:'attendance.manage',run:()=>openDailyModal()},
+  {name:'Marcar todos presentes',action:'attendance.manage',run:()=>markAllPresent()},
+  {name:'Confirmar jornada del día',action:'attendance.manage',run:()=>confirmToday()},
+  {name:'Registrar excepción del día',action:'attendance.manage',run:()=>openTodayExceptions()},
+  {name:'Aplicar patrón de turnos',action:'planning.manage',run:()=>openPatternModal()},
+  {name:'Agregar trabajador',action:'employees.manage',run:()=>openEmployeeModal()},
+  {name:'Registrar jornada adicional',action:'additional.create',run:()=>openAdditionalModal()},
+  {name:'Abrir centro de alertas',view:'today',run:()=>openAlerts()},
+  {name:'Exportar respaldo',action:'backups.manage',run:()=>exportBackup()},
+  {name:'Deshacer último cambio',action:'planning.manage',run:()=>undoAction()},
+  {name:'Rehacer cambio',action:'planning.manage',run:()=>redoAction()},
 ];
+function commandIsAllowed(command){
+  if(command.view)return window.ShiftControlPermissions?.canOpenView?.(command.view)===true;
+  if(command.action)return window.ShiftControlPermissions?.canUseAction?.(command.action)===true;
+  return false;
+}
 function openCommandPalette(){commandPalette.classList.add('open');commandInput.value='';renderCommands();setTimeout(()=>commandInput.focus(),0)}
 function closeCommandPalette(){commandPalette.classList.remove('open')}
 function renderCommands(){
   const q=commandInput.value.toLowerCase();
-  const list=commands.filter(c=>c.name.toLowerCase().includes(q));
+  const list=commands.filter(c=>commandIsAllowed(c)&&c.name.toLowerCase().includes(q));
   commandList.innerHTML=list.map((c,i)=>`<div class="command-item" onclick="runCommand(${commands.indexOf(c)})">${c.name}</div>`).join('');
 }
-function runCommand(i){commands[i].run();closeCommandPalette();renderAll()}
+function runCommand(i){const command=commands[i];if(!command||!commandIsAllowed(command))return;command.run();closeCommandPalette();renderAll()}
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openCommandPalette()}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey){e.preventDefault();undoAction()}
@@ -15250,6 +15275,7 @@ try{
 
 document.getElementById('holidayForm')?.addEventListener('submit',event=>{
   event.preventDefault();
+  if(!requireAppPermission('settings.manage'))return;
 
   const id=document.getElementById('holidayId')?.value||'';
   const date=document.getElementById('holidayDate')?.value||'';
@@ -15437,43 +15463,60 @@ applyDensity();
 
 // --- Perfiles de uso: administrador / jefa de isla ---
 
-// ROLE_KEY y LEGACY_ROLE_KEYS se inicializan al comienzo del archivo (V9).
 function getAppRole(){
-  const validRoles=['admin','chief'];
-  const authenticatedRole=window.AuthContext?.get()?.legacyRole;
-  if(validRoles.includes(authenticatedRole))return authenticatedRole;
-  const currentKey=(typeof ROLE_KEY==='string'&&ROLE_KEY)?ROLE_KEY:'shiftcontrol_app_role_v11';
-  const legacyKeys=Array.isArray(LEGACY_ROLE_KEYS)?LEGACY_ROLE_KEYS:[];
-  let role=null;
-  try{ role=localStorage.getItem(currentKey); }catch(_error){ role=null; }
-  if(!validRoles.includes(role)){
-    for(const key of legacyKeys){
-      try{
-        const legacy=localStorage.getItem(key);
-        if(legacy==='attendant'){ role='chief'; break; }
-        if(validRoles.includes(legacy)){ role=legacy; break; }
-      }catch(_error){}
-    }
-    if(!validRoles.includes(role)) role='admin';
-    try{ localStorage.setItem(currentKey,role); }catch(_error){}
-  }
-  return role;
+  return window.ShiftControlPermissions?.getLegacyRole?.() || null;
 }
-function setAppRole(role){
-  const authenticatedRole=window.AuthContext?.get()?.legacyRole;
-  const next=['admin','chief'].includes(authenticatedRole)
-    ?authenticatedRole
-    :(['admin','chief'].includes(role)?role:'admin');
-  try{localStorage.setItem(ROLE_KEY,next)}catch(_error){}
+function setAppRole(){
   applyAppRole(true);
 }
-function roleCanOpenView(role,viewId){
-  if(role==='admin') return true;
-  const button=document.querySelector(`.nav-btn[data-view="${viewId}"]`);
-  if(!button) return viewId==='today';
-  return button.classList.contains('role-chief-visible');
+function roleCanOpenView(_role,viewId){
+  return window.ShiftControlPermissions?.canOpenView?.(viewId)===true;
 }
-function roleHomeView(role){return role==='admin'?'dashboard':'today'}
+function roleHomeView(){
+  return window.ShiftControlPermissions?.getRole?.()==='ADMIN'
+    ?'dashboard'
+    :'today';
+}
+function requireAppPermission(action,message){
+  return window.ShiftControlPermissions?.requireAction?.(action,message)===true;
+}
+function canUseAppPermission(action){
+  return window.ShiftControlPermissions?.canUseAction?.(action)===true;
+}
+function applyPermissionVisibility(root=document){
+  root.querySelectorAll?.('[data-permission-action]').forEach(element=>{
+    const action=element.dataset.permissionAction;
+    const allowed=canUseAppPermission(action);
+    element.hidden=!allowed;
+    if(allowed){
+      element.style.removeProperty('display');
+    }else{
+      element.style.setProperty('display','none','important');
+    }
+  });
+}
+function authenticatedDisplayName(){
+  return window.AuthContext?.get?.()?.displayName || '';
+}
+function authenticatedDisplayProfile(){
+  const role=getAppRole();
+  const displayName=authenticatedDisplayName();
+  const initials=displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0,2)
+    .map(part=>part[0])
+    .join('')
+    .toUpperCase();
+
+  return {
+    displayName,
+    initials:initials||(role==='chief'?'JI':'AD'),
+    title:role==='chief'
+      ?'Jefa de isla · operación'
+      :'Administrador · acceso completo'
+  };
+}
 function applyRoleViewIsolation(role){
   document.querySelectorAll('.view').forEach(view=>{
     const allowed=roleCanOpenView(role,view.id);
@@ -15485,11 +15528,19 @@ function applyAppRole(forceView=true){
  if(document.body.classList.contains('auth-locked')&&!authenticatedUser?.())return;
  const role=getAppRole();document.body.dataset.role=role;
  const selector=document.getElementById('roleSelector');if(selector)selector.value=role;
- const profiles={admin:['SC','Sebastián Correa','Administrador · acceso completo'],chief:['JI','María González','Jefa de isla · operación y personal']};
- const p=profiles[role]||profiles.admin;
- if(window.roleAvatar)roleAvatar.textContent=p[0];
- if(window.roleName)roleName.textContent=p[1];
- if(window.roleTitle)roleTitle.textContent=p[2];
+ const profile=authenticatedDisplayProfile();
+ if(window.roleAvatar)roleAvatar.textContent=profile.initials;
+ if(window.roleName)roleName.textContent=profile.displayName;
+ if(window.roleTitle)roleTitle.textContent=profile.title;
+ const mobileAvatar=document.getElementById('v523MobileUserAvatar');
+ const mobileName=document.getElementById('v523MobileUserName');
+ const mobileRole=document.getElementById('v523MobileUserRole');
+ if(mobileAvatar)mobileAvatar.textContent=profile.initials;
+ if(mobileName)mobileName.textContent=profile.displayName;
+ if(mobileRole)mobileRole.textContent=profile.title;
+ const incidentReporter=document.getElementById('incidentReporter');
+ if(incidentReporter&&!incidentReporter.value)incidentReporter.value=profile.displayName;
+ applyPermissionVisibility();
  document.querySelectorAll('.nav-btn').forEach(btn=>{const allowed=roleCanOpenView(role,btn.dataset.view);btn.style.display=allowed?'flex':'none';btn.setAttribute('aria-hidden',allowed?'false':'true');btn.tabIndex=allowed?0:-1});
  document.querySelectorAll('.role-admin-only').forEach(el=>el.style.display=role==='admin'?'inline-flex':'none');
  document.querySelectorAll('.role-chief-only').forEach(el=>el.style.display=role==='chief'?'inline-flex':'none');
@@ -15690,17 +15741,17 @@ async function migrateLegacyIncidents(){
 }
 window.migrateLegacyIncidents=migrateLegacyIncidents;
 function ensureIncidentPermission(){return true}
-function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0];IncidentModule.add({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||'Jefa de isla',owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,createdAt:new Date().toISOString(),createdBy:getAppRole()==='admin'?'Administrador':'Jefa de isla',updates:[]},{prepend:true,save:false});persistOpsIncidents();event.target.reset();incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
+function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],displayName=authenticatedDisplayName();IncidentModule.add({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||displayName,owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,createdAt:new Date().toISOString(),createdBy:displayName,updates:[]},{prepend:true,save:false});persistOpsIncidents();event.target.reset();incidentReporter.value=displayName;incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
 function showToast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
 function filterOpsIncidents(f,b){opsIncidentFilter=f;document.querySelectorAll('[data-incident-filter]').forEach(x=>x.classList.toggle('active',x.dataset.incidentFilter===f));renderOpsIncidents()}
-function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const x=IncidentModule.findById(id);if(!x)return;const changes={status,updates:[...(x.updates||[]),{at:new Date().toISOString(),text:`Estado cambiado a ${status}`}]};if(status==='resolved')changes.resolvedAt=new Date().toISOString();IncidentModule.patch(id,changes,{save:false});persistOpsIncidents();renderOpsIncidents()}
-function archiveOpsIncident(id){if(!ensureIncidentPermission()||!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const x=IncidentModule.patch(id,{archived:true},{save:false});if(x)persistOpsIncidents();renderOpsIncidents()}
-function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'};root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`}<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button></div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
+function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const x=IncidentModule.findById(id);if(!x)return;const role=getAppRole(),chiefReview=role==='chief'&&x.status==='open'&&status==='review';if(role!=='admin'&&!chiefReview)return alert('Solo el administrador puede resolver o reabrir incidencias.');const changes={status,updates:[...(x.updates||[]),{at:new Date().toISOString(),text:`Estado cambiado a ${status}`}]};if(status==='resolved')changes.resolvedAt=new Date().toISOString();IncidentModule.patch(id,changes,{save:false});persistOpsIncidents();renderOpsIncidents()}
+function archiveOpsIncident(id){if(!ensureIncidentPermission())return;if(getAppRole()!=='admin')return alert('Solo el administrador puede archivar incidencias.');if(!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const x=IncidentModule.patch(id,{archived:true},{save:false});if(x)persistOpsIncidents();renderOpsIncidents()}
+function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'},isAdmin=getAppRole()==='admin';root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
 function opsChecklistKey(){return `${checklistDate?.value||isoToday}|${checklistShift?.value||'Mañana'}`} function opsChecklistStore(){return opsRead(window.OPS_CHECKLISTS_KEY,{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:k.split('|')[0],shift:k.split('|')[1],items:{},notes:'',completed:false}} function saveOpsChecklist(d){const s=opsChecklistStore();s[opsChecklistKey()]=d;opsWrite(window.OPS_CHECKLISTS_KEY,s)}
 function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
 function saveOpsChecklistNotes(){const d=getOpsChecklist();d.notes=checklistNotes.value;saveOpsChecklist(d)}
 function createIncidentFromChecklist(id,title){if(!ensureIncidentPermission())return;showView('incidents');setTimeout(()=>{incidentTitle.value=`Checklist: ${title}`;incidentDescription.value=`Problema detectado en ${title}, durante el turno ${checklistShift.value}.`;incidentShift.value=checklistShift.value;incidentType.value=id==='surtidores'?'Equipo':'Instalaciones';incidentTitle.focus()},80)}
-function completeOpsChecklist(){const d=getOpsChecklist(),unanswered=OPS_CHECKLIST_ITEMS.filter(([id])=>!d.items[id]);if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Confirmar igualmente?`))return;d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=getAppRole()==='admin'?'Sebastián Correa':'Jefa de isla';saveOpsChecklist(d);renderOpsChecklist();showToast('Checklist confirmado')}
+function completeOpsChecklist(){const d=getOpsChecklist(),unanswered=OPS_CHECKLIST_ITEMS.filter(([id])=>!d.items[id]);if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Confirmar igualmente?`))return;d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();saveOpsChecklist(d);renderOpsChecklist();showToast('Checklist confirmado')}
 function renderOpsChecklist(){
   const root=document.getElementById('checklistItems');
   if(!root)return;
@@ -15742,7 +15793,7 @@ function renderEvaluationEmployeeOptions(){const el=document.getElementById('eva
 function renderEvaluationCriteria(){const root=document.getElementById('evaluationCriteria');if(!root)return;root.innerHTML=Object.entries(EVAL_CRITERIA).map(([section,items])=>`<div class="evaluation-block"><h4>${section}</h4>${items.map(item=>`<div class="evaluation-row"><strong>${item}</strong><div class="eval-options">${[['green','🟢 Destacado'],['yellow','🟡 Cumple'],['red','🔴 Requiere apoyo']].map(([v,l])=>`<button class="eval-option ${currentEvaluation.scores?.[item]===v?'active':''}" data-value="${v}" onclick="setEvaluationScore('${item}','${v}')">${l}</button>`).join('')}</div></div>`).join('')}</div>`).join('')}
 function setEvaluationScore(item,value){currentEvaluation.scores=currentEvaluation.scores||{};currentEvaluation.scores[item]=value;renderEvaluationCriteria()}
 function newEvaluation(){currentEvaluation={id:'',scores:{},status:'draft'};evaluationId.value='';evaluationPeriod.value=evaluationMonth.value;evaluationStrengths.value='';evaluationImprovements.value='';evaluationGoal.value='';evaluationContext.textContent='Nueva evaluación mensual';evaluationStatusPill.textContent='Borrador';renderEvaluationCriteria()}
-function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||'Jefa de isla',scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
+function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||authenticatedDisplayName(),scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
 function openEvaluation(id){const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation=x;evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;renderEvaluationCriteria()}
 function renderEvaluations(){const root=document.getElementById('evaluationList');if(!root)return;const period=evaluationMonth.value,list=opsRead(window.EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);root.innerHTML=list.length?list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<div class="eval-card" onclick="openEvaluation('${x.id}')"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small></div>`}).join(''):'<div class="ops-empty">No hay evaluaciones para este mes.</div>'}
 function renderOpsModules(){renderOpsIncidents();renderOpsChecklist();renderHandoffs();renderEvaluations()}
@@ -15767,7 +15818,7 @@ function saveEvaluation(status){
  const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID();
  const duplicate=list.find(x=>x.employeeId===employeeId&&x.period===period&&x.id!==id);
  if(duplicate){alert('Ya existe una evaluación para esta trabajadora en ese mes. Ábrela desde el listado para continuar.');return openEvaluation(duplicate.id)}
- const idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||'Jefa de isla',scores:{...(currentEvaluation.scores||{})},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};
+ const idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||authenticatedDisplayName(),scores:{...(currentEvaluation.scores||{})},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};
  if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);currentEvaluation=record;evaluationId.value=id;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada');closeEvaluationEditor();
 }
 function openEvaluation(id){
@@ -15808,7 +15859,7 @@ function renderAttendanceNoticeInbox(){
 }
 function validateAttendanceNotice(id){
  
- const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;item.validated=true;item.validatedAt=new Date().toISOString();item.validatedBy=getAppRole()==='admin'?'Administrador':'Jefa de isla';opsWrite(ATTENDANT_NOTICE_KEY,list);renderAttendanceNoticeInbox();showToast('Aviso marcado como revisado');
+ const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;item.validated=true;item.validatedAt=new Date().toISOString();item.validatedBy=authenticatedDisplayName();opsWrite(ATTENDANT_NOTICE_KEY,list);renderAttendanceNoticeInbox();showToast('Aviso marcado como revisado');
 }
 
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{closeEvaluationEditor();applyAppRole(true)},100));
@@ -15830,13 +15881,13 @@ function assignAttendanceCoverage(id){
   const names=candidates.map((e,i)=>`${i+1}. ${e.name}`).join('\n');
   const selected=prompt(`Selecciona número de reemplazo para ${absent?.name||'la trabajadora'}:\n${names}`);
   const candidate=candidates[Number(selected)-1];if(!candidate)return;
-  item.coverageStatus='assigned';item.coverageEmployeeId=candidate.id;item.coverageName=candidate.name;item.validated=true;item.validatedAt=new Date().toISOString();item.validatedBy=getAppRole()==='admin'?'Administrador':'Jefa de isla';
+  item.coverageStatus='assigned';item.coverageEmployeeId=candidate.id;item.coverageName=candidate.name;item.validated=true;item.validatedAt=new Date().toISOString();item.validatedBy=authenticatedDisplayName();
   opsWrite(ATTENDANT_NOTICE_KEY,list);renderAttendanceNoticeInbox();if(typeof renderMyShift==='function')renderMyShift();showToast(`Reemplazo asignado: ${candidate.name}`);
 }
 function resolveAttendanceNotice(id){
   
   const list=opsRead(ATTENDANT_NOTICE_KEY,[]),item=list.find(x=>x.id===id);if(!item)return;
-  item.validated=true;item.coverageStatus='resolved';item.validatedAt=new Date().toISOString();item.validatedBy=getAppRole()==='admin'?'Administrador':'Jefa de isla';
+  item.validated=true;item.coverageStatus='resolved';item.validatedAt=new Date().toISOString();item.validatedBy=authenticatedDisplayName();
   opsWrite(ATTENDANT_NOTICE_KEY,list);renderAttendanceNoticeInbox();if(typeof renderMyShift==='function')renderMyShift();showToast('Aviso resuelto');
 }
 function renderAttendanceNoticeInbox(){
@@ -15891,7 +15942,7 @@ function renderV12ApprovalCenter(){
 }
 
 function openV12Payments(){
- if(getAppRole()!=='admin')return alert('Solo el administrador puede revisar pagos.');
+ if(!requireAppPermission('payments.manage','Solo el administrador puede revisar pagos.'))return;
  let modal=document.getElementById('v12PaymentsModal');
  if(!modal){
    modal=document.createElement('div');modal.id='v12PaymentsModal';modal.className='modal';modal.innerHTML=`<div class="modal-card wide"><div class="modal-head"><div><h3>Pagos de turnos extra</h3><p>Revisión exclusiva del administrador.</p></div><button class="icon-btn" onclick="closeV12Payments()">×</button></div><div id="v12PaymentsList" class="v12-payment-list"></div></div>`;document.body.appendChild(modal);
@@ -15903,19 +15954,19 @@ function renderV12Payments(){
  const root=document.getElementById('v12PaymentsList');if(!root)return;const rows=state.additional||[];
  root.innerHTML=rows.length?rows.map(x=>`<div class="v12-payment-row"><div class="v12-payment-head"><div><strong>${opsEsc(v12EmployeeName(x.employeeId))}</strong><p>${opsEsc(x.date)} · Turno ${opsEsc(x.shift||'—')} · ${opsEsc(x.reason||'Turno extra')}</p></div><strong>${money(Number(x.amount||0))}</strong></div><div class="v12-actions"><span class="ops-pill">${opsEsc(x.paid||'Pendiente')}</span>${x.paid!=='Pagado'?`<button class="btn small" onclick="approveExtraV12('${x.id}')">Aprobar para pago</button><button class="btn primary small" onclick="payExtraV12('${x.id}')">Marcar pagado</button>`:''}</div></div>`).join(''):'<div class="ops-empty">No hay turnos extra registrados.</div>';
 }
-function approveExtraV12(id){if(getAppRole()!=='admin')return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Aprobado para pago',approvedForPaymentAt:new Date().toISOString()},{save:false});save();renderAll();v12Activity('Turno extra aprobado para pago',`${v12EmployeeName(x.employeeId)} · ${x.date}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago aprobado')}
-function payExtraV12(id){if(getAppRole()!=='admin')return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Pagado',paidDate:isoToday},{save:false});save();renderAll();v12Activity('Turno extra marcado como pagado',`${v12EmployeeName(x.employeeId)} · ${money(Number(x.amount||0))}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago registrado')}
+function approveExtraV12(id){if(!requireAppPermission('payments.manage'))return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Aprobado para pago',approvedForPaymentAt:new Date().toISOString()},{save:false});save();renderAll();v12Activity('Turno extra aprobado para pago',`${v12EmployeeName(x.employeeId)} · ${x.date}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago aprobado')}
+function payExtraV12(id){if(!requireAppPermission('payments.manage'))return;const x=AdditionalModule.findById(id);if(!x)return;AdditionalModule.patch(id,{paid:'Pagado',paidDate:isoToday},{save:false});save();renderAll();v12Activity('Turno extra marcado como pagado',`${v12EmployeeName(x.employeeId)} · ${money(Number(x.amount||0))}`);renderV12Payments();renderV12ApprovalCenter();showToast('Pago registrado')}
 
 // Reemplaza confirmación por envío y archiva automáticamente los checklists sin excepciones.
 completeOpsChecklist=function(){
  const d=getOpsChecklist(),unanswered=OPS_CHECKLIST_ITEMS.filter(([id])=>!d.items[id]);
  if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Enviar igualmente?`))return;
- d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=getAppRole()==='admin'?'Sebastián Correa':'Jefa de isla';
+ d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();
  const hasIssue=Object.values(d.items||{}).includes('issue')||(d.notes||'').trim();
  d.reviewStatus=hasIssue?'pending_review':'auto_archived';d.reviewedAt=hasIssue?'':new Date().toISOString();d.reviewedBy=hasIssue?'':'Sistema';
  saveOpsChecklist(d);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist enviado',`${d.date} · ${d.shift}${hasIssue?' · Con observaciones':' · Sin observaciones'}`);showToast(hasIssue?'Checklist enviado para revisión':'Checklist recibido sin observaciones');
 }
-function reviewChecklistV12(key){if(getAppRole()!=='admin')return;const store=opsChecklistStore(),d=store[key];if(!d)return;d.reviewStatus='reviewed';d.reviewedAt=new Date().toISOString();d.reviewedBy='Sebastián Correa';opsWrite(window.OPS_CHECKLISTS_KEY,store);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist marcado como revisado',`${d.date} · ${d.shift}`);showToast('Checklist revisado')}
+function reviewChecklistV12(key){if(getAppRole()!=='admin')return;const store=opsChecklistStore(),d=store[key];if(!d)return;d.reviewStatus='reviewed';d.reviewedAt=new Date().toISOString();d.reviewedBy=authenticatedDisplayName();opsWrite(window.OPS_CHECKLISTS_KEY,store);renderOpsChecklist();renderV12ApprovalCenter();v12Activity('Checklist marcado como revisado',`${d.date} · ${d.shift}`);showToast('Checklist revisado')}
 const _renderOpsChecklistHistoryV11=renderOpsChecklistHistory;
 renderOpsChecklistHistory=function(){
  const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([,x])=>x.completed).sort((a,b)=>new Date(b[1].completedAt)-new Date(a[1].completedAt)).slice(0,10);
@@ -15924,17 +15975,19 @@ renderOpsChecklistHistory=function(){
 
 const _saveEvaluationV11=saveEvaluation;
 saveEvaluation=function(status){
- if(getAppRole()==='admin'&&status!=='approved')return alert('El administrador revisa evaluaciones enviadas; no crea borradores.');
+ const role=getAppRole();
+ if(role!=='chief')return alert('Solo la jefa de isla puede crear o enviar evaluaciones.');
+ if(!['draft','submitted'].includes(status))return alert('La jefa de isla solo puede guardar borradores o enviar evaluaciones a aprobación.');
  _saveEvaluationV11(status);
  if(status==='submitted')v12Activity('Evaluación enviada a aprobación',`${v12EmployeeName(evaluationEmployee.value)} · ${evaluationPeriod.value}`);
  renderV12ApprovalCenter();
 }
 function approveEvaluationV12(){
  if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden aprobar evaluaciones enviadas a revisión.');
- x.status='approved';x.approvedAt=new Date().toISOString();x.approvedBy='Sebastián Correa';x.updatedAt=x.approvedAt;opsWrite(window.EVAL_KEY,list);currentEvaluation=x;evaluationStatusPill.textContent='Aprobada';renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación aprobada',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación aprobada');closeEvaluationEditor();
+ x.status='approved';x.approvedAt=new Date().toISOString();x.approvedBy=authenticatedDisplayName();x.updatedAt=x.approvedAt;opsWrite(window.EVAL_KEY,list);currentEvaluation=x;evaluationStatusPill.textContent='Aprobada';renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación aprobada',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación aprobada');closeEvaluationEditor();
 }
 function returnEvaluationV12(){
- if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;x.status='draft';x.returnNote=note.trim();x.returnedAt=new Date().toISOString();x.returnedBy='Sebastián Correa';x.updatedAt=x.returnedAt;opsWrite(window.EVAL_KEY,list);renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
+ if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;x.status='draft';x.returnNote=note.trim();x.returnedAt=new Date().toISOString();x.returnedBy=authenticatedDisplayName();x.updatedAt=x.returnedAt;opsWrite(window.EVAL_KEY,list);renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
 }
 const _openEvaluationV11=openEvaluation;
 openEvaluation=function(id){_openEvaluationV11(id);const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;const editor=document.getElementById('evaluationEditor');if(x.returnNote){let note=editor.querySelector('.v12-review-note');if(!note){note=document.createElement('div');note.className='v12-review-note';editor.querySelector('.ops-panel-head')?.after(note)}note.textContent=`Corrección solicitada: ${x.returnNote}`}else editor.querySelector('.v12-review-note')?.remove();const locked=x.status==='approved';editor.querySelectorAll('input,textarea,select').forEach(el=>el.disabled=locked||getAppRole()==='admin');}
@@ -15979,12 +16032,8 @@ renderOpsChecklist=function(){
 
 const _renderAdditionalV13Base=renderAdditional;
 renderAdditional=function(){
-  if(getAppRole()!=='admin'){
-    const table=document.getElementById('additionalTable');
-    if(table)table.innerHTML='<tr><td colspan="8"><div class="empty">Los pagos de turnos extra son gestionados exclusivamente por el administrador.</div></td></tr>';
-    return;
-  }
   _renderAdditionalV13Base();
+  applyPermissionVisibility(document.getElementById('additional'));
 };
 
 const _renderV12PaymentsV13Base=renderV12Payments;
@@ -16116,7 +16165,6 @@ function authenticatedUser(){
 }
 function applyAuthenticatedIdentity(user){
   if(!user)return;
-  try{localStorage.setItem(ROLE_KEY,user.role)}catch(_error){}
   document.body.dataset.authenticated='true';
   document.body.classList.remove('auth-locked');
   const screen=document.getElementById('loginScreen');
@@ -16124,20 +16172,6 @@ function applyAuthenticatedIdentity(user){
     screen.classList.add('hidden');
     screen.setAttribute('aria-hidden','true');
   }
-  const profiles={
-    admin:['SC',user.name||'Administrador','Administrador · acceso completo'],
-    chief:['JI',user.name||'Jefa de isla','Jefa de isla · operación y personal']
-  };
-  const profile=profiles[user.role]||profiles.admin;
-  if(window.roleAvatar)roleAvatar.textContent=profile[0];
-  if(window.roleName)roleName.textContent=profile[1];
-  if(window.roleTitle)roleTitle.textContent=profile[2];
-  const mobileAvatar=document.getElementById('v523MobileUserAvatar');
-  const mobileName=document.getElementById('v523MobileUserName');
-  const mobileRole=document.getElementById('v523MobileUserRole');
-  if(mobileAvatar)mobileAvatar.textContent=profile[0];
-  if(mobileName)mobileName.textContent=profile[1];
-  if(mobileRole)mobileRole.textContent=profile[2];
   applyAppRole(true);
 }
 function showLoginScreen(message=''){
@@ -16774,6 +16808,7 @@ function financeCollection(type){
   return map[type]||'expenses';
 }
 function openFinanceEntry(type){
+  if(!requireAppPermission('finance.manage'))return;
   const chosen=type||({summary:'expense',shortages:'shortage',reconciliations:'reconciliation',expenses:'expense',approvals:'expense'}[financeActiveTab]||'expense');
   const modal=document.getElementById('financeModal');
   document.getElementById('financeEntryId').value='';
@@ -16807,6 +16842,7 @@ function configureFinanceModal(type){
 }
 function closeFinanceEntry(){document.getElementById('financeModal')?.classList.remove('open')}
 function editFinanceEntry(type,id){
+  if(!requireAppPermission('finance.manage'))return;
   const store=financeStore(),row=store[financeCollection(type)].find(item=>item.id===id);
   if(!row)return;
   openFinanceEntry(type);
@@ -16842,6 +16878,7 @@ document.addEventListener('input',event=>{
 });
 function saveFinanceEntry(event){
   event.preventDefault();
+  if(!requireAppPermission('finance.manage'))return;
   const type=financeEntryType.value;
   const store=financeStore();
   const collection=financeCollection(type);
@@ -16879,6 +16916,7 @@ function saveFinanceEntry(event){
   showToast('Registro financiero guardado');
 }
 function deleteFinanceEntry(type,id){
+  if(!requireAppPermission('finance.manage'))return;
   if(!confirm('¿Eliminar este registro financiero?'))return;
   const store=financeStore(),collection=financeCollection(type);
   if(type==='shortage'){
@@ -16891,6 +16929,7 @@ function deleteFinanceEntry(type,id){
   renderFinance();showToast('Registro eliminado');
 }
 function advanceFinanceStatus(type,id){
+  if(!requireAppPermission('finance.manage'))return;
   const store=financeStore(),collection=financeCollection(type),row=store[collection].find(item=>item.id===id);
   if(!row)return;
   if(type==='shortage'){
@@ -16908,6 +16947,7 @@ function advanceFinanceStatus(type,id){
   saveFinanceStore(store);renderFinance();
 }
 function approveFinanceEntry(type,id){
+  if(!requireAppPermission('finance.manage'))return;
   const store=financeStore(),collection=financeCollection(type),row=store[collection].find(item=>item.id===id);
   if(!row)return;
   if(type==='shortage'){
@@ -16920,6 +16960,7 @@ function approveFinanceEntry(type,id){
   renderFinance();showToast('Registro aprobado');
 }
 function rejectFinanceEntry(type,id){
+  if(!requireAppPermission('finance.manage'))return;
   const store=financeStore(),collection=financeCollection(type),row=store[collection].find(item=>item.id===id);
   if(!row)return;
   if(type==='shortage'){
@@ -16932,6 +16973,7 @@ function rejectFinanceEntry(type,id){
   renderFinance();showToast('Registro rechazado');
 }
 function exportFinanceCSV(){
+  if(!requireAppPermission('finance.manage'))return;
   const store=financeStore(),month=financeMonthValue();
   const rows=[['tipo','fecha','turno','trabajador','categoria_motivo','monto_diferencia','estado','observaciones']];
   financeRowsForMonth(store.shortages).forEach(r=>rows.push(['faltante',r.date,r.shift,financeEmployeeName(r.employeeId),r.reason,r.amount,r.status,r.notes]));
@@ -17077,6 +17119,7 @@ function renderDepositHistory(){
   }).join(''):'<div class="empty">Sin historial de conciliaciones.</div>';
 }
 function openDepositEntry(){
+  if(!requireAppPermission('finance.manage'))return;
   depositEntryId.value='';
   depositEntryDate.value=depositDateValue();
   depositEntryType.value='itam';
@@ -17096,6 +17139,7 @@ function configureDepositEntry(){
 }
 function closeDepositEntry(){depositModal?.classList.remove('open')}
 function editDepositEntry(id){
+  if(!requireAppPermission('finance.manage'))return;
   const row=depositStore().find(item=>item.id===id);
   if(!row)return;
   openDepositEntry();
@@ -17110,6 +17154,7 @@ function editDepositEntry(id){
   depositModalTitle.textContent='Editar movimiento';
 }
 function openSafeToBrinks(date,amount){
+  if(!requireAppPermission('finance.manage'))return;
   openDepositEntry();
   depositEntryDate.value=isoToday;
   depositEntryType.value='safe_to_brinks';
@@ -17121,6 +17166,7 @@ function openSafeToBrinks(date,amount){
 }
 function saveDepositEntry(event){
   event.preventDefault();
+  if(!requireAppPermission('finance.manage'))return;
   const rows=depositStore();
   const id=depositEntryId.value||safeRandomUUID();
   const existing=rows.find(r=>r.id===id);
@@ -17147,6 +17193,7 @@ function saveDepositEntry(event){
   showToast('Movimiento guardado');
 }
 function exportDepositsCSV(){
+  if(!requireAppPermission('finance.manage'))return;
   const rows=depositStore();
   const data=[['fecha','tipo','monto','hora','numero_bolsa_comprobante','estado','observaciones']];
   rows.forEach(r=>data.push([r.date,depositTypeMeta(r.type).label,r.amount,r.time,r.reference,r.status,r.notes]));
@@ -17396,7 +17443,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
   const st=()=>window.state||{};
   const nowTime=()=>new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
   function audit(action,detail=''){
-    const items=load(AUDIT_KEY,[]);items.unshift({id:'a'+Date.now()+Math.random(),at:new Date().toISOString(),user:document.body.dataset.role==='chief'?'Jefa de Isla':'Administrador',action,detail});save(AUDIT_KEY,items.slice(0,250));
+    const items=load(AUDIT_KEY,[]);items.unshift({id:'a'+Date.now()+Math.random(),at:new Date().toISOString(),user:authenticatedDisplayName(),action,detail});save(AUDIT_KEY,items.slice(0,250));
   }
   function toast(title,detail='',undo){
     const root=document.getElementById('v17ToastStack'); if(!root)return; const id='t'+Date.now();
@@ -17466,6 +17513,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="src/config.js"></script>
 <script src="src/auth.js"></script>
+<script src="src/app/permissions.js"></script>
 <script src="src/v20-interface.js"></script>
 <script src="src/storage.js"></script>
 
