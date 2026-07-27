@@ -12132,6 +12132,7 @@ function renderTodayMobileShiftView(date,rows,execs){
 }
 
 function quickPresent(employeeId,date){
+  if(!requireAppPermission('attendance.manage'))return;
   snapshot();
   const existing=state.executions.find(x=>x.employeeId===employeeId&&x.date===date);
   const data={
@@ -12147,6 +12148,7 @@ function quickPresent(employeeId,date){
 }
 
 function markPendingPresent(){
+  if(!requireAppPermission('attendance.manage'))return;
   const lockedDate=todayUI.date.value||isoToday;
   if(DailyClosureModule.isClosed(lockedDate))return toast('La jornada está cerrada. Debes reabrirla para editar');
   const date=todayUI.date.value||isoToday;
@@ -12178,6 +12180,7 @@ function renderTodayCloseState(date){
   if(reopen)reopen.style.display=closed?'inline-flex':'none';
 }
 function reopenToday(){
+  if(!requireAppPermission('daily-closures.manage','Solo el administrador puede reabrir jornadas.'))return;
   const date=todayUI.date.value||isoToday;
   if(!DailyClosureModule.isClosed(date))return toast('La jornada ya está abierta');
   if(!confirm(`¿Reabrir la jornada del ${fmt(date)}? Los cambios posteriores quedarán registrados.`))return;
@@ -12187,6 +12190,7 @@ function reopenToday(){
   save();renderAll();toast('Jornada reabierta');
 }
 function confirmToday(){
+  if(!requireAppPermission('attendance.manage'))return;
   const date=todayUI.date.value||isoToday;
   const rows=todayPlannedRows(date);
   if(!rows.length)return toast('No hay turnos planificados');
@@ -12225,6 +12229,7 @@ function confirmToday(){
 }
 
 function clearTodayExecutions(){
+  if(!requireAppPermission('daily-closures.manage','Solo el administrador puede reiniciar la jornada.'))return;
   const date=todayUI.date.value||isoToday;
   if(!confirm('¿Eliminar todos los registros de ejecución y reemplazos automáticos de este día?'))return;
   snapshot();
@@ -12787,6 +12792,7 @@ function replacementCandidates(employeeId,date,shift){
   }).filter(e=>e.available).sort((a,b)=>b.score-a.score);
 }
 function markAllPresent(){
+  if(!requireAppPermission('attendance.manage'))return;
   const date=executionDate.value||isoToday;
   const planned=state.plans.filter(p=>p.date===date&&['A','B','C'].includes(p.code));
   if(!planned.length)return toast('No hay turnos planificados para esa fecha');
@@ -12819,6 +12825,7 @@ function openPatternModal(){
   openModal('patternModal');
 }
 function applyPattern(){
+  if(!requireAppPermission('planning.manage'))return;
   const ids=[...patternEmployees.selectedOptions].map(o=>o.value);
   const pattern=state.settings.patterns.find(p=>p.id===patternSelect.value);
   if(!ids.length||!pattern)return alert('Selecciona al menos un trabajador y un patrón.');
@@ -13193,6 +13200,8 @@ function editEmployee(id){const e=employee(id);employeeId.value=e.id;employeeNam
 employeeForm.addEventListener('submit',e=>{
   e.preventDefault();
 
+  if(!requireAppPermission('employees.manage'))return;
+
   const id=document.getElementById('employeeId').value;
   const rut=document.getElementById('employeeRut').value.trim();
   const name=document.getElementById('employeeName').value.trim();
@@ -13233,6 +13242,7 @@ employeeForm.addEventListener('submit',e=>{
   toast(id?'Trabajador actualizado':'Trabajador agregado correctamente');
 });
 function deleteEmployee(id){
+  if(getAppRole()!=='admin')return alert('Solo el administrador puede eliminar trabajadores.');
 
   if(!confirm('¿Eliminar trabajador y todos sus registros?'))return;
 
@@ -14571,6 +14581,7 @@ function assignReplacementCore(executionId,replacementId,date,{silent=false}={})
 }
 
 function assignAbsenceReplacement(absenceId,executionId,replacementId,date){
+  if(!requireAppPermission('absences.manage'))return;
   snapshot();
 
   const result=assignReplacementCore(executionId,replacementId,date);
@@ -15266,7 +15277,7 @@ try{
     todayView.innerHTML=`<div class="panel" style="margin:30px">
       <h2>No se pudo iniciar el sistema</h2>
       <p>${error.message}</p>
-      <button class="btn primary" onclick="localStorage.clear();location.reload()">
+      <button class="btn primary" onclick="recoverLocalStartupState()">
         Restablecer datos locales
       </button>
     </div>`;
@@ -15274,6 +15285,45 @@ try{
 }
 },300);
 });
+
+function recoverLocalStartupState(){
+  const keysToRemove=[];
+  const temporaryKeyPrefixes=[
+    'shiftcontrol_supabase_last_sync'
+  ];
+
+  const temporaryExactKeys=[
+    'shiftcontrol_active_period',
+    'shiftcontrol_local_state_company_v1'
+  ];
+
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i);
+      if(!key)continue;
+      if(temporaryExactKeys.includes(key)||temporaryKeyPrefixes.some(prefix=>key.startsWith(prefix))){
+        keysToRemove.push(key);
+      }
+    }
+
+    if(!keysToRemove.length){
+      alert('No hay caché temporal identificada para limpiar.');
+      return;
+    }
+
+    const preview=keysToRemove.slice(0,8).join('\n');
+    const more=keysToRemove.length>8?`\n... y ${keysToRemove.length-8} más`:'';
+    if(!confirm(`Se limpiará solo la caché temporal de inicio:\n\n${preview}${more}\n\nNo se tocarán sesión, respaldos ni datos operativos. ¿Continuar?`)){
+      return;
+    }
+
+    keysToRemove.forEach(key=>localStorage.removeItem(key));
+    location.reload();
+  }catch(error){
+    console.error('No fue posible limpiar la caché temporal de inicio.',error);
+    alert('No fue posible limpiar la caché temporal de inicio.');
+  }
+}
 
 document.getElementById('holidayForm')?.addEventListener('submit',event=>{
   event.preventDefault();
