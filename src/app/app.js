@@ -20,6 +20,10 @@ async function initApp(){
     await window.migrateLegacyIncidents();
   }
 
+  if(window.migrateLegacyEvaluations){
+    await window.migrateLegacyEvaluations();
+  }
+
   if(window.AppState){
     AppState.initialized = true;
   }

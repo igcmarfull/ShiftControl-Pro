@@ -10104,6 +10104,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/attendance/attendance.js"></script>
 <script src="src/modules/shortages/shortages.js"></script>
 <script src="src/modules/incidents/incidents.js"></script>
+<script src="src/modules/evaluations/evaluations.js"></script>
 
 <script>
 // ShiftControl Pro · lógica extraída sin alterar comportamiento
@@ -10578,7 +10579,7 @@ function renderDashboard(){
   const licenseIssues=licenseCoverageAlerts(referenceDate);
   const dayClosed=DailyClosureModule.isClosed(referenceDate);
 
-  const evals=typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(window.EVAL_KEY,[]):[];
+  const evals=EvaluationModule.getAll();
   const submittedEvaluations=evals.filter(e=>e.status==='submitted');
 
   const checklistStore=typeof opsChecklistStore==='function'?opsChecklistStore():{};
@@ -11585,7 +11586,7 @@ function workerProfileData(id,monthOverride=''){
   const extras=state.additional.filter(x=>x.employeeId===id&&x.date.startsWith(month));
   const absencesAll=state.absences.filter(x=>x.employeeId===id);
   const absencesMonth=absencesAll.filter(x=>(x.from||x.start||'').startsWith(month)||(x.to||x.end||'').startsWith(month));
-  const evals=(typeof opsRead==='function' && typeof EVAL_KEY!=='undefined'?opsRead(window.EVAL_KEY,[]):[]).filter(x=>x.employeeId===id&&(!x.period||x.period.startsWith(month)));
+  const evals=EvaluationModule.getAll().filter(x=>x.employeeId===id&&(!x.period||x.period.startsWith(month)));
   const incidents=(typeof opsIncidents==='function'?opsIncidents():[]).filter(x=>{
     const incidentDate=(x.createdAt||x.date||'').slice(0,10);
     const haystack=[x.reporter,x.owner,x.description,x.title].filter(Boolean).join(' ').toLowerCase();
@@ -15612,10 +15613,120 @@ const INCIDENTS_LEGACY_COMPANY_ID=
   localStorage.getItem(INCIDENTS_LEGACY_OWNER_KEY)
   ||localStorage.getItem('shiftcontrol_local_state_company_v1')
   ||'';
+const EVALUATIONS_MIGRATION_KEY='shiftcontrol_v11_evaluations_migrated';
+const EVALUATIONS_LEGACY_OWNER_KEY='shiftcontrol_v11_evaluations_legacy_company';
+const EVALUATIONS_LEGACY_COMPANY_ID=
+  localStorage.getItem(EVALUATIONS_LEGACY_OWNER_KEY)
+  ||localStorage.getItem('shiftcontrol_local_state_company_v1')
+  ||'';
 const OPS_CHECKLIST_ITEMS=[['personal','Personal completo','Dotación y reemplazos confirmados'],['uniformes','Presentación y uniforme','Equipo preparado para iniciar el turno'],['surtidores','Surtidores operativos','Sin equipos bloqueados o con fallas visibles'],['banos','Baños revisados','Limpieza e insumos básicos disponibles'],['patio','Patio e islas limpios','Área operativa ordenada'],['instalaciones','Instalaciones revisadas','Iluminación, señalética y accesos en condiciones'],['entrega','Novedades y entrega de turno','Pendientes informados al siguiente responsable']];
 const EVAL_CRITERIA={Asistencia:['Puntualidad','Asistencia','Cumplimiento de turnos'],Trabajo:['Desempeño general','Atención al cliente','Protocolo de atención','Trabajo en equipo','Responsabilidad','Iniciativa'],Actitud:['Disposición','Respeto','Comunicación']};
 let opsIncidentFilter='all', currentEvaluation={scores:{}};
 function opsRead(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}} function opsWrite(k,v){localStorage.setItem(k,JSON.stringify(v))} function opsEsc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function readLegacyEvaluations(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(window.EVAL_KEY)||'null');
+    return Array.isArray(parsed)?parsed:null;
+  }catch(_error){
+    return null;
+  }
+}
+function persistEvaluations(){
+  opsWrite(window.EVAL_KEY,EvaluationModule.getAll());
+  save();
+}
+function refreshEvaluationConsumers(){
+  if(typeof renderEvaluations==='function'){
+    renderEvaluations();
+  }
+  if(typeof renderV12ApprovalCenter==='function'){
+    renderV12ApprovalCenter();
+  }
+}
+function mergeLegacyEvaluations(current,legacy){
+  const knownIds=new Set(current.map(item=>item.id));
+  return current.concat(
+    legacy.filter(item=>!knownIds.has(item.id))
+  );
+}
+async function migrateLegacyEvaluations(){
+  try{
+    const context=window.AuthContext?.get?.();
+    const currentState=window.ShiftControlState?.get?.();
+
+    if(!context?.companyId||!currentState){
+      return false;
+    }
+
+    const migrationKey=`${EVALUATIONS_MIGRATION_KEY}:${context.companyId}`;
+    if(
+      localStorage.getItem(migrationKey)==='1'
+      &&Array.isArray(currentState.evaluations)
+    ){
+      refreshEvaluationConsumers();
+      return true;
+    }
+
+    const legacy=readLegacyEvaluations();
+    const canImportLegacy=
+      !EVALUATIONS_LEGACY_COMPANY_ID
+      ||EVALUATIONS_LEGACY_COMPANY_ID===context.companyId;
+    const hadCanonicalCollection=Array.isArray(currentState.evaluations);
+    const current=hadCanonicalCollection
+      ?currentState.evaluations
+      :[];
+    let next=current;
+
+    if(canImportLegacy){
+      next=hadCanonicalCollection
+        ?mergeLegacyEvaluations(current,legacy||[])
+        :(legacy||[]);
+    }
+
+    const changed=
+      !hadCanonicalCollection
+      ||next.length!==current.length;
+
+    if(changed){
+      EvaluationModule.replaceAll(next,{save:false});
+    }
+
+    if(canImportLegacy){
+      opsWrite(window.EVAL_KEY,EvaluationModule.getAll());
+    }
+
+    refreshEvaluationConsumers();
+
+    if(changed){
+      save();
+      if(typeof renderAll==='function'){
+        renderAll();
+      }
+
+      const synced=await window.ShiftControlStorage?.pushState?.();
+      if(!synced){
+        return false;
+      }
+    }
+
+    localStorage.setItem(migrationKey,'1');
+    if(!EVALUATIONS_LEGACY_COMPANY_ID&&canImportLegacy){
+      localStorage.setItem(
+        EVALUATIONS_LEGACY_OWNER_KEY,
+        context.companyId
+      );
+    }
+
+    return true;
+  }catch(error){
+    console.warn(
+      '[ShiftControl V1.1] No fue posible migrar las evaluaciones legacy.',
+      error
+    );
+    return false;
+  }
+}
+window.migrateLegacyEvaluations=migrateLegacyEvaluations;
 function readLegacyIncidents(){
   try{
     const parsed=JSON.parse(localStorage.getItem(window.OPS_INCIDENTS_KEY)||'null');
@@ -15793,9 +15904,9 @@ function renderEvaluationEmployeeOptions(){const el=document.getElementById('eva
 function renderEvaluationCriteria(){const root=document.getElementById('evaluationCriteria');if(!root)return;root.innerHTML=Object.entries(EVAL_CRITERIA).map(([section,items])=>`<div class="evaluation-block"><h4>${section}</h4>${items.map(item=>`<div class="evaluation-row"><strong>${item}</strong><div class="eval-options">${[['green','🟢 Destacado'],['yellow','🟡 Cumple'],['red','🔴 Requiere apoyo']].map(([v,l])=>`<button class="eval-option ${currentEvaluation.scores?.[item]===v?'active':''}" data-value="${v}" onclick="setEvaluationScore('${item}','${v}')">${l}</button>`).join('')}</div></div>`).join('')}</div>`).join('')}
 function setEvaluationScore(item,value){currentEvaluation.scores=currentEvaluation.scores||{};currentEvaluation.scores[item]=value;renderEvaluationCriteria()}
 function newEvaluation(){currentEvaluation={id:'',scores:{},status:'draft'};evaluationId.value='';evaluationPeriod.value=evaluationMonth.value;evaluationStrengths.value='';evaluationImprovements.value='';evaluationGoal.value='';evaluationContext.textContent='Nueva evaluación mensual';evaluationStatusPill.textContent='Borrador';renderEvaluationCriteria()}
-function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||authenticatedDisplayName(),scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
-function openEvaluation(id){const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation=x;evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;renderEvaluationCriteria()}
-function renderEvaluations(){const root=document.getElementById('evaluationList');if(!root)return;const period=evaluationMonth.value,list=opsRead(window.EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);root.innerHTML=list.length?list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<div class="eval-card" onclick="openEvaluation('${x.id}')"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small></div>`}).join(''):'<div class="ops-empty">No hay evaluaciones para este mes.</div>'}
+function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=EvaluationModule.getAll(),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||authenticatedDisplayName(),scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)EvaluationModule.update(id,record,{save:false});else EvaluationModule.add(record,{prepend:true,save:false});persistEvaluations();evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
+function openEvaluation(id){const x=EvaluationModule.findById(id);if(!x)return;currentEvaluation=x;evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;renderEvaluationCriteria()}
+function renderEvaluations(){const root=document.getElementById('evaluationList');if(!root)return;const period=evaluationMonth.value,list=EvaluationModule.getAll().filter(x=>x.period===period),workers=employeesForEval();evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);root.innerHTML=list.length?list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<div class="eval-card" onclick="openEvaluation('${x.id}')"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small></div>`}).join(''):'<div class="ops-empty">No hay evaluaciones para este mes.</div>'}
 function renderOpsModules(){renderOpsIncidents();renderOpsChecklist();renderHandoffs();renderEvaluations()}
 window.addEventListener('DOMContentLoaded',()=>{if(checklistDate&&!checklistDate.value)checklistDate.value=isoToday;if(handoffDate&&!handoffDate.value)handoffDate.value=isoToday;setTimeout(()=>{renderOpsModules();initEvaluationUI()},0)});
 
@@ -15809,23 +15920,23 @@ function closeEvaluationEditor(){const el=document.getElementById('evaluationEdi
 function newEvaluation(){
  currentEvaluation={id:'',scores:{},status:'draft'};evaluationId.value='';evaluationPeriod.value=evaluationMonth.value;
  evaluationStrengths.value='';evaluationImprovements.value='';evaluationGoal.value='';evaluationContext.textContent='Nueva evaluación mensual';evaluationStatusPill.textContent='Borrador';
- const used=new Set(opsRead(window.EVAL_KEY,[]).filter(x=>x.period===evaluationPeriod.value).map(x=>x.employeeId));
+ const used=new Set(EvaluationModule.getAll().filter(x=>x.period===evaluationPeriod.value).map(x=>x.employeeId));
  const first=employeesForEval().find(x=>!used.has(x.id))||employeesForEval()[0]; if(first)evaluationEmployee.value=first.id;
  document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function saveEvaluation(status){
  const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');
- const list=opsRead(window.EVAL_KEY,[]),id=evaluationId.value||safeRandomUUID();
+ const list=EvaluationModule.getAll(),id=evaluationId.value||safeRandomUUID();
  const duplicate=list.find(x=>x.employeeId===employeeId&&x.period===period&&x.id!==id);
  if(duplicate){alert('Ya existe una evaluación para esta trabajadora en ese mes. Ábrela desde el listado para continuar.');return openEvaluation(duplicate.id)}
  const idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||authenticatedDisplayName(),scores:{...(currentEvaluation.scores||{})},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};
- if(idx>=0)list[idx]=record;else list.unshift(record);opsWrite(window.EVAL_KEY,list);currentEvaluation=record;evaluationId.value=id;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada');closeEvaluationEditor();
+ if(idx>=0)EvaluationModule.update(id,record,{save:false});else EvaluationModule.add(record,{prepend:true,save:false});persistEvaluations();currentEvaluation=record;evaluationId.value=id;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada');closeEvaluationEditor();
 }
 function openEvaluation(id){
- const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;currentEvaluation={...x,scores:{...(x.scores||{})}};evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
+ const x=EvaluationModule.findById(id);if(!x)return;currentEvaluation={...x,scores:{...(x.scores||{})}};evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderEvaluations(){
- const root=document.getElementById('evaluationList');if(!root||!document.getElementById('evaluationMonth'))return;const period=evaluationMonth.value,list=opsRead(window.EVAL_KEY,[]).filter(x=>x.period===period),workers=employeesForEval();
+ const root=document.getElementById('evaluationList');if(!root||!document.getElementById('evaluationMonth'))return;const period=evaluationMonth.value,list=EvaluationModule.getAll().filter(x=>x.period===period),workers=employeesForEval();
  evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);
  const cards=list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<button class="eval-card" onclick="openEvaluation('${x.id}')"><div class="eval-card-top"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span></div><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small><span class="muted">Abrir evaluación independiente</span></button>`});
  const evaluated=new Set(list.map(x=>x.employeeId));workers.filter(w=>!evaluated.has(w.id)).forEach(w=>cards.push(`<button class="eval-card" onclick="newEvaluationFor('${w.id}')"><div class="eval-card-top"><strong>${opsEsc(w.name)}</strong><span class="eval-status">Pendiente</span></div><small>Sin evaluación para ${opsEsc(period)}</small><span class="muted">Crear evaluación</span></button>`));
@@ -15918,7 +16029,7 @@ function v12Activity(action,detail=''){
   try{renderV12ApprovalCenter()}catch{}
 }
 function v12EmployeeName(id){return window.EmployeeModule.find(id)?.name||'Trabajadora'}
-function v12PendingEvaluations(){return opsRead(window.EVAL_KEY,[]).filter(x=>x.status==='submitted')}
+function v12PendingEvaluations(){return EvaluationModule.getAll().filter(x=>x.status==='submitted')}
 function v12ProblemChecklists(){return Object.values(opsChecklistStore()).filter(x=>x.completed&&x.reviewStatus!=='reviewed'&&(Object.values(x.items||{}).includes('issue')||(x.notes||'').trim()))}
 function v12PendingExtras(){return (state.additional||[]).filter(x=>x.paid!=='Pagado')}
 
@@ -15932,7 +16043,7 @@ function renderV12ApprovalCenter(){
    <div class="v12-task"><div class="v12-task-main"><span class="v12-task-icon">💰</span><div><strong>Pagos pendientes de turnos extra</strong><small>Información financiera visible solo para administración.</small></div></div><div class="v12-actions"><span class="v12-badge ${extras.length?'danger':'success'}">${extras.length}</span><button class="btn small" onclick="openV12Payments()">Revisar pagos</button></div></div>
    <div class="v12-task"><div class="v12-task-main"><span class="v12-task-icon">✓</span><div><strong>Checklists con observaciones</strong><small>Los checklists conformes se archivan automáticamente.</small></div></div><div class="v12-actions"><span class="v12-badge ${checks.length?'warning':'success'}">${checks.length}</span><button class="btn small" onclick="showView('checklists')">Revisar</button></div></div>`;
  }else{
-   const drafts=opsRead(window.EVAL_KEY,[]).filter(x=>x.status==='draft').length;
+   const drafts=EvaluationModule.getAll().filter(x=>x.status==='draft').length;
    root.classList.add('v12-center');
    root.innerHTML=`
    <div class="v12-task"><div class="v12-task-main"><span class="v12-task-icon">✓</span><div><strong>Registrar asistencia del día</strong><small>Confirma presentes, atrasos, ausencias y reemplazos.</small></div></div><button class="btn small" onclick="showView('today')">Abrir</button></div>
@@ -15983,14 +16094,14 @@ saveEvaluation=function(status){
  renderV12ApprovalCenter();
 }
 function approveEvaluationV12(){
- if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden aprobar evaluaciones enviadas a revisión.');
- x.status='approved';x.approvedAt=new Date().toISOString();x.approvedBy=authenticatedDisplayName();x.updatedAt=x.approvedAt;opsWrite(window.EVAL_KEY,list);currentEvaluation=x;evaluationStatusPill.textContent='Aprobada';renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación aprobada',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación aprobada');closeEvaluationEditor();
+ if(getAppRole()!=='admin')return;const id=evaluationId.value,x=EvaluationModule.findById(id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden aprobar evaluaciones enviadas a revisión.');
+ const approvedAt=new Date().toISOString(),approved=EvaluationModule.patch(id,{status:'approved',approvedAt,approvedBy:authenticatedDisplayName(),updatedAt:approvedAt},{save:false});persistEvaluations();currentEvaluation=approved;evaluationStatusPill.textContent='Aprobada';renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación aprobada',`${v12EmployeeName(approved.employeeId)} · ${approved.period}`);showToast('Evaluación aprobada');closeEvaluationEditor();
 }
 function returnEvaluationV12(){
- if(getAppRole()!=='admin')return;const id=evaluationId.value,list=opsRead(window.EVAL_KEY,[]),x=list.find(e=>e.id===id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;x.status='draft';x.returnNote=note.trim();x.returnedAt=new Date().toISOString();x.returnedBy=authenticatedDisplayName();x.updatedAt=x.returnedAt;opsWrite(window.EVAL_KEY,list);renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(x.employeeId)} · ${x.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
+ if(getAppRole()!=='admin')return;const id=evaluationId.value,x=EvaluationModule.findById(id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;const returnedAt=new Date().toISOString(),returned=EvaluationModule.patch(id,{status:'draft',returnNote:note.trim(),returnedAt,returnedBy:authenticatedDisplayName(),updatedAt:returnedAt},{save:false});persistEvaluations();renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(returned.employeeId)} · ${returned.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
 }
 const _openEvaluationV11=openEvaluation;
-openEvaluation=function(id){_openEvaluationV11(id);const x=opsRead(window.EVAL_KEY,[]).find(e=>e.id===id);if(!x)return;const editor=document.getElementById('evaluationEditor');if(x.returnNote){let note=editor.querySelector('.v12-review-note');if(!note){note=document.createElement('div');note.className='v12-review-note';editor.querySelector('.ops-panel-head')?.after(note)}note.textContent=`Corrección solicitada: ${x.returnNote}`}else editor.querySelector('.v12-review-note')?.remove();const locked=x.status==='approved';editor.querySelectorAll('input,textarea,select').forEach(el=>el.disabled=locked||getAppRole()==='admin');}
+openEvaluation=function(id){_openEvaluationV11(id);const x=EvaluationModule.findById(id);if(!x)return;const editor=document.getElementById('evaluationEditor');if(x.returnNote){let note=editor.querySelector('.v12-review-note');if(!note){note=document.createElement('div');note.className='v12-review-note';editor.querySelector('.ops-panel-head')?.after(note)}note.textContent=`Corrección solicitada: ${x.returnNote}`}else editor.querySelector('.v12-review-note')?.remove();const locked=x.status==='approved';editor.querySelectorAll('input,textarea,select').forEach(el=>el.disabled=locked||getAppRole()==='admin');}
 
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{renderV12ApprovalCenter();renderOpsChecklistHistory();},250));
 const _applyAppRoleV11=applyAppRole;
