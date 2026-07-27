@@ -16,6 +16,10 @@ async function initApp(){
     await window.migrateLegacyCashShortages();
   }
 
+  if(window.migrateLegacyIncidents){
+    await window.migrateLegacyIncidents();
+  }
+
   if(window.AppState){
     AppState.initialized = true;
   }
