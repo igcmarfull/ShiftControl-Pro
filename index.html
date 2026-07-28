@@ -30,7 +30,7 @@ button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
 .sidebar{
-  position:sticky;top:0;height:100vh;padding:22px 16px;border-right:1px solid var(--line);
+  position:sticky;top:0;height:100vh;padding:16px 16px;border-right:1px solid var(--line);
   background:rgba(8,10,14,.96);backdrop-filter:blur(16px)
 }
 .brand{display:flex;align-items:center;gap:12px;padding:0 4px 22px}
@@ -1015,9 +1015,9 @@ body.density-compact .replacement-overview{
 .nav-group{
   display:flex;
   flex-direction:column;
-  gap:4px;
-  padding:0 0 13px;
-  margin-bottom:12px;
+  gap:3px;
+  padding:0 0 9px;
+  margin-bottom:8px;
   border-bottom:1px solid var(--line);
 }
 
@@ -1137,7 +1137,7 @@ body.light .panel-chip{color:#a45100}
 
 
 /* Roles V3 */
-.role-card{margin:14px 12px 18px;padding:12px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel-2));display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center}
+.role-card{margin:10px 12px 10px;padding:10px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel-2));display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center}
 .role-avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--blue);color:#fff;font-weight:800;font-size:12px;box-shadow:0 8px 22px rgba(36,112,255,.22)}
 .role-copy{min-width:0;display:flex;flex-direction:column;gap:2px}.role-copy strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.role-copy span{font-size:10px;color:var(--muted)}
 .role-selector{max-width:34px;width:34px;height:30px;border:0;border-radius:9px;background:var(--soft);color:var(--text);cursor:pointer;font-size:0;padding:0 5px}.role-selector option{font-size:13px;color:#111}
@@ -4567,7 +4567,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 .v18-station-context{display:grid;grid-template-columns:minmax(180px,1.2fr) repeat(3,minmax(120px,.65fr));align-items:center;gap:0;margin:0 0 22px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--shadow);overflow:hidden}
 .v18-context-main,.v18-context-item{min-height:70px;padding:13px 17px;display:flex;align-items:center;gap:11px;border-right:1px solid var(--line)}
 .v18-context-item:last-child{border-right:0}.v18-context-item{display:grid;align-content:center;gap:4px}.v18-context-main small,.v18-context-item small{display:block;color:var(--muted);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}.v18-context-main strong,.v18-context-item strong{font-size:13px}.v18-context-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px color-mix(in srgb,var(--green) 14%,transparent)}
-.sidebar{box-shadow:none!important}.sidebar .brand{padding-bottom:18px!important}.sidebar .nav{gap:14px!important}.nav-group{padding-top:3px}.nav-group-title{font-size:9px!important;letter-spacing:.12em!important;margin-bottom:7px!important}.nav-btn{min-height:38px!important;border-radius:10px!important;padding:8px 10px!important;font-size:12px!important}.nav-btn span{opacity:.8}.nav-btn.active{box-shadow:none!important}
+.sidebar{box-shadow:none!important}.sidebar .brand{padding-bottom:14px!important}.sidebar .nav{gap:9px!important}.nav-group{padding-top:2px}.nav-group-title{font-size:9px!important;letter-spacing:.12em!important;margin-bottom:3px!important}.nav-btn{min-height:33px!important;border-radius:10px!important;padding:7px 10px!important;font-size:12px!important}.nav-btn span{opacity:.8}.nav-btn.active{box-shadow:none!important}
 .topbar{margin-bottom:18px!important}.topbar h2{letter-spacing:-.035em}.topbar p{max-width:720px}.topbar .actions{gap:7px!important}.topbar .actions .btn:not(.primary),.topbar .actions .field{box-shadow:none!important}.btn{border-radius:10px!important}.card,.panel,.ops-panel,.dashboard-panel{box-shadow:none!important}.cards{gap:12px!important}.metric-value{letter-spacing:-.045em}
 @media(min-width:821px){.main{padding-top:20px!important}.topbar .actions{max-width:58%;justify-content:flex-end}.topbar .actions .btn{min-height:38px;padding:8px 11px;font-size:11px}.topbar .actions .field{min-height:38px;padding:8px 10px;font-size:11px}}
 @media(max-width:980px){.v18-station-context{grid-template-columns:1fr 1fr}.v18-context-main,.v18-context-item{border-bottom:1px solid var(--line)}.v18-context-item:nth-child(2){border-right:0}.v18-context-item:nth-child(3),.v18-context-item:nth-child(4){border-bottom:0}}
@@ -4576,7 +4576,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 @media print{.v18-notification-fab,.v18-station-context{display:none!important}}
 </style>
 
-<link rel="stylesheet" href="src/v20-interface.css?v=20260727-operational-home">
+<link rel="stylesheet" href="src/v20-interface.css?v=20260727-operational-home-v13">
 
 
 <style id="v35-reportes-impresion-profesional">
@@ -15258,6 +15258,7 @@ function renderOperationalHome(){
   const shiftStatus=shiftClosed?'Turno cerrado':'Operación en curso';
   const stationName=window.AuthContext?.get?.()?.companyName || v14State().settings?.stationName || 'Estación Coltauco';
   const shiftHours={Mañana:'07:00 - 15:00',Tarde:'15:00 - 23:00',Noche:'23:00 - 07:00'}[v14CurrentShift()] || 'Turno operativo';
+  const [shiftStart,shiftEnd]=shiftHours.split(' - ').map(part=>(part||'').trim());
   const teamReviewed=Math.max(0,snapshot.planned-snapshot.pending.length);
   const teamProgress=snapshot.planned?Math.round(teamReviewed/snapshot.planned*100):0;
   const checklistProgress=snapshot.completedChecklist?100:0;
@@ -15265,10 +15266,11 @@ function renderOperationalHome(){
   const coverageTotal=snapshot.exceptions.length||snapshot.uncovered.length;
   const coveredCount=Math.max(0,coverageTotal-snapshot.uncovered.length);
   const coverageProgress=coverageTotal?Math.round(coveredCount/coverageTotal*100):100;
-  const important=[
+  const attentionItems=[
     {icon:'attendance',title:'Revisar asistencia',description:`${snapshot.pending.length} trabajador(es) pendiente(s) de revisión.`,status:snapshot.pending.length?'Pendiente':'Al día',tone:snapshot.pending.length?'warning':'stable',action:'chiefHomeOpenToday()'},
     {icon:'checklist',title:'Completar checklist',description:snapshot.completedChecklist?'Checklist enviado para este turno.':'Control operativo pendiente de envío.',status:snapshot.completedChecklist?'Enviado':'Pendiente',tone:snapshot.completedChecklist?'stable':'warning',action:'chiefHomeOpenChecklist()'},
     {icon:'incident',title:'Resolver incidencias',description:snapshot.openIncidents.length?'Hay novedades que requieren seguimiento.':'Sin incidencias abiertas para revisar.',status:`${snapshot.openIncidents.length} abierta(s)`,tone:snapshot.openIncidents.length?'warning':'stable',action:'chiefHomeOpenIncidents()'},
+    {icon:'coverage',title:'Gestionar cobertura',description:snapshot.uncovered.length?`${snapshot.uncovered.length} turno(s) sin cobertura.`:'Cobertura completa para el turno.',status:snapshot.uncovered.length?'Pendiente':'Cubierto',tone:snapshot.uncovered.length?'critical':'stable',action:'chiefHomeOpenAbsences()'},
     {icon:'handoff',title:'Entregar turno',description:shiftClosed?'Turno cerrado y listo para revisión.':'Preparar cierre cuando termine la operación.',status:shiftClosed?'Cerrado':'Disponible',tone:shiftClosed?'stable':'neutral',action:"chiefHomeOpenView('handoff')"}
   ];
   const presentTeam=snapshot.grouped.present.slice(0,4);
@@ -15277,6 +15279,22 @@ function renderOperationalHome(){
     .slice()
     .sort((a,b)=>String(b.date||b.at||'').localeCompare(String(a.date||a.at||'')))
     .slice(0,5);
+  const lastUpdateTime=audit[0]?.date?new Date(audit[0].date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'—';
+  const dateObj=new Date(`${snapshot.date}T12:00:00`);
+  const dateLabel=dateObj.toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'});
+  const weekdayLabel=dateObj.toLocaleDateString('es-CL',{weekday:'long'}).replace(/^./,character=>character.toUpperCase());
+  let nextEventCountdown='—';
+  if(/^\d{2}:\d{2}$/.test(shiftEnd||'')){
+    const [endHour,endMinute]=shiftEnd.split(':').map(Number);
+    const now=new Date();
+    const end=new Date(now);
+    end.setHours(endHour,endMinute,0,0);
+    if(end<=now)end.setDate(end.getDate()+1);
+    const diffMinutes=Math.round((end-now)/60000);
+    const diffHours=Math.floor(diffMinutes/60);
+    const remainderMinutes=diffMinutes%60;
+    nextEventCountdown=diffHours>0?`En ${diffHours}h ${remainderMinutes}min`:`En ${remainderMinutes}min`;
+  }
   const icon={
     attendance:'<svg viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/><path d="M17 8l2 2 4-5"/></svg>',
     checklist:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
@@ -15289,109 +15307,118 @@ function renderOperationalHome(){
     audit:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><path d="M18 16l2 2-2 2"/></svg>',
     more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
     arrow:'<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
-    sync:'<svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M7 9a7 7 0 0 1 11-2l2 2"/><path d="M17 15a7 7 0 0 1-11 2l-2-2"/></svg>'
+    sync:'<svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M7 9a7 7 0 0 1 11-2l2 2"/><path d="M17 15a7 7 0 0 1-11 2l-2-2"/></svg>',
+    calendar:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+    clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
+    status:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>'
   };
   const secondary=[
-    {label:'Trabajadores',icon:'employees',action:"chiefHomeOpenView('employees')"},
-    {label:'Planificación',icon:'planning',action:"chiefHomeOpenView('planning')"},
-    {label:'Evaluaciones',icon:'evaluations',action:"chiefHomeOpenView('evaluations')"},
-    {label:'Historial',icon:'audit',action:"chiefHomeOpenView('audit')"},
-    {label:'Más',icon:'more',action:"chiefHomeOpenView('workcenter')"}
+    {label:'Trabajadores',description:'Ver y gestionar trabajadores',icon:'employees',tone:'green',action:"chiefHomeOpenView('employees')"},
+    {label:'Planificación',description:'Turnos y coberturas',icon:'planning',tone:'green',action:"chiefHomeOpenView('planning')"},
+    {label:'Registro real',description:'Asistencia y marcaciones',icon:'checklist',tone:'blue',action:"chiefHomeOpenView('actual')"},
+    {label:'Evaluaciones',description:'Desempeño del equipo',icon:'evaluations',tone:'purple',action:"chiefHomeOpenView('evaluations')"},
+    {label:'Historial',description:'Historial de operaciones',icon:'clock',tone:'orange',action:"chiefHomeOpenView('audit')"},
+    {label:'Más',description:'Más opciones y herramientas',icon:'more',tone:'neutral',action:"chiefHomeOpenView('workcenter')"}
   ];
   root.innerHTML=`
     <div class="chief-home">
       <section class="chief-home-hero ${healthStatus.tone}">
-        <div class="chief-home-hero-media" aria-hidden="true"></div>
-        <div class="chief-home-hero-overlay"></div>
-        <div class="chief-home-tools" aria-hidden="true"><span>◴</span><span>☷</span></div>
+        <div class="chief-home-hero-bg" aria-hidden="true"></div>
+        <div class="chief-home-hero-overlay" aria-hidden="true"></div>
+        <span class="chief-home-badge"><i></i>Control room</span>
         <div class="chief-home-greeting">
-          <span class="chief-home-kicker">Control room</span>
           <h3>${v14Esc(stationName)}</h3>
           <p>Turno ${v14Esc(v14CurrentShift())} · ${v14Esc(shiftHours)}</p>
           <div class="chief-home-hero-meta">
-            <span>${fmt(snapshot.date)}</span>
-            <span class="chief-home-shift-state"><i></i>${v14Esc(healthStatus.label)}</span>
-            <span>${v14Esc(shiftStatus)}</span>
-            <span>${snapshot.present}/${snapshot.planned} presentes</span>
-            <span>Actualizado ${audit[0]?.date?new Date(audit[0].date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'—'}</span>
+            <div class="chief-home-chip info"><span>${icon.calendar}</span><div><strong>${v14Esc(dateLabel)}</strong><small>${v14Esc(weekdayLabel)}</small></div></div>
+            <div class="chief-home-chip ${healthStatus.tone}"><span>${icon.status}</span><div><strong>${v14Esc(healthStatus.label)}</strong><small>${v14Esc(shiftStatus)}</small></div></div>
+            <div class="chief-home-chip info"><span>${icon.employees}</span><div><strong>${snapshot.present}/${snapshot.planned}</strong><small>Presentes</small></div></div>
+            <div class="chief-home-chip info"><span>${icon.clock}</span><div><strong>Actualizado</strong><small>${lastUpdateTime}</small></div></div>
           </div>
         </div>
         <div class="chief-home-score" style="--v14-score:${healthStatus.score}">
           <strong>${healthStatus.score}%</strong>
-          <span>Salud del turno</span>
+          <span>Salud operacional</span>
           <em>${v14Esc(healthStatus.label.replace('Operación ',''))}</em>
         </div>
       </section>
 
       <section class="chief-home-main-cards" aria-label="Resumen rápido del turno">
-        <article class="chief-home-card">
+        <article class="chief-home-card blue">
           <span>${icon.attendance}</span>
           <div><h4>Asistencia</h4><strong>${snapshot.present}/${snapshot.planned}</strong><p>${snapshot.pending.length?`${snapshot.pending.length} pendiente(s)`:'Cobertura lista'}</p></div>
           <div class="chief-card-progress"><i style="width:${teamProgress}%"></i></div>
-          <button type="button" onclick="chiefHomeOpenToday()">Ver asistencia ${icon.arrow}</button>
         </article>
-        <article class="chief-home-card">
+        <article class="chief-home-card green">
           <span>${icon.checklist}</span>
           <div><h4>Checklist diario</h4><strong>${checklistProgress}%</strong><p>${snapshot.completedChecklist?'Completado':'Pendiente'}</p></div>
           <div class="chief-card-progress"><i style="width:${checklistProgress}%"></i></div>
-          <button type="button" onclick="chiefHomeOpenChecklist()">Abrir checklist ${icon.arrow}</button>
         </article>
-        <article class="chief-home-card ${snapshot.openIncidents.length?'warning':''}">
+        <article class="chief-home-card orange ${snapshot.openIncidents.length?'warning':''}">
           <span>${icon.incident}</span>
           <div><h4>Incidencias</h4><strong>${snapshot.openIncidents.length}</strong><p>Abiertas</p></div>
           <div class="chief-card-progress"><i style="width:${incidentProgress}%"></i></div>
-          <button type="button" onclick="chiefHomeOpenIncidents()">Ver incidencias ${icon.arrow}</button>
         </article>
-        <article class="chief-home-card ${snapshot.uncovered.length?'critical':''}">
+        <article class="chief-home-card purple ${snapshot.uncovered.length?'critical':''}">
           <span>${icon.coverage}</span>
-          <div><h4>Reemplazos</h4><strong>${snapshot.uncovered.length?'Pendiente':'Cubierto'}</strong><p>${snapshot.uncovered.length} sin cobertura</p></div>
+          <div><h4>Cobertura</h4><strong>${snapshot.uncovered.length?'Pendiente':'Cubierto'}</strong><p>${snapshot.uncovered.length} sin cobertura</p></div>
           <div class="chief-card-progress"><i style="width:${coverageProgress}%"></i></div>
-          <button type="button" onclick="chiefHomeOpenAbsences()">Ver cobertura ${icon.arrow}</button>
         </article>
       </section>
 
-      <section class="chief-home-command">
+      <section class="chief-home-grid">
         <section class="chief-home-work">
-          <div class="chief-home-section-title">
-            <span>★ Qué debo hacer ahora</span>
-          </div>
+          <div class="chief-home-section-title"><span>¿Qué requiere atención?</span></div>
           <div class="chief-home-task-list">
-            ${important.map(item=>`<button type="button" class="chief-home-task ${item.tone}" onclick="${item.action}"><span>${icon[item.icon]||icon.checklist}</span><div><strong>${v14Esc(item.title)}</strong><p>${v14Esc(item.description)}</p></div><em>${v14Esc(item.status)}</em><b>${item.title==='Entregar turno'?'Preparar':'Ver'} ${icon.arrow}</b></button>`).join('')}
+            ${attentionItems.map(item=>`<button type="button" class="chief-home-task ${item.tone}" onclick="${item.action}"><span>${icon[item.icon]||icon.checklist}</span><div><strong>${v14Esc(item.title)}</strong><p>${v14Esc(item.description)}</p></div><em>${v14Esc(item.status)}</em><b>${item.title==='Entregar turno'?'Preparar':'Ver'} ${icon.arrow}</b></button>`).join('')}
           </div>
         </section>
+
+        <section class="chief-home-secondary" aria-label="Accesos secundarios">
+          <div class="chief-home-section-title"><span>Accesos directos</span></div>
+          <div class="chief-home-secondary-grid">
+            ${secondary.map(item=>`<button type="button" class="chief-home-secondary-card tone-${item.tone}" onclick="${item.action}"><span class="chief-home-secondary-icon">${icon[item.icon]}</span><strong>${v14Esc(item.label)}</strong><p>${v14Esc(item.description)}</p></button>`).join('')}
+          </div>
+          <div class="chief-home-tip">
+            <span class="chief-home-tip-icon">⚡</span>
+            <div><strong>Tip operativo</strong><p>Usa estos accesos para navegar rápidamente por las herramientas más utilizadas.</p></div>
+            <button type="button" class="chief-home-tip-close" onclick="this.closest('.chief-home-tip').remove()" aria-label="Cerrar tip">✕</button>
+          </div>
+        </section>
+
+        <button type="button" class="chief-home-next-event" onclick="chiefHomeOpenView('handoff')">
+          <div class="chief-home-section-title"><span>Próximo evento</span></div>
+          <strong class="chief-home-next-time">${v14Esc(shiftEnd||'--:--')}</strong>
+          <p class="chief-home-next-title">Cambio de turno</p>
+          <p class="chief-home-next-sub">Preparar entrega operacional</p>
+          <em class="chief-home-next-badge">${v14Esc(nextEventCountdown)}</em>
+        </button>
 
         <section class="chief-home-shift-panel">
           <div class="chief-home-panel-head"><h3>Estado del turno</h3></div>
           <div class="chief-home-shift-list">
-            <div><span>${icon.sync}</span><strong>Inicio del turno</strong><em>${v14Esc(shiftHours.split(' - ')[0]||'--:--')}</em></div>
+            <div><span>${icon.clock}</span><strong>Inicio del turno</strong><em>${v14Esc(shiftStart||'--:--')}</em></div>
             <div><span>${icon.attendance}</span><strong>Equipo presente</strong><em>${snapshot.present}/${snapshot.planned}</em></div>
-            <div><span>${icon.sync}</span><strong>Última actualización</strong><em>${audit[0]?.date?new Date(audit[0].date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'—'}</em></div>
+            <div><span>${icon.sync}</span><strong>Última actualización</strong><em>${lastUpdateTime}</em></div>
             <div><span>${icon.incident}</span><strong>Incidencias críticas</strong><em>${snapshot.openIncidents.filter(item=>item.priority==='Alta').length||'Sin incidencias'}</em></div>
           </div>
-          <div class="chief-home-all-good"><span>✓</span>${issues?'Atención requerida':'Todo bajo control'}</div>
+          <div class="chief-home-all-good ${issues?'warning':''}"><span>✓</span>${issues?'Atención requerida':'Todo bajo control'}</div>
         </section>
-      </section>
 
-      <section class="chief-home-lower">
-        <article class="chief-home-panel">
-          <div class="chief-home-panel-head"><h3>Actividad reciente</h3><span>${audit.length}</span></div>
+        <article class="chief-home-panel chief-home-activity">
+          <div class="chief-home-panel-head"><h3>Actividad reciente</h3><button type="button" class="chief-home-panel-link" onclick="chiefHomeOpenView('audit')">Ver todas ${icon.arrow}</button></div>
           <div class="chief-home-timeline">
             ${audit.length?audit.map(item=>{const activityDate=item.date||item.at;return `<div><time>${activityDate?new Date(activityDate).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'--:--'}</time><span></span><p><strong>${v14Esc(item.action||'Actividad')}</strong><small>${v14Esc(item.user||item.detail||item.role||'Sistema')} · ${activityDate?new Date(activityDate).toLocaleDateString('es-CL'):'Sin fecha'}</small></p></div>`}).join(''):'<div class="ops-empty">No hay actividad reciente registrada.</div>'}
           </div>
         </article>
 
-        <article class="chief-home-panel">
-          <div class="chief-home-panel-head"><h3>Equipo presente</h3><span>${snapshot.grouped.present.length}</span></div>
-          <div class="chief-home-team">
+        <article class="chief-home-panel chief-home-team-panel">
+          <div class="chief-home-panel-head"><h3>Equipo presente</h3><button type="button" class="chief-home-panel-link" onclick="chiefHomeOpenView('employees')">Ver todo ${icon.arrow}</button></div>
+          <div class="chief-home-team-list">
             ${presentTeam.length?presentTeam.map(({row,execution})=>`<div class="chief-home-person"><span>${v14Esc(row.employee.name||'T').slice(0,2).toUpperCase()}</span><div><strong>${v14Esc(row.employee.name)}</strong><small>${v14Esc(row.employee.role||row.employee.area||'Equipo')}</small></div><em>${v14Esc(execution?.status||'Presente')}</em></div>`).join(''):'<div class="ops-empty">Aún no hay presentes registrados.</div>'}
             ${extraPresent?`<div class="chief-home-more">+${extraPresent} más presentes</div>`:''}
           </div>
-          <button type="button" class="chief-home-panel-link" onclick="chiefHomeOpenView('employees')">Ver equipo completo ${icon.arrow}</button>
         </article>
-      </section>
-
-      <section class="chief-home-secondary" aria-label="Accesos secundarios">
-        ${secondary.map(item=>`<button type="button" onclick="${item.action}"><span>${icon[item.icon]}</span>${v14Esc(item.label)}</button>`).join('')}
       </section>
     </div>
   `;
