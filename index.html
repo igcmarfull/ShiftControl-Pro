@@ -1330,6 +1330,78 @@ body.light .evaluation-list-grid .eval-card{background:#fff!important;border-col
 body.light .evaluation-list-grid .eval-card small,
 body.light .evaluation-list-grid .eval-card .muted{color:#667085!important;-webkit-text-fill-color:#667085!important}
 
+/* Evaluaciones: rediseño de resumen, toolbar y tarjetas */
+.eval-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.eval-summary-card{display:flex;align-items:center;gap:14px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:var(--shadow)}
+.eval-summary-icon{display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;border-radius:14px;font-size:18px}
+.eval-summary-card.tone-green .eval-summary-icon{background:rgba(34,197,94,.14);color:#22c55e}
+.eval-summary-card.tone-orange .eval-summary-icon{background:rgba(245,158,11,.14);color:#f59e0b}
+.eval-summary-card.tone-red .eval-summary-icon{background:rgba(239,68,68,.14);color:#ef4444}
+.eval-summary-card span{display:block;font-size:12px;color:var(--muted)}
+.eval-summary-card strong{display:block;font-size:30px;line-height:1.15;margin:2px 0;color:var(--text)}
+.eval-summary-card small{display:block;font-size:11.5px;color:var(--muted)}
+
+.eval-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.eval-search{display:flex;align-items:center;gap:8px;flex:1 1 220px;min-width:180px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.eval-search span{color:var(--muted);font-size:14px}
+.eval-search input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);padding:10px 0;font:inherit;outline:none}
+.eval-filter{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:9px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.eval-view-toggle{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.eval-view-btn{border:0;background:var(--panel2);color:var(--muted);padding:9px 12px;cursor:pointer;font-size:14px;line-height:1}
+.eval-view-btn.active{background:var(--soft);color:var(--text)}
+.eval-view-btn+.eval-view-btn{border-left:1px solid var(--line)}
+
+.evaluation-list-grid.list-view{grid-template-columns:1fr}
+.evaluation-list-grid .eval-card{position:relative}
+.eval-card-delete{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--line);border-radius:50%;background:var(--panel2);color:var(--muted);font-size:11px;line-height:1;cursor:pointer;z-index:1}
+.eval-card-delete:hover{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.3);color:#ef4444}
+.eval-card-role{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.eval-card-name{font-size:15px;font-weight:800}
+.eval-card-meta{font-size:12px}
+.eval-status{align-self:flex-start;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;width:max-content}
+.eval-status-approved{background:rgba(34,197,94,.14)}
+.eval-status-submitted{background:rgba(245,158,11,.14)}
+.eval-status-draft{background:rgba(148,163,184,.18)}
+.eval-status-pending{background:rgba(239,68,68,.12)}
+.eval-card-action{margin-top:auto;padding-top:6px;font-size:12px;font-weight:700}
+.eval-new-card{align-items:center;justify-content:center;text-align:center;gap:6px;border-style:dashed}
+.eval-new-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--panel2);font-size:16px}
+.evaluation-list-grid.list-view .eval-card{flex-direction:row;align-items:center;min-height:0;gap:16px}
+.evaluation-list-grid.list-view .eval-card-role{width:110px;flex-shrink:0}
+.evaluation-list-grid.list-view .eval-card-name{flex:1}
+.evaluation-list-grid.list-view .eval-card-meta{width:110px}
+.evaluation-list-grid.list-view .eval-card-action{margin-top:0}
+.evaluation-list-grid.list-view .eval-new-card{flex-direction:row;justify-content:flex-start;text-align:left}
+
+body:not(.light) .evaluation-list-grid .eval-card .eval-status-approved{color:#4ade80!important}
+body:not(.light) .evaluation-list-grid .eval-card .eval-status-submitted{color:#fbbf24!important}
+body:not(.light) .evaluation-list-grid .eval-card .eval-status-draft{color:#94a3b8!important}
+body:not(.light) .evaluation-list-grid .eval-card .eval-status-pending{color:#f87171!important}
+body:not(.light) .evaluation-list-grid .eval-card .eval-card-action{color:#60a5fa!important}
+body.light .evaluation-list-grid .eval-card .eval-status-approved{color:#16a34a!important}
+body.light .evaluation-list-grid .eval-card .eval-status-submitted{color:#b45309!important}
+body.light .evaluation-list-grid .eval-card .eval-status-draft{color:#64748b!important}
+body.light .evaluation-list-grid .eval-card .eval-status-pending{color:#dc2626!important}
+body.light .evaluation-list-grid .eval-card .eval-card-action{color:#2563eb!important}
+
+@media(max-width:680px){
+  #evaluations .topbar{margin-bottom:10px!important}
+  #evaluations .topbar .actions{display:flex;flex-direction:column;gap:8px}
+  .eval-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0}
+  .eval-summary-card{flex-direction:column;align-items:flex-start;gap:6px;padding:10px}
+  .eval-summary-icon{width:28px;height:28px;font-size:12px;border-radius:9px}
+  .eval-summary-card span{font-size:9.5px}
+  .eval-summary-card strong{font-size:19px;margin:1px 0}
+  .eval-summary-card small{display:none}
+  .eval-toolbar{gap:8px;margin-bottom:12px}
+  .eval-search{flex:1 1 100%;order:1}
+  .eval-filter{flex:1 1 auto;order:2}
+  .eval-view-toggle{order:3}
+  .evaluation-list-grid.list-view .eval-card{flex-direction:column;align-items:flex-start}
+  .evaluation-list-grid.list-view .eval-card-role,
+  .evaluation-list-grid.list-view .eval-card-meta{width:auto}
+}
+
 /* Vista semanal: usar el tema real, no un fondo oscuro fijo */
 body.light .week-grid{background:#fff;color:#142033}
 body.light .week-grid>div{border-color:#cfd8e4!important}
@@ -3371,6 +3443,10 @@ body[data-role="chief"] #today table td:nth-child(2){
   background:var(--soft);
 }
 
+.evaluation-criterion-icon.green{color:#22c55e;background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.28)}
+.evaluation-criterion-icon.yellow{color:#ca8a04;background:rgba(234,179,8,.14);border-color:rgba(234,179,8,.3)}
+.evaluation-criterion-icon.red{color:#ef4444;background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.28)}
+
 .evaluation-criterion-name div{
   display:grid;
   gap:3px;
@@ -3393,13 +3469,12 @@ body[data-role="chief"] #today table td:nth-child(2){
   justify-content:center;
   align-items:center;
   gap:6px;
-  border:1px solid var(--line);
+  border:1px solid transparent;
   border-radius:10px;
-  color:var(--muted);
-  background:var(--soft);
   font-size:10px;
   font-weight:750;
   cursor:pointer;
+  transition:background .15s ease,color .15s ease,box-shadow .15s ease;
 }
 
 .evaluation-segmented i{
@@ -3409,19 +3484,21 @@ body[data-role="chief"] #today table td:nth-child(2){
   background:currentColor;
 }
 
-.evaluation-segmented .green{color:#22c55e}
-.evaluation-segmented .yellow{color:#eab308}
-.evaluation-segmented .red{color:#ef4444}
+.evaluation-segmented .green{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.24)}
+.evaluation-segmented .yellow{background:rgba(234,179,8,.12);color:#ca8a04;border-color:rgba(234,179,8,.26)}
+.evaluation-segmented .red{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.24)}
+
+.evaluation-segmented button:hover{filter:brightness(1.08)}
 
 .evaluation-segmented button.active{
-  border-color:currentColor;
-  color:white;
-  box-shadow:inset 0 0 0 1px currentColor;
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
 }
 
-.evaluation-segmented .green.active{background:color-mix(in srgb,#22c55e 22%,var(--panel))}
-.evaluation-segmented .yellow.active{background:color-mix(in srgb,#eab308 22%,var(--panel))}
-.evaluation-segmented .red.active{background:color-mix(in srgb,#ef4444 22%,var(--panel))}
+.evaluation-segmented .green.active{background:#16a34a}
+.evaluation-segmented .yellow.active{background:#ca8a04}
+.evaluation-segmented .red.active{background:#dc2626}
 
 .evaluation-wizard-footer{
   position:sticky;
@@ -9655,7 +9732,11 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
 <section id="evaluations" class="view ops-module-view">
   <div class="topbar"><div><h2>Evaluación mensual del personal</h2></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn primary" onclick="newEvaluation()">＋ Nueva evaluación</button></div></div>
-  <div class="ops-summary-grid"><article class="ops-summary-card success"><span>Completadas</span><strong id="evalCompletedCount">0</strong><small>Evaluaciones cerradas</small></article><article class="ops-summary-card warning"><span>Borradores</span><strong id="evalDraftCount">0</strong><small>Pendientes de revisión</small></article><article class="ops-summary-card danger"><span>Sin evaluar</span><strong id="evalPendingCount">0</strong><small>Personal activo pendiente</small></article></div>
+  <div class="eval-summary-grid">
+    <article class="eval-summary-card tone-green"><span class="eval-summary-icon">✓</span><div><span>Completadas</span><strong id="evalCompletedCount">0</strong><small>Evaluaciones cerradas</small></div></article>
+    <article class="eval-summary-card tone-orange"><span class="eval-summary-icon">⏳</span><div><span>Borradores</span><strong id="evalDraftCount">0</strong><small>Pendientes de revisión</small></div></article>
+    <article class="eval-summary-card tone-red"><span class="eval-summary-icon">◒</span><div><span>Sin evaluar</span><strong id="evalPendingCount">0</strong><small>Personal activo pendiente</small></div></article>
+  </div>
   <div class="evaluation-workspace">
     <article class="ops-panel evaluation-editor evaluation-wizard" id="evaluationEditor" hidden>
       <div class="evaluation-wizard-head">
@@ -9666,6 +9747,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
         <div class="evaluation-wizard-head-actions">
           <span class="ops-pill" id="evaluationStatusPill">Borrador</span>
+          <button class="btn danger role-admin-only" type="button" onclick="deleteEvaluation()">Eliminar</button>
           <button class="btn" type="button" onclick="closeEvaluationEditor()">Cerrar</button>
         </div>
       </div>
@@ -9764,7 +9846,25 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
       </section>
     </article>
-    <article class="ops-panel evaluation-list-panel"><div class="ops-panel-head"><div><h3>Evaluaciones del mes</h3><p>Cada persona mantiene su propia ficha; puedes tener varias abiertas simultáneamente.</p></div></div><div id="evaluationList" class="ops-list evaluation-list-grid"></div></article>
+    <article class="ops-panel evaluation-list-panel">
+      <div class="ops-panel-head"><div><h3>Evaluaciones del mes</h3><p>Cada persona mantiene su propia ficha; puedes tener varias abiertas simultáneamente.</p></div></div>
+      <div class="eval-toolbar">
+        <div class="eval-search"><span>⌕</span><input type="text" id="evalSearchInput" placeholder="Buscar trabajador..." oninput="onEvalFilterChange()"></div>
+        <select class="eval-filter" id="evalStatusFilter" onchange="onEvalFilterChange()">
+          <option value="all">Estado: Todos</option>
+          <option value="approved">Aprobadas</option>
+          <option value="submitted">En revisión</option>
+          <option value="draft">Borradores</option>
+          <option value="pending">Pendientes</option>
+        </select>
+        <select class="eval-filter" id="evalRoleFilter" onchange="onEvalFilterChange()"><option value="all">Jefatura: Todas</option></select>
+        <div class="eval-view-toggle">
+          <button type="button" class="eval-view-btn active" data-mode="grid" onclick="setEvalViewMode('grid')" aria-label="Vista en grilla">▦</button>
+          <button type="button" class="eval-view-btn" data-mode="list" onclick="setEvalViewMode('list')" aria-label="Vista en lista">☰</button>
+        </div>
+      </div>
+      <div id="evaluationList" class="ops-list evaluation-list-grid"></div>
+    </article>
   </div>
 </section>
 
@@ -10127,7 +10227,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/attendance/attendance.js"></script>
 <script src="src/modules/shortages/shortages.js"></script>
 <script src="src/modules/incidents/incidents.js"></script>
-<script src="src/modules/evaluations/evaluations.js"></script>
+<script src="src/modules/evaluations/evaluations.js?v=20260727-eval-remove"></script>
 <script src="src/modules/checklists/checklists.js"></script>
 
 <script>
@@ -15078,8 +15178,9 @@ function v14Today(){
 }
 function v14CurrentShift(){
   const hour=new Date().getHours();
-  if(hour<14)return 'Mañana';
-  if(hour<22)return 'Tarde';
+  if(hour<7)return 'Noche';
+  if(hour<15)return 'Mañana';
+  if(hour<23)return 'Tarde';
   return 'Noche';
 }
 function v14Workers(){
@@ -16594,7 +16695,6 @@ function setEvaluationScore(item,value){currentEvaluation.scores=currentEvaluati
 function newEvaluation(){currentEvaluation={id:'',scores:{},status:'draft'};evaluationId.value='';evaluationPeriod.value=evaluationMonth.value;evaluationStrengths.value='';evaluationImprovements.value='';evaluationGoal.value='';evaluationContext.textContent='Nueva evaluación mensual';evaluationStatusPill.textContent='Borrador';renderEvaluationCriteria()}
 function saveEvaluation(status){const employeeId=evaluationEmployee.value,period=evaluationPeriod.value;if(!employeeId||!period)return alert('Selecciona trabajador y mes.');const list=EvaluationModule.getAll(),id=evaluationId.value||safeRandomUUID(),idx=list.findIndex(x=>x.id===id),record={id,employeeId,period,evaluator:evaluationEvaluator.value.trim()||authenticatedDisplayName(),scores:currentEvaluation.scores||{},strengths:evaluationStrengths.value.trim(),improvements:evaluationImprovements.value.trim(),goal:evaluationGoal.value.trim(),status,updatedAt:new Date().toISOString()};if(idx>=0)EvaluationModule.update(id,record,{save:false});else EvaluationModule.add(record,{prepend:true,save:false});persistEvaluations();evaluationId.value=id;currentEvaluation=record;renderEvaluations();showToast(status==='draft'?'Borrador guardado':'Evaluación enviada')}
 function openEvaluation(id){const x=EvaluationModule.findById(id);if(!x)return;currentEvaluation=x;evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;renderEvaluationCriteria()}
-function renderEvaluations(){const root=document.getElementById('evaluationList');if(!root)return;const period=evaluationMonth.value,list=EvaluationModule.getAll().filter(x=>x.period===period),workers=employeesForEval();evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);root.innerHTML=list.length?list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<div class="eval-card" onclick="openEvaluation('${x.id}')"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small></div>`}).join(''):'<div class="ops-empty">No hay evaluaciones para este mes.</div>'}
 function renderOpsModules(){renderOpsIncidents();renderOpsChecklist();renderHandoffs();renderEvaluations()}
 window.addEventListener('DOMContentLoaded',()=>{if(checklistDate&&!checklistDate.value)checklistDate.value=isoToday;if(handoffDate&&!handoffDate.value)handoffDate.value=isoToday;setTimeout(()=>{renderOpsModules();initEvaluationUI()},0)});
 
@@ -16623,12 +16723,52 @@ function saveEvaluation(status){
 function openEvaluation(id){
  const x=EvaluationModule.findById(id);if(!x)return;currentEvaluation={...x,scores:{...(x.scores||{})}};evaluationId.value=x.id;evaluationEmployee.value=x.employeeId;evaluationPeriod.value=x.period;evaluationEvaluator.value=x.evaluator;evaluationStrengths.value=x.strengths||'';evaluationImprovements.value=x.improvements||'';evaluationGoal.value=x.goal||'';evaluationStatusPill.textContent={draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status];evaluationContext.textContent=`Evaluación ${x.period}`;document.getElementById('evaluationEditor').hidden=false;renderEvaluationCriteria();document.getElementById('evaluationEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
+let evalViewMode='grid';
+let evalSearchQuery='';
+let evalStatusFilterValue='all';
+let evalRoleFilterValue='all';
+function onEvalFilterChange(){
+ evalSearchQuery=(document.getElementById('evalSearchInput')?.value||'').trim().toLowerCase();
+ evalStatusFilterValue=document.getElementById('evalStatusFilter')?.value||'all';
+ evalRoleFilterValue=document.getElementById('evalRoleFilter')?.value||'all';
+ renderEvaluations();
+}
+function setEvalViewMode(mode){
+ evalViewMode=mode;
+ document.querySelectorAll('.eval-view-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));
+ renderEvaluations();
+}
 function renderEvaluations(){
  const root=document.getElementById('evaluationList');if(!root||!document.getElementById('evaluationMonth'))return;const period=evaluationMonth.value,list=EvaluationModule.getAll().filter(x=>x.period===period),workers=employeesForEval();
  evalCompletedCount.textContent=list.filter(x=>x.status==='approved').length;evalDraftCount.textContent=list.filter(x=>x.status!=='approved').length;evalPendingCount.textContent=Math.max(0,workers.length-new Set(list.map(x=>x.employeeId)).size);
- const cards=list.map(x=>{const w=workers.find(e=>e.id===x.employeeId);return `<button class="eval-card" onclick="openEvaluation('${x.id}')"><div class="eval-card-top"><strong>${opsEsc(w?.name||'Trabajador')}</strong><span class="eval-status">${{draft:'Borrador',submitted:'En revisión',approved:'Aprobada'}[x.status]}</span></div><small>${opsEsc(x.evaluator)} · ${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small><span class="muted">Abrir evaluación independiente</span></button>`});
- const evaluated=new Set(list.map(x=>x.employeeId));workers.filter(w=>!evaluated.has(w.id)).forEach(w=>cards.push(`<button class="eval-card" onclick="newEvaluationFor('${w.id}')"><div class="eval-card-top"><strong>${opsEsc(w.name)}</strong><span class="eval-status">Pendiente</span></div><small>Sin evaluación para ${opsEsc(period)}</small><span class="muted">Crear evaluación</span></button>`));
- root.innerHTML=cards.join('')||'<div class="ops-empty">No hay personal activo.</div>';
+ const roleFilterEl=document.getElementById('evalRoleFilter');
+ if(roleFilterEl&&roleFilterEl.dataset.populated!=='1'){
+  const roles=Array.from(new Set(workers.map(w=>w.role||w.area).filter(Boolean))).sort();
+  roleFilterEl.innerHTML='<option value="all">Jefatura: Todas</option>'+roles.map(r=>`<option value="${opsEsc(r)}">${opsEsc(r)}</option>`).join('');
+  roleFilterEl.dataset.populated='1';
+ }
+ const evaluated=new Set(list.map(x=>x.employeeId));
+ let entries=list.map(x=>({worker:workers.find(e=>e.id===x.employeeId),record:x,status:x.status}));
+ workers.filter(w=>!evaluated.has(w.id)).forEach(w=>entries.push({worker:w,record:null,status:'pending'}));
+ entries=entries.filter(entry=>{
+  const w=entry.worker;if(!w)return true;
+  if(evalSearchQuery&&!w.name.toLowerCase().includes(evalSearchQuery))return false;
+  if(evalStatusFilterValue!=='all'&&entry.status!==evalStatusFilterValue)return false;
+  if(evalRoleFilterValue!=='all'&&(w.role||w.area)!==evalRoleFilterValue)return false;
+  return true;
+ });
+ const statusLabel={draft:'Borrador',submitted:'En revisión',approved:'Aprobada',pending:'Pendiente'};
+ const cards=entries.length?entries.map(entry=>{
+  const w=entry.worker,name=opsEsc(w?w.name:'Trabajador eliminado'),role=opsEsc(w?(w.role||w.area||'Equipo'):'Sin ficha activa');
+  if(entry.record){
+   const x=entry.record;
+   return `<div class="eval-card status-${x.status}" onclick="openEvaluation('${x.id}')"><button type="button" class="eval-card-delete role-admin-only" onclick="deleteEvaluationFromList('${x.id}',event)" aria-label="Eliminar evaluación">✕</button><div class="eval-card-role">${role}</div><strong class="eval-card-name">${name}</strong><small class="eval-card-meta">${new Date(x.updatedAt).toLocaleDateString('es-CL')}</small><span class="eval-status eval-status-${x.status}">${statusLabel[x.status]}</span><span class="eval-card-action">◎ Ver evaluación</span></div>`;
+  }
+  return `<button type="button" class="eval-card status-pending" onclick="newEvaluationFor('${w.id}')"><div class="eval-card-role">${role}</div><strong class="eval-card-name">${name}</strong><small class="eval-card-meta">Sin evaluación para ${opsEsc(period)}</small><span class="eval-status eval-status-pending">Pendiente</span><span class="eval-card-action">＋ Crear evaluación</span></button>`;
+ }):['<div class="ops-empty">No hay resultados para este filtro.</div>'];
+ cards.push('<button type="button" class="eval-card eval-new-card" onclick="newEvaluation()"><span class="eval-new-icon">＋</span><strong>Nuevo personal</strong><small>Crear ficha de evaluación</small></button>');
+ root.innerHTML=cards.join('');
+ root.classList.toggle('list-view',evalViewMode==='list');
 }
 function newEvaluationFor(employeeId){newEvaluation();evaluationEmployee.value=employeeId}
 function nextPlannedShifts(worker,limit=6){
@@ -16787,6 +16927,28 @@ function approveEvaluationV12(){
 }
 function returnEvaluationV12(){
  if(getAppRole()!=='admin')return;const id=evaluationId.value,x=EvaluationModule.findById(id);if(!x)return alert('Abre una evaluación enviada.');if(x.status!=='submitted')return alert('Solo se pueden devolver evaluaciones enviadas.');const note=prompt('Indica qué debe corregirse:');if(note===null)return;const returnedAt=new Date().toISOString(),returned=EvaluationModule.patch(id,{status:'draft',returnNote:note.trim(),returnedAt,returnedBy:authenticatedDisplayName(),updatedAt:returnedAt},{save:false});persistEvaluations();renderEvaluations();renderV12ApprovalCenter();v12Activity('Evaluación devuelta para corregir',`${v12EmployeeName(returned.employeeId)} · ${returned.period}`);showToast('Evaluación devuelta');closeEvaluationEditor();
+}
+function performDeleteEvaluation(id){
+ if(getAppRole()!=='admin')return;
+ const x=EvaluationModule.findById(id);
+ if(!x)return alert('No se encontró la evaluación.');
+ const employeeExists=!!window.EmployeeModule.find(x.employeeId);
+ const who=employeeExists?v12EmployeeName(x.employeeId):'un trabajador eliminado';
+ if(!confirm(`¿Eliminar la evaluación de ${who} · ${x.period}? Esta acción no se puede deshacer.`))return;
+ EvaluationModule.remove(id,{save:false});
+ persistEvaluations();renderEvaluations();renderV12ApprovalCenter();
+ v12Activity('Evaluación eliminada',`${who} · ${x.period}`);
+ showToast('Evaluación eliminada');
+}
+function deleteEvaluation(){
+ const id=evaluationId.value;
+ if(!id||!EvaluationModule.findById(id))return alert('Abre una evaluación guardada para poder eliminarla.');
+ performDeleteEvaluation(id);
+ closeEvaluationEditor();
+}
+function deleteEvaluationFromList(id,evt){
+ evt?.stopPropagation();
+ performDeleteEvaluation(id);
 }
 const _openEvaluationV11=openEvaluation;
 openEvaluation=function(id){_openEvaluationV11(id);const x=EvaluationModule.findById(id);if(!x)return;const editor=document.getElementById('evaluationEditor');if(x.returnNote){let note=editor.querySelector('.v12-review-note');if(!note){note=document.createElement('div');note.className='v12-review-note';editor.querySelector('.ops-panel-head')?.after(note)}note.textContent=`Corrección solicitada: ${x.returnNote}`}else editor.querySelector('.v12-review-note')?.remove();const locked=x.status==='approved';editor.querySelectorAll('input,textarea,select').forEach(el=>el.disabled=locked||getAppRole()==='admin');}
@@ -17193,7 +17355,7 @@ function renderEvaluationCriteria(){
           const selected=currentEvaluation.scores?.[item]||'';
           return `<article class="evaluation-criterion-card ${selected?'answered':''}">
             <div class="evaluation-criterion-name">
-              <span class="evaluation-criterion-icon">${selected?evaluationScoreMeta(selected).icon:'○'}</span>
+              <span class="evaluation-criterion-icon ${selected||''}">${selected?evaluationScoreMeta(selected).icon:'○'}</span>
               <div><strong>${opsEsc(item)}</strong><small>${selected?evaluationScoreMeta(selected).label:'Selecciona una valoración'}</small></div>
             </div>
             <div class="evaluation-segmented" role="group" aria-label="${opsEsc(item)}">

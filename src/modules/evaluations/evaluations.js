@@ -89,6 +89,27 @@ window.EvaluationModule = {
     this._saveIfNeeded(save);
 
     return items;
+  },
+
+  remove(id, {save=true}={}){
+    const state = this._getState();
+
+    if(!state||!Array.isArray(state.evaluations)){
+      return false;
+    }
+
+    const index=state.evaluations.findIndex(
+      item=>item.id===id
+    );
+
+    if(index<0){
+      return false;
+    }
+
+    state.evaluations.splice(index,1);
+    this._saveIfNeeded(save);
+
+    return true;
   }
 
 };
