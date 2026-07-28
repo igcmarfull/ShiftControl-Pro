@@ -1991,9 +1991,6 @@
 /* Ajuste UX móvil · pagos y Bandeja ADMIN */
 @media(max-width:820px){
   #additional .payment-mobile-footer{
-    position:sticky;
-    bottom:76px;
-    z-index:20;
     display:grid!important;
     grid-template-columns:minmax(0,1fr);
     gap:10px;
