@@ -5192,6 +5192,297 @@ body[data-role="chief"] #today table td:nth-child(2){
 }
 </style>
 
+<style id="v53-invoices">
+/* V53 · Facturas y Compras */
+#invoices .card{position:relative}
+.invoices-mobile-flow{display:contents}
+.invoices-btn-icon{width:14px;height:14px;margin-right:6px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Base (móvil y escritorio) — valores originales, sin cambios */
+.invoices-kpi-card{padding:18px}
+.invoices-kpi-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.invoices-kpi-label{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.invoices-kpi-value{font-size:25px;font-weight:800;letter-spacing:-.02em;margin-top:10px}
+.invoices-kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.invoices-kpi-card.tone-orange .invoices-kpi-label,.invoices-kpi-card.tone-orange .invoices-kpi-value{color:var(--orange)}
+.invoices-kpi-card.tone-red .invoices-kpi-label,.invoices-kpi-card.tone-red .invoices-kpi-value{color:var(--red)}
+.invoices-kpi-card.tone-green .invoices-kpi-label,.invoices-kpi-card.tone-green .invoices-kpi-value{color:var(--green)}
+.invoices-sparkline{display:block;width:100%;height:20px;margin-top:8px;stroke:var(--blue);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.invoices-kpi-card.tone-orange .invoices-sparkline{stroke:var(--orange)}
+.invoices-kpi-card.tone-red .invoices-sparkline{stroke:var(--red)}
+.invoices-kpi-card.tone-green .invoices-sparkline{stroke:var(--green)}
+
+.invoices-tabs-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.invoices-tabs{display:flex;gap:24px;overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 18px;box-shadow:var(--shadow)}
+body.light #invoices .invoices-tabs{background:var(--panel2,#f6f8fc);border-color:var(--border,#d8e0ea);box-shadow:0 1px 2px rgba(20,32,51,.05)}
+.invoices-tab{flex:0 0 auto;border:0;border-bottom:2px solid transparent;background:none;color:var(--muted);font-weight:700;font-size:13.5px;padding:7px 2px 9px;cursor:pointer;white-space:nowrap}
+.invoices-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.invoices-filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.invoices-date-range{display:flex;align-items:center;gap:6px}
+.invoices-date-range input[type="date"]{max-width:122px}
+.invoices-date-range-sep{color:var(--muted);font-size:12px}
+
+/* Botón "Filtros" colapsable (checkbox-hack, sin JS): agrupa proveedor, rango
+   de fechas y categoría. Vive en su propio botón tanto en escritorio como en
+   móvil; el panel cae a su propia fila completa cuando se abre. */
+.invoices-filters-toggle-input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.invoices-filters-toggle-btn{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-weight:700;font-size:13px;padding:11px 14px;border-radius:12px;cursor:pointer;white-space:nowrap}
+.invoices-filters-toggle-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.invoices-filters-toggle-chevron{transition:transform .15s;margin-left:2px}
+.invoices-filters-collapsible{display:none;flex:1 0 100%;flex-wrap:wrap;gap:10px;padding-top:2px}
+.invoices-filters-toggle-input:checked~.invoices-filters-collapsible{display:flex}
+.invoices-filters-toggle-input:checked~.invoices-filters-toggle-btn .invoices-filters-toggle-chevron{transform:rotate(180deg)}
+.invoices-filters-collapsible .additional-filter-wrap{flex:1 1 220px}
+
+.invoices-main-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.8fr);gap:16px}
+.invoices-table-card{padding:20px}
+
+.invoices-avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:900;color:#fff;flex:0 0 auto}
+.invoices-avatar.tone-blue{background:#3b82f6}
+.invoices-avatar.tone-orange{background:#f59e0b}
+.invoices-avatar.tone-purple{background:#8b6ef5}
+.invoices-avatar.tone-green{background:#22c55e}
+.invoices-avatar.tone-red{background:#ff6565}
+.invoices-provider-cell{display:flex;align-items:center;gap:10px}
+.invoices-provider-cell strong{display:block;font-size:12.5px}
+.invoices-provider-cell small{display:block;color:var(--muted);font-size:10.5px;margin-top:1px}
+
+.invoices-due-sub{display:block;font-size:10.5px;margin-top:2px}
+.invoices-due-sub.tone-red{color:var(--red)}
+.invoices-due-sub.tone-orange{color:var(--orange)}
+.invoices-due-sub.tone-muted{color:var(--muted)}
+
+.invoices-category-badge{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:800;white-space:nowrap}
+.invoices-category-badge.tone-blue{background:rgba(59,130,246,.14);color:#3b82f6}
+.invoices-category-badge.tone-orange{background:rgba(245,158,11,.14);color:#f59e0b}
+.invoices-category-badge.tone-purple{background:rgba(139,110,245,.14);color:#8b6ef5}
+.invoices-category-badge.tone-green{background:rgba(34,197,94,.14);color:#22c55e}
+.invoices-category-badge.tone-red{background:rgba(255,101,101,.14);color:#ff6565}
+
+.invoices-status{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12px;white-space:nowrap}
+.invoices-status::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.invoices-status.st-pagada{color:var(--green)}
+.invoices-status.st-pendiente{color:var(--orange)}
+.invoices-status.st-vencepronto{color:var(--red)}
+.invoices-status.st-vencida{color:var(--red)}
+
+.invoices-row-actions{display:flex;gap:6px}
+.invoices-icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.invoices-icon-btn:hover{color:var(--text);border-color:var(--muted)}
+.invoices-icon-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.invoices-icon-btn.is-active{color:var(--green)}
+.invoices-icon-btn.is-danger:hover{color:var(--red);border-color:var(--red)}
+
+.invoices-pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:16px;margin-top:6px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.invoices-pagination-pages{display:flex;align-items:center;gap:6px}
+.invoices-page-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;font-weight:700;font-size:12px}
+.invoices-page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.invoices-page-btn:disabled{opacity:.4;cursor:default}
+.invoices-page-size{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 8px;color:var(--text);font-size:12px}
+
+.invoices-upcoming-list{display:grid;gap:2px}
+.invoices-upcoming-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.invoices-upcoming-item:last-child{border-bottom:0}
+.invoices-upcoming-info{flex:1;min-width:0}
+.invoices-upcoming-info strong{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.invoices-upcoming-info small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px}
+.invoices-upcoming-amount{font-size:12.5px;font-weight:800;white-space:nowrap}
+
+.invoices-composition{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+.invoices-category-donut{width:110px;height:110px;display:grid;place-items:center;border-radius:50%;background:var(--line)}
+.invoices-category-donut::before{content:'';grid-area:1/1;width:74px;height:74px;border-radius:50%;background:var(--panel)}
+.invoices-category-legend{gap:8px}
+.invoices-category-legend>div{padding:5px 0}
+.invoices-category-total{display:flex;justify-content:space-between;align-items:center;padding-top:14px;margin-top:14px;border-top:1px solid var(--line)}
+.invoices-category-total span{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.invoices-category-total strong{font-size:15px}
+
+/* ============================================================
+   V54 · Facturas y Compras — dashboard SaaS premium (SOLO ESCRITORIO)
+   Todo lo de abajo está scoped a min-width:821px a propósito:
+   no debe alterar en absoluto la versión móvil ya aprobada.
+   ============================================================ */
+@media(min-width:821px){
+  /* 1. Contenedor: aprovechar todo el ancho disponible */
+  .main:has(#invoices.active){padding-left:20px;padding-right:20px}
+  #invoices .topbar{padding:0 2px}
+
+  /* 2. KPIs: tarjetas grandes, una sola fila, más aire, ícono grande */
+  #invoices .invoices-kpi-row{grid-template-columns:repeat(5,minmax(0,1fr));gap:18px}
+  #invoices .invoices-kpi-card{padding:24px 22px 22px;min-height:152px;display:flex;flex-direction:column}
+  #invoices .invoices-kpi-label{font-size:11px}
+  #invoices .invoices-kpi-value{font-size:31px;margin-top:14px}
+  #invoices .invoices-kpi-sub{font-size:12px;margin-top:4px}
+  #invoices .invoices-sparkline{height:28px;margin-top:auto;padding-top:14px;opacity:.85}
+
+  /* Ícono grande a la derecha. Reutiliza .additional-card-icon (oculto por
+     defecto y con posición absoluta solo en su propio media móvil, ver
+     v51-payment-center-mobile-polish) — se sobreescribe únicamente aquí. */
+  #invoices .invoices-kpi-icon{display:grid!important;position:static!important;transform:none!important;top:auto!important;left:auto!important;width:46px;height:46px;border-radius:14px;place-items:center;flex:0 0 auto}
+  #invoices .invoices-kpi-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  #invoices .invoices-kpi-icon.tone-blue{background:rgba(59,130,246,.14);color:#3b82f6}
+  #invoices .invoices-kpi-icon.tone-orange{background:rgba(245,158,11,.14);color:#f59e0b}
+  #invoices .invoices-kpi-icon.tone-purple{background:rgba(139,110,245,.14);color:#8b6ef5}
+  #invoices .invoices-kpi-icon.tone-green{background:rgba(34,197,94,.14);color:#22c55e}
+  #invoices .invoices-kpi-icon.tone-red{background:rgba(255,101,101,.14);color:#ff6565}
+
+  #invoices .invoices-tabs-bar{margin-bottom:18px}
+
+  /* 3. Zona principal: tabla ~72% / sidebar ~28% */
+  #invoices .invoices-main-grid{grid-template-columns:minmax(0,1fr) minmax(320px,.4fr);gap:20px;align-items:start}
+  #invoices .invoices-table-card{padding:22px}
+  #invoices .invoices-sidebar{display:flex;flex-direction:column;gap:20px}
+
+  /* 4. Tabla: filas más altas, proveedor más visible, badges, botones claros */
+  #invoices .invoices-table-card .table-wrap th,
+  #invoices .invoices-table-card .table-wrap td{padding:17px 15px}
+  #invoices .invoices-table-card .table-wrap td{vertical-align:middle}
+
+  #invoices .invoices-avatar{width:38px;height:38px;font-size:12px}
+  #invoices .invoices-provider-cell{gap:12px}
+  #invoices .invoices-provider-cell strong{font-size:13px}
+  #invoices .invoices-provider-cell small{font-size:11px;margin-top:2px}
+
+  #invoices .invoices-due-sub{font-size:11px;margin-top:3px}
+
+  #invoices .invoices-category-badge{padding:5px 11px;font-size:11px}
+
+  /* Estado como badge (pill) en vez de solo punto+texto */
+  #invoices .invoices-status{padding:6px 13px;border-radius:999px}
+  #invoices .invoices-status::before{width:6px;height:6px}
+  #invoices .invoices-status.st-pagada{background:rgba(34,197,94,.14);color:#22c55e}
+  #invoices .invoices-status.st-pendiente{background:rgba(245,158,11,.14);color:#f59e0b}
+  #invoices .invoices-status.st-vencepronto{background:rgba(255,101,101,.16);color:#ff8a5b}
+  #invoices .invoices-status.st-vencida{background:rgba(255,101,101,.14);color:#ff6565}
+
+  #invoices .invoices-row-actions{gap:8px}
+  #invoices .invoices-icon-btn{width:34px;height:34px;border-radius:9px}
+  #invoices .invoices-icon-btn svg{width:15px;height:15px}
+  #invoices .invoices-icon-btn:hover{background:color-mix(in srgb,var(--panel) 85%,var(--text) 6%)}
+  #invoices .invoices-icon-btn.is-active{border-color:rgba(34,197,94,.4)}
+
+  /* 5. Sidebar: más aire, donut algo más grande */
+  #invoices .invoices-upcoming-item{padding:12px 0}
+  #invoices .invoices-upcoming-info strong{font-size:13px}
+  #invoices .invoices-upcoming-info small{font-size:11px}
+  #invoices .invoices-upcoming-amount{font-size:13px}
+
+  #invoices .invoices-category-donut{width:112px;height:112px}
+  #invoices .invoices-category-donut::before{width:76px;height:76px}
+  #invoices .invoices-category-legend{gap:9px}
+  #invoices .invoices-category-total{padding-top:16px;margin-top:16px}
+  #invoices .invoices-category-total strong{font-size:16px}
+
+  /* Elementos exclusivos del rediseño móvil: ocultos en escritorio */
+  #invoices .invoices-kpi-dots,
+  #invoices .invoices-mobile-meta,
+  #invoices .invoices-fab,
+  #invoices .invoices-mobile-export-btn,
+  #invoices .invoices-mobile-list{display:none}
+
+  /* El botón "Filtros" (proveedor + rango de fechas + categoría) ahora también
+     existe en escritorio, no solo en móvil — ver reglas base de
+     .invoices-filters-toggle-* más abajo, ya sin scoping a mobile. */
+}
+
+@media(max-width:820px){
+  .invoices-main-grid{grid-template-columns:1fr}
+  #invoices .invoices-kpi-row{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;scroll-snap-type:x proximity;grid-template-columns:none;padding-bottom:2px}
+  #invoices .invoices-kpi-row .card{flex:0 0 calc((100% - 16px)/3);scroll-snap-align:start}
+
+  /* Prioridad en el carrusel: Pendiente de pago, Vencidas y Próximos 7 días
+     primero (las 3 visibles a la vez); Total comprado y Pagadas quedan al final. */
+  #invoices .invoices-kpi-pending{order:1}
+  #invoices .invoices-kpi-overdue{order:2}
+  #invoices .invoices-kpi-duesoon{order:3}
+  #invoices .invoices-kpi-total{order:4}
+  #invoices .invoices-kpi-paid{order:5}
+
+  /* Tarjetas KPI compactas en móvil: 3 visibles al mismo tiempo, con franja
+     superior de color (acento elegido) */
+  #invoices .invoices-kpi-card{padding:13px;min-height:100px;border-top:2px solid var(--line)}
+  #invoices .invoices-kpi-card.tone-blue{border-top-color:var(--blue)}
+  #invoices .invoices-kpi-card.tone-orange{border-top-color:var(--orange)}
+  #invoices .invoices-kpi-card.tone-red{border-top-color:var(--red)}
+  #invoices .invoices-kpi-card.tone-green{border-top-color:var(--green)}
+  #invoices .invoices-kpi-label{font-size:9px}
+  #invoices .invoices-kpi-value{font-size:18px;margin-top:8px}
+  #invoices .invoices-kpi-sub{font-size:9.5px;margin-top:2px}
+  #invoices .invoices-sparkline{height:16px;margin-top:8px}
+
+  #invoices .invoices-filters{width:100%}
+  #invoices .invoices-filters-collapsible .additional-filter-wrap{flex:1 1 45%}
+
+  /* Ocultar acciones de escritorio del topbar: "Nueva factura" pasa al FAB */
+  #invoices .topbar .actions{display:none}
+
+  /* Reordenar el flujo móvil: buscador+Filtros primero, luego KPIs, tabs y orden.
+     .invoices-tabs-bar se "disuelve" (display:contents) para que tabs y filtros
+     puedan reordenarse de forma independiente dentro de .invoices-mobile-flow. */
+  #invoices .invoices-mobile-flow{display:flex;flex-direction:column;gap:14px}
+  #invoices .invoices-tabs-bar{display:contents}
+  #invoices .invoices-filters{order:1}
+  #invoices .invoices-kpi-row{order:2}
+  #invoices .invoices-kpi-dots{order:3}
+  #invoices .invoices-tabs{order:4}
+  #invoices .invoices-mobile-meta{order:5}
+
+  /* Corrige el ícono de las KPI: .additional-card-icon (heredado de Centro de
+     pagos) lo pone en position:absolute centrado arriba en móvil, montándose
+     sobre el label. Aquí se cancela para que vuelva a ser un ítem normal del
+     flex (label a la izquierda, ícono a la derecha). */
+  #invoices .invoices-kpi-icon{position:static!important;top:auto!important;left:auto!important;transform:none!important;display:grid!important;width:22px;height:22px;border-radius:7px}
+  #invoices .invoices-kpi-icon svg{width:12px;height:12px}
+
+  /* Puntos del carrusel de KPIs */
+  #invoices .invoices-kpi-dots{display:flex;justify-content:center;gap:6px}
+  #invoices .invoices-kpi-dot{width:6px;height:6px;border-radius:50%;background:var(--line);transition:width .15s,background .15s}
+  #invoices .invoices-kpi-dot.active{background:var(--blue);width:16px;border-radius:4px}
+
+  .invoices-search-wrap{flex:1 1 auto;min-width:0}
+  .invoices-filters-collapsible .select{width:100%}
+  .invoices-date-range{flex:1 1 100%}
+  .invoices-mobile-export-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;border:1px dashed var(--line);background:none;color:var(--muted);font-weight:700;font-size:12.5px;padding:11px;border-radius:12px;cursor:pointer}
+
+  /* Contador de resultados + orden */
+  #invoices .invoices-mobile-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
+
+  /* Barra de tabs compacta en móvil */
+  #invoices .invoices-tabs{gap:14px;padding:6px 12px}
+  #invoices .invoices-tab{font-size:12px;padding:6px 2px 7px}
+  #invoices .invoices-sort-label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+  #invoices .invoices-sort-select{border:0;background:none;color:var(--blue);font-weight:700;font-size:12px}
+
+  /* Botón flotante "Nueva factura" */
+  #invoices .invoices-fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:var(--blue);color:#fff;border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(37,99,235,.35);z-index:40;cursor:pointer}
+  #invoices .invoices-fab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+
+  /* Lista de facturas como tarjetas: <div> propios (no tabla), flexbox estándar,
+     máxima compatibilidad con Safari/Chrome móvil. Reemplaza la tabla en esta vista. */
+  #invoices .invoices-table-card{padding:14px}
+  #invoices .table-wrap{display:none}
+  #invoices .invoices-mobile-list{display:flex;flex-direction:column;gap:10px}
+  #invoices .invoices-mcard{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:14px;padding:14px 15px;background:var(--panel);box-shadow:var(--shadow)}
+  #invoices .invoices-mcard.st-pagada{border-left-color:var(--green)}
+  #invoices .invoices-mcard.st-pendiente{border-left-color:var(--orange)}
+  #invoices .invoices-mcard.st-vencepronto{border-left-color:var(--red)}
+  #invoices .invoices-mcard.st-vencida{border-left-color:var(--red)}
+  #invoices .invoices-mcard.st-pagada .invoices-avatar{box-shadow:0 0 0 2px color-mix(in srgb, var(--green) 45%, transparent)}
+  #invoices .invoices-mcard.st-pendiente .invoices-avatar{box-shadow:0 0 0 2px color-mix(in srgb, var(--orange) 45%, transparent)}
+  #invoices .invoices-mcard.st-vencepronto .invoices-avatar{box-shadow:0 0 0 2px color-mix(in srgb, var(--red) 45%, transparent)}
+  #invoices .invoices-mcard.st-vencida .invoices-avatar{box-shadow:0 0 0 2px color-mix(in srgb, var(--red) 45%, transparent)}
+  #invoices .invoices-mcard-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  #invoices .invoices-mcard-provider{display:flex;align-items:center;gap:9px;min-width:0}
+  #invoices .invoices-mcard-provider .invoices-avatar{width:34px;height:34px;font-size:11px;flex:0 0 auto}
+  #invoices .invoices-mcard-provider strong{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #invoices .invoices-mcard-amount{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+  #invoices .invoices-mcard-amount strong{font-size:16.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+  #invoices .invoices-mcard-invoice-no{margin-top:7px;font-size:10.5px;color:var(--muted)}
+  #invoices .invoices-mcard-dates{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin-top:7px;padding-top:9px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
+  #invoices .invoices-mcard-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:9px}
+}
+</style>
+
 
 <style id="v50-mobile-center-launcher">
 /* V50 · Launcher móvil único: Centro */
@@ -5450,6 +5741,11 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="reports"><span>↗</span>Reportes</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="audit"><span>≡</span>Historial de actividad</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="settings"><span>⚙</span>Configuración</button>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Tienda</div>
+    <button class="nav-btn role-admin-visible" data-view="invoices"><span>🧾</span>Facturas y compras</button>
   </div>
 </nav>
 
@@ -8243,6 +8539,124 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       </div>
     </section>
 
+    <section id="invoices" class="view">
+      <div class="topbar">
+        <div><h2>Facturas y Compras</h2><p>Gestiona tus compras, facturas y vencimientos.</p></div>
+        <div class="actions">
+          <button class="btn" onclick="exportInvoicesCSV()"><svg class="invoices-btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>Exportar CSV</button>
+          <button class="btn primary" onclick="openInvoiceModal()">＋ Nueva factura</button>
+        </div>
+      </div>
+
+      <div class="invoices-mobile-flow">
+      <div class="cards invoices-kpi-row" id="invoicesKpiRow">
+        <div class="card invoices-kpi-card tone-blue invoices-kpi-total">
+          <div class="invoices-kpi-head"><span class="invoices-kpi-label">Total comprado (mes)</span><span class="additional-card-icon invoices-kpi-icon tone-blue"><svg viewBox="0 0 24 24"><path d="M3 10h18M7 3v4M17 3v4"/><rect x="3" y="6" width="18" height="15" rx="2"/></svg></span></div>
+          <div class="invoices-kpi-value" id="invTotalMonth">$0</div>
+          <div class="invoices-kpi-sub" id="invTotalMonthSub">0 facturas</div>
+          <svg class="invoices-sparkline" id="invTotalMonthSpark" viewBox="0 0 60 20" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="card invoices-kpi-card tone-orange invoices-kpi-pending">
+          <div class="invoices-kpi-head"><span class="invoices-kpi-label">Pendiente de pago</span><span class="additional-card-icon invoices-kpi-icon tone-orange"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor" stroke="none"/></svg></span></div>
+          <div class="invoices-kpi-value" id="invPending">$0</div>
+          <div class="invoices-kpi-sub" id="invPendingSub">0 facturas</div>
+          <svg class="invoices-sparkline" id="invPendingSpark" viewBox="0 0 60 20" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="card invoices-kpi-card tone-red invoices-kpi-duesoon">
+          <div class="invoices-kpi-head"><span class="invoices-kpi-label">Vencen próximos 7 días</span><span class="additional-card-icon invoices-kpi-icon tone-red"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span></div>
+          <div class="invoices-kpi-value" id="invDueSoon">0</div>
+          <div class="invoices-kpi-sub" id="invDueSoonSub">$0</div>
+          <svg class="invoices-sparkline" id="invDueSoonSpark" viewBox="0 0 60 20" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="card invoices-kpi-card tone-red invoices-kpi-overdue">
+          <div class="invoices-kpi-head"><span class="invoices-kpi-label">Vencidas</span><span class="additional-card-icon invoices-kpi-icon tone-red"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16h.01"/></svg></span></div>
+          <div class="invoices-kpi-value" id="invOverdue">0</div>
+          <div class="invoices-kpi-sub" id="invOverdueSub">$0</div>
+          <svg class="invoices-sparkline" id="invOverdueSpark" viewBox="0 0 60 20" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="card invoices-kpi-card tone-green invoices-kpi-paid">
+          <div class="invoices-kpi-head"><span class="invoices-kpi-label">Pagadas (mes)</span><span class="additional-card-icon invoices-kpi-icon tone-green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></span></div>
+          <div class="invoices-kpi-value" id="invPaidMonth">$0</div>
+          <div class="invoices-kpi-sub" id="invPaidMonthSub">0 facturas</div>
+          <svg class="invoices-sparkline" id="invPaidMonthSpark" viewBox="0 0 60 20" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+      <div class="invoices-kpi-dots" id="invoicesKpiDots">
+        <span class="invoices-kpi-dot active"></span><span class="invoices-kpi-dot"></span><span class="invoices-kpi-dot"></span><span class="invoices-kpi-dot"></span><span class="invoices-kpi-dot"></span>
+      </div>
+
+      <div class="invoices-tabs-bar">
+        <div class="invoices-tabs" id="invoicesTabs">
+          <button type="button" class="invoices-tab active" data-tab="todas" onclick="switchInvoiceTab('todas')">Todas</button>
+          <button type="button" class="invoices-tab" data-tab="pendiente" onclick="switchInvoiceTab('pendiente')">Pendientes</button>
+          <button type="button" class="invoices-tab" data-tab="pagada" onclick="switchInvoiceTab('pagada')">Pagadas</button>
+          <button type="button" class="invoices-tab" data-tab="vencida" onclick="switchInvoiceTab('vencida')">Vencidas</button>
+        </div>
+        <div class="invoices-filters">
+          <span class="additional-search-wrap invoices-search-wrap"><span class="additional-filter-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input class="field" id="invoiceSearch" placeholder="Buscar factura, proveedor o RUT..." oninput="renderInvoices()"></span>
+          <input type="checkbox" id="invoiceMobileFiltersToggle" class="invoices-filters-toggle-input">
+          <label for="invoiceMobileFiltersToggle" class="invoices-filters-toggle-btn"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros<svg class="invoices-filters-toggle-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></label>
+          <div class="invoices-filters-collapsible">
+            <span class="additional-filter-wrap invoices-filter-provider"><span class="additional-filter-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/></svg></span><select class="select" id="invoiceProviderFilter" onchange="renderInvoices()"><option value="">Todos los proveedores</option></select></span>
+            <span class="additional-filter-wrap invoices-filter-date invoices-date-range"><span class="additional-filter-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><input class="field" type="date" id="invoiceDateFrom" onchange="renderInvoices()"><span class="invoices-date-range-sep">–</span><input class="field" type="date" id="invoiceDateTo" onchange="renderInvoices()"></span>
+            <span class="additional-filter-wrap invoices-filter-category"><span class="additional-filter-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg></span><select class="select" id="invoiceCategoryFilter" onchange="renderInvoices()"><option value="">Todas las categorías</option></select></span>
+            <button type="button" class="invoices-mobile-export-btn" onclick="exportInvoicesCSV()"><svg class="invoices-btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>Exportar CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="invoices-mobile-meta">
+        <span id="invoicesResultCount">0 facturas encontradas</span>
+        <label class="invoices-sort-label">Ordenar
+          <select id="invoiceSortMode" class="invoices-sort-select" onchange="renderInvoices()">
+            <option value="recientes">Más recientes</option>
+            <option value="antiguas">Más antiguas</option>
+            <option value="monto-desc">Monto: mayor a menor</option>
+            <option value="monto-asc">Monto: menor a mayor</option>
+          </select>
+        </label>
+      </div>
+
+      </div>
+
+      <button type="button" class="invoices-fab" onclick="openInvoiceModal()" aria-label="Nueva factura">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+
+      <div class="invoices-main-grid">
+        <div class="card invoices-table-card">
+          <div class="table-wrap" style="box-shadow:none">
+            <table>
+              <thead><tr><th>Proveedor</th><th>Factura</th><th>Fecha emisión</th><th>Vencimiento</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="invoicesTable"></tbody>
+            </table>
+          </div>
+          <div class="invoices-mobile-list" id="invoicesMobileList"></div>
+          <div class="invoices-pagination" id="invoicesPagination"></div>
+        </div>
+
+        <aside class="invoices-sidebar">
+          <article class="dashboard-panel">
+            <div class="dashboard-panel-head">
+              <div><span class="section-kicker">Alertas</span><h3>Próximos vencimientos</h3><p>Facturas pendientes ordenadas por urgencia.</p></div>
+            </div>
+            <div id="invoiceUpcomingList" class="invoices-upcoming-list"></div>
+          </article>
+
+          <article class="dashboard-panel">
+            <div class="dashboard-panel-head">
+              <div><span class="section-kicker">Compras</span><h3>Resumen por categoría</h3><p>Distribución del monto comprado este mes.</p></div>
+            </div>
+            <div class="invoices-composition">
+              <div id="invoiceCategoryDonut" class="invoices-category-donut"></div>
+              <div id="invoiceCategoryLegend" class="finance-legend invoices-category-legend"></div>
+            </div>
+            <div class="invoices-category-total"><span>Total</span><strong id="invoiceCategoryDonutTotal">$0</strong></div>
+          </article>
+        </aside>
+      </div>
+    </section>
+
     <section id="finance" class="view finance-view">
       <div class="topbar finance-topbar">
         <div>
@@ -10121,6 +10535,22 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <div class="modal" id="additionalModal"><div class="modal-card"><div class="modal-head"><h3 id="additionalTitle">Jornada adicional</h3><button class="close" onclick="closeModal(&#39;additionalModal&#39;)">×</button></div><form id="additionalForm" class="form-grid">
 <input type="hidden" id="additionalId"><div class="form-group full"><label>Trabajador</label><select class="select" id="additionalEmployee"><option value="c5bc9e66-5d1e-4ed0-af9d-0a5512b1542a">María González</option><option value="4bf8c22b-747d-4257-9bf1-cd8d2590787a">Nadia Osorio</option><option value="ff8573f7-6fff-4c70-964b-6d8211622f59">Belen Urtubia</option><option value="83da76aa-1b7f-46ba-b5b4-562a2d3f51f5">Cristina Erices</option><option value="66464a68-1690-44fd-b472-d108a5841370">Marjorie Pezo</option><option value="f4829d59-f3ec-4088-ba59-91b3f7dec587">Micaela Aguilera</option><option value="bc6ee09f-f5a5-4ffc-b304-6493ecea7bf6">Yaritza Pizarro</option><option value="313cd7e0-0249-4c6b-b03f-76e48783963e">Martina Figueroa</option><option value="d022aa33-5c96-4fad-89e4-7c33e8474140">Arantza</option><option value="61d4ec45-18fc-4491-a7e0-da31c371cc1b">Constanza Carrasco</option><option value="8e5e6ab8-8a19-4467-aaae-c1c126a5bf9d">Ayleen Pizarro</option><option value="9b35fc9a-03d1-44bc-b3f6-0619bf37d3b8">Katherine Vasquez</option><option value="f451d71a-5ef5-48ce-9d61-bc17cdad587b">Margot Aguilera</option><option value="59b8364a-5f53-47ad-b1ab-20244c25d8e6">Francisca Suarez</option></select></div><div class="form-group"><label>Fecha</label><input class="field" type="date" id="additionalDate"></div><div class="form-group"><label>Turno</label><select class="select" id="additionalShift"><option>A</option><option>B</option><option>C</option></select></div><div class="form-group full"><label>Motivo</label><input class="field" id="additionalReason"></div><div class="form-group admin-financial-only"><label>Monto</label><input class="field" type="number" min="0" id="additionalAmount"></div><div class="form-group admin-financial-only"><label>Estado</label><select class="select" id="additionalPaid"><option>Pendiente</option><option>Pagado</option></select></div><div class="form-group admin-financial-only"><label>Fecha de pago</label><input class="field" type="date" id="additionalPaidDate"></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeModal(&#39;additionalModal&#39;)">Cancelar</button><button class="btn primary">Guardar</button></div></form></div></div>
 
+<div class="modal" id="invoiceModal"><div class="modal-card"><div class="modal-head"><h3 id="invoiceTitle">Nueva factura</h3><button class="close" onclick="closeModal('invoiceModal')">×</button></div><form id="invoiceForm" class="form-grid">
+<input type="hidden" id="invoiceId"><input type="hidden" id="invoiceEstado">
+<div class="form-group"><label>Proveedor</label><input class="field" id="invoiceProveedor" placeholder="Ej: Copec Distribución"></div>
+<div class="form-group"><label>RUT proveedor</label><input class="field" id="invoiceRut" placeholder="76.123.456-7"></div>
+<div class="form-group"><label>N° factura</label><input class="field" id="invoiceNumero" placeholder="F-0001"></div>
+<div class="form-group"><label>Categoría</label><select class="select" id="invoiceCategoria"><option>Combustible</option><option>Alimentos</option><option>Bebidas</option><option>Tabaco</option><option>Mantención</option><option>Insumos</option><option>Servicios</option><option>Otros</option></select></div>
+<div class="form-group"><label>Fecha emisión</label><input class="field" type="date" id="invoiceFechaEmision"></div>
+<div class="form-group"><label>Fecha vencimiento</label><input class="field" type="date" id="invoiceFechaVencimiento"></div>
+<div class="form-group"><label>Monto total</label><input class="field" type="number" min="0" id="invoiceMonto"></div>
+<div class="form-group full"><label>Nota</label><input class="field" id="invoiceNota" placeholder="Observaciones (opcional)"></div>
+<div class="full actions" style="justify-content:space-between">
+<button type="button" class="btn danger" id="invoiceDeleteBtn" style="display:none" onclick="deleteInvoiceFromModal()">Eliminar factura</button>
+<div style="display:flex;gap:8px"><button type="button" class="btn" onclick="closeModal('invoiceModal')">Cancelar</button><button class="btn primary">Guardar</button></div>
+</div>
+</form></div></div>
+
 
 <div class="modal" id="holidayModal"><div class="modal-card"><div class="modal-head"><h3>Agregar feriado</h3><button class="close" onclick="closeModal(&#39;holidayModal&#39;)">×</button></div><form id="holidayForm" class="form-grid">
 <div class="form-group"><label>Fecha</label><input class="field" type="date" id="holidayDate" required=""></div>
@@ -10297,6 +10727,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/incidents/incidents.js"></script>
 <script src="src/modules/evaluations/evaluations.js?v=20260727-eval-remove"></script>
 <script src="src/modules/checklists/checklists.js?v=20260728-checklist-remove"></script>
+<script src="src/modules/invoices/invoices.js?v=20260729-invoices-add"></script>
 
 <script>
 // ShiftControl Pro · lógica extraída sin alterar comportamiento
@@ -14226,6 +14657,514 @@ document.getElementById('additionalForm')?.addEventListener('submit',event=>{
 });
 
 
+// ===== Facturas y Compras =====
+
+let invoiceActiveTab='todas';
+let invoicesFilteredCache=[];
+let invoicePage=1;
+const INVOICE_PAGE_SIZE=10;
+
+function invoiceTodayMidnight(){
+  const d=new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function invoiceDisplayStatus(inv){
+  if(inv.estado==='pagada')return 'pagada';
+  const due=inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`):null;
+  if(!due||isNaN(due))return 'pendiente';
+  const daysLeft=Math.ceil((due-invoiceTodayMidnight())/86400000);
+  if(daysLeft<0)return 'vencida';
+  if(daysLeft<=7)return 'vence-pronto';
+  return 'pendiente';
+}
+
+function invoiceStatusMeta(status){
+  return {
+    pagada:{label:'Pagada',cls:'st-pagada'},
+    pendiente:{label:'Pendiente',cls:'st-pendiente'},
+    'vence-pronto':{label:'Vence pronto',cls:'st-vencepronto'},
+    vencida:{label:'Vencida',cls:'st-vencida'}
+  }[status]||{label:status,cls:'st-pendiente'};
+}
+
+const INVOICE_TONES=['blue','orange','purple','green','red'];
+
+function invoiceHashIndex(str){
+  const s=String(str||'');
+  let h=0;
+  for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  return h%INVOICE_TONES.length;
+}
+
+function invoiceProviderTone(name){
+  return INVOICE_TONES[invoiceHashIndex(name)];
+}
+
+function invoiceAvatar(name){
+  const tone=invoiceProviderTone(name);
+  return `<span class="invoices-avatar tone-${tone}">${escapeHtml(initials(name))}</span>`;
+}
+
+const INVOICE_CATEGORY_TONES={
+  Combustible:'orange',
+  Alimentos:'green',
+  Bebidas:'blue',
+  Tabaco:'purple',
+  'Mantención':'red',
+  Insumos:'purple',
+  Servicios:'blue',
+  Otros:'orange'
+};
+
+function invoiceCategoryTone(category){
+  return INVOICE_CATEGORY_TONES[category]||INVOICE_TONES[invoiceHashIndex(category)];
+}
+
+function invoiceCategoryBadge(category){
+  if(!category)return '—';
+  return `<span class="invoices-category-badge tone-${invoiceCategoryTone(category)}">${escapeHtml(category)}</span>`;
+}
+
+function invoiceDueSubtitle(inv){
+  if(!inv.fechaVencimiento||inv.estado==='pagada')return '';
+  const due=new Date(`${inv.fechaVencimiento}T00:00:00`);
+  if(isNaN(due))return '';
+  const daysLeft=Math.ceil((due-invoiceTodayMidnight())/86400000);
+  const abs=Math.abs(daysLeft);
+  const label=daysLeft<0?`${abs} día${abs===1?'':'s'} vencida`:daysLeft===0?'Vence hoy':`${daysLeft} día${daysLeft===1?'':'s'}`;
+  const tone=daysLeft<0?'tone-red':daysLeft<=7?'tone-orange':'tone-muted';
+  return `<span class="invoices-due-sub ${tone}">${label}</span>`;
+}
+
+function sparklinePolyline(values){
+  const nums=(values||[]).map(Number).filter(v=>!isNaN(v));
+  if(nums.length<2)return '';
+  const max=Math.max(...nums,1);
+  const min=Math.min(...nums,0);
+  const range=(max-min)||1;
+  const step=60/(nums.length-1);
+  const points=nums.map((v,i)=>`${(i*step).toFixed(1)},${(18-((v-min)/range)*16).toFixed(1)}`).join(' ');
+  return `<polyline points="${points}"/>`;
+}
+
+function invoiceMonthlyTotals(invoices,monthsBack){
+  const months=[];
+  const base=new Date();
+  base.setDate(1);
+  for(let i=monthsBack-1;i>=0;i--){
+    const d=new Date(base.getFullYear(),base.getMonth()-i,1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  return months.map(prefix=>invoices
+    .filter(inv=>(inv.fechaEmision||'').startsWith(prefix))
+    .reduce((sum,inv)=>sum+Number(inv.montoTotal||0),0)
+  );
+}
+
+function buildInvoiceDonutGradient(categoryTotals){
+  const total=categoryTotals.reduce((s,c)=>s+c.total,0)||1;
+  let acc=0;
+  const stops=categoryTotals.map(c=>{
+    const start=acc,end=acc+(c.total/total*100);
+    acc=end;
+    return `var(--${invoiceCategoryTone(c.categoria)}) ${start}% ${end}%`;
+  });
+  return `conic-gradient(${stops.join(',')})`;
+}
+
+function invoicePaymentPrefix(filterValue){
+  if(filterValue)return filterValue;
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function fillInvoiceFilterOptions(invoices){
+  const providerSelect=document.getElementById('invoiceProviderFilter');
+  const categorySelect=document.getElementById('invoiceCategoryFilter');
+  if(providerSelect){
+    const current=providerSelect.value;
+    const providers=[...new Set(invoices.map(inv=>inv.proveedor).filter(Boolean))].sort();
+    providerSelect.innerHTML='<option value="">Todos los proveedores</option>'+
+      providers.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+    providerSelect.value=providers.includes(current)?current:'';
+  }
+  if(categorySelect){
+    const current=categorySelect.value;
+    const categories=[...new Set(invoices.map(inv=>inv.categoria).filter(Boolean))].sort();
+    categorySelect.innerHTML='<option value="">Todas las categorías</option>'+
+      categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    categorySelect.value=categories.includes(current)?current:'';
+  }
+}
+
+function switchInvoiceTab(tab){
+  invoiceActiveTab=tab;
+  document.querySelectorAll('#invoicesTabs .invoices-tab').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.tab===tab);
+  });
+  renderInvoices();
+}
+
+function invoiceGoToPage(page){
+  invoicePage=page;
+  renderInvoices(true);
+}
+
+function renderInvoicePagination(totalRows,totalPages,startIdx,pageCount){
+  const el=document.getElementById('invoicesPagination');
+  if(!el)return;
+
+  if(!totalRows){
+    el.innerHTML='';
+    return;
+  }
+
+  const from=startIdx+1;
+  const to=startIdx+pageCount;
+  const pages=[];
+  for(let p=1;p<=totalPages;p++)pages.push(p);
+
+  el.innerHTML=`
+    <span>Mostrando ${from} a ${to} de ${totalRows} factura${totalRows===1?'':'s'}</span>
+    <div class="invoices-pagination-pages">
+      <button type="button" class="invoices-page-btn" ${invoicePage<=1?'disabled':''} onclick="invoiceGoToPage(${invoicePage-1})">‹</button>
+      ${pages.map(p=>`<button type="button" class="invoices-page-btn${p===invoicePage?' active':''}" onclick="invoiceGoToPage(${p})">${p}</button>`).join('')}
+      <button type="button" class="invoices-page-btn" ${invoicePage>=totalPages?'disabled':''} onclick="invoiceGoToPage(${invoicePage+1})">›</button>
+    </div>
+  `;
+}
+
+function renderInvoices(keepPage){
+  const table=document.getElementById('invoicesTable');
+  if(!table)return;
+
+  if(!keepPage)invoicePage=1;
+
+  const all=InvoiceModule.getAll();
+  fillInvoiceFilterOptions(all);
+
+  const provider=document.getElementById('invoiceProviderFilter')?.value||'';
+  const dateFrom=document.getElementById('invoiceDateFrom')?.value||'';
+  const dateTo=document.getElementById('invoiceDateTo')?.value||'';
+  const category=document.getElementById('invoiceCategoryFilter')?.value||'';
+  const search=(document.getElementById('invoiceSearch')?.value||'').trim().toLowerCase();
+
+  let rows=all.filter(inv=>{
+    if(provider&&inv.proveedor!==provider)return false;
+    if(dateFrom&&(inv.fechaEmision||'')<dateFrom)return false;
+    if(dateTo&&(inv.fechaEmision||'')>dateTo)return false;
+    if(category&&inv.categoria!==category)return false;
+    if(search){
+      const text=[inv.proveedor,inv.numeroFactura].filter(Boolean).join(' ').toLowerCase();
+      if(!text.includes(search))return false;
+    }
+    if(invoiceActiveTab==='vencida')return invoiceDisplayStatus(inv)==='vencida';
+    if(invoiceActiveTab==='pendiente')return inv.estado==='pendiente';
+    if(invoiceActiveTab==='pagada')return inv.estado==='pagada';
+    return true;
+  });
+
+  const sortMode=document.getElementById('invoiceSortMode')?.value||'recientes';
+  const sorters={
+    recientes:(a,b)=>new Date(b.fechaEmision||0)-new Date(a.fechaEmision||0),
+    antiguas:(a,b)=>new Date(a.fechaEmision||0)-new Date(b.fechaEmision||0),
+    'monto-desc':(a,b)=>Number(b.montoTotal||0)-Number(a.montoTotal||0),
+    'monto-asc':(a,b)=>Number(a.montoTotal||0)-Number(b.montoTotal||0)
+  };
+  rows=rows.sort(sorters[sortMode]||sorters.recientes);
+
+  invoicesFilteredCache=rows;
+
+  const resultCountEl=document.getElementById('invoicesResultCount');
+  if(resultCountEl)resultCountEl.textContent=`${rows.length} factura${rows.length===1?'':'s'} encontrada${rows.length===1?'':'s'}`;
+
+  const totalRows=rows.length;
+  const totalPages=Math.max(1,Math.ceil(totalRows/INVOICE_PAGE_SIZE));
+  if(invoicePage>totalPages)invoicePage=totalPages;
+  if(invoicePage<1)invoicePage=1;
+  const startIdx=(invoicePage-1)*INVOICE_PAGE_SIZE;
+  const pageRows=rows.slice(startIdx,startIdx+INVOICE_PAGE_SIZE);
+
+  table.innerHTML=pageRows.length?pageRows.map(inv=>{
+    const status=invoiceDisplayStatus(inv);
+    const meta=invoiceStatusMeta(status);
+    return `<tr>
+      <td data-label="Proveedor"><div class="invoices-provider-cell">${invoiceAvatar(inv.proveedor)}<div><strong>${escapeHtml(inv.proveedor||'—')}</strong>${inv.rutProveedor?`<small>${escapeHtml(inv.rutProveedor)}</small>`:''}</div></div></td>
+      <td data-label="Factura">${escapeHtml(inv.numeroFactura||'—')}</td>
+      <td data-label="Fecha emisión">${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</td>
+      <td data-label="Vencimiento">${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</td>
+      <td data-label="Categoría">${invoiceCategoryBadge(inv.categoria)}</td>
+      <td data-label="Monto"><strong>${money(inv.montoTotal)}</strong></td>
+      <td data-label="Estado"><span class="invoices-status ${meta.cls}">${meta.label}</span></td>
+      <td data-label="Acciones"><div class="invoices-row-actions">
+        <button type="button" class="invoices-icon-btn" title="Ver factura" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" class="invoices-icon-btn" title="Editar" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+        <button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty">Aún no hay facturas registradas. Usa "Nueva factura" para comenzar.</div></td></tr>`;
+
+  const mobileList=document.getElementById('invoicesMobileList');
+  if(mobileList){
+    mobileList.innerHTML=pageRows.length
+      ?pageRows.map(invoiceMobileCardHTML).join('')
+      :`<div class="empty">Aún no hay facturas registradas. Usa "Nueva factura" para comenzar.</div>`;
+  }
+
+  renderInvoicePagination(totalRows,totalPages,startIdx,pageRows.length);
+  renderInvoiceKpis(all);
+  renderInvoiceSidebar(all);
+  initInvoiceKpiDots();
+}
+
+function invoiceMobileCardHTML(inv){
+  const status=invoiceDisplayStatus(inv);
+  const meta=invoiceStatusMeta(status);
+  return `<div class="invoices-mcard ${meta.cls}">
+    <div class="invoices-mcard-top">
+      <div class="invoices-mcard-provider">
+        ${invoiceAvatar(inv.proveedor)}
+        <strong>${escapeHtml(inv.proveedor||'—')}</strong>
+      </div>
+      <div class="invoices-mcard-amount">
+        <strong>${money(inv.montoTotal)}</strong>
+        <span class="invoices-status ${meta.cls}">${meta.label}</span>
+      </div>
+    </div>
+    <div class="invoices-mcard-invoice-no">Factura #${escapeHtml(inv.numeroFactura||'—')}</div>
+    <div class="invoices-mcard-dates">
+      <span>Emisión: ${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</span>
+      <span>Vence: ${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</span>
+    </div>
+    <div class="invoices-mcard-bottom">
+      ${invoiceCategoryBadge(inv.categoria)}
+      <div class="invoices-row-actions">
+        <button type="button" class="invoices-icon-btn" title="Ver factura" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" class="invoices-icon-btn" title="Editar" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+        <button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function initInvoiceKpiDots(){
+  const row=document.getElementById('invoicesKpiRow');
+  const dots=document.querySelectorAll('#invoicesKpiDots .invoices-kpi-dot');
+  if(!row||!dots.length||row.dataset.dotsBound)return;
+  row.dataset.dotsBound='1';
+  row.addEventListener('scroll',()=>{
+    const max=row.scrollWidth-row.clientWidth;
+    const idx=max>0?Math.round(row.scrollLeft/max*(dots.length-1)):0;
+    dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+  },{passive:true});
+}
+
+function renderInvoiceKpis(all){
+  const monthPrefix=invoicePaymentPrefix();
+  const monthInvoices=all.filter(inv=>(inv.fechaEmision||'').startsWith(monthPrefix));
+
+  const totalMonth=monthInvoices.reduce((s,inv)=>s+Number(inv.montoTotal||0),0);
+  const paidMonthInvoices=monthInvoices.filter(inv=>inv.estado==='pagada');
+  const paidMonth=paidMonthInvoices.reduce((s,inv)=>s+Number(inv.montoTotal||0),0);
+  const pendingInvoices=all.filter(inv=>inv.estado==='pendiente');
+  const pending=pendingInvoices.reduce((s,inv)=>s+Number(inv.montoTotal||0),0);
+  const dueSoonInvoices=all.filter(inv=>invoiceDisplayStatus(inv)==='vence-pronto');
+  const overdueInvoices=all.filter(inv=>invoiceDisplayStatus(inv)==='vencida');
+  const dueSoonAmount=dueSoonInvoices.reduce((s,inv)=>s+Number(inv.montoTotal||0),0);
+  const overdueAmount=overdueInvoices.reduce((s,inv)=>s+Number(inv.montoTotal||0),0);
+
+  const plural=(n)=>`${n} factura${n===1?'':'s'}`;
+  const setText=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val};
+  setText('invTotalMonth',money(totalMonth));
+  setText('invTotalMonthSub',plural(monthInvoices.length));
+  setText('invPending',money(pending));
+  setText('invPendingSub',plural(pendingInvoices.length));
+  setText('invDueSoon',String(dueSoonInvoices.length));
+  setText('invDueSoonSub',money(dueSoonAmount));
+  setText('invOverdue',String(overdueInvoices.length));
+  setText('invOverdueSub',money(overdueAmount));
+  setText('invPaidMonth',money(paidMonth));
+  setText('invPaidMonthSub',plural(paidMonthInvoices.length));
+
+  const totals=invoiceMonthlyTotals(all,6);
+  const setSpark=(id,values)=>{const el=document.getElementById(id);if(el)el.innerHTML=sparklinePolyline(values)};
+  setSpark('invTotalMonthSpark',totals);
+  setSpark('invPaidMonthSpark',totals);
+  setSpark('invPendingSpark',totals);
+  setSpark('invDueSoonSpark',totals);
+  setSpark('invOverdueSpark',totals);
+}
+
+function renderInvoiceSidebar(all){
+  const upcomingList=document.getElementById('invoiceUpcomingList');
+  if(upcomingList){
+    const upcoming=all
+      .filter(inv=>inv.estado==='pendiente'&&inv.fechaVencimiento)
+      .sort((a,b)=>new Date(a.fechaVencimiento)-new Date(b.fechaVencimiento))
+      .slice(0,6);
+    upcomingList.innerHTML=upcoming.length?upcoming.map(inv=>{
+      const daysLeft=Math.ceil((new Date(`${inv.fechaVencimiento}T00:00:00`)-invoiceTodayMidnight())/86400000);
+      const dueLabel=daysLeft<0?`vencida hace ${Math.abs(daysLeft)}d`:daysLeft===0?'vence hoy':`vence en ${daysLeft}d`;
+      return `<div class="invoices-upcoming-item">
+        ${invoiceAvatar(inv.proveedor)}
+        <div class="invoices-upcoming-info"><strong>${escapeHtml(inv.proveedor||'—')}</strong><small>${escapeHtml(inv.numeroFactura||'')} · ${dueLabel}</small></div>
+        <span class="invoices-upcoming-amount">${money(inv.montoTotal)}</span>
+      </div>`;
+    }).join(''):'<p class="muted">No hay vencimientos próximos.</p>';
+  }
+
+  const donut=document.getElementById('invoiceCategoryDonut');
+  const legend=document.getElementById('invoiceCategoryLegend');
+  const totalEl=document.getElementById('invoiceCategoryDonutTotal');
+  const monthPrefix=invoicePaymentPrefix();
+  const monthInvoices=all.filter(inv=>(inv.fechaEmision||'').startsWith(monthPrefix));
+  const byCategory={};
+  monthInvoices.forEach(inv=>{
+    const cat=inv.categoria||'Otros';
+    byCategory[cat]=(byCategory[cat]||0)+Number(inv.montoTotal||0);
+  });
+  const categoryTotals=Object.entries(byCategory)
+    .map(([categoria,total])=>({categoria,total}))
+    .sort((a,b)=>b.total-a.total);
+  const grandTotal=categoryTotals.reduce((s,c)=>s+c.total,0);
+
+  if(totalEl)totalEl.textContent=money(grandTotal);
+
+  if(donut){
+    donut.style.background=categoryTotals.length?buildInvoiceDonutGradient(categoryTotals):'var(--line)';
+  }
+
+  if(legend){
+    legend.innerHTML=categoryTotals.length?categoryTotals.map(c=>`
+      <div><i style="background:var(--${invoiceCategoryTone(c.categoria)})"></i><span>${escapeHtml(c.categoria)}</span><small>${money(c.total)}</small><strong style="font-size:11px">${grandTotal?Math.round(c.total/grandTotal*100):0}%</strong></div>
+    `).join(''):'<p class="muted">Sin datos aún.</p>';
+  }
+}
+
+function openInvoiceModal(id){
+  const form=document.getElementById('invoiceForm');
+  form?.reset();
+  document.getElementById('invoiceId').value='';
+  document.getElementById('invoiceEstado').value='pendiente';
+  document.getElementById('invoiceTitle').textContent='Nueva factura';
+  const deleteBtn=document.getElementById('invoiceDeleteBtn');
+  if(deleteBtn)deleteBtn.style.display=id?'inline-flex':'none';
+
+  if(id){
+    const inv=InvoiceModule.findById(id);
+    if(!inv)return toast('No se encontró la factura');
+    document.getElementById('invoiceId').value=inv.id;
+    document.getElementById('invoiceEstado').value=inv.estado||'pendiente';
+    document.getElementById('invoiceProveedor').value=inv.proveedor||'';
+    document.getElementById('invoiceRut').value=inv.rutProveedor||'';
+    document.getElementById('invoiceNumero').value=inv.numeroFactura||'';
+    document.getElementById('invoiceCategoria').value=inv.categoria||'Combustible';
+    document.getElementById('invoiceFechaEmision').value=inv.fechaEmision||'';
+    document.getElementById('invoiceFechaVencimiento').value=inv.fechaVencimiento||'';
+    document.getElementById('invoiceMonto').value=Number(inv.montoTotal||0);
+    document.getElementById('invoiceNota').value=inv.nota||'';
+    document.getElementById('invoiceTitle').textContent='Editar factura';
+  }
+
+  openModal('invoiceModal');
+}
+
+document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
+  event.preventDefault();
+
+  const id=document.getElementById('invoiceId').value;
+  const proveedor=document.getElementById('invoiceProveedor').value.trim();
+  const rutProveedor=document.getElementById('invoiceRut').value.trim();
+  const numeroFactura=document.getElementById('invoiceNumero').value.trim();
+  const categoria=document.getElementById('invoiceCategoria').value;
+  const fechaEmision=document.getElementById('invoiceFechaEmision').value;
+  const fechaVencimiento=document.getElementById('invoiceFechaVencimiento').value;
+  const montoTotal=Number(document.getElementById('invoiceMonto').value||0);
+  const nota=document.getElementById('invoiceNota').value.trim();
+  const estado=document.getElementById('invoiceEstado').value||'pendiente';
+
+  if(!proveedor)return alert('Indica el proveedor.');
+  if(!numeroFactura)return alert('Indica el número de factura.');
+  if(!fechaEmision)return alert('Selecciona la fecha de emisión.');
+  if(!fechaVencimiento)return alert('Selecciona la fecha de vencimiento.');
+  if(montoTotal<=0)return alert('El monto debe ser mayor a 0.');
+
+  snapshot();
+
+  if(id){
+    InvoiceModule.patch(id,{
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota
+    },{save:false});
+    log(`Factura actualizada: ${proveedor} (${numeroFactura})`);
+  }else{
+    InvoiceModule.create({
+      id:safeRandomUUID(),
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,
+      estado:'pendiente'
+    },{prepend:true,save:false});
+    log(`Factura registrada: ${proveedor} (${numeroFactura})`);
+  }
+
+  save();
+  closeModal('invoiceModal');
+  renderInvoices();
+  toast('Factura guardada');
+});
+
+function toggleInvoicePaid(id){
+  const inv=InvoiceModule.findById(id);
+  if(!inv)return;
+
+  snapshot();
+  const nextEstado=inv.estado==='pagada'?'pendiente':'pagada';
+  InvoiceModule.patch(id,{estado:nextEstado},{save:false});
+  log(`Factura ${nextEstado==='pagada'?'marcada como pagada':'marcada como pendiente'}: ${inv.proveedor} (${inv.numeroFactura})`);
+  save();
+  renderInvoices();
+  toast(nextEstado==='pagada'?'Factura marcada como pagada':'Factura marcada como pendiente');
+}
+
+function deleteInvoice(id){
+  const inv=InvoiceModule.findById(id);
+  if(!inv)return false;
+  if(!confirm(`¿Eliminar la factura ${inv.numeroFactura||''} de ${inv.proveedor||'este proveedor'}?`))return false;
+
+  snapshot();
+  InvoiceModule.remove(id,{save:false});
+  log(`Factura eliminada: ${inv.proveedor} (${inv.numeroFactura})`);
+  save();
+  renderInvoices();
+  toast('Factura eliminada');
+  return true;
+}
+
+function deleteInvoiceFromModal(){
+  const id=document.getElementById('invoiceId').value;
+  if(!id)return;
+  if(deleteInvoice(id))closeModal('invoiceModal');
+}
+
+function exportInvoicesCSV(){
+  const rows=[
+    ['Proveedor','RUT','Factura','Fecha emisión','Vencimiento','Categoría','Monto','Estado','Nota'],
+    ...invoicesFilteredCache.map(inv=>[
+      inv.proveedor||'',
+      inv.rutProveedor||'',
+      inv.numeroFactura||'',
+      inv.fechaEmision||'',
+      inv.fechaVencimiento||'',
+      inv.categoria||'',
+      inv.montoTotal||0,
+      invoiceStatusMeta(invoiceDisplayStatus(inv)).label,
+      inv.nota||''
+    ])
+  ];
+  downloadCSV(rows,`facturas-compras-${invoicePaymentPrefix()}`);
+}
+
+
 function renderAudit(){
   const list=document.getElementById('auditList');
   if(!list)return;
@@ -15920,6 +16859,7 @@ function renderAll(){
     'renderExecution',
     'renderEmployees',
     'renderAdditional',
+    'renderInvoices',
     'renderReports',
     'renderAudit',
     'renderSpecials',
@@ -18634,7 +19574,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/config.js"></script>
 <script src="src/auth.js"></script>
 <script src="src/app/permissions.js"></script>
-<script src="src/v20-interface.js"></script>
+<script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/storage.js"></script>
 
 <script src="src/app/state.js"></script>
