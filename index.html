@@ -10936,7 +10936,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
 const KEYS={data:'shiftcontrol_pro_v2_all_replacement_candidates'};
 const today=new Date();
-const isoToday=today.toISOString().slice(0,10);
+const isoToday=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
 const appPeriod={
   date:isoToday,
