@@ -5871,6 +5871,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <div class="nav-group-title">Administración</div>
     <button class="nav-btn role-admin-visible" data-view="additional"><span>＋</span>Jornadas adicionales</button>
     <button class="nav-btn role-admin-visible" data-view="finance"><span>$</span>Finanzas</button>
+    <button class="nav-btn role-admin-visible" data-view="team"><span>◍</span>Equipo de estación</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="reports"><span>↗</span>Reportes</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="audit"><span>≡</span>Historial de actividad</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="settings"><span>⚙</span>Configuración</button>
@@ -9084,6 +9085,49 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       </div>
     </div>
 
+    <style>
+      .team-current-card{background:var(--surface,var(--panel2));border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:8px;margin-bottom:18px}
+      .team-current-head span{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+      .team-current-card strong{font-size:18px}
+      .team-current-card small{color:var(--muted);font-size:12.5px}
+      .team-current-card .btn{justify-self:start;margin-top:6px}
+      .team-history{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:10px}
+      .team-history h4{margin:0;font-size:14px}
+      .team-history-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+      .team-history-row:first-of-type{border-top:0}
+      .team-history-row strong{display:block;font-size:13.5px}
+      .team-history-row span{color:var(--muted);font-size:12.5px}
+      .team-history-row small{color:var(--muted);font-size:11.5px;white-space:nowrap}
+    </style>
+
+    <section id="team" class="view">
+      <div class="topbar">
+        <div>
+          <h2>Equipo de estación</h2>
+          <p>Administra quién tiene el rol de Jefa de Isla.</p>
+        </div>
+      </div>
+      <div id="teamRoot">
+        <div class="ops-empty">Cargando equipo…</div>
+      </div>
+    </section>
+
+    <div class="modal" id="assignChiefModal">
+      <div class="modal-card">
+        <div class="modal-head"><h3 id="assignChiefTitle">Asignar Jefa de Isla</h3><button class="close" onclick="closeModal('assignChiefModal')">×</button></div>
+        <form id="assignChiefForm" class="form-grid">
+          <div class="form-group full"><label>Nombre</label><input class="field" id="assignChiefName" placeholder="Nombre completo" required></div>
+          <div class="form-group full"><label>Correo</label><input class="field" type="email" id="assignChiefEmail" placeholder="nombre@empresa.cl" required></div>
+          <div id="assignChiefError" class="login-error" role="alert"></div>
+          <p class="muted" style="margin:0;font-size:12.5px">Si el correo no tiene cuenta todavía, se le manda una invitación para crear su contraseña. Si ya tiene cuenta, solo se le asigna el rol.</p>
+          <div class="full actions" style="justify-content:flex-end">
+            <button type="button" class="btn" onclick="closeModal('assignChiefModal')">Cancelar</button>
+            <button class="btn primary" id="assignChiefSubmit" type="submit">Enviar invitación</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <section id="reports" class="view reports-v32">
       <div class="topbar reports-v32-topbar">
         <div class="reports-v32-heading"><h2>Reportes</h2></div>
@@ -11392,6 +11436,8 @@ document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',
     if(typeof selectChecklistDateForReview==='function')selectChecklistDateForReview();
     if(typeof renderOpsModules==='function')renderOpsModules();
   }
+
+  if(btn.dataset.view==='team'&&typeof renderTeam==='function')renderTeam();
 
   renderAll();
 }));
@@ -17104,6 +17150,125 @@ function renderDailySummaryContent(root){
     </div>
   `;
 }
+
+async function renderTeam(){
+  const root=document.getElementById('teamRoot');
+  if(!root)return;
+
+  try{
+    const client=window.ShiftControlAuth?.getClient?.();
+    const context=window.AuthContext?.get?.();
+    if(!client||!context?.companyId){
+      root.innerHTML='<div class="ops-empty">No se pudo cargar la información de la empresa.</div>';
+      return;
+    }
+
+    const {data:memberships,error:membershipsError}=await client
+      .from('company_memberships')
+      .select('user_id, role, active, created_at')
+      .eq('company_id',context.companyId);
+
+    if(membershipsError){
+      root.innerHTML=`<div class="ops-empty">No se pudo cargar el equipo.<br><small>${v14Esc(membershipsError.message)}</small></div>`;
+      return;
+    }
+
+    const userIds=[...new Set((memberships||[]).map(item=>item.user_id))];
+    let namesById={};
+    if(userIds.length){
+      const {data:profiles}=await client
+        .from('profiles')
+        .select('id, display_name')
+        .in('id',userIds);
+      namesById=Object.fromEntries((profiles||[]).map(profile=>[profile.id,profile.display_name]));
+    }
+    const nameFor=id=>v14Esc(namesById[id]||'Cuenta sin nombre');
+
+    const currentChief=(memberships||[]).find(item=>item.role==='CHIEF'&&item.active);
+
+    const {data:events}=await client
+      .from('team_role_events')
+      .select('id, action, actor_user_id, target_user_id, previous_user_id, created_at')
+      .eq('company_id',context.companyId)
+      .order('created_at',{ascending:false})
+      .limit(20);
+
+    root.innerHTML=`
+      <div class="team-current-card">
+        <div class="team-current-head"><span>Jefa de Isla actual</span></div>
+        ${currentChief
+          ?`<strong>${nameFor(currentChief.user_id)}</strong><small>Desde ${fmt(String(currentChief.created_at||'').slice(0,10))}</small>`
+          :'<div class="ops-empty">Todavía no hay una Jefa de Isla asignada.</div>'}
+        <button type="button" class="btn primary" onclick="openAssignChiefModal()">${currentChief?'Reemplazar Jefa de Isla':'Asignar Jefa de Isla'}</button>
+      </div>
+      <div class="team-history">
+        <h4>Historial</h4>
+        ${(events&&events.length)?events.map(ev=>`
+          <div class="team-history-row">
+            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de Jefa de Isla</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
+            <small>${new Date(ev.created_at).toLocaleString('es-CL')} · por ${nameFor(ev.actor_user_id)}</small>
+          </div>
+        `).join(''):'<div class="ops-empty">Sin movimientos registrados.</div>'}
+      </div>
+    `;
+  }catch(error){
+    root.innerHTML=`<div class="ops-empty">No se pudo cargar el equipo.<br><small>${v14Esc(error?.message||String(error))}</small></div>`;
+  }
+}
+
+function openAssignChiefModal(){
+  if(!requireAppPermission('team.manage','Solo el administrador puede asignar la Jefa de Isla.'))return;
+  document.getElementById('assignChiefForm')?.reset();
+  const errorEl=document.getElementById('assignChiefError');
+  if(errorEl)errorEl.textContent='';
+  openModal('assignChiefModal');
+}
+
+document.getElementById('assignChiefForm')?.addEventListener('submit',async event=>{
+  event.preventDefault();
+
+  const email=document.getElementById('assignChiefEmail').value.trim().toLowerCase();
+  const displayName=document.getElementById('assignChiefName').value.trim();
+  const errorEl=document.getElementById('assignChiefError');
+  const submitBtn=document.getElementById('assignChiefSubmit');
+
+  if(errorEl)errorEl.textContent='';
+
+  if(!email||!displayName){
+    if(errorEl)errorEl.textContent='Indica el nombre y el correo.';
+    return;
+  }
+
+  const originalLabel=submitBtn.textContent;
+  submitBtn.disabled=true;
+  submitBtn.textContent='Enviando…';
+
+  try{
+    const client=window.ShiftControlAuth.getClient();
+    const {data,error}=await client.functions.invoke('assign-chief',{body:{email,displayName}});
+
+    if(error){
+      let message=error.message||'No se pudo completar la acción.';
+      try{
+        if(error.context&&typeof error.context.json==='function'){
+          const parsed=await error.context.json();
+          if(parsed?.error)message=parsed.error;
+        }
+      }catch(_parseError){}
+      throw new Error(message);
+    }
+    if(data?.error)throw new Error(data.error);
+
+    closeModal('assignChiefModal');
+    showToast('Jefa de Isla actualizada');
+    renderTeam();
+  }catch(error){
+    if(errorEl)errorEl.textContent=error.message||'Ocurrió un error inesperado.';
+  }finally{
+    submitBtn.disabled=false;
+    submitBtn.textContent=originalLabel;
+  }
+});
 function showView(id){
   const role=typeof getAppRole==='function'?getAppRole():'admin';
   if(typeof roleCanOpenView==='function'&&!roleCanOpenView(role,id)){
@@ -17116,6 +17281,7 @@ function showView(id){
   if(id==='operational-home')renderOperationalHome();
   if(id==='admin-inbox')renderAdminInbox();
   if(id==='daily-summary')renderDailySummary();
+  if(id==='team'&&typeof renderTeam==='function')renderTeam();
   if(id==='checklists')selectChecklistDateForReview();
   if(id==='incidents'||id==='checklists')setTimeout(()=>window.renderOpsModules?.(),0);
   if(id==='myshift'&&typeof renderMyShift==='function')renderMyShift();
