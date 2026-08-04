@@ -5786,6 +5786,19 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <button class="login-submit" type="submit">Crear contraseña</button>
       </form>
 
+      <form id="recoveryPasswordForm" class="login-form" autocomplete="on" hidden>
+        <label>
+          <span>Nueva contraseña</span>
+          <input id="recoveryPassword" name="new-password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        </label>
+        <label>
+          <span>Confirmar contraseña</span>
+          <input id="recoveryPasswordConfirm" name="confirm-password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        </label>
+        <div id="recoveryPasswordError" class="login-error" role="alert"></div>
+        <button class="login-submit" type="submit">Guardar nueva contraseña</button>
+      </form>
+
       <p class="login-security-note">Las cuentas y contraseñas se validan de forma segura mediante Supabase Auth.</p>
     </section>
   </div>
@@ -18672,8 +18685,10 @@ function showLoginScreen(message=''){
   }
   const loginForm=document.getElementById('loginForm');
   const invitationForm=document.getElementById('invitePasswordForm');
+  const recoveryForm=document.getElementById('recoveryPasswordForm');
   if(loginForm)loginForm.hidden=false;
   if(invitationForm)invitationForm.hidden=true;
+  if(recoveryForm)recoveryForm.hidden=true;
   const title=document.getElementById('loginTitle');
   const subtitle=document.getElementById('loginSubtitle');
   if(title)title.textContent='Iniciar sesión';
@@ -18692,8 +18707,10 @@ function showInvitationScreen(message=''){
   }
   const loginForm=document.getElementById('loginForm');
   const invitationForm=document.getElementById('invitePasswordForm');
+  const recoveryForm=document.getElementById('recoveryPasswordForm');
   if(loginForm)loginForm.hidden=true;
   if(invitationForm)invitationForm.hidden=false;
+  if(recoveryForm)recoveryForm.hidden=true;
   const title=document.getElementById('loginTitle');
   const subtitle=document.getElementById('loginSubtitle');
   if(title)title.textContent='Activa tu cuenta';
@@ -18701,6 +18718,28 @@ function showInvitationScreen(message=''){
   const error=document.getElementById('invitePasswordError');
   if(error)error.textContent=message;
   setTimeout(()=>document.getElementById('invitePassword')?.focus(),80);
+}
+function showRecoveryScreen(message=''){
+  document.body.dataset.authenticated='false';
+  document.body.classList.add('auth-locked');
+  const screen=document.getElementById('loginScreen');
+  if(screen){
+    screen.classList.remove('hidden');
+    screen.setAttribute('aria-hidden','false');
+  }
+  const loginForm=document.getElementById('loginForm');
+  const invitationForm=document.getElementById('invitePasswordForm');
+  const recoveryForm=document.getElementById('recoveryPasswordForm');
+  if(loginForm)loginForm.hidden=true;
+  if(invitationForm)invitationForm.hidden=true;
+  if(recoveryForm)recoveryForm.hidden=false;
+  const title=document.getElementById('loginTitle');
+  const subtitle=document.getElementById('loginSubtitle');
+  if(title)title.textContent='Restablece tu contraseña';
+  if(subtitle)subtitle.textContent='Elige una contraseña nueva para tu cuenta.';
+  const error=document.getElementById('recoveryPasswordError');
+  if(error)error.textContent=message;
+  setTimeout(()=>document.getElementById('recoveryPassword')?.focus(),80);
 }
 async function loginShiftControl(event){
   event?.preventDefault();
@@ -18772,11 +18811,50 @@ async function acceptShiftControlInvitation(event){
 
   return false;
 }
+async function completeShiftControlRecovery(event){
+  event?.preventDefault();
+  const password=document.getElementById('recoveryPassword')?.value||'';
+  const confirmation=document.getElementById('recoveryPasswordConfirm')?.value||'';
+  const error=document.getElementById('recoveryPasswordError');
+  const submit=document.querySelector('#recoveryPasswordForm .login-submit');
+
+  if(password!==confirmation){
+    if(error)error.textContent='Las contraseñas no coinciden.';
+    document.getElementById('recoveryPasswordConfirm')?.focus();
+    return false;
+  }
+
+  if(submit)submit.disabled=true;
+  if(error)error.textContent='';
+
+  try{
+    await window.ShiftControlAuth.completeRecovery(password);
+    await window.ShiftControlStorage?.bootstrap();
+    const user=authenticatedUser();
+    applyAuthenticatedIdentity(user);
+    if(typeof showToast==='function')showToast('Contraseña actualizada correctamente');
+  }catch(recoveryError){
+    const message=recoveryError?.message||'No fue posible actualizar la contraseña.';
+    if(window.ShiftControlAuth?.isRecoveryPending?.()){
+      showRecoveryScreen(message);
+    }else{
+      showLoginScreen(message);
+    }
+  }finally{
+    if(submit)submit.disabled=false;
+  }
+
+  return false;
+}
 async function initializeShiftControlAuth(){
   document.getElementById('loginForm')?.addEventListener('submit',loginShiftControl);
   document.getElementById('invitePasswordForm')?.addEventListener(
     'submit',
     acceptShiftControlInvitation
+  );
+  document.getElementById('recoveryPasswordForm')?.addEventListener(
+    'submit',
+    completeShiftControlRecovery
   );
   document.getElementById('toggleLoginPassword')?.addEventListener('click',()=>{
     const input=document.getElementById('loginPassword');
@@ -18791,6 +18869,10 @@ async function initializeShiftControlAuth(){
     await window.ShiftControlAuth.initialize();
     if(window.ShiftControlAuth.isInvitationPending()){
       showInvitationScreen();
+      return;
+    }
+    if(window.ShiftControlAuth.isRecoveryPending?.()){
+      showRecoveryScreen();
       return;
     }
     const user=authenticatedUser();

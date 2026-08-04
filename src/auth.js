@@ -10,11 +10,17 @@
   const SESSION_ONLY_KEY='shiftcontrol_auth_session_only_v1';
   const SESSION_TAB_KEY='shiftcontrol_auth_session_tab_v1';
   const INVITATION_PENDING_KEY='shiftcontrol_auth_invitation_pending_v1';
+  const RECOVERY_PENDING_KEY='shiftcontrol_auth_recovery_pending_v1';
   let client=null;
   let currentContext=null;
   let initialized=false;
   let initializePromise=null;
   let invitationPending=captureInvitationCallback();
+  let recoveryPending=!invitationPending&&captureRecoveryCallback();
+  const pendingCallbackError=
+    (!invitationPending&&!recoveryPending)
+      ?captureCallbackErrorDescription()
+      :null;
 
   function hasInvitationType(params){
     return params.get('type')==='invite';
@@ -48,6 +54,80 @@
 
     try{
       sessionStorage.removeItem(INVITATION_PENDING_KEY);
+
+      if(!window.history?.replaceState||!window.location)return;
+
+      const url=new URL(window.location.href);
+      [
+        'type',
+        'token',
+        'token_hash',
+        'access_token',
+        'refresh_token',
+        'expires_in',
+        'expires_at',
+        'token_type',
+        'error',
+        'error_code',
+        'error_description'
+      ].forEach(key=>url.searchParams.delete(key));
+      url.hash='';
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${url.search}`
+      );
+    }catch(_error){}
+  }
+
+  function hasRecoveryType(params){
+    return params.get('type')==='recovery';
+  }
+
+  function captureCallbackErrorDescription(){
+    try{
+      const searchParams=new URLSearchParams(window.location.search||'');
+      const hashParams=new URLSearchParams(
+        String(window.location.hash||'').replace(/^#/,'')
+      );
+      const raw=
+        hashParams.get('error_description')||
+        searchParams.get('error_description');
+
+      return raw?decodeURIComponent(raw.replace(/\+/g,' ')):null;
+    }catch(_error){
+      return null;
+    }
+  }
+
+  function captureRecoveryCallback(){
+    try{
+      const searchParams=new URLSearchParams(window.location.search||'');
+      const hashParams=new URLSearchParams(
+        String(window.location.hash||'').replace(/^#/,'')
+      );
+      const detected=
+        hasRecoveryType(searchParams)||
+        hasRecoveryType(hashParams);
+
+      if(detected){
+        sessionStorage.setItem(RECOVERY_PENDING_KEY,'true');
+      }
+
+      return (
+        detected||
+        sessionStorage.getItem(RECOVERY_PENDING_KEY)==='true'
+      );
+    }catch(_error){
+      return false;
+    }
+  }
+
+  function clearRecoveryCallback(){
+    recoveryPending=false;
+
+    try{
+      sessionStorage.removeItem(RECOVERY_PENDING_KEY);
 
       if(!window.history?.replaceState||!window.location)return;
 
@@ -232,7 +312,7 @@
     if(initializePromise)return initializePromise;
 
     initializePromise=(async()=>{
-      if(invitationPending){
+      if(invitationPending||recoveryPending){
         setPersistencePreference(true);
       }else{
         await enforceSessionPreference();
@@ -254,6 +334,23 @@
 
         currentContext=null;
         return null;
+      }
+
+      if(recoveryPending){
+        if(!data.session?.user){
+          clearRecoveryCallback();
+          throw accessError(
+            pendingCallbackError||'El enlace de recuperación no es válido o ya expiró.',
+            'AUTH_RECOVERY_INVALID'
+          );
+        }
+
+        currentContext=null;
+        return null;
+      }
+
+      if(pendingCallbackError){
+        throw accessError(pendingCallbackError,'AUTH_CALLBACK_ERROR');
       }
 
       return activate(data.session?.user||null);
@@ -317,6 +414,29 @@
     }
   }
 
+  async function completeRecovery(password){
+    if(!recoveryPending){
+      throw accessError(
+        'No hay una recuperación de contraseña pendiente.',
+        'AUTH_RECOVERY_NOT_PENDING'
+      );
+    }
+
+    const {data,error}=await getClient().auth.updateUser({password});
+    if(error)throw error;
+
+    clearRecoveryCallback();
+
+    try{
+      initialized=true;
+      return await activate(data.user);
+    }catch(error){
+      await getClient().auth.signOut({scope:'local'});
+      currentContext=null;
+      throw error;
+    }
+  }
+
   function legacyUser(){
     const context=currentContext;
     if(!context)return null;
@@ -335,7 +455,8 @@
     get:()=>currentContext,
     isReady:()=>initialized,
     hasCompany:()=>Boolean(currentContext?.companyId),
-    isInvitationPending:()=>invitationPending
+    isInvitationPending:()=>invitationPending,
+    isRecoveryPending:()=>recoveryPending
   });
 
   window.ShiftControlAuth=Object.freeze({
@@ -344,7 +465,9 @@
     signIn,
     signOut,
     acceptInvitation,
+    completeRecovery,
     isInvitationPending:()=>invitationPending,
+    isRecoveryPending:()=>recoveryPending,
     legacyUser
   });
 })();
