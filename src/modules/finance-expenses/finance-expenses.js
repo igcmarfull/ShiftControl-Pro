@@ -1,6 +1,6 @@
 (function(){
 
-window.EvaluationModule = {
+window.FinanceExpenseModule = {
 
   _getState(){
     return window.ShiftControlState?.get?.() || null;
@@ -14,7 +14,7 @@ window.EvaluationModule = {
 
   getAll(){
     const state = this._getState();
-    return state?.evaluations || [];
+    return state?.financeExpenses || [];
   },
 
   findById(id){
@@ -30,14 +30,14 @@ window.EvaluationModule = {
       return null;
     }
 
-    if(!Array.isArray(state.evaluations)){
-      state.evaluations=[];
+    if(!Array.isArray(state.financeExpenses)){
+      state.financeExpenses=[];
     }
 
     if(prepend){
-      state.evaluations.unshift(data);
+      state.financeExpenses.unshift(data);
     }else{
-      state.evaluations.push(data);
+      state.financeExpenses.push(data);
     }
 
     this._saveIfNeeded(save);
@@ -47,11 +47,11 @@ window.EvaluationModule = {
   update(id, data, {save=true}={}){
     const state = this._getState();
 
-    if(!state||!Array.isArray(state.evaluations)){
+    if(!state||!Array.isArray(state.financeExpenses)){
       return null;
     }
 
-    const index=state.evaluations.findIndex(
+    const index=state.financeExpenses.findIndex(
       item=>item.id===id
     );
 
@@ -59,7 +59,7 @@ window.EvaluationModule = {
       return null;
     }
 
-    state.evaluations[index]=data;
+    state.financeExpenses[index]=data;
     this._saveIfNeeded(save);
 
     return data;
@@ -78,6 +78,23 @@ window.EvaluationModule = {
     return existing;
   },
 
+  remove(id, {save=true}={}){
+    const state = this._getState();
+
+    if(!state||!Array.isArray(state.financeExpenses)){
+      return null;
+    }
+
+    const existing=this.findById(id);
+
+    state.financeExpenses=state.financeExpenses.filter(
+      item=>item.id!==id
+    );
+
+    this._saveIfNeeded(save);
+    return existing;
+  },
+
   replaceAll(items, {save=true}={}){
     const state = this._getState();
 
@@ -85,35 +102,14 @@ window.EvaluationModule = {
       return [];
     }
 
-    state.evaluations=items;
+    state.financeExpenses=items;
     this._saveIfNeeded(save);
 
     return items;
-  },
-
-  remove(id, {save=true}={}){
-    const state = this._getState();
-
-    if(!state||!Array.isArray(state.evaluations)){
-      return false;
-    }
-
-    const index=state.evaluations.findIndex(
-      item=>item.id===id
-    );
-
-    if(index<0){
-      return false;
-    }
-
-    state.evaluations.splice(index,1);
-    this._saveIfNeeded(save);
-
-    return true;
   }
 
 };
 
-console.log("[ShiftControl V1.1] Evaluations module loaded");
+console.log("[ShiftControl V1.0] Finance expenses module loaded");
 
 })();

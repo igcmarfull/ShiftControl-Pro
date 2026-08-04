@@ -62,6 +62,23 @@ window.ChecklistModule = {
     this._saveIfNeeded(save);
 
     return items;
+  },
+
+  remove(key, {save=true}={}){
+    const state=this._getState();
+
+    if(!state||!state.checklists||typeof state.checklists!=='object'){
+      return false;
+    }
+
+    if(!(key in state.checklists)){
+      return false;
+    }
+
+    delete state.checklists[key];
+    this._saveIfNeeded(save);
+
+    return true;
   }
 
 };

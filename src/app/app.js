@@ -28,6 +28,18 @@ async function initApp(){
     await window.migrateLegacyChecklists();
   }
 
+  if(window.migrateLegacyFinanceReconciliations){
+    await window.migrateLegacyFinanceReconciliations();
+  }
+
+  if(window.migrateLegacyFinanceExpenses){
+    await window.migrateLegacyFinanceExpenses();
+  }
+
+  if(window.migrateLegacyDeposits){
+    await window.migrateLegacyDeposits();
+  }
+
   if(window.AppState){
     AppState.initialized = true;
   }
