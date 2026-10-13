@@ -70,6 +70,25 @@ async function main() {
     assert.equal(remote.data.plans.length, 1);
     assert.equal(remote.data.plans[0].code, 'C');
     assert.equal(writes, 7);
+
+    // Corrupt legacy imports must never be silently deduplicated or
+    // overwritten by an edit, a removal, a bulk change, or direct save.
+    const duplicate = { id: 'legacy-duplicate', employeeId: 'own',
+      date: '2026-11-02', code: 'A' };
+    remote.data.plans.push(duplicate);
+    const beforeDuplicates = clone(remote.data.plans);
+    await assert.rejects(api.upsertPlan({
+      employeeId: 'own', date: '2026-11-02', code: 'B'
+    }), /duplicados/);
+    await assert.rejects(api.removePlan('own', '2026-11-02'), /duplicados/);
+    await assert.rejects(api.applyPlanChanges([
+      { employeeId: 'own', date: '2026-11-03', code: 'C' }
+    ]), /duplicados/);
+    const corrupted = await api.load();
+    await assert.rejects(api.save(corrupted), /duplicados/);
+    assert.equal(writes, 7, 'Corrupt schedules must not be persisted');
+    assert.deepEqual(remote.data.plans, beforeDuplicates,
+      'Rejected operations must preserve original data');
   }
   console.log('Area shift create/edit/remove regression passed.');
 }
