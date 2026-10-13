@@ -588,9 +588,20 @@
       }
       function commitSelection(code) {
         if (!selectedCells.size || saving || loading) return;
+        // Never authorize a queued edit against a different login or area.
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) {
+          status.textContent = 'La sesión cambió. Vuelve a abrir tu calendario.';
+          return;
+        }
+        if (code !== null && !validCodes.includes(code)) {
+          status.textContent = 'Código de turno no válido.';
+          return;
+        }
         const changes = [...selectedCells.values()].map(cell => ({ ...cell, code }));
         if (!window.confirm('¿Aplicar ' + (code || 'eliminación') + ' a ' +
-          changes.length + ' celdas de ' + areas[view.area || window.AuthContext?.get?.()?.area] + '?')) return;
+          changes.length + ' celdas de ' + areas[context.area] + '?')) return;
         void mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
       }
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
