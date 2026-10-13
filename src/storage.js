@@ -350,6 +350,14 @@
       .eq('key', key)
       .maybeSingle();
     if (error) throw error;
+    // A sign-out or account switch while the request was in flight must
+    // never deliver the previous chief's records to the new session.
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId ||
+        current.role !== context.role || current.area !== context.area) {
+      throw new Error('La sesión cambió durante la consulta. Vuelve a ingresar.');
+    }
     return data ? structuredClone(data) : null;
   }
 
