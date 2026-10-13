@@ -55,8 +55,14 @@
         const partition = preview.partitionEmployeesAndPlans(snapshot);
         const report = preview.migrationReadiness(partition);
         const inventory = preview.migrationInventory(snapshot);
+        const fieldReport = preview.migrationFieldReport?.(snapshot);
         section.append(create('p', 'Campos adicionales pendientes de revisión: ' +
           inventory.unexpected.length));
+        if (fieldReport) {
+          section.append(create('p', 'Campos totales: ' + fieldReport.totalFields +
+            ' · Reconocidos: ' + fieldReport.recognizedFields +
+            ' · Sin mapear: ' + fieldReport.unmappedFields.length));
+        }
         if (inventory.unexpected.length) {
           section.append(create('p', 'No se copiarán automáticamente: ' +
             inventory.unexpected.join(', ')));
