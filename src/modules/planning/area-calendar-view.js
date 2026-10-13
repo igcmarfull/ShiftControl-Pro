@@ -328,6 +328,35 @@
       status.textContent = 'Turnos del área · revisión ' + view.revision;
       const toolbar = el('div');
       toolbar.className = 'area-toolbar';
+      const exportCsv = el('button', 'Exportar planificación CSV');
+      exportCsv.type = 'button';
+      exportCsv.addEventListener('click', () => {
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        const monthPlans = new Map(view.plans.filter(p =>
+          typeof p.date === 'string' && p.date.startsWith(selectedMonth + '-'))
+          .map(p => [p.employeeId + ':' + p.date, p.code]));
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const days = new Date(year, month, 0).getDate();
+        const quote = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+        const headers = ['Trabajador', ...Array.from({ length: days },
+          (_, i) => selectedMonth + '-' + String(i + 1).padStart(2, '0'))];
+        const rows = [headers, ...view.employees.map(employee =>
+          [employee.name || employee.id, ...headers.slice(1).map(date =>
+            monthPlans.get(employee.id + ':' + date) || '')])];
+        const csv = '\uFEFF' + rows.map(row => row.map(quote).join(';')).join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = el('a');
+        link.href = url;
+        link.download = 'turnos-' + context.area.toLowerCase() + '-' + selectedMonth + '.csv';
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      });
+      toolbar.append(exportCsv);
       const previous = el('button', '←');
       const next = el('button', '→');
       const monthly = el('button', 'Planificación mensual');
