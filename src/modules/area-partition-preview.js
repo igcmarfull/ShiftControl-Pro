@@ -60,6 +60,30 @@
     return output;
   }
 
+  // Preflight for an ADMIN-driven migration. No writes are performed.
+  // Fail closed while any worker or operational record lacks a clear owner.
+  function migrationReadiness(partition) {
+    if (!partition || !partition.ESTACION || !partition.TIENDA ||
+        !partition.UNASSIGNED) {
+      throw new Error('Partición incompleta.');
+    }
+    const counts = {
+      unassignedEmployees: partition.UNASSIGNED.employees.length,
+      unassignedPlans: partition.UNASSIGNED.plans.length,
+      unassignedExecutions: partition.UNASSIGNED.executions.length,
+      unassignedAdditional: partition.UNASSIGNED.additional.length,
+      unassignedAbsences: partition.UNASSIGNED.absences.length,
+      unresolvedPlans: partition.unresolvedPlans.length,
+      unresolvedExecutions: partition.unresolvedExecutions.length,
+      unresolvedAdditional: partition.unresolvedAdditional.length,
+      unresolvedAbsences: partition.unresolvedAbsences.length
+    };
+    const blockers = Object.entries(counts)
+      .filter(([, count]) => count > 0)
+      .map(([name, count]) => ({ name, count }));
+    return { ready: blockers.length === 0, blockers, counts };
+  }
+
   // A CHIEF receives only a detached, area-scoped snapshot. This is a
   // preparation helper, NOT a substitute for Supabase RLS or secure bootstrap.
   function snapshotForRole(partition, context) {
@@ -81,6 +105,7 @@
 
   window.ShiftControlAreaPartition = Object.freeze({
     partitionEmployeesAndPlans,
-    snapshotForRole
+    snapshotForRole,
+    migrationReadiness
   });
 })();
