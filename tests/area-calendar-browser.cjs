@@ -213,6 +213,17 @@ const assert = require('node:assert/strict');
     await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().waitFor();
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').count(), 2,
       'Admin must see one monthly planning grid for each area');
+    // Admin can filter the two area grids independently without edit access.
+    const stationSearch = page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' });
+    const storeSearch = page.getByRole('searchbox', { name: 'Buscar trabajador en Tienda' });
+    await stationSearch.fill('inexistente');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().locator('.cal-row:visible').count(), 0);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').nth(1).locator('.cal-row:visible').count(), 1);
+    await stationSearch.fill('ESTACION');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().locator('.cal-row:visible').count(), 1);
+    await storeSearch.fill('inexistente');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').nth(1).locator('.cal-row:visible').count(), 0);
+    await storeSearch.fill('');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell[role="button"]').count(), 0,
       'Admin oversight must remain read-only');
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
