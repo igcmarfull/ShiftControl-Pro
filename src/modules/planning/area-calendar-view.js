@@ -4,6 +4,8 @@
   const ID = 'shiftcontrol-area-calendar';
   const areas = { ESTACION: 'Isla', TIENDA: 'Tienda' };
   let generation = 0;
+  let selectedMonth = new Date().toISOString().slice(0, 7);
+  let displayMode = 'monthly';
   const el = (tag, text) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = String(text);
@@ -140,36 +142,143 @@
         return;
       }
       status.textContent = 'Turnos del área · revisión ' + view.revision;
-      const table = el('table');
-      const head = el('tr');
-      for (const title of ['Trabajador', 'Fecha', 'Turno', 'Acción']) {
-        head.append(el('th', title));
-      }
-      table.append(head);
-      const names = new Map(view.employees.map(e => [e.id, e.name || e.id]));
-      for (const plan of [...view.plans].sort((a, b) =>
-        String(a.date).localeCompare(String(b.date)))) {
-        const row = el('tr');
-        row.append(el('td', names.get(plan.employeeId) || 'Trabajador'),
-          el('td', plan.date), el('td', plan.code || '—'));
-        const cell = el('td');
-        const remove = el('button', 'Eliminar');
-        remove.type = 'button';
-        remove.addEventListener('click', async () => {
-          if (!window.confirm('¿Eliminar este turno?')) return;
-          await mutate(() => window.ShiftControlAreaCalendar.removePlan(
-            plan.employeeId, plan.date));
+      const toolbar = el('div');
+      toolbar.className = 'area-toolbar';
+      const previous = el('button', '←');
+      const next = el('button', '→');
+      const monthly = el('button', 'Planificación mensual');
+      const weekly = el('button', 'Vista semanal');
+      const monthPicker = el('input');
+      monthPicker.type = 'month';
+      monthPicker.value = selectedMonth;
+      monthPicker.setAttribute('aria-label', 'Mes de planificación');
+      monthPicker.addEventListener('change', () => {
+        if (/^\\d{4}-\\d{2}$/.test(monthPicker.value)) {
+          selectedMonth = monthPicker.value;
+          refresh();
+        }
+      });
+      for (const [button, offset] of [[previous, -1], [next, 1]]) {
+        button.type = 'button';
+        button.addEventListener('click', () => {
+          const [year, month] = selectedMonth.split('-').map(Number);
+          const target = new Date(year, month - 1 + offset, 1);
+          selectedMonth = target.getFullYear() + '-' +
+            String(target.getMonth() + 1).padStart(2, '0');
+          refresh();
         });
-        cell.append(remove);
-        row.append(cell);
-        table.append(row);
       }
-      const tableWrap = el('div');
-      tableWrap.className = 'area-table-wrap';
-      tableWrap.append(table);
-      content.append(tableWrap);
-      if (!view.plans.length) {
-        const empty = el('p', view.employees.length ? 'Todavía no hay turnos asignados. Agrega el primero abajo.' : 'No hay trabajadores asignados a esta área. Solicita al administrador que los asigne.');
+      monthly.addEventListener('click', () => { displayMode = 'monthly'; refresh(); });
+      weekly.addEventListener('click', () => { displayMode = 'weekly'; refresh(); });
+      toolbar.append(monthly, weekly, previous, monthPicker, next);
+      content.append(toolbar);
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const days = new Date(year, month, 0).getDate();
+      const plans = new Map(view.plans.map(p => [p.employeeId + ':' + p.date, p]));
+      const wrapper = el('div');
+      wrapper.className = 'table-wrap';
+      wrapper.style.overflowX = 'auto';
+      if (displayMode === 'monthly') {
+        const grid = el('div');
+        grid.className = 'calendar-grid';
+        grid.style.minWidth = '1050px';
+        const head = el('div');
+        head.className = 'cal-head';
+        const nameHead = el('div', 'Trabajador');
+        nameHead.className = 'sticky-name';
+        head.append(nameHead);
+        for (let day = 1; day <= 31; day++) {
+          const cell = el('div', day <= days ? String(day) : '');
+          head.append(cell);
+        }
+        const summary = el('div', 'Resumen');
+        summary.className = 'sticky-summary';
+        head.append(summary);
+        grid.append(head);
+        for (const employee of view.employees) {
+          const row = el('div');
+          row.className = 'cal-row';
+          const name = el('div');
+          name.className = 'cal-name';
+          const person = el('div');
+          person.className = 'person';
+          const avatar = el('div', (employee.name || '?').split(/\\s+/).slice(0,2).map(s => s[0]).join('').toUpperCase());
+          avatar.className = 'avatar';
+          const nameText = el('strong', employee.name || employee.id);
+          person.append(avatar, nameText);
+          name.append(person);
+          row.append(name);
+          const counts = {};
+          for (let day = 1; day <= 31; day++) {
+            const cell = el('div');
+            cell.className = 'cal-cell';
+            if (day <= days) {
+              const date = selectedMonth + '-' + String(day).padStart(2,'0');
+              const plan = plans.get(employee.id + ':' + date);
+              if (plan?.code) {
+                const dot = el('div', plan.code);
+                dot.className = 'cal-dot plan-' + plan.code;
+                cell.append(dot);
+                counts[plan.code] = (counts[plan.code] || 0) + 1;
+              }
+              cell.title = (employee.name || 'Trabajador') + ' · ' + date + ' · ' + (plan?.code || 'Sin turno');
+              cell.tabIndex = 0;
+              cell.setAttribute('role', 'button');
+              cell.setAttribute('aria-label', cell.title + '. Editar turno');
+              const edit = () => {
+                const code = window.prompt('Turno para ' + date + ' (A, B, C, D, Libre). Deja vacío para eliminar:', plan?.code || '');
+                if (code === null) return;
+                const value = code.trim();
+                if (value && !['A','B','C','D','Libre'].includes(value)) {
+                  status.textContent = 'Código de turno no válido.';
+                  return;
+                }
+                mutate(() => value
+                  ? window.ShiftControlAreaCalendar.upsertPlan({employeeId:employee.id,date,code:value})
+                  : window.ShiftControlAreaCalendar.removePlan(employee.id,date));
+              };
+              cell.addEventListener('click', edit);
+              cell.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); edit(); }
+              });
+            }
+            row.append(cell);
+          }
+          const total = el('div', Object.entries(counts).map(([code,count]) => code + ' ' + count).join(' · ') || 'Sin turnos');
+          total.className = 'cal-summary';
+          row.append(total);
+          grid.append(row);
+        }
+        wrapper.append(grid);
+      } else {
+        const grid = el('div');
+        grid.className = 'week-grid';
+        const start = new Date(year, month - 1, 1);
+        const mondayOffset = (start.getDay() + 6) % 7;
+        start.setDate(start.getDate() - mondayOffset);
+        grid.append(el('div', 'Trabajador'));
+        const dates = Array.from({length:7}, (_,i) => {
+          const d = new Date(start);
+          d.setDate(start.getDate()+i);
+          return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        });
+        for (const date of dates) grid.append(el('div', date));
+        for (const employee of view.employees) {
+          const name = el('div', employee.name || employee.id);
+          name.className = 'week-name';
+          grid.append(name);
+          for (const date of dates) {
+            const plan = plans.get(employee.id + ':' + date);
+            const cell = el('div', plan?.code || 'Sin turno');
+            cell.className = 'week-cell';
+            grid.append(cell);
+          }
+        }
+        wrapper.append(grid);
+      }
+      content.append(wrapper);
+      if (!view.employees.length) {
+        const empty = el('p', 'No hay trabajadores asignados a esta área. El administrador debe asignarlos.');
         empty.className = 'area-empty';
         content.append(empty);
       }
