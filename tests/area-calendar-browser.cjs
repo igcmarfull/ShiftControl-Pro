@@ -102,6 +102,12 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Mostrar todos' }).click();
     assert.equal(await workerSearch.inputValue(), '');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row:visible').count(), 1);
+    // October 2026 has nine weekend dates (five Saturdays and four Sundays).
+    await page.getByRole('button', { name: 'Seleccionar fines de semana' }).click();
+    await page.getByText('9 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected').count(), 9);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-05"]').count(), 0);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByRole('button', { name: 'Vista semanal' }).click();
     const weeklySearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
     await weeklySearch.fill('inexistente');
