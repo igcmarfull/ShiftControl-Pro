@@ -39,6 +39,8 @@ async function main() {
     await assert.rejects(api.upsertPlan({
       employeeId: 'other', date: '2026-10-13'
     }));
+    await assert.rejects(api.upsertPlan({ employeeId: 'own', date: '2026-02-31', code: 'A' }));
+    await assert.rejects(api.removePlan('own', '2026-02-31'));
     assert.equal(writes, 2);
     await api.removePlan('own', '2026-10-13');
     assert.equal(remote.data.plans.length, 0);
