@@ -224,6 +224,13 @@ const assert = require('node:assert/strict');
     await storeSearch.fill('inexistente');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').nth(1).locator('.cal-row:visible').count(), 0);
     await storeSearch.fill('');
+    await stationSearch.fill('inexistente');
+    await page.getByRole('button', { name: 'Actualizar calendarios' }).click();
+    await page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' }).waitFor();
+    assert.equal(await page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' }).inputValue(), 'inexistente');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().locator('.cal-row:visible').count(), 0);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').nth(1).locator('.cal-row:visible').count(), 1);
+    await page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' }).fill('');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell[role="button"]').count(), 0,
       'Admin oversight must remain read-only');
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
