@@ -940,6 +940,9 @@
         workerCount.textContent = visible + ' de ' + view.employees.length + ' trabajadores';
         resetSearch.disabled = !query;
       });
+      // Reapply the persisted filter after the new grid is mounted.
+      // Dispatching also updates the visible-worker counter and reset button.
+      employeeSearch.dispatchEvent(new Event('input'));
 
       // Monthly staffing summary is derived exclusively from the loaded
       // area snapshot. No legacy global company data is consulted.
