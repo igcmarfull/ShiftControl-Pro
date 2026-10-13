@@ -77,7 +77,7 @@
   async function upsertPlan(plan, key) {
     if (!plan || typeof plan !== 'object' || Array.isArray(plan) ||
         !plan.employeeId || typeof plan.date !== 'string' ||
-        !/^\\d{4}-\\d{2}-\\d{2}$/.test(plan.date)) {
+        !/^\d{4}-\d{2}-\d{2}$/.test(plan.date)) {
       throw new Error('Se requiere un turno con trabajador y fecha válidos.');
     }
     const view = await load(key);
@@ -103,7 +103,7 @@
 
   async function removePlan(employeeId, date, key) {
     if (!employeeId || typeof date !== 'string' ||
-        !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) {
+        !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       throw new Error('Se requiere trabajador y fecha válidos.');
     }
     const view = await load(key);
