@@ -1494,22 +1494,28 @@
         .map(node => ({ node, disabled: node.disabled }));
       lockedControls.forEach(({ node }) => { node.disabled = true; });
       status.textContent = 'Guardando en Supabase…';
+      let writeCompleted = false;
       try {
         await action();
+        writeCompleted = true;
         // Release the write lock before refreshing, but keep the reload
         // button disabled while the fresh snapshot is being fetched.
-        saving = false;
-        if (token === generation) await refresh();
+        if (token === generation) {
+          saving = false;
+          await refresh();
+        }
       } catch (error) {
         if (token === generation) {
-          status.textContent = 'No se guardó: ' + (error?.message || 'error de sincronización');
-          if (/revisi[oó]n|conflict|concurren|desactualizad/i.test(error?.message || '')) {
+          status.textContent = (writeCompleted ?
+            'Se guardó, pero no se pudo actualizar el calendario: ' :
+            'No se guardó: ') + (error?.message || 'error de sincronización');
+          if (!writeCompleted && /revisi[oó]n|conflict|concurren|desactualizad/i.test(error?.message || '')) {
             status.textContent += ' Actualiza los turnos antes de intentar nuevamente.';
           }
         }
       } finally {
-        saving = false;
         if (token === generation) {
+          saving = false;
           reload.disabled = loading;
           lockedControls.forEach(({ node, disabled }) => {
             if (node.isConnected) node.disabled = disabled;
