@@ -52,6 +52,17 @@
       try {
         const partition = preview.partitionEmployeesAndPlans(state.get());
         const report = preview.migrationReadiness(partition);
+        const inventory = preview.migrationInventory(state.get());
+        section.append(create('p', 'Campos adicionales pendientes de revisión: ' +
+          inventory.unexpected.length));
+        if (inventory.unexpected.length) {
+          section.append(create('p', 'No se copiarán automáticamente: ' +
+            inventory.unexpected.join(', ')));
+        }
+        if (report.ready && !inventory.complete) {
+          section.append(create('p',
+            'La clasificación está completa, pero aún no es seguro migrar todo el estado.'));
+        }
         section.append(create('p', report.ready
           ? 'Sin registros pendientes de clasificación. La migración aún no se ha ejecutado.'
           : 'Migración pendiente: existen registros que requieren revisión.'));
