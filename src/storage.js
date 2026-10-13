@@ -372,6 +372,13 @@
       throw new Error('Se requiere un estado de área válido.');
     }
     const collections = ['employees', 'plans', 'executions', 'additional', 'absences'];
+    // The scoped format is intentionally closed: unknown top-level keys
+    // could contain shared settings, another area's schedule or audit data.
+    for (const name of Object.keys(data)) {
+      if (!collections.includes(name)) {
+        throw new Error('Colección no autorizada en estado de área: ' + name);
+      }
+    }
     for (const name of collections) {
       if (!Array.isArray(data[name])) {
         throw new Error('Falta una colección de área válida: ' + name);
