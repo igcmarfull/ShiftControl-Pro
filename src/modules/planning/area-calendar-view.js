@@ -81,6 +81,7 @@
         #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
         #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
         #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        #shiftcontrol-area-calendar .area-editor-operational {color:#fbbf24;font-size:13px;flex-basis:100%}
         #shiftcontrol-area-calendar .area-single-editor:focus-within {border-color:#60a5fa}
         #shiftcontrol-area-calendar button:focus-visible,
         #shiftcontrol-area-calendar select:focus-visible,
@@ -555,6 +556,15 @@
         editor.setAttribute('role', 'group');
         editor.setAttribute('aria-label', 'Editar turno');
         const label = el('strong', (employee.name || 'Trabajador') + ' · ' + date);
+        const details = operationalDetails(employee.id, date);
+        const operationalSummary = [details.absence?.type,
+          details.additional && 'Jornada adicional',
+          details.execution?.status].filter(Boolean).join(' · ');
+        if (operationalSummary) {
+          const note = el('span', 'Registro operativo: ' + operationalSummary);
+          note.className = 'area-editor-operational';
+          editor.append(note);
+        }
         const picker = el('select');
         picker.setAttribute('aria-label', 'Código de turno');
         const empty = el('option', 'Sin turno');
