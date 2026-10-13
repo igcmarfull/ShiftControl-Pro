@@ -79,11 +79,19 @@ const assert = require('node:assert/strict');
     await page.getByText('Sin conexión de prueba').waitFor();
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row').count(), 1,
       'Chief should retain the previous planning grid after a network error');
+    assert.equal(await page.getByRole('searchbox', { name: 'Buscar trabajador del área' }).isDisabled(), true,
+      'Stale calendar controls must stay locked after a failed refresh');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell[role="button"]').first()
+      .getAttribute('aria-disabled'), 'true');
     await page.evaluate(() => {
       window.ShiftControlAreaCalendar.load = window.__originalChiefLoad;
       delete window.__originalChiefLoad;
       delete window.__resolveChiefLoad;
     });
+    await page.getByRole('button', { name: 'Actualizar turnos' }).click();
+    await page.getByText(/Turnos del área · revisión/).waitFor();
+    assert.equal(await page.getByRole('searchbox', { name: 'Buscar trabajador del área' }).isDisabled(), false,
+      'Successful retry must restore editable controls');
     // Worker search must filter rows in both the original monthly grid and
     // the weekly grid without exposing workers from another area.
     const workerSearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
