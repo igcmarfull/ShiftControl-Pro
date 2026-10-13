@@ -804,9 +804,12 @@
           grid.append(heading);
         }
         for (const employee of view.employees) {
+          const weekRow = el('div');
+          weekRow.className = 'week-row';
+          weekRow.style.display = 'contents';
           const name = el('div', employee.name || employee.id);
           name.className = 'week-name';
-          grid.append(name);
+          weekRow.append(name);
           for (const date of dates) {
             const plan = plans.get(employee.id + ':' + date);
             const cell = el('div', plan?.code || 'Sin turno');
@@ -834,8 +837,9 @@
                 else edit();
               }
             });
-            grid.append(cell);
+            weekRow.append(cell);
           }
+          grid.append(weekRow);
         }
         wrapper.append(grid);
       }
@@ -847,7 +851,7 @@
           const name = row.querySelector('.cal-name, .week-name');
           const match = !query || (name?.textContent || '').toLocaleLowerCase('es-CL').includes(query);
           row.hidden = !match;
-          row.style.display = match ? '' : 'none';
+          row.style.display = match ? (row.classList.contains('week-row') ? 'contents' : '') : 'none';
           if (match) visible++;
         }
         workerCount.textContent = visible + ' de ' + view.employees.length + ' trabajadores';
