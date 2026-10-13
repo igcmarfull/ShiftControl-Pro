@@ -82,18 +82,15 @@ Deno.serve(async (req: Request) => {
 
     // Area chiefs must not be activated until app_state is segregated by area
     // and server-side access policies are deployed and verified.
-    if (Deno.env.get("SHIFTCONTROL_AREA_CHIEFS_ENABLED") !== "true") {
-      return jsonResponse({
-        error: "Las jefaturas por área aún no están habilitadas. Falta validar la separación de datos.",
-      }, 503);
-    }
+    const areaChiefsEnabled =
+      Deno.env.get("SHIFTCONTROL_AREA_CHIEFS_ENABLED") === "true";
 
     // 3. Validar entrada.
     const body = await req.json().catch(() => ({}));
     const email = String((body as Record<string, unknown>).email || "").trim().toLowerCase();
     const displayName = String((body as Record<string, unknown>).displayName || "").trim();
     const area = String((body as Record<string, unknown>).area || "").trim().toUpperCase();
-    if (area !== "ESTACION" && area !== "TIENDA") {
+    if (areaChiefsEnabled && area !== "ESTACION" && area !== "TIENDA") {
       return jsonResponse({ error: "Selecciona ESTACION o TIENDA." }, 400);
     }
 
@@ -163,13 +160,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // 6. Asignar/reemplazar de forma atómica.
+    const rpcName = areaChiefsEnabled ? "assign_chief_area" : "assign_chief";
+    const rpcArgs = {
+      p_company_id: companyId,
+      p_target_user_id: targetUserId,
+      p_actor_user_id: callerId,
+      ...(areaChiefsEnabled ? { p_area: area } : {}),
+    };
     const { data: result, error: assignError } = await admin
-      .rpc("assign_chief_area", {
-        p_company_id: companyId,
-        p_target_user_id: targetUserId,
-        p_actor_user_id: callerId,
-        p_area: area,
-      })
+      .rpc(rpcName, rpcArgs)
       .single();
 
     if (assignError) {
