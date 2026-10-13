@@ -77,7 +77,7 @@
   async function upsertPlan(plan, key) {
     if (!plan || typeof plan !== 'object' || Array.isArray(plan) ||
         !plan.employeeId || typeof plan.date !== 'string' ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(plan.date)) {
+        !isCalendarDate(plan.date)) {
       throw new Error('Se requiere un turno con trabajador y fecha válidos.');
     }
     const view = await load(key);
@@ -105,7 +105,7 @@
 
   async function removePlan(employeeId, date, key) {
     if (!employeeId || typeof date !== 'string' ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        !isCalendarDate(date)) {
       throw new Error('Se requiere trabajador y fecha válidos.');
     }
     const view = await load(key);
@@ -123,7 +123,7 @@
   // One area-scoped transaction for the original panel's pattern, bulk and
   // duplicate-month actions. All assignments are validated before any write.
   function isCalendarDate(value) {
-    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    if (typeof value !== 'string' || !isCalendarDate(value)) return false;
     const date = new Date(value + 'T12:00:00Z');
     return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
   }
@@ -139,7 +139,7 @@
     const normalized = changes.map(change => {
       if (!change || !employees.has(change.employeeId) ||
           typeof change.date !== 'string' ||
-          !/^\d{4}-\d{2}-\d{2}$/.test(change.date) ||
+          !isCalendarDate(change.date) ||
           !isCalendarDate(change.date) ||
           (change.code !== null && !allowedCodes.has(change.code))) {
         throw new Error('La asignación contiene trabajadores, fechas o turnos no autorizados.');
