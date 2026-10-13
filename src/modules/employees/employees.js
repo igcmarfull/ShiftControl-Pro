@@ -67,6 +67,17 @@ window.EmployeeModule = {
     return employee;
   },
 
+  // Preview counts before migration; no records are changed.
+  getAreaSummary(){
+    const employees = this.getAll();
+    return {
+      ESTACION: employees.filter(item => item.area === 'ESTACION').length,
+      TIENDA: employees.filter(item => item.area === 'TIENDA').length,
+      UNASSIGNED: employees.filter(item => !VALID_AREAS.includes(item.area)).length,
+      total: employees.length
+    };
+  },
+
   find(id){
 
     return this.getAll().find(
