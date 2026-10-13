@@ -244,6 +244,24 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().locator('.cal-row:visible').count(), 0);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').nth(1).locator('.cal-row:visible').count(), 1);
     await page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' }).fill('');
+    // A slow network refresh must not blank the existing planning grids.
+    await page.evaluate(() => {
+      const original = window.ShiftControlStorage.readAreaState;
+      window.__finishSlowReads = [];
+      window.ShiftControlStorage.readAreaState = area => new Promise(resolve => {
+        window.__finishSlowReads.push(() => resolve(original(area)));
+      });
+    });
+    await page.getByRole('button', { name: 'Actualizar calendarios' }).click();
+    await page.waitForFunction(() => window.__finishSlowReads.length === 2);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').count(), 2,
+      'Previously loaded area calendars should remain visible during network latency');
+    await page.evaluate(() => {
+      const finish = window.__finishSlowReads.splice(0);
+      finish.forEach(resolve => resolve());
+    });
+    await page.getByText(/Calendarios de .*solo lectura/).waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').count(), 2);
     // Both admin calendars follow the same month navigation, including year rollover.
     await page.locator('#shiftcontrol-area-calendar input[type="month"]').fill('2026-01');
     await page.getByRole('button', { name: 'Mes anterior' }).click();
