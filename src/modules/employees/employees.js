@@ -3,6 +3,9 @@
 // Areas are explicit. Legacy employees without an area remain unassigned
 // until an ADMIN classifies them; never infer an area automatically.
 const VALID_AREAS = ['ESTACION', 'TIENDA'];
+function effectiveArea(area){
+  return area === 'Isla' ? 'ESTACION' : (VALID_AREAS.includes(area) ? area : null);
+}
 
 function normalizeArea(area){
   const normalized = String(area || '').trim().toUpperCase();
@@ -49,11 +52,11 @@ window.EmployeeModule = {
 
   getByArea(area){
     const normalized = normalizeArea(area);
-    return this.getAll().filter(employee => employee.area === normalized);
+    return this.getAll().filter(employee => effectiveArea(employee.area) === normalized);
   },
 
   getUnassigned(){
-    return this.getAll().filter(employee => !VALID_AREAS.includes(employee.area));
+    return this.getAll().filter(employee => !effectiveArea(employee.area));
   },
 
   // Only ADMIN may classify legacy employees. This is a local state helper,
@@ -135,9 +138,9 @@ window.EmployeeModule = {
   getAreaSummary(){
     const employees = this.getAll();
     return {
-      ESTACION: employees.filter(item => item.area === 'ESTACION').length,
-      TIENDA: employees.filter(item => item.area === 'TIENDA').length,
-      UNASSIGNED: employees.filter(item => !VALID_AREAS.includes(item.area)).length,
+      ESTACION: employees.filter(item => effectiveArea(item.area) === 'ESTACION').length,
+      TIENDA: employees.filter(item => effectiveArea(item.area) === 'TIENDA').length,
+      UNASSIGNED: employees.filter(item => !effectiveArea(item.area)).length,
       total: employees.length
     };
   },
