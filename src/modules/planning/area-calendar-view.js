@@ -658,6 +658,78 @@
         await mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
       });
       content.append(bulk);
+
+      // Apply a repeating weekly pattern, preserving the original planner's
+      // recurring-shift workflow without touching the company-wide state.
+      const pattern = el('form');
+      pattern.className = 'area-form';
+      const patternWorker = el('select');
+      for (const employee of view.employees) {
+        const option = el('option', employee.name || employee.id);
+        option.value = employee.id;
+        patternWorker.append(option);
+      }
+      const patternStart = el('input');
+      patternStart.type = 'date';
+      patternStart.required = true;
+      const patternWeeks = el('select');
+      for (const weeks of [1, 2, 3, 4, 6, 8]) {
+        const option = el('option', weeks + ' semanas');
+        option.value = String(weeks);
+        patternWeeks.append(option);
+      }
+      const weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves',
+        'Viernes', 'Sábado', 'Domingo'];
+      const patternCodes = weekdays.map(day => {
+        const select = el('select');
+        for (const code of validCodes) {
+          const option = el('option', code);
+          option.value = code;
+          select.append(option);
+        }
+        return { day, select };
+      });
+      const patternSubmit = el('button', 'Aplicar patrón semanal');
+      patternSubmit.type = 'submit';
+      patternSubmit.disabled = !view.employees.length;
+      for (const [labelText, field] of [
+        ['Trabajador', patternWorker], ['Desde', patternStart],
+        ['Repeticiones', patternWeeks],
+        ...patternCodes.map(({ day, select }) => [day, select])
+      ]) {
+        const label = el('label', labelText);
+        label.append(field);
+        pattern.append(label);
+      }
+      pattern.append(patternSubmit);
+      pattern.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (saving || loading || !patternStart.value || !patternWorker.value) return;
+        const start = new Date(patternStart.value + 'T12:00:00Z');
+        if (!Number.isFinite(start.getTime()) ||
+            start.toISOString().slice(0, 10) !== patternStart.value) {
+          status.textContent = 'Fecha de inicio inválida.';
+          return;
+        }
+        const weeks = Number(patternWeeks.value);
+        if (![1, 2, 3, 4, 6, 8].includes(weeks)) return;
+        const changes = [];
+        for (let offset = 0; offset < weeks * 7; offset++) {
+          const dateObject = new Date(start.getTime() + offset * 86400000);
+          const date = dateObject.toISOString().slice(0, 10);
+          if (duplicateCells.has(patternWorker.value + ':' + date)) {
+            status.textContent = 'No se puede aplicar el patrón: contiene turnos duplicados.';
+            return;
+          }
+          const weekday = (dateObject.getUTCDay() + 6) % 7;
+          changes.push({ employeeId: patternWorker.value, date,
+            code: patternCodes[weekday].select.value });
+        }
+        if (!window.confirm('Aplicar patrón de ' + weeks +
+          ' semanas a este trabajador? Se reemplazarán sus turnos existentes.')) return;
+        await mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
+      });
+      content.append(pattern);
     }
     async function mutate(action) {
       if (saving || loading) return;
