@@ -103,6 +103,53 @@
         #shiftcontrol-area-calendar .area-staffing-summary .area-table-wrap {max-height:340px;overflow:auto}
         #shiftcontrol-area-calendar .area-staffing-summary th {position:sticky;top:0;z-index:1}
         #shiftcontrol-area-calendar .area-staffing-summary td {font-size:13px;padding:8px 12px}
+        /* Return the chief planner to the compact legacy visual hierarchy:
+           calendar first, utilities second, no oversized blue button wall. */
+        body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {
+          width:calc(100% - 32px);max-width:none;min-height:0;
+          margin:12px 16px!important;padding:20px 24px!important;
+          border-radius:12px;box-shadow:none;background:transparent;
+          border:1px solid rgba(148,163,184,.16);
+        }
+        #shiftcontrol-area-calendar h2 {font-size:22px;margin:0 0 10px}
+        #shiftcontrol-area-calendar .area-toolbar {
+          gap:6px;align-items:center;margin-bottom:10px
+        }
+        #shiftcontrol-area-calendar button,#shiftcontrol-area-calendar select,
+        #shiftcontrol-area-calendar input {
+          min-height:32px;border-radius:6px;padding:5px 9px;font-size:12px
+        }
+        #shiftcontrol-area-calendar button {
+          background:#1e293b;border-color:#334155;color:#e2e8f0;
+          font-weight:500
+        }
+        #shiftcontrol-area-calendar button:hover {background:#334155}
+        #shiftcontrol-area-calendar button:disabled {opacity:.45;cursor:not-allowed}
+        #shiftcontrol-area-calendar .area-status {font-size:12px;margin:0 0 8px}
+        #shiftcontrol-area-calendar .area-calendar-selection {
+          gap:6px;margin:8px 0 10px;align-items:center
+        }
+        #shiftcontrol-area-calendar .area-calendar-selection .area-selection-count {
+          flex:1 0 100%;font-size:12px
+        }
+        #shiftcontrol-area-calendar .area-worker-filter {margin:8px 0;gap:7px}
+        #shiftcontrol-area-calendar .area-employee-search {width:220px}
+        #shiftcontrol-area-calendar .area-staffing-summary {margin-top:12px}
+        #shiftcontrol-area-calendar .area-staffing-summary .area-table-wrap {max-height:190px}
+        #shiftcontrol-area-calendar .area-calendar-selection input[type=date] {width:145px}
+        #shiftcontrol-area-calendar .area-toolbar input[type=month] {width:155px}
+        #shiftcontrol-area-calendar .area-advanced-tools {
+          margin:8px 0 12px;border:1px solid #334155;border-radius:8px;padding:7px 10px
+        }
+        #shiftcontrol-area-calendar .area-advanced-tools summary {
+          cursor:pointer;font-size:12px;font-weight:600;color:#cbd5e1
+        }
+        #shiftcontrol-area-calendar .area-advanced-tools .area-calendar-selection {
+          padding-top:8px
+        }
+        #shiftcontrol-area-calendar .area-quick-shift-menu button {
+          background:#1e293b;border:1px solid #475569
+        }
         @media(max-width:640px){body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {width:calc(100% - 20px);margin:10px auto!important;padding:18px!important}}
       `;
       document.head.append(style);
