@@ -81,6 +81,11 @@
         #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
         #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
         #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        #shiftcontrol-area-calendar .area-calendar-selection {display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 18px}
+        #shiftcontrol-area-calendar .area-calendar-selection select {width:auto;min-width:100px}
+        #shiftcontrol-area-calendar .area-calendar-selection .area-selection-count {font-weight:600;margin-right:auto}
+        #shiftcontrol-area-calendar .cal-cell.selected {outline:2px solid #60a5fa;outline-offset:-2px;background:rgba(59,130,246,.22)}
+        #shiftcontrol-area-calendar .cal-cell[role="button"] {cursor:pointer}
         #shiftcontrol-area-calendar .area-staffing-summary {margin-top:26px}
         #shiftcontrol-area-calendar .area-staffing-summary h3 {margin:0 0 12px;font-size:18px}
         #shiftcontrol-area-calendar .area-staffing-summary .area-table-wrap {max-height:340px;overflow:auto}
@@ -548,6 +553,7 @@
       const selectionBar = el('div');
       selectionBar.className = 'area-calendar-selection';
       const selectionCount = el('span', '0 celdas seleccionadas');
+      selectionCount.className = 'area-selection-count';
       const selectionCode = el('select');
       selectionCode.setAttribute('aria-label', 'Turno para selección');
       for (const code of validCodes) {
@@ -676,6 +682,9 @@
               cell.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 selectCell(cell, employee, date);
+              });
+              cell.addEventListener('mousedown', e => {
+                if (e.shiftKey && e.button === 0) e.preventDefault();
               });
               cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); edit(); }
