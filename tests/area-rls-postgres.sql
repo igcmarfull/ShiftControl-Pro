@@ -103,3 +103,48 @@ begin
 end $$;
 rollback;
 \echo Write isolation checks passed
+
+-- An existing row must not be movable to another area via UPDATE.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-1111-1111-111111111111',true);
+do $$
+begin
+  begin
+    update area_state set area='TIENDA' where area='ESTACION' and key='schedule';
+    raise exception 'Station moved its schedule to store';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','22222222-2222-2222-2222-222222222222',true);
+do $$
+begin
+  begin
+    update area_state set area='ESTACION' where area='TIENDA' and key='schedule';
+    raise exception 'Store moved its schedule to station';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+-- Inactive memberships must also be denied UPDATE and INSERT.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','44444444-4444-4444-4444-444444444444',true);
+do $$
+declare affected integer;
+begin
+  update area_state set data='{"tampered":true}' where area='ESTACION';
+  get diagnostics affected = row_count;
+  if affected <> 0 then raise exception 'Inactive member updated a row'; end if;
+  begin
+    insert into area_state(company_id,area,key,data) values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','ESTACION','inactive-write','{}');
+    raise exception 'Inactive member inserted a row';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+\echo Area movement and inactive write checks passed
