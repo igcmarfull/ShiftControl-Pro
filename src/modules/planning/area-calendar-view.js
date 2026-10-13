@@ -313,8 +313,8 @@
     document.body.append(container);
     // Keep the original navigation usable for chiefs without routing them
     // into hidden, company-wide legacy screens.
-    for (const nav of document.querySelectorAll(
-      '.sidebar [data-view="planning"], .mobile-nav [data-view="planning"]')) {
+    for (const nav of (document.querySelectorAll?.(
+      '.sidebar [data-view="planning"], .mobile-nav [data-view="planning"]') || [])) {
       if (nav.dataset.areaCalendarBound === 'true') continue;
       nav.dataset.areaCalendarBound = 'true';
       nav.addEventListener('click', event => {
