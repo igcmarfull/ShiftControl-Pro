@@ -113,7 +113,11 @@
       panel.append(monthPicker);
       const content = el('div');
       panel.append(content);
-      document.body.append(panel);
+      // Keep oversight inside the original planning screen when present,
+      // rather than attaching a second unrelated page below the entire SPA.
+      const planningView = document.getElementById('planning');
+      if (planningView) planningView.append(panel);
+      else document.body.append(panel);
       const ownerGeneration = generation;
       let adminRequest = 0;
       async function refreshAdmin() {
