@@ -51,7 +51,25 @@ async function main() {
     assert.equal(remote.data.plans.length, 0);
     assert.equal(writes, 5);
     await api.removePlan('own', '2026-10-13');
-    assert.equal(writes, 3);
+    assert.equal(writes, 5);
+    await api.applyPlanChanges([
+      { employeeId: 'own', date: '2026-11-01', code: 'A' },
+      { employeeId: 'own', date: '2026-11-02', code: 'B' }
+    ]);
+    assert.equal(remote.data.plans.length, 2);
+    assert.equal(writes, 6);
+    await assert.rejects(api.applyPlanChanges([
+      { employeeId: 'own', date: '2026-11-03', code: 'A' },
+      { employeeId: 'other', date: '2026-11-04', code: 'B' }
+    ]));
+    assert.equal(writes, 6, 'Invalid bulk changes must be atomic');
+    await api.applyPlanChanges([
+      { employeeId: 'own', date: '2026-11-01', code: null },
+      { employeeId: 'own', date: '2026-11-02', code: 'C' }
+    ]);
+    assert.equal(remote.data.plans.length, 1);
+    assert.equal(remote.data.plans[0].code, 'C');
+    assert.equal(writes, 7);
   }
   console.log('Area shift create/edit/remove regression passed.');
 }
