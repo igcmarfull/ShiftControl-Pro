@@ -30,12 +30,12 @@ async function main() {
       crypto: { randomUUID: () => 'new-' + writes }
     });
     const api = window.ShiftControlAreaCalendar;
-    await api.upsertPlan({ employeeId: 'own', date: '2026-10-13', shift: 'A' });
+    await api.upsertPlan({ employeeId: 'own', date: '2026-10-13', code: 'A' });
     assert.equal(remote.data.plans.length, 1);
     assert.equal(remote.revision, 2);
-    await api.upsertPlan({ employeeId: 'own', date: '2026-10-13', shift: 'B' });
+    await api.upsertPlan({ employeeId: 'own', date: '2026-10-13', code: 'B' });
     assert.equal(remote.data.plans.length, 1);
-    assert.equal(remote.data.plans[0].shift, 'B');
+    assert.equal(remote.data.plans[0].code, 'B');
     await assert.rejects(api.upsertPlan({
       employeeId: 'other', date: '2026-10-13'
     }));
