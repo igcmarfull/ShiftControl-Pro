@@ -72,5 +72,51 @@
     return { ...structuredClone(payload), area: after.area, revision };
   }
 
-  window.ShiftControlAreaCalendar = Object.freeze({ load, save });
+  // Scoped calendar mutations. Never use the legacy PlanningModule or
+  // company-wide ShiftControlState; optimistic save rejects stale revisions.
+  async function upsertPlan(plan, key) {
+    if (!plan || typeof plan !== 'object' || Array.isArray(plan) ||
+        !plan.employeeId || typeof plan.date !== 'string' ||
+        !/^\\d{4}-\\d{2}-\\d{2}$/.test(plan.date)) {
+      throw new Error('Se requiere un turno con trabajador y fecha válidos.');
+    }
+    const view = await load(key);
+    if (!view) {
+      throw new Error('No existe calendario migrado para esta área.');
+    }
+    if (!view.employees.some(employee => employee.id === plan.employeeId)) {
+      throw new Error('El trabajador no pertenece al área de esta jefatura.');
+    }
+    const index = view.plans.findIndex(item =>
+      item.employeeId === plan.employeeId && item.date === plan.date);
+    const incoming = structuredClone(plan);
+    if (index >= 0) {
+      // Keep the existing identity when editing an established shift.
+      incoming.id = view.plans[index].id;
+      view.plans[index] = { ...view.plans[index], ...incoming };
+    } else {
+      incoming.id = incoming.id || crypto.randomUUID();
+      view.plans.push(incoming);
+    }
+    return save(view, key);
+  }
+
+  async function removePlan(employeeId, date, key) {
+    if (!employeeId || typeof date !== 'string' ||
+        !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) {
+      throw new Error('Se requiere trabajador y fecha válidos.');
+    }
+    const view = await load(key);
+    if (!view) throw new Error('No existe calendario migrado para esta área.');
+    if (!view.employees.some(employee => employee.id === employeeId)) {
+      throw new Error('El trabajador no pertenece al área de esta jefatura.');
+    }
+    const filtered = view.plans.filter(plan =>
+      !(plan.employeeId === employeeId && plan.date === date));
+    if (filtered.length === view.plans.length) return view;
+    view.plans = filtered;
+    return save(view, key);
+  }
+
+  window.ShiftControlAreaCalendar = Object.freeze({ load, save, upsertPlan, removePlan });
 })();
