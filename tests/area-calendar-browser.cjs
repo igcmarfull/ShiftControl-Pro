@@ -83,7 +83,11 @@ const assert = require('node:assert/strict');
       window.ShiftControlAreaCalendarView.mount();
     });
     await page.waitForFunction(() => window.__pendingReads.length === 2);
-    await page.locator('#shiftcontrol-area-calendar input[type="month"]').fill('2026-11');
+    await page.evaluate(() => {
+      const picker = document.querySelector('#shiftcontrol-area-calendar input[type="month"]');
+      picker.value = '2026-11';
+      picker.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await page.waitForFunction(() => window.__pendingReads.length >= 4);
     await page.evaluate(() => {
       for (const entry of window.__pendingReads.slice(2)) {
