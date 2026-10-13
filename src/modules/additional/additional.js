@@ -1,5 +1,12 @@
 (function(){
 
+function assertAreaCutoverReady(){
+  const context = window.AuthContext?.get?.();
+  if(context?.role === 'CHIEF' && context.area){
+    throw new Error('Operación pendiente de migración por área.');
+  }
+}
+
 window.AdditionalModule = {
 
   _getState(){
@@ -130,6 +137,7 @@ window.AdditionalModule = {
   },
 
   patch(id, changes, {save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
@@ -151,6 +159,7 @@ window.AdditionalModule = {
   },
 
   replaceAll(records, {save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
@@ -164,6 +173,7 @@ window.AdditionalModule = {
   },
 
   add(data, {prepend=false, save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
@@ -194,6 +204,7 @@ window.AdditionalModule = {
   },
 
   create(data){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state.additional){
@@ -217,6 +228,7 @@ window.AdditionalModule = {
   },
 
   update(id, data){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state.additional){
@@ -237,6 +249,7 @@ window.AdditionalModule = {
   },
 
   remove(id){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state.additional){
