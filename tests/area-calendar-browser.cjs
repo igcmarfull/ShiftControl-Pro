@@ -101,6 +101,22 @@ const assert = require('node:assert/strict');
     await page.getByRole('menuitem', { name: 'B', exact: true }).click();
     await page.getByText(/Turnos del área · revisión/).waitFor();
     assert.equal(await page.getByRole('menu', { name: 'Asignación rápida de turnos' }).isVisible(), false);
+    // Drag selection must not open an editor or write before confirmation.
+    const dragCells = page.locator('#shiftcontrol-area-calendar .cal-row .cal-cell[role="button"]');
+    const dragStart = await dragCells.nth(1).boundingBox();
+    const dragEnd = await dragCells.nth(3).boundingBox();
+    const writesBeforeDrag = await page.evaluate(() => window.__saves.length);
+    await page.mouse.move(dragStart.x + dragStart.width / 2, dragStart.y + dragStart.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(dragEnd.x + dragEnd.width / 2, dragEnd.y + dragEnd.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await page.getByText('3 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('.area-single-editor').count(), 0);
+    assert.equal(await page.evaluate(() => window.__saves.length), writesBeforeDrag);
+    await dragCells.nth(2).click({ button: 'right' });
+    await page.getByText('3 celda(s) · asignar turno').waitFor();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     // Worker search must filter rows in both the original monthly grid and
     // the weekly grid without exposing workers from another area.
     const workerSearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
