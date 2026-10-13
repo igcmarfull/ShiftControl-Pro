@@ -758,6 +758,10 @@
       targetDate.type = 'date';
       targetDate.setAttribute('aria-label', 'Fecha a seleccionar');
       targetDate.value = selectedMonth + '-01';
+      // Date selection is limited to the displayed month (or displayed week).
+      // Prevent selecting stale/off-screen dates by constraining the input.
+      targetDate.min = selectedMonth + '-01';
+      targetDate.max = selectedMonth + '-' + String(days).padStart(2, '0');
       const selectWeekends = el('button', 'Seleccionar fines de semana');
       selectWeekends.type = 'button';
       const clearSelection = el('button', 'Limpiar selección');
