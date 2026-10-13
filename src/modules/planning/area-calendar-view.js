@@ -440,7 +440,15 @@
       loading = true;
       reload.disabled = true;
       const token = ++generation;
-      // Keep the existing calendar visible while reloading; disable edits until data is fresh.
+      // Keep the old calendar visible for reference, but never allow writes
+      // against stale data while the refresh is pending or has failed.
+      content.querySelectorAll('button, input, select, [role="button"]').forEach(node => {
+        if ('disabled' in node) node.disabled = true;
+        if (node.getAttribute('role') === 'button') {
+          node.setAttribute('aria-disabled', 'true');
+          node.style.pointerEvents = 'none';
+        }
+      });
       status.textContent = 'Actualizando planificación…';
       let view;
       try {
@@ -1524,7 +1532,10 @@
         if (token === generation) {
           saving = false;
           reload.disabled = loading;
-          lockedControls.forEach(({ node, disabled }) => {
+          // A failed reload retains the old grid only as a read-only reference.
+          // Restore editable controls only if the write itself failed; a
+          // successful write requires a fresh snapshot before further edits.
+          if (!writeCompleted) lockedControls.forEach(({ node, disabled }) => {
             if (node.isConnected) node.disabled = disabled;
           });
         }
