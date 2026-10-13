@@ -53,6 +53,16 @@
     return normalizeRole(getContext()?.role);
   }
 
+  // The original ISLA panel is shared by both chiefs; only its area scope changes.
+  // Never derive scope from a client-side dropdown: RLS is the authority.
+  function getChiefArea(){
+    const context=getContext();
+    if(normalizeRole(context?.role)!=='CHIEF')return null;
+    if(context.area==='ESTACION')return 'Isla';
+    if(context.area==='TIENDA')return 'Tienda';
+    return null;
+  }
+
   function getLegacyRole(){
     const role=getRole();
     if(role==='ADMIN')return 'admin';
@@ -87,6 +97,7 @@
   window.ShiftControlPermissions=Object.freeze({
     getRole,
     getLegacyRole,
+    getChiefArea,
     canOpenView,
     canUseAction,
     requireAction
