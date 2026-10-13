@@ -81,6 +81,8 @@
         #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
         #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
         #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        #shiftcontrol-area-calendar .area-single-editor {display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px;margin:12px 0;border:1px solid #64748b;border-radius:8px;background:#1e293b}
+        #shiftcontrol-area-calendar .area-single-editor select {width:auto;min-width:130px}
         #shiftcontrol-area-calendar .area-calendar-selection {display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 18px}
         #shiftcontrol-area-calendar .area-calendar-selection select {width:auto;min-width:100px}
         #shiftcontrol-area-calendar .area-calendar-selection .area-selection-count {font-weight:600;margin-right:auto}
@@ -539,26 +541,53 @@
           status.textContent = 'La sesión cambió. Vuelve a abrir tu calendario.';
           return;
         }
-        const code = window.prompt(
-          'Turno para ' + (employee.name || 'Trabajador') + ' · ' + date +
-          ' (' + validCodes.join(', ') + '). Vacío para eliminar:',
-          plan?.code || '');
-        if (code === null) return;
-        const value = code.trim();
-        if (value && !validCodes.includes(value)) {
-          status.textContent = 'Código de turno no válido.';
-          return;
+        // Use the same in-panel workflow as the original planner, without a
+        // browser prompt that blocks the application and hides context.
+        const previous = content.querySelector('.area-single-editor');
+        if (previous) previous.remove();
+        const editor = el('div');
+        editor.className = 'area-single-editor';
+        editor.setAttribute('role', 'group');
+        editor.setAttribute('aria-label', 'Editar turno');
+        const label = el('strong', (employee.name || 'Trabajador') + ' · ' + date);
+        const picker = el('select');
+        picker.setAttribute('aria-label', 'Código de turno');
+        const empty = el('option', 'Sin turno');
+        empty.value = '';
+        picker.append(empty);
+        for (const code of validCodes) {
+          const option = el('option', code);
+          option.value = code;
+          picker.append(option);
         }
-        // The prompt can stay open while the user signs out or switches area.
-        const latest = window.AuthContext?.get?.();
-        if (latest?.role !== 'CHIEF' || latest.userId !== context.userId ||
-            latest.companyId !== context.companyId || latest.area !== context.area) {
-          status.textContent = 'La sesión cambió. No se guardó el turno.';
-          return;
-        }
-        void mutate(() => value
-          ? window.ShiftControlAreaCalendar.upsertPlan({ employeeId: employee.id, date, code: value })
-          : window.ShiftControlAreaCalendar.removePlan(employee.id, date));
+        picker.value = plan?.code || '';
+        const save = el('button', 'Guardar turno');
+        save.type = 'button';
+        const cancel = el('button', 'Cancelar');
+        cancel.type = 'button';
+        cancel.addEventListener('click', () => editor.remove());
+        save.addEventListener('click', () => {
+          if (saving || loading) return;
+          const latest = window.AuthContext?.get?.();
+          if (latest?.role !== 'CHIEF' || latest.userId !== context.userId ||
+              latest.companyId !== context.companyId || latest.area !== context.area) {
+            status.textContent = 'La sesión cambió. No se guardó el turno.';
+            editor.remove();
+            return;
+          }
+          const value = picker.value;
+          if (value && !validCodes.includes(value)) {
+            status.textContent = 'Código de turno no válido.';
+            return;
+          }
+          editor.remove();
+          void mutate(() => value
+            ? window.ShiftControlAreaCalendar.upsertPlan({ employeeId: employee.id, date, code: value })
+            : window.ShiftControlAreaCalendar.removePlan(employee.id, date));
+        });
+        editor.append(label, picker, save, cancel);
+        content.prepend(editor);
+        picker.focus();
       }
       // Original planner-style multi-cell selection, committed as one
       // authorized area transaction rather than writing the company state.
