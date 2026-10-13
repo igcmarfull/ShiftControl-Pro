@@ -483,6 +483,44 @@
         status.textContent = 'Atención: hay ' + duplicateCells.size +
           ' fechas con turnos duplicados. No edites esas celdas hasta corregir los datos.';
       }
+      // Mirror the original planner's operational overlays using ONLY the
+      // area-authorized snapshot (never the legacy global state).
+      const executionsByDay = new Map((view.executions || []).map(item =>
+        [item.employeeId + ':' + item.date, item]));
+      const additionalByDay = new Map((view.additional || []).map(item =>
+        [item.employeeId + ':' + item.date, item]));
+      const absences = view.absences || [];
+      function operationalDetails(employeeId, date) {
+        const absence = absences.find(item => item.employeeId === employeeId &&
+          typeof item.from === 'string' && typeof item.to === 'string' &&
+          item.from <= date && date <= item.to);
+        const execution = executionsByDay.get(employeeId + ':' + date);
+        const additional = additionalByDay.get(employeeId + ':' + date);
+        return { absence, execution, additional };
+      }
+      function decorateCell(cell, employeeId, date) {
+        const { absence, execution, additional } = operationalDetails(employeeId, date);
+        if (absence) {
+          const code = ({ Permiso: 'P', Licencia: 'L', Vacaciones: 'V' })[absence.type] || 'X';
+          const overlay = el('span', code);
+          overlay.className = 'cal-dot abs-' + code;
+          overlay.title = absence.type || 'Ausencia';
+          cell.append(overlay);
+        }
+        if (additional) {
+          const extra = el('span', '+' + (additional.shift || ''));
+          extra.className = 'extra-mark';
+          extra.title = 'Jornada adicional';
+          cell.append(extra);
+        }
+        if (execution?.status) {
+          const statusClass = ({ Presente: 'exec-ok', Atrasado: 'exec-late',
+            Ausente: 'exec-bad', Vacaciones: 'exec-purple' })[execution.status] || 'exec-info';
+          cell.classList.add(statusClass);
+        }
+        return [absence?.type, additional && 'Jornada adicional', execution?.status]
+          .filter(Boolean).join(' · ');
+      }
       const validCodes = ['A', 'B', 'C', 'D', 'L', 'V', 'P', 'X', 'Libre', 'Licencia', 'Vacaciones', 'Permiso'];
       function editShift(employee, date, plan) {
         if (saving || loading) return;
@@ -550,7 +588,9 @@
                 cell.append(dot);
                 counts[plan.code] = (counts[plan.code] || 0) + 1;
               }
-              cell.title = (employee.name || 'Trabajador') + ' · ' + date + ' · ' + (plan?.code || 'Sin turno');
+              const operational = decorateCell(cell, employee.id, date);
+              cell.title = (employee.name || 'Trabajador') + ' · ' + date + ' · ' +
+                (plan?.code || 'Sin turno') + (operational ? ' · ' + operational : '');
               cell.tabIndex = 0;
               cell.setAttribute('role', 'button');
               cell.setAttribute('aria-label', cell.title + '. Editar turno');
