@@ -17,23 +17,34 @@ insert into company_memberships values
 insert into area_state(company_id,area,key,data) values
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','ESTACION','schedule','{}'),
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','TIENDA','schedule','{}');
-create function test_access(p_user uuid,p_own text,p_expected int) returns void language plpgsql as $$
-declare n int;
-begin
- perform set_config('request.jwt.claim.sub',p_user::text,true);
- execute 'set local role authenticated';
- select count(*) into n from area_state;
- if n<>p_expected then raise exception 'RLS count mismatch: expected %, got %',p_expected,n; end if;
- if p_own is not null then
-   select count(*) into n from area_state where area=p_own;
-   if n<>1 then raise exception 'Missing own area %',p_own; end if;
- end if;
- execute 'reset role';
-end $$;
 begin;
-select test_access('11111111-1111-1111-1111-111111111111','ESTACION',1);
-select test_access('22222222-2222-2222-2222-222222222222','TIENDA',1);
-select test_access('33333333-3333-3333-3333-333333333333',null,2);
-select test_access('44444444-4444-4444-4444-444444444444',null,0);
+set local role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-1111-1111-111111111111',true);
+do $$ begin
+ if (select count(*) from area_state) <> 1 or (select count(*) from area_state where area='ESTACION') <> 1 then
+ raise exception 'Station read isolation failed'; end if;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','22222222-2222-2222-2222-222222222222',true);
+do $$ begin
+ if (select count(*) from area_state) <> 1 or (select count(*) from area_state where area='TIENDA') <> 1 then
+ raise exception 'Store read isolation failed'; end if;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','33333333-3333-3333-3333-333333333333',true);
+do $$ begin
+ if (select count(*) from area_state) <> 2 then raise exception 'Admin read failed'; end if;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','44444444-4444-4444-4444-444444444444',true);
+do $$ begin
+ if (select count(*) from area_state) <> 0 then raise exception 'Inactive member access'; end if;
+end $$;
 rollback;
 \echo RLS integration checks passed
