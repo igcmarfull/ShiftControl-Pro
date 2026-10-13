@@ -55,10 +55,11 @@
     const content = el('div');
     const controls = el('div');
     let saving = false;
+    let loading = false;
     const reload = el('button', 'Actualizar turnos');
     reload.type = 'button';
     reload.addEventListener('click', () => {
-      if (!saving) refresh();
+      if (!saving && !loading) refresh();
     });
     const signout = el('button', 'Cerrar sesión');
     signout.type = 'button';
@@ -78,7 +79,9 @@
     document.body.append(container);
     refresh();
     async function refresh() {
-      if (saving) return;
+      if (saving || loading) return;
+      loading = true;
+      reload.disabled = true;
       const token = ++generation;
       content.replaceChildren();
       let view;
@@ -88,6 +91,9 @@
         if (token === generation) status.textContent =
           error?.message || 'No se pudo consultar el calendario.';
         return;
+      } finally {
+        loading = false;
+        if (!saving && token === generation) reload.disabled = false;
       }
       const now = window.AuthContext?.get?.();
       if (token !== generation || now?.userId !== context.userId ||
@@ -153,7 +159,7 @@
       content.append(form);
     }
     async function mutate(action) {
-      if (saving) return;
+      if (saving || loading) return;
       saving = true;
       const token = generation;
       reload.disabled = true;
@@ -163,6 +169,8 @@
       status.textContent = 'Guardando en Supabase…';
       try {
         await action();
+        // Release the write lock before refreshing, but keep the reload
+        // button disabled while the fresh snapshot is being fetched.
         saving = false;
         if (token === generation) await refresh();
       } catch (error) {
@@ -171,7 +179,7 @@
       } finally {
         saving = false;
         if (token === generation) {
-          reload.disabled = false;
+          reload.disabled = loading;
           content.querySelectorAll('button, input, select').forEach(node => {
             node.disabled = false;
           });
