@@ -61,6 +61,12 @@
       document.head.append(style);
     }
     if (context?.role === 'ADMIN' && context.companyId && context.userId) {
+      if (root?.dataset.owner === context.userId &&
+          root?.dataset.company === context.companyId &&
+          root?.dataset.mode === 'admin') {
+        if (typeof refreshActive === 'function') void refreshActive();
+        return;
+      }
       generation++;
       refreshActive = null;
       if (root) root.remove();
@@ -69,6 +75,7 @@
       panel.id = ID;
       panel.dataset.owner = context.userId;
       panel.dataset.company = context.companyId;
+      panel.dataset.mode = 'admin';
       panel.className = 'panel';
       panel.style.margin = '18px';
       panel.append(el('h2', 'Calendarios por área · Supervisión'));
@@ -78,6 +85,11 @@
       const reload = el('button', 'Actualizar calendarios');
       reload.type = 'button';
       panel.append(reload);
+      const monthPicker = el('input');
+      monthPicker.type = 'month';
+      monthPicker.value = selectedMonth;
+      monthPicker.setAttribute('aria-label', 'Mes de supervisión');
+      panel.append(monthPicker);
       const content = el('div');
       panel.append(content);
       document.body.append(panel);
@@ -141,6 +153,13 @@
         }
       }
       reload.addEventListener('click', refreshAdmin);
+      monthPicker.addEventListener('change', () => {
+        if (/^\d{4}-(0[1-9]|1[0-2])$/.test(monthPicker.value)) {
+          selectedMonth = monthPicker.value;
+          void refreshAdmin();
+        }
+      });
+      refreshActive = refreshAdmin;
       void refreshAdmin();
       return;
     }
