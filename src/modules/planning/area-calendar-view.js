@@ -704,7 +704,15 @@
       workerCount.className = 'area-worker-count';
       const workerFilter = el('div');
       workerFilter.className = 'area-worker-filter';
-      workerFilter.append(employeeSearch, workerCount);
+      const resetSearch = el('button', 'Mostrar todos');
+      resetSearch.type = 'button';
+      resetSearch.addEventListener('click', () => {
+        employeeSearch.value = '';
+        employeeSearch.dispatchEvent(new Event('input'));
+        employeeSearch.focus();
+      });
+      workerFilter.append(employeeSearch, resetSearch, workerCount);
+      resetSearch.disabled = true;
       content.append(workerFilter);
       const wrapper = el('div');
       wrapper.className = 'table-wrap';
@@ -855,6 +863,7 @@
           if (match) visible++;
         }
         workerCount.textContent = visible + ' de ' + view.employees.length + ' trabajadores';
+        resetSearch.disabled = !query;
       });
 
       // Monthly staffing summary is derived exclusively from the loaded
