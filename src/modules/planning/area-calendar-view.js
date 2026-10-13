@@ -533,6 +533,12 @@
           status.textContent = 'Hay turnos duplicados para este día. Solicita su corrección al administrador.';
           return;
         }
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) {
+          status.textContent = 'La sesión cambió. Vuelve a abrir tu calendario.';
+          return;
+        }
         const code = window.prompt(
           'Turno para ' + (employee.name || 'Trabajador') + ' · ' + date +
           ' (' + validCodes.join(', ') + '). Vacío para eliminar:',
@@ -541,6 +547,13 @@
         const value = code.trim();
         if (value && !validCodes.includes(value)) {
           status.textContent = 'Código de turno no válido.';
+          return;
+        }
+        // The prompt can stay open while the user signs out or switches area.
+        const latest = window.AuthContext?.get?.();
+        if (latest?.role !== 'CHIEF' || latest.userId !== context.userId ||
+            latest.companyId !== context.companyId || latest.area !== context.area) {
+          status.textContent = 'La sesión cambió. No se guardó el turno.';
           return;
         }
         void mutate(() => value
