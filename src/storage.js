@@ -353,6 +353,37 @@
     return data ? structuredClone(data) : null;
   }
 
+  // Explicit area-scoped RPC, not connected to legacy save() or global state.
+  // Optimistic revision prevents overwriting another editor's changes.
+  async function writeOwnAreaState(key, nextData, expectedRevision) {
+    const context = window.AuthContext?.get?.() || null;
+    if (!context?.companyId || context.role !== 'CHIEF' ||
+        !VALID_AREAS.includes(context.area)) {
+      throw new Error('Se requiere una jefatura con área asignada.');
+    }
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    if (nextData === undefined || nextData === null) {
+      throw new Error('No se puede guardar un estado vacío.');
+    }
+    if (expectedRevision === undefined ||
+        (expectedRevision !== null &&
+         (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1))) {
+      throw new Error('Se requiere una revisión válida o null para crear.');
+    }
+    // The RPC independently checks company membership and area on the server.
+    const { data, error } = await getClient().rpc('save_area_state', {
+      p_company_id: context.companyId,
+      p_area: context.area,
+      p_key: key,
+      p_data: nextData,
+      p_expected_revision: expectedRevision
+    });
+    if (error) throw error;
+    return data;
+  }
+
   const originalSave = window.save;
 
   if (typeof originalSave === 'function') {
@@ -385,6 +416,7 @@
     getTenantLocalKey,
     readAreaState,
     writeAreaState,
-    readOwnAreaState
+    readOwnAreaState,
+    writeOwnAreaState
   });
 })();
