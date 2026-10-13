@@ -167,7 +167,16 @@
         if (!event.target?.closest?.('[data-view="planning"]')) return;
         // The legacy navigation may activate the planning screen after
         // bubbling completes. Defer the visibility check to the next task.
-        setTimeout(refreshWhenReturning, 0);
+        setTimeout(() => {
+          const current = window.AuthContext?.get?.();
+          if (ownerGeneration !== generation || current?.role !== 'ADMIN' ||
+              current.userId !== context.userId || current.companyId !== context.companyId ||
+              !panel.isConnected || document.hidden ||
+              (planningView && !planningView.classList.contains('active'))) return;
+          // Explicit navigation is a user request for current data: do not
+          // suppress it with the passive focus/visibility refresh throttle.
+          void refreshAdmin();
+        }, 0);
       };
       window.addEventListener('focus', refreshWhenReturning);
       document.addEventListener('visibilitychange', refreshWhenReturning);
