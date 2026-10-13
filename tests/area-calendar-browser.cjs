@@ -111,6 +111,13 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Mostrar todos' }).click();
     assert.equal(await weeklySearch.inputValue(), '');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .week-row:visible').count(), 1);
+    // Weekly range selection uses the same shift-click semantics as the monthly grid.
+    const weeklyCells = page.locator('#shiftcontrol-area-calendar .week-row').first().locator('.week-cell');
+    await weeklyCells.nth(0).dispatchEvent('click', { ctrlKey: true });
+    await weeklyCells.nth(3).dispatchEvent('click', { shiftKey: true });
+    await page.getByText('4 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .week-cell.selected').count(), 4);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByRole('button', { name: 'Planificación mensual' }).click();
     // Chief bulk editor must be available without crossing area boundaries.
     assert.equal(await page.getByRole('button', { name: 'Asignar rango de turnos' }).count(), 1);
