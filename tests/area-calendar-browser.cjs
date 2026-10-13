@@ -25,7 +25,10 @@ const assert = require('node:assert/strict');
           };
         },
         upsertPlan: async plan => window.__saves.push({ area: window.__ctx.area, plan }),
-        removePlan: async () => {}
+        removePlan: async () => {},
+        applyPlanChanges: async changes => window.__saves.push({
+          area: window.__ctx.area, changes
+        })
       };
     });
     await page.addScriptTag({ content: view });
@@ -39,6 +42,20 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByRole('button', { name: 'Asignar rango de turnos' }).count(), 1);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .area-form').count(), 3);
     assert.equal(await page.getByRole('button', { name: 'Aplicar patrón semanal' }).count(), 1);
+    // Exercise the actual bulk handler and verify that only the logged-in
+    // chief's employee ID is sent to the area-scoped adapter.
+    await page.evaluate(() => { window.confirm = () => true; });
+    const bulkForm = page.locator('#shiftcontrol-area-calendar .area-form').nth(1);
+    await bulkForm.locator('input[type="date"]').nth(0).fill('2026-10-19');
+    await bulkForm.locator('input[type="date"]').nth(1).fill('2026-10-20');
+    await bulkForm.getByRole('button', { name: 'Asignar rango de turnos' }).click();
+    await page.waitForFunction(() => window.__saves.some(entry => entry.changes?.length === 2));
+    const bulkSave = await page.evaluate(() => window.__saves.find(entry => entry.changes?.length === 2));
+    assert.equal(bulkSave.area, 'ESTACION');
+    assert.deepEqual(bulkSave.changes.map(change => change.employeeId),
+      ['station-worker', 'station-worker']);
+    assert.deepEqual(bulkSave.changes.map(change => change.date),
+      ['2026-10-19', '2026-10-20']);
     // Reopening the same authorized area must refresh, not silently return
     // a stale calendar (regression for the original panel's save path).
     const loadsBefore = await page.evaluate(() => window.__loads);
