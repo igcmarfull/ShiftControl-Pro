@@ -25,11 +25,12 @@ async function main() {
       console: { info() {}, warn() {} },
       setTimeout: () => 1, clearTimeout() {}
     });
-    await assert.rejects(window.ShiftControlStorage.bootstrap(), error =>
-      error.code === 'AUTH_AREA_STORAGE_CUTOVER_REQUIRED');
+    assert.equal(await window.ShiftControlStorage.bootstrap(), null);
+    assert.equal(window.ShiftControlStorage.isReady(), false);
+    assert.equal(window.ShiftControlStorage.getActiveCompanyId(), null);
     assert.equal(queries, 0);
     assert.equal(cacheWrites, 0);
   }
-  console.log('Legacy CHIEF bootstrap fails closed for all area assignments.');
+  console.log('Legacy CHIEF bootstrap skips company-wide state for all area assignments.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
