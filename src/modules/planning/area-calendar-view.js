@@ -588,6 +588,39 @@
         wrapper.append(grid);
       }
       content.append(wrapper);
+      // Monthly staffing summary is derived exclusively from the loaded
+      // area snapshot. No legacy global company data is consulted.
+      const summaryPanel = el('section');
+      summaryPanel.className = 'area-staffing-summary';
+      summaryPanel.append(el('h3', 'Cobertura diaria · ' + selectedMonth));
+      const staffing = el('div');
+      staffing.className = 'area-table-wrap';
+      const staffingTable = el('table');
+      const staffingHead = el('tr');
+      for (const label of ['Fecha', 'Turnos asignados', 'Sin asignación', 'Detalle']) {
+        staffingHead.append(el('th', label));
+      }
+      staffingTable.append(staffingHead);
+      for (let day = 1; day <= days; day++) {
+        const date = selectedMonth + '-' + String(day).padStart(2, '0');
+        const counts = {};
+        let assigned = 0;
+        for (const employee of view.employees) {
+          const plan = plans.get(employee.id + ':' + date);
+          if (!plan?.code) continue;
+          assigned++;
+          counts[plan.code] = (counts[plan.code] || 0) + 1;
+        }
+        const row = el('tr');
+        for (const value of [date, assigned, view.employees.length - assigned,
+          Object.entries(counts).map(([code, count]) => code + ': ' + count).join(' · ') || 'Sin turnos']) {
+          row.append(el('td', value));
+        }
+        staffingTable.append(row);
+      }
+      staffing.append(staffingTable);
+      summaryPanel.append(staffing);
+      content.append(summaryPanel);
       if (!view.employees.length) {
         const empty = el('p', 'No hay trabajadores asignados a esta área. El administrador debe asignarlos.');
         empty.className = 'area-empty';
