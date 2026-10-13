@@ -18,6 +18,7 @@
     if (!authorized) {
       generation++;
       if (root) root.remove();
+      document.body.classList.remove('shiftcontrol-area-chief-mode');
       return;
     }
     if (root && root.dataset.owner === context.userId &&
@@ -37,7 +38,18 @@
     status.setAttribute('role', 'status');
     const content = el('div');
     container.append(status, content);
-    // Separate safe view, not a child of the legacy planning grid.
+    // Never leave the legacy company-wide grids visible to a scoped CHIEF.
+    // This only masks presentation; Supabase RLS remains mandatory.
+    document.body.classList.add('shiftcontrol-area-chief-mode');
+    if (!document.getElementById('shiftcontrol-area-chief-style')) {
+      const style = el('style');
+      style.id = 'shiftcontrol-area-chief-style';
+      style.textContent = 'body.shiftcontrol-area-chief-mode .view,' +
+        'body.shiftcontrol-area-chief-mode .sidebar,' +
+        'body.shiftcontrol-area-chief-mode .mobile-nav {' +
+        'display:none!important}';
+      document.head.append(style);
+    }
     document.body.append(container);
     refresh();
     async function refresh() {
