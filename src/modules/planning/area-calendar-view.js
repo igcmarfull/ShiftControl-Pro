@@ -25,9 +25,9 @@
       const style = el('style');
       style.id = 'shiftcontrol-area-chief-style';
       style.textContent = `
-        body.shiftcontrol-area-chief-mode .view,
-        body.shiftcontrol-area-chief-mode .sidebar,
-        body.shiftcontrol-area-chief-mode .mobile-nav {display:none!important}
+        /* Preserve the original navigation shell while preventing access
+           to legacy company-wide views through the area chief UI. */
+        body.shiftcontrol-area-chief-mode .view {display:none!important}
         body.shiftcontrol-area-chief-mode {min-height:100vh!important;overflow:auto!important}
         body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {
           box-sizing:border-box;position:relative!important;inset:auto!important;
