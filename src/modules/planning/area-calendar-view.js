@@ -94,7 +94,10 @@
       panel.append(content);
       document.body.append(panel);
       const ownerGeneration = generation;
+      let adminRequest = 0;
       async function refreshAdmin() {
+        const request = ++adminRequest;
+        const requestedMonth = selectedMonth;
         reload.disabled = true;
         status.textContent = 'Consultando calendarios…';
         content.replaceChildren();
@@ -106,7 +109,7 @@
           const results = await Promise.allSettled(
             Object.keys(areas).map(area => storage.readAreaState(area, 'main')));
           const current = window.AuthContext?.get?.();
-          if (ownerGeneration !== generation || current?.role !== 'ADMIN' ||
+          if (ownerGeneration !== generation || request !== adminRequest || current?.role !== 'ADMIN' ||
               current.userId !== context.userId || current.companyId !== context.companyId) return;
           for (const [index, area] of Object.keys(areas).entries()) {
             const section = el('section');
@@ -129,8 +132,7 @@
                 for (const title of ['Trabajador', 'Fecha', 'Turno']) header.append(el('th', title));
                 table.append(header);
                 const names = new Map(data.employees.map(person => [person.id, person.name || person.id]));
-                const currentMonth = selectedMonth;
-                const monthPlans = data.plans.filter(plan => plan.date?.startsWith(currentMonth + '-'))
+                const monthPlans = data.plans.filter(plan => plan.date?.startsWith(requestedMonth + '-'))
                   .sort((a, b) => a.date.localeCompare(b.date));
                 for (const plan of monthPlans) {
                   const tr = el('tr');
@@ -144,12 +146,12 @@
             }
             content.append(section);
           }
-          status.textContent = 'Calendarios de ' + selectedMonth + ' · solo lectura';
+          status.textContent = 'Calendarios de ' + requestedMonth + ' · solo lectura';
         } catch (error) {
-          if (ownerGeneration === generation) status.textContent =
+          if (ownerGeneration === generation && request === adminRequest) status.textContent =
             'No se pudieron consultar los calendarios: ' + (error?.message || 'error');
         } finally {
-          if (ownerGeneration === generation) reload.disabled = false;
+          if (ownerGeneration === generation && request === adminRequest) reload.disabled = false;
         }
       }
       reload.addEventListener('click', refreshAdmin);
