@@ -588,6 +588,76 @@
         }));
       });
       content.append(form);
+
+      // Bulk assignment is scoped to the same authenticated chief's workers.
+      // One atomic area_state revision covers the entire selected date range.
+      const bulk = el('form');
+      bulk.className = 'area-form';
+      const bulkWorker = el('select');
+      const bulkAll = el('option', 'Todos los trabajadores del área');
+      bulkAll.value = '__all__';
+      bulkWorker.append(bulkAll);
+      for (const employee of view.employees) {
+        const option = el('option', employee.name || employee.id);
+        option.value = employee.id;
+        bulkWorker.append(option);
+      }
+      const fromDate = el('input');
+      fromDate.type = 'date';
+      fromDate.required = true;
+      const toDate = el('input');
+      toDate.type = 'date';
+      toDate.required = true;
+      const bulkCode = el('select');
+      for (const code of validCodes) {
+        const option = el('option', code);
+        option.value = code;
+        bulkCode.append(option);
+      }
+      const bulkSubmit = el('button', 'Asignar rango de turnos');
+      bulkSubmit.type = 'submit';
+      bulkSubmit.disabled = !view.employees.length;
+      for (const [labelText, field] of [
+        ['Trabajador', bulkWorker], ['Desde', fromDate],
+        ['Hasta', toDate], ['Turno', bulkCode]
+      ]) {
+        const label = el('label', labelText);
+        label.append(field);
+        bulk.append(label);
+      }
+      bulk.append(bulkSubmit);
+      bulk.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (saving || loading || !fromDate.value || !toDate.value) return;
+        const start = new Date(fromDate.value + 'T12:00:00Z');
+        const end = new Date(toDate.value + 'T12:00:00Z');
+        if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) ||
+            start > end || (end - start) / 86400000 > 30) {
+          status.textContent = 'Selecciona un rango válido de hasta 31 días.';
+          return;
+        }
+        const workers = bulkWorker.value === '__all__'
+          ? view.employees : view.employees.filter(e => e.id === bulkWorker.value);
+        const changes = [];
+        for (let time = start.getTime(); time <= end.getTime(); time += 86400000) {
+          const date = new Date(time).toISOString().slice(0, 10);
+          for (const employee of workers) {
+            if (duplicateCells.has(employee.id + ':' + date)) {
+              status.textContent = 'No se puede asignar el rango: contiene turnos duplicados.';
+              return;
+            }
+            changes.push({ employeeId: employee.id, date, code: bulkCode.value });
+          }
+        }
+        if (!changes.length || changes.length > 2000) {
+          status.textContent = 'El rango excede el máximo de 2000 asignaciones.';
+          return;
+        }
+        if (!window.confirm('Asignar ' + changes.length + ' turnos en ' +
+          areas[context.area] + '? Se reemplazarán los turnos existentes en esas fechas.')) return;
+        await mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
+      });
+      content.append(bulk);
     }
     async function mutate(action) {
       if (saving || loading) return;
