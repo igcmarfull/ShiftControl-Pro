@@ -49,3 +49,57 @@ do $$ begin
 end $$;
 rollback;
 \echo RLS integration checks passed
+
+-- Verify write isolation under the same authenticated roles.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-1111-1111-111111111111',true);
+do $$
+declare affected integer;
+begin
+  update area_state set data='{"test":"own"}' where area='ESTACION';
+  get diagnostics affected = row_count;
+  if affected <> 1 then raise exception 'Station cannot update own area'; end if;
+  update area_state set data='{"test":"foreign"}' where area='TIENDA';
+  get diagnostics affected = row_count;
+  if affected <> 0 then raise exception 'Station updated store area'; end if;
+  begin
+    insert into area_state(company_id,area,key,data) values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','TIENDA','cross-area','{}');
+    raise exception 'Station inserted into store area';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','22222222-2222-2222-2222-222222222222',true);
+do $$
+declare affected integer;
+begin
+  update area_state set data='{"test":"own"}' where area='TIENDA';
+  get diagnostics affected = row_count;
+  if affected <> 1 then raise exception 'Store cannot update own area'; end if;
+  update area_state set data='{"test":"foreign"}' where area='ESTACION';
+  get diagnostics affected = row_count;
+  if affected <> 0 then raise exception 'Store updated station area'; end if;
+  begin
+    insert into area_state(company_id,area,key,data) values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','ESTACION','cross-area','{}');
+    raise exception 'Store inserted into station area';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','33333333-3333-3333-3333-333333333333',true);
+do $$
+declare affected integer;
+begin
+  update area_state set data='{"test":"admin"}' where key='schedule';
+  get diagnostics affected = row_count;
+  if affected <> 2 then raise exception 'Admin cannot update both areas'; end if;
+end $$;
+rollback;
+\echo Write isolation checks passed
