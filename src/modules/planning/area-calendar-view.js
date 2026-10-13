@@ -15,10 +15,17 @@
     const authorized = context?.role === 'CHIEF' &&
       Boolean(context.companyId && context.userId) &&
       Object.hasOwn(areas, context.area);
+    // Fail closed for a CHIEF whose area has not yet been assigned.
+    const pendingArea = context?.role === 'CHIEF' && !authorized;
     if (!authorized) {
       generation++;
       if (root) root.remove();
-      document.body.classList.remove('shiftcontrol-area-chief-mode');
+      document.body.classList.toggle('shiftcontrol-area-chief-mode', pendingArea);
+      if (pendingArea) {
+        const notice = el('section', 'Tu jefatura todavía no tiene un área asignada. Contacta al administrador.');
+        notice.id = ID;
+        document.body.append(notice);
+      }
       return;
     }
     if (root && root.dataset.owner === context.userId &&
