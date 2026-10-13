@@ -390,10 +390,26 @@
       content.append(toolbar);
       const [year, month] = selectedMonth.split('-').map(Number);
       const days = new Date(year, month, 0).getDate();
-      const plans = new Map(view.plans.map(p => [p.employeeId + ':' + p.date, p]));
+      // Never let duplicate records silently determine which shift a cell
+      // displays. A conflicted schedule needs correction by an administrator.
+      const plans = new Map();
+      const duplicateCells = new Set();
+      for (const plan of view.plans) {
+        const cellKey = plan.employeeId + ':' + plan.date;
+        if (plans.has(cellKey)) duplicateCells.add(cellKey);
+        else plans.set(cellKey, plan);
+      }
+      if (duplicateCells.size) {
+        status.textContent = 'Atención: hay ' + duplicateCells.size +
+          ' fechas con turnos duplicados. No edites esas celdas hasta corregir los datos.';
+      }
       const validCodes = ['A', 'B', 'C', 'D', 'L', 'V', 'P', 'X', 'Libre', 'Licencia', 'Vacaciones', 'Permiso'];
       function editShift(employee, date, plan) {
         if (saving || loading) return;
+        if (duplicateCells.has(employee.id + ':' + date)) {
+          status.textContent = 'Hay turnos duplicados para este día. Solicita su corrección al administrador.';
+          return;
+        }
         const code = window.prompt(
           'Turno para ' + (employee.name || 'Trabajador') + ' · ' + date +
           ' (' + validCodes.join(', ') + '). Vacío para eliminar:',
