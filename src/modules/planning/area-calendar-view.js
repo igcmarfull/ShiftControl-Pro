@@ -339,7 +339,13 @@
           .map(p => [p.employeeId + ':' + p.date, p.code]));
         const [year, month] = selectedMonth.split('-').map(Number);
         const days = new Date(year, month, 0).getDate();
-        const quote = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+        // Prevent spreadsheet formula execution when a worker name starts
+        // with a formula prefix; quoting CSV fields alone is insufficient.
+        const quote = value => {
+          const raw = String(value ?? '');
+          const safe = /^[\\s]*[=+@-]/.test(raw) ? "'" + raw : raw;
+          return '"' + safe.replace(/"/g, '""') + '"';
+        };
         const headers = ['Trabajador', ...Array.from({ length: days },
           (_, i) => selectedMonth + '-' + String(i + 1).padStart(2, '0'))];
         const rows = [headers, ...view.employees.map(employee =>
