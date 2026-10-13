@@ -1485,6 +1485,7 @@
         await mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
       });
       content.append(pattern);
+      return true;
     }
     async function mutate(action) {
       if (saving || loading) return;
@@ -1506,7 +1507,7 @@
         if (token === generation) {
           saving = false;
           const refreshed = await refresh();
-          if (refreshed === false) {
+          if (refreshed !== true && token === generation) {
             status.textContent = 'Los turnos se guardaron, pero no se pudo actualizar el calendario. Pulsa Actualizar turnos antes de seguir editando.';
           }
         }
