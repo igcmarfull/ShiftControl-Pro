@@ -775,7 +775,7 @@
       function selectRange(cell, employee, date) {
         if (!selectionAnchor) return selectCell(cell, employee, date);
         const cells = [...content.querySelectorAll('[data-employee-id][data-date][role="button"]')]
-          .filter(node => node.getClientRects().length > 0 || !node.closest('.cal-row, .week-row')?.hidden);
+          .filter(node => !node.closest('.cal-row, .week-row')?.hidden);
         const start = cells.findIndex(node => node.dataset.employeeId === selectionAnchor.employeeId &&
           node.dataset.date === selectionAnchor.date);
         const end = cells.indexOf(cell);
@@ -1023,7 +1023,8 @@
             cell.addEventListener('keydown', event => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                if (event.ctrlKey || event.metaKey || event.shiftKey) selectCell(cell, employee, date);
+                if (event.shiftKey) selectRange(cell, employee, date);
+                else if (event.ctrlKey || event.metaKey) selectCell(cell, employee, date);
                 else edit();
               }
             });
