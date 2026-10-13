@@ -5,6 +5,7 @@
   const areas = { ESTACION: 'Isla', TIENDA: 'Tienda' };
   let generation = 0;
   let selectedMonth = new Date().toISOString().slice(0, 7);
+  let selectedWeek = 0;
   let displayMode = 'monthly';
   let refreshActive = null;
   const el = (tag, text) => {
@@ -162,6 +163,7 @@
       monthPicker.addEventListener('change', () => {
         if (/^\d{4}-\d{2}$/.test(monthPicker.value)) {
           selectedMonth = monthPicker.value;
+          selectedWeek = 0;
           refresh();
         }
       });
@@ -172,11 +174,20 @@
           const target = new Date(year, month - 1 + offset, 1);
           selectedMonth = target.getFullYear() + '-' +
             String(target.getMonth() + 1).padStart(2, '0');
+          selectedWeek = 0;
           refresh();
         });
       }
       monthly.addEventListener('click', () => { displayMode = 'monthly'; refresh(); });
       weekly.addEventListener('click', () => { displayMode = 'weekly'; refresh(); });
+      if (displayMode === 'weekly') {
+        const prevWeek = el('button', '← Semana');
+        const nextWeek = el('button', 'Semana →');
+        prevWeek.type = nextWeek.type = 'button';
+        prevWeek.addEventListener('click', () => { selectedWeek--; refresh(); });
+        nextWeek.addEventListener('click', () => { selectedWeek++; refresh(); });
+        toolbar.append(prevWeek, nextWeek);
+      }
       toolbar.append(monthly, weekly, previous, monthPicker, next);
       content.append(toolbar);
       const [year, month] = selectedMonth.split('-').map(Number);
@@ -262,7 +273,7 @@
         grid.className = 'week-grid';
         const start = new Date(year, month - 1, 1);
         const mondayOffset = (start.getDay() + 6) % 7;
-        start.setDate(start.getDate() - mondayOffset);
+        start.setDate(start.getDate() - mondayOffset + selectedWeek * 7);
         grid.append(el('div', 'Trabajador'));
         const dates = Array.from({length:7}, (_,i) => {
           const d = new Date(start);
