@@ -204,6 +204,10 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Invertir selección visible' }).click();
     await page.getByText('1 celdas seleccionadas').waitFor();
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    // Show assigned and unassigned counts before applying a bulk change.
+    await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
+    await page.getByText('1 con turno · 30 sin turno').waitFor();
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
