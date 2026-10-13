@@ -741,6 +741,8 @@
       selectVisible.type = 'button';
       const selectEmpty = el('button', 'Seleccionar días sin turno');
       selectEmpty.type = 'button';
+      const selectAssigned = el('button', 'Seleccionar turnos asignados');
+      selectAssigned.type = 'button';
       const clearSelection = el('button', 'Limpiar selección');
       clearSelection.type = 'button';
       clearSelection.disabled = true;
@@ -878,6 +880,26 @@
         }
         updateSelection();
       });
+      // Quickly select only existing assignments for controlled replacement or removal.
+      selectAssigned.addEventListener('click', () => {
+        if (saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        for (const cell of wrapper.querySelectorAll('.cal-cell[role="button"], .week-cell[role="button"]')) {
+          const row = cell.closest('.cal-row, .week-row');
+          if (row?.hidden || row?.style.display === 'none') continue;
+          const employeeId = cell.dataset.employeeId;
+          const date = cell.dataset.date;
+          if (!employeeId || !date) continue;
+          const key = employeeId + ':' + date;
+          if (!plans.has(key) || duplicateCells.has(key) || selectedCells.has(key)) continue;
+          selectedCells.set(key, { employeeId, date });
+          cell.classList.add('selected');
+          cell.setAttribute('aria-pressed', 'true');
+        }
+        updateSelection();
+      });
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
       clearSelection.addEventListener('click', () => {
@@ -889,7 +911,7 @@
         selectionAnchor = null;
         updateSelection();
       });
-      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectEmpty, selectionCode, applySelection, removeSelection, clearSelection);
+      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectEmpty, selectAssigned, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
       // local to this area snapshot and never broadens employee access.
