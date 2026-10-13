@@ -52,6 +52,15 @@
   }
   window.ShiftControlAreaClassificationEntry = Object.freeze({ mount });
   document.addEventListener('DOMContentLoaded', mount);
-  // Auth initialization may finish after DOMContentLoaded.
+  // The existing SPA re-renders employees after async auth/bootstrap. Mount
+  // there too, without relying on an auth event that the legacy app may omit.
+  const originalRenderEmployees = window.renderEmployees;
+  if (typeof originalRenderEmployees === 'function') {
+    window.renderEmployees = function () {
+      const result = originalRenderEmployees.apply(this, arguments);
+      mount();
+      return result;
+    };
+  }
   window.addEventListener('shiftcontrol:auth-context-changed', mount);
 })();
