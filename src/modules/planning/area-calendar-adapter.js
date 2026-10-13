@@ -140,7 +140,6 @@
       if (!change || !employees.has(change.employeeId) ||
           typeof change.date !== 'string' ||
           !isCalendarDate(change.date) ||
-          !isCalendarDate(change.date) ||
           (change.code !== null && !allowedCodes.has(change.code))) {
         throw new Error('La asignación contiene trabajadores, fechas o turnos no autorizados.');
       }
