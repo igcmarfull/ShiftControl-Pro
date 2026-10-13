@@ -246,7 +246,8 @@ const assert = require('node:assert/strict');
     await page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' }).fill('');
     // A slow network refresh must not blank the existing planning grids.
     await page.evaluate(() => {
-      const original = window.ShiftControlStorage.readAreaState;
+      window.__originalAreaRead = window.ShiftControlStorage.readAreaState;
+      const original = window.__originalAreaRead;
       window.__finishSlowReads = [];
       window.ShiftControlStorage.readAreaState = area => new Promise(resolve => {
         window.__finishSlowReads.push(() => resolve(original(area)));
@@ -262,6 +263,10 @@ const assert = require('node:assert/strict');
     });
     await page.getByText(/Calendarios de .*solo lectura/).waitFor();
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').count(), 2);
+    await page.evaluate(() => {
+      window.ShiftControlStorage.readAreaState = window.__originalAreaRead;
+      delete window.__originalAreaRead;
+    });
     // Both admin calendars follow the same month navigation, including year rollover.
     await page.locator('#shiftcontrol-area-calendar input[type="month"]').fill('2026-01');
     await page.getByRole('button', { name: 'Mes anterior' }).click();
