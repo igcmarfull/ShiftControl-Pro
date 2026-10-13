@@ -623,6 +623,11 @@
           return;
         }
         const changes = [...selectedCells.values()].map(cell => ({ ...cell, code }));
+        const changedMonths = new Set(changes.map(cell => cell.date.slice(0, 7)));
+        if (changedMonths.size > 1) {
+          status.textContent = 'La selección incluye más de un mes. Edita cada mes por separado.';
+          return;
+        }
         if (!window.confirm('¿Aplicar ' + (code || 'eliminación') + ' a ' +
           changes.length + ' celdas de ' + areas[context.area] + '?')) return;
         void mutate(() => {
