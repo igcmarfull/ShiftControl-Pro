@@ -843,26 +843,32 @@
         }
         updateSelection();
       }
-      // Match the legacy chief panel: paint a range by dragging across cells.
-      // The drag is selection-only; nothing is persisted until Apply is pressed.
+      // Ordinary clicks still open the editor. A drag starts only after the
+      // pointer enters a second cell with the primary mouse button held.
+      let dragOrigin = null;
       let dragSelecting = false;
       let suppressDragClick = false;
       function beginDrag(event, cell, employee, date) {
         if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey ||
             stale || saving || loading) return;
-        dragSelecting = true;
-        suppressDragClick = true;
-        selectCell(cell, employee, date);
-        // A drag must not accidentally open the single-cell editor on mouseup.
-        event.preventDefault();
+        dragOrigin = { cell, employee, date };
+        dragSelecting = false;
       }
-      function dragOver(cell, employee, date) {
-        if (!dragSelecting || stale || saving || loading) return;
+      function dragOver(cell, employee, date, event) {
+        if (!dragOrigin || !(event.buttons & 1) || stale || saving || loading) return;
+        if (!dragSelecting) {
+          dragSelecting = true;
+          suppressDragClick = true;
+          const origin = dragOrigin;
+          selectCell(origin.cell, origin.employee, origin.date);
+        }
         const key = employee.id + ':' + date;
-        if (selectedCells.has(key)) return;
-        selectRange(cell, employee, date);
+        if (!selectedCells.has(key)) selectRange(cell, employee, date);
       }
-      function endDrag() { dragSelecting = false; }
+      function endDrag() {
+        dragOrigin = null;
+        dragSelecting = false;
+      }
       content.addEventListener('mouseup', endDrag);
       content.addEventListener('mouseleave', endDrag);
       function commitSelection(code) {
@@ -1190,7 +1196,7 @@
                 selectCell(cell, employee, date);
               });
               cell.addEventListener('mousedown', e => beginDrag(e, cell, employee, date));
-              cell.addEventListener('mouseenter', () => dragOver(cell, employee, date));
+              cell.addEventListener('mouseenter', event => dragOver(cell, employee, date, event));
               cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
