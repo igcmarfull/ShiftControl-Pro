@@ -399,6 +399,7 @@
     controls.className = 'area-toolbar';
     let saving = false;
     let loading = false;
+    let stale = true;
     const reload = el('button', 'Actualizar turnos');
     reload.type = 'button';
     reload.addEventListener('click', () => {
@@ -438,6 +439,7 @@
     async function refresh() {
       if (saving || loading) return;
       loading = true;
+      stale = true;
       reload.disabled = true;
       const token = ++generation;
       // Keep the old calendar visible for reference, but never allow writes
@@ -473,6 +475,7 @@
         return false;
       }
       content.replaceChildren();
+      stale = false;
       status.textContent = 'Turnos del área · revisión ' + view.revision;
       const toolbar = el('div');
       toolbar.className = 'area-toolbar';
@@ -645,6 +648,7 @@
       }
       const validCodes = ['A', 'B', 'C', 'D', 'L', 'V', 'P', 'X', 'Libre', 'Licencia', 'Vacaciones', 'Permiso'];
       function editShift(employee, date, plan) {
+        if (stale) return;
         if (saving || loading) return;
         if (duplicateCells.has(employee.id + ':' + date)) {
           status.textContent = 'Hay turnos duplicados para este día. Solicita su corrección al administrador.';
@@ -796,6 +800,7 @@
           !selectedCells.size || saving || loading;
       }
       function selectCell(cell, employee, date) {
+        if (stale) return;
         if (saving || loading) return;
         const current = window.AuthContext?.get?.();
         if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
@@ -818,6 +823,7 @@
         updateSelection();
       }
       function selectRange(cell, employee, date) {
+        if (stale) return;
         if (!selectionAnchor) return selectCell(cell, employee, date);
         const cells = [...content.querySelectorAll('[data-employee-id][data-date][role="button"]')]
           .filter(node => !node.closest('.cal-row, .week-row')?.hidden);
@@ -838,6 +844,7 @@
         updateSelection();
       }
       function commitSelection(code) {
+        if (stale) return;
         if (!selectedCells.size || saving || loading) return;
         // Never authorize a queued edit against a different login or area.
         const current = window.AuthContext?.get?.();
@@ -1496,6 +1503,7 @@
       return true;
     }
     async function mutate(action) {
+        if (stale) return;
       if (saving || loading) return;
       saving = true;
       const token = generation;
