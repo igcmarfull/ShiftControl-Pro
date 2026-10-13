@@ -12,6 +12,19 @@ function normalizeArea(area){
   return normalized;
 }
 
+function requireEmployeeMutationAccess(){
+  const context = window.AuthContext?.get?.() || null;
+  if(!context?.companyId || !['ADMIN','CHIEF'].includes(context.role)){
+    throw new Error('Se requiere una sesión de empresa válida.');
+  }
+  // Until area-specific persistence is live, CHIEF must not mutate the
+  // company-wide JSON, even via a module method bypassing the UI.
+  if(context.role === 'CHIEF' && context.area){
+    throw new Error('Los cambios por área aún no están habilitados.');
+  }
+  return context;
+}
+
 window.EmployeeModule = {
 
   _getState(){
@@ -47,7 +60,7 @@ window.EmployeeModule = {
   // not a substitute for server-side RLS or area-isolated persistence.
   assignArea(id, area){
     const context = window.AuthContext?.get?.() || null;
-    if(context.role !== 'ADMIN' || !context.companyId){
+    if(context?.role !== 'ADMIN' || !context.companyId){
       throw new Error('Solo ADMIN puede asignar el área de un trabajador.');
     }
     const normalized = normalizeArea(area);
@@ -95,6 +108,8 @@ window.EmployeeModule = {
 
 
   create(data){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 
@@ -111,6 +126,9 @@ window.EmployeeModule = {
     }
 
     const normalizedData = {...data};
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area') && window.AuthContext?.get?.()?.role !== 'ADMIN') {
+      throw new Error('Solo ADMIN puede modificar el área de un trabajador.');
+    }
     if(Object.prototype.hasOwnProperty.call(normalizedData, 'area')){
       normalizedData.area = normalizeArea(normalizedData.area);
     }
@@ -140,8 +158,13 @@ window.EmployeeModule = {
 
 
   update(id,data){
+    requireEmployeeMutationAccess();
+
 
     const normalizedData = {...data};
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area') && window.AuthContext?.get?.()?.role !== 'ADMIN') {
+      throw new Error('Solo ADMIN puede modificar el área de un trabajador.');
+    }
     if(Object.prototype.hasOwnProperty.call(normalizedData, 'area')){
       normalizedData.area = normalizeArea(normalizedData.area);
     }
@@ -165,6 +188,8 @@ window.EmployeeModule = {
 
 
   remove(id){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 
@@ -183,6 +208,8 @@ window.EmployeeModule = {
 
 
   addDocument(id,document){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 
@@ -207,6 +234,8 @@ window.EmployeeModule = {
 
 
   removeDocument(id,index){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 
