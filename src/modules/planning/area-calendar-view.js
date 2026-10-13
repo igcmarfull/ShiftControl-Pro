@@ -219,6 +219,23 @@
       const [year, month] = selectedMonth.split('-').map(Number);
       const days = new Date(year, month, 0).getDate();
       const plans = new Map(view.plans.map(p => [p.employeeId + ':' + p.date, p]));
+      const validCodes = ['A', 'B', 'C', 'D', 'L', 'V', 'P', 'X', 'Libre', 'Licencia', 'Vacaciones', 'Permiso'];
+      function editShift(employee, date, plan) {
+        if (saving || loading) return;
+        const code = window.prompt(
+          'Turno para ' + (employee.name || 'Trabajador') + ' · ' + date +
+          ' (' + validCodes.join(', ') + '). Vacío para eliminar:',
+          plan?.code || '');
+        if (code === null) return;
+        const value = code.trim();
+        if (value && !validCodes.includes(value)) {
+          status.textContent = 'Código de turno no válido.';
+          return;
+        }
+        void mutate(() => value
+          ? window.ShiftControlAreaCalendar.upsertPlan({ employeeId: employee.id, date, code: value })
+          : window.ShiftControlAreaCalendar.removePlan(employee.id, date));
+      }
       const wrapper = el('div');
       wrapper.className = 'table-wrap';
       wrapper.style.overflowX = 'auto';
@@ -269,18 +286,7 @@
               cell.tabIndex = 0;
               cell.setAttribute('role', 'button');
               cell.setAttribute('aria-label', cell.title + '. Editar turno');
-              const edit = () => {
-                const code = window.prompt('Turno para ' + date + ' (A, B, C, D, Libre). Deja vacío para eliminar:', plan?.code || '');
-                if (code === null) return;
-                const value = code.trim();
-                if (value && !['A','B','C','D','Libre'].includes(value)) {
-                  status.textContent = 'Código de turno no válido.';
-                  return;
-                }
-                mutate(() => value
-                  ? window.ShiftControlAreaCalendar.upsertPlan({employeeId:employee.id,date,code:value})
-                  : window.ShiftControlAreaCalendar.removePlan(employee.id,date));
-              };
+              const edit = () => editShift(employee, date, plan);
               cell.addEventListener('click', edit);
               cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); edit(); }
@@ -322,18 +328,7 @@
             cell.tabIndex = 0;
             cell.setAttribute('role', 'button');
             cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
-            const edit = () => {
-              const code = window.prompt('Turno para ' + date + ' (A, B, C, D, Libre). Deja vacío para eliminar:', plan?.code || '');
-              if (code === null) return;
-              const value = code.trim();
-              if (value && !['A', 'B', 'C', 'D', 'Libre'].includes(value)) {
-                status.textContent = 'Código de turno no válido.';
-                return;
-              }
-              mutate(() => value
-                ? window.ShiftControlAreaCalendar.upsertPlan({employeeId: employee.id, date, code: value})
-                : window.ShiftControlAreaCalendar.removePlan(employee.id, date));
-            };
+            const edit = () => editShift(employee, date, plan);
             cell.addEventListener('click', edit);
             cell.addEventListener('keydown', event => {
               if (event.key === 'Enter' || event.key === ' ') {
@@ -365,7 +360,7 @@
       date.type = 'date';
       date.required = true;
       const shift = el('select');
-      for (const code of ['A', 'B', 'C', 'D', 'Libre']) {
+      for (const code of validCodes) {
         const option = el('option', code);
         option.value = code;
         shift.append(option);
