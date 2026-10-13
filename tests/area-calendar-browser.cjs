@@ -208,6 +208,12 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('1 con turno · 30 sin turno').waitFor();
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    // Applying the already-assigned A shift is a no-op, not a storage write.
+    await page.getByRole('button', { name: 'Seleccionar turnos asignados' }).click();
+    await page.getByRole('combobox', { name: 'Turno para selección' }).selectOption('A');
+    await page.getByRole('button', { name: 'Aplicar a selección' }).click();
+    await page.getByText('No hay cambios: los turnos seleccionados ya tienen ese valor.').waitFor();
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
