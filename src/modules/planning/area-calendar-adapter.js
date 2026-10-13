@@ -24,6 +24,9 @@
       throw new Error('La sesión cambió durante la carga del calendario.');
     }
     if (!row) return null;
+    if (!Number.isSafeInteger(row.revision) || row.revision < 1) {
+      throw new Error('El calendario remoto no tiene una revisión válida.');
+    }
     const data = row.data;
     // Storage validates the ownership of all five operational collections.
     // Return a detached view model; never write into window.state or cache.
@@ -47,10 +50,10 @@
           .every(name => Array.isArray(view[name]))) {
       throw new Error('El calendario no corresponde al área activa.');
     }
-    if (view.revision === undefined ||
-        (view.revision !== null &&
-         (!Number.isSafeInteger(view.revision) || view.revision < 1))) {
-      throw new Error('Revisión de calendario inválida.');
+    // A missing row must be initialized through a separate ADMIN-reviewed
+    // migration, not by a CHIEF creating an empty calendar by accident.
+    if (!Number.isSafeInteger(view.revision) || view.revision < 1) {
+      throw new Error('El calendario debe existir y tener una revisión válida antes de guardar.');
     }
     const storage = window.ShiftControlStorage;
     if (typeof storage?.writeOwnAreaState !== 'function') {
