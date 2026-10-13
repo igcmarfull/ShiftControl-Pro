@@ -10,8 +10,15 @@
       if (root) root.remove();
       return;
     }
+    // An existing panel belongs to the session that opened it. Never keep
+    // another ADMIN's employee data visible after switching accounts.
+    if (root && root.dataset.owner !== context.userId) {
+      root.remove();
+      root = null;
+    }
     if (root) return;
     root = document.createElement('section');
+    root.dataset.owner = context.userId;
     root.id = ID;
     root.className = 'panel';
     root.style.margin = '16px 0';
@@ -23,7 +30,8 @@
     panel.hidden = true;
     button.addEventListener('click', () => {
       const current = window.AuthContext?.get?.();
-      if (current?.role !== 'ADMIN' || current.companyId !== context.companyId) {
+      if (current?.role !== 'ADMIN' || current.companyId !== context.companyId ||
+          current.userId !== context.userId) {
         panel.hidden = true;
         panel.replaceChildren();
         mount();
