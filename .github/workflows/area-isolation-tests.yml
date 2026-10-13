@@ -33,6 +33,12 @@ jobs:
         run: node --version
       - name: Run area tests
         run: node --test tests/*.test.cjs
+      - name: Install Chromium browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run Chromium area calendar test
+        run: node tests/area-calendar-browser.cjs
       - name: Verify isolated PostgreSQL service
         env:
           PGPASSWORD: postgres
