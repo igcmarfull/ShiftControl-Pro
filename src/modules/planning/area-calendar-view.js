@@ -681,11 +681,11 @@
           if (cell?.focus) cell.focus();
         };
         cancel.addEventListener('click', closeEditor);
-        picker.addEventListener('keydown', event => {
+        editor.addEventListener('keydown', event => {
           if (event.key === 'Escape') {
             event.preventDefault();
             closeEditor();
-          } else if (event.key === 'Enter') {
+          } else if (event.key === 'Enter' && event.target === picker) {
             event.preventDefault();
             save.click();
           }
