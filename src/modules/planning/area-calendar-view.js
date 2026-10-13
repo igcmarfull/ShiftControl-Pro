@@ -676,10 +676,9 @@
         cancel.type = 'button';
         const closeEditor = () => {
           editor.remove();
-          if (document.activeElement === picker || document.activeElement === cancel) {
-            const cell = content.querySelector('[data-employee-id="' + employee.id + '"][data-date="' + date + '"]');
-            if (cell?.focus) cell.focus();
-          }
+          const cell = [...content.querySelectorAll('[data-employee-id][data-date]')]
+            .find(node => node.dataset.employeeId === employee.id && node.dataset.date === date);
+          if (cell?.focus) cell.focus();
         };
         cancel.addEventListener('click', closeEditor);
         picker.addEventListener('keydown', event => {
