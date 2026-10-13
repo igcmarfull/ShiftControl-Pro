@@ -312,14 +312,20 @@
     );
   }
 
+  function notifyContextChanged(){
+    window.dispatchEvent(new Event('shiftcontrol:auth-context-changed'));
+  }
+
   async function activate(user){
     if(!user){
       currentContext=null;
+      notifyContextChanged();
       return null;
     }
 
     currentContext=await loadContext(user);
     clearLegacyAuth();
+    notifyContextChanged();
     return currentContext;
   }
 
@@ -401,6 +407,7 @@
   async function signOut(){
     const {error}=await getClient().auth.signOut({scope:'local'});
     currentContext=null;
+    notifyContextChanged();
     setPersistencePreference(true);
     clearLegacyAuth();
     if(error)throw error;
