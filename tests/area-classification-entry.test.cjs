@@ -8,10 +8,10 @@ const source = fs.readFileSync(path.join(__dirname, '../src/modules/employees/ar
 const elements = new Map();
 const makeNode = (tag) => ({
   tag, dataset: {}, style: {}, children: [], hidden: false,
-  append(...nodes) { this.children.push(...nodes); },
-  prepend(node) { this.children.unshift(node); },
+  append(...nodes) { for (const node of nodes) node.parent = this; this.children.push(...nodes); },
+  prepend(node) { node.parent = this; this.children.unshift(node); },
   replaceChildren() { this.children = []; },
-  remove() { if (this.id) elements.delete(this.id); },
+  remove() { if (this.id && elements.get(this.id) === this) elements.delete(this.id); if (this.parent) this.parent.children = this.parent.children.filter(node => node !== this); },
   addEventListener(type, fn) { this['on_' + type] = fn; },
   querySelector() { return null; }
 });
