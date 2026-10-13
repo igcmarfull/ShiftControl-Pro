@@ -1,5 +1,17 @@
 (function(){
 
+// Areas are explicit. Legacy employees without an area remain unassigned
+// until an ADMIN classifies them; never infer an area automatically.
+const VALID_AREAS = ['ESTACION', 'TIENDA'];
+
+function normalizeArea(area){
+  const normalized = String(area || '').trim().toUpperCase();
+  if(!VALID_AREAS.includes(normalized)){
+    throw new Error('Area invalida: use ESTACION o TIENDA.');
+  }
+  return normalized;
+}
+
 window.EmployeeModule = {
 
   _getState(){
@@ -21,6 +33,15 @@ window.EmployeeModule = {
 
   },
 
+
+  getByArea(area){
+    const normalized = normalizeArea(area);
+    return this.getAll().filter(employee => employee.area === normalized);
+  },
+
+  getUnassigned(){
+    return this.getAll().filter(employee => !VALID_AREAS.includes(employee.area));
+  },
 
   find(id){
 
@@ -54,12 +75,17 @@ window.EmployeeModule = {
       return null;
     }
 
+    const normalizedData = {...data};
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area')){
+      normalizedData.area = normalizeArea(normalizedData.area);
+    }
+
     const employee={
       id: typeof safeRandomUUID==='function'
         ? safeRandomUUID()
         : crypto.randomUUID(),
 
-      ...data,
+      ...normalizedData,
 
       start: data.start || new Date().toISOString().slice(0,10),
 
@@ -80,12 +106,17 @@ window.EmployeeModule = {
 
   update(id,data){
 
+    const normalizedData = {...data};
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area')){
+      normalizedData.area = normalizeArea(normalizedData.area);
+    }
+
     const state = this._getState();
 
     state.employees = state.employees.map(
       employee =>
         employee.id===id
-        ? {...employee,...data}
+        ? {...employee,...normalizedData}
         : employee
     );
 
