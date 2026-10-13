@@ -89,6 +89,20 @@ const assert = require('node:assert/strict');
     assert.equal(selectedSave.area, 'ESTACION');
     assert.deepEqual(selectedSave.changes.map(change => change.employeeId),
       ['station-worker', 'station-worker']);
+    // Single-cell editing must use the integrated in-panel editor, not a
+    // blocking browser prompt, and must write only the scoped employee.
+    await page.evaluate(() => { window.prompt = () => { throw new Error('Unexpected browser prompt'); }; });
+    await page.locator('#shiftcontrol-area-calendar .cal-row').first()
+      .locator('.cal-cell').nth(5).dispatchEvent('click');
+    const editor = page.locator('#shiftcontrol-area-calendar .area-single-editor');
+    await editor.getByRole('combobox', { name: 'Código de turno' }).selectOption('D');
+    await editor.getByRole('button', { name: 'Guardar turno' }).click();
+    await page.waitForFunction(() => window.__saves.some(entry => entry.plan?.code === 'D'));
+    const singleSave = await page.evaluate(() => window.__saves.find(entry => entry.plan?.code === 'D'));
+    assert.equal(singleSave.area, 'ESTACION');
+    assert.equal(singleSave.plan.employeeId, 'station-worker');
+    assert.equal(singleSave.plan.date, '2026-10-06');
+    assert.equal(await editor.count(), 0);
     // Reopening the same authorized area must refresh, not silently return
     // a stale calendar (regression for the original panel's save path).
     const loadsBefore = await page.evaluate(() => window.__loads);
