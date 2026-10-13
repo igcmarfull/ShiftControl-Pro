@@ -372,7 +372,21 @@
         const sourceMonth = prior.getFullYear() + '-' + String(prior.getMonth() + 1).padStart(2, '0');
         const lastDay = new Date(year, month, 0).getDate();
         const assigned = new Set(view.plans.map(plan => plan.employeeId + ':' + plan.date));
-        const changes = view.plans.filter(plan => plan.date?.startsWith(sourceMonth + '-') &&
+        const sourceCounts = new Map();
+        for (const plan of view.plans) {
+          if (typeof plan.date === 'string' && plan.date.startsWith(sourceMonth + '-')) {
+            const key = plan.employeeId + ':' + plan.date;
+            sourceCounts.set(key, (sourceCounts.get(key) || 0) + 1);
+          }
+        }
+        const sourceDuplicates = [...sourceCounts.values()].filter(count => count > 1).length;
+        if (sourceDuplicates) {
+          status.textContent = 'No se puede copiar: el mes anterior tiene ' +
+            sourceDuplicates + ' fechas con turnos duplicados. Corrige los datos primero.';
+          return;
+        }
+        const changes = view.plans.filter(plan => typeof plan.date === 'string' &&
+          plan.date.startsWith(sourceMonth + '-') &&
           /^\d{4}-\d{2}-\d{2}$/.test(plan.date) &&
           Number(plan.date.slice(-2)) <= lastDay &&
           !assigned.has(plan.employeeId + ':' + selectedMonth + plan.date.slice(-3)))
