@@ -54,9 +54,12 @@
     status.setAttribute('role', 'status');
     const content = el('div');
     const controls = el('div');
+    let saving = false;
     const reload = el('button', 'Actualizar turnos');
     reload.type = 'button';
-    reload.addEventListener('click', () => refresh());
+    reload.addEventListener('click', () => {
+      if (!saving) refresh();
+    });
     const signout = el('button', 'Cerrar sesión');
     signout.type = 'button';
     signout.addEventListener('click', async () => {
@@ -75,6 +78,7 @@
     document.body.append(container);
     refresh();
     async function refresh() {
+      if (saving) return;
       const token = ++generation;
       content.replaceChildren();
       let view;
@@ -149,14 +153,29 @@
       content.append(form);
     }
     async function mutate(action) {
+      if (saving) return;
+      saving = true;
       const token = generation;
+      reload.disabled = true;
+      content.querySelectorAll('button, input, select').forEach(node => {
+        node.disabled = true;
+      });
       status.textContent = 'Guardando en Supabase…';
       try {
         await action();
+        saving = false;
         if (token === generation) await refresh();
       } catch (error) {
         if (token === generation) status.textContent =
           'No se guardó: ' + (error?.message || 'error de sincronización');
+      } finally {
+        saving = false;
+        if (token === generation) {
+          reload.disabled = false;
+          content.querySelectorAll('button, input, select').forEach(node => {
+            node.disabled = false;
+          });
+        }
       }
     }
   }
