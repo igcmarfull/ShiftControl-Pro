@@ -846,10 +846,12 @@
       // Match the legacy chief panel: paint a range by dragging across cells.
       // The drag is selection-only; nothing is persisted until Apply is pressed.
       let dragSelecting = false;
+      let suppressDragClick = false;
       function beginDrag(event, cell, employee, date) {
         if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey ||
             stale || saving || loading) return;
         dragSelecting = true;
+        suppressDragClick = true;
         selectCell(cell, employee, date);
         // A drag must not accidentally open the single-cell editor on mouseup.
         event.preventDefault();
@@ -861,7 +863,8 @@
         selectRange(cell, employee, date);
       }
       function endDrag() { dragSelecting = false; }
-      window.addEventListener('mouseup', endDrag);
+      content.addEventListener('mouseup', endDrag);
+      content.addEventListener('mouseleave', endDrag);
       function commitSelection(code) {
         if (stale) return;
         if (!selectedCells.size || saving || loading) return;
@@ -1177,6 +1180,7 @@
               cell.setAttribute('aria-label', cell.title + '. Editar turno');
               const edit = () => editShift(employee, date, plan);
               cell.addEventListener('click', e => {
+                if (suppressDragClick) { suppressDragClick = false; return; }
                 if (e.shiftKey) selectRange(cell, employee, date);
                 else if (e.ctrlKey || e.metaKey) selectCell(cell, employee, date);
                 else edit();
@@ -1185,9 +1189,8 @@
                 e.preventDefault();
                 selectCell(cell, employee, date);
               });
-              cell.addEventListener('mousedown', e => {
-                if (e.shiftKey && e.button === 0) e.preventDefault();
-              });
+              cell.addEventListener('mousedown', e => beginDrag(e, cell, employee, date));
+              cell.addEventListener('mouseenter', () => dragOver(cell, employee, date));
               cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
@@ -1244,6 +1247,7 @@
             cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
             const edit = () => editShift(employee, date, plan);
             cell.addEventListener('click', event => {
+              if (suppressDragClick) { suppressDragClick = false; return; }
               if (event.shiftKey) selectRange(cell, employee, date);
               else if (event.ctrlKey || event.metaKey) selectCell(cell, employee, date);
               else edit();
@@ -1252,6 +1256,8 @@
               event.preventDefault();
               selectCell(cell, employee, date);
             });
+            cell.addEventListener('mousedown', event => beginDrag(event, cell, employee, date));
+            cell.addEventListener('mouseenter', () => dragOver(cell, employee, date));
             cell.addEventListener('keydown', event => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
