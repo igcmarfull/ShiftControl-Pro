@@ -98,6 +98,33 @@
     return { ready: blockers.length === 0, blockers, counts };
   }
 
+  // Inventory every legacy top-level field before migrating. A field not
+  // explicitly accounted for must remain in app_state until reviewed;
+  // silently dropping it would risk losing operational information.
+  function migrationInventory(source) {
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      throw new Error('Estado operacional inválido.');
+    }
+    const partitioned = ['employees', 'plans', 'executions', 'additional', 'absences'];
+    const shared = ['holidays'];
+    const known = new Set([...partitioned, ...shared]);
+    const unexpected = Object.keys(source).filter(key => !known.has(key)).sort();
+    const counts = {};
+    for (const key of [...partitioned, ...shared]) {
+      if (source[key] !== undefined && !Array.isArray(source[key])) {
+        throw new Error('Colección inválida: ' + key);
+      }
+      counts[key] = (source[key] || []).length;
+    }
+    return {
+      counts,
+      unexpected,
+      // Readiness for copying is intentionally stricter than the employee
+      // ownership report: any unreviewed field blocks automatic cutover.
+      complete: unexpected.length === 0
+    };
+  }
+
   // A CHIEF receives only a detached, area-scoped snapshot. This is a
   // preparation helper, NOT a substitute for Supabase RLS or secure bootstrap.
   function snapshotForRole(partition, context) {
@@ -120,6 +147,7 @@
   window.ShiftControlAreaPartition = Object.freeze({
     partitionEmployeesAndPlans,
     snapshotForRole,
-    migrationReadiness
+    migrationReadiness,
+    migrationInventory
   });
 })();
