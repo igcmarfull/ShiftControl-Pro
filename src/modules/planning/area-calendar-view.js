@@ -28,6 +28,22 @@
         /* Preserve the original navigation shell while preventing access
            to legacy company-wide views through the area chief UI. */
         body.shiftcontrol-area-chief-mode .view {display:none!important}
+        /* Chief calendar uses the existing application navigation shell. */
+        body.shiftcontrol-area-chief-mode .sidebar,
+        body.shiftcontrol-area-chief-mode .mobile-nav {visibility:visible!important}
+        #shiftcontrol-area-calendar[data-mode="admin"] {
+          max-width:calc(100% - 36px);margin:18px auto!important;
+          padding:24px;background:#111827;color:#f8fafc;
+          border:1px solid #334155;border-radius:16px;
+        }
+        #shiftcontrol-area-calendar[data-mode="admin"] > section {
+          margin:24px 0;padding:18px;border:1px solid #334155;
+          border-radius:12px;background:#0f172a;
+        }
+        #shiftcontrol-area-calendar[data-mode="admin"] > div > section {
+          margin:24px 0;padding:18px;border:1px solid #334155;
+          border-radius:12px;background:#0f172a;
+        }
         body.shiftcontrol-area-chief-mode {min-height:100vh!important;overflow:auto!important}
         body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {
           box-sizing:border-box;position:relative!important;inset:auto!important;
