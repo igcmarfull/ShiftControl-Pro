@@ -278,6 +278,28 @@
             const plan = plans.get(employee.id + ':' + date);
             const cell = el('div', plan?.code || 'Sin turno');
             cell.className = 'week-cell';
+            cell.tabIndex = 0;
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
+            const edit = () => {
+              const code = window.prompt('Turno para ' + date + ' (A, B, C, D, Libre). Deja vacío para eliminar:', plan?.code || '');
+              if (code === null) return;
+              const value = code.trim();
+              if (value && !['A', 'B', 'C', 'D', 'Libre'].includes(value)) {
+                status.textContent = 'Código de turno no válido.';
+                return;
+              }
+              mutate(() => value
+                ? window.ShiftControlAreaCalendar.upsertPlan({employeeId: employee.id, date, code: value})
+                : window.ShiftControlAreaCalendar.removePlan(employee.id, date));
+            };
+            cell.addEventListener('click', edit);
+            cell.addEventListener('keydown', event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                edit();
+              }
+            });
             grid.append(cell);
           }
         }
