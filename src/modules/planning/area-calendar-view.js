@@ -839,9 +839,19 @@
           status.textContent = 'Código de turno no válido.';
           return;
         }
-        const changes = [...selectedCells.values()].map(cell => ({ ...cell, code }));
+        // Do not rewrite unchanged assignments or try to remove empty dates.
+        const changes = [...selectedCells.values()]
+          .filter(cell => (plans.get(cell.employeeId + ':' + cell.date)?.code || null) !== code)
+          .map(cell => ({ ...cell, code }));
+        if (!changes.length) {
+          status.textContent = 'No hay cambios: los turnos seleccionados ya tienen ese valor.';
+          return;
+        }
+        const overwritten = changes.filter(cell => plans.has(cell.employeeId + ':' + cell.date)).length;
+        const created = changes.length - overwritten;
         if (!window.confirm('¿Aplicar ' + (code || 'eliminación') + ' a ' +
-          changes.length + ' celdas de ' + areas[context.area] + '?')) return;
+          changes.length + ' celdas de ' + areas[context.area] + '? ' +
+          overwritten + ' turnos existentes afectados; ' + created + ' fechas vacías.')) return;
         void mutate(() => {
           const latest = window.AuthContext?.get?.();
           if (latest?.role !== 'CHIEF' || latest.userId !== context.userId ||
