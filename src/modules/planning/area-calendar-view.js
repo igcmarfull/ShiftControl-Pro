@@ -442,7 +442,7 @@
       const token = ++generation;
       // Keep the old calendar visible for reference, but never allow writes
       // against stale data while the refresh is pending or has failed.
-      content.querySelectorAll('button, input, select, [role="button"]').forEach(node => {
+      (content.querySelectorAll?.('button, input, select, [role="button"]') || []).forEach(node => {
         if ('disabled' in node) node.disabled = true;
         if (node.getAttribute('role') === 'button') {
           node.setAttribute('aria-disabled', 'true');
