@@ -84,7 +84,7 @@
         #shiftcontrol-area-calendar .area-calendar-selection {display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 18px}
         #shiftcontrol-area-calendar .area-calendar-selection select {width:auto;min-width:100px}
         #shiftcontrol-area-calendar .area-calendar-selection .area-selection-count {font-weight:600;margin-right:auto}
-        #shiftcontrol-area-calendar .cal-cell.selected {outline:2px solid #60a5fa;outline-offset:-2px;background:rgba(59,130,246,.22)}
+        #shiftcontrol-area-calendar .cal-cell.selected, #shiftcontrol-area-calendar .week-cell.selected {outline:2px solid #60a5fa;outline-offset:-2px;background:rgba(59,130,246,.22)}
         #shiftcontrol-area-calendar .cal-cell[role="button"] {cursor:pointer}
         #shiftcontrol-area-calendar .area-staffing-summary {margin-top:26px}
         #shiftcontrol-area-calendar .area-staffing-summary h3 {margin:0 0 12px;font-size:18px}
@@ -617,7 +617,7 @@
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
       clearSelection.addEventListener('click', () => {
-        for (const cell of wrapper.querySelectorAll('.cal-cell.selected')) {
+        for (const cell of wrapper.querySelectorAll('.cal-cell.selected, .week-cell.selected')) {
           cell.classList.remove('selected');
           cell.setAttribute('aria-pressed', 'false');
         }
