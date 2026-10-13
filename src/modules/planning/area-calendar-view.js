@@ -280,7 +280,11 @@
           d.setDate(start.getDate()+i);
           return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
         });
-        for (const date of dates) grid.append(el('div', date));
+        for (const date of dates) {
+          const heading = el('div', date);
+          heading.className = 'week-date';
+          grid.append(heading);
+        }
         for (const employee of view.employees) {
           const name = el('div', employee.name || employee.id);
           name.className = 'week-name';
