@@ -71,6 +71,21 @@ const assert = require('node:assert/strict');
       ['station-worker', 'station-worker']);
     assert.deepEqual(bulkSave.changes.map(change => change.date),
       ['2026-10-19', '2026-10-20']);
+    // Multi-cell edits must be sent as one authorized area-scoped write.
+    const firstCells = page.locator('#shiftcontrol-area-calendar .cal-row').first().locator('.cal-cell');
+    await firstCells.nth(2).click({ modifiers: ['Control'] });
+    await firstCells.nth(3).click({ modifiers: ['Control'] });
+    await page.getByText('2 celdas seleccionadas').waitFor();
+    await page.getByRole('button', { name: 'Aplicar a selección' }).click();
+    await page.waitForFunction(() => window.__saves.some(entry =>
+      entry.changes?.length === 2 &&
+      entry.changes.some(change => change.date === '2026-10-03')));
+    const selectedSave = await page.evaluate(() => window.__saves.find(entry =>
+      entry.changes?.length === 2 &&
+      entry.changes.some(change => change.date === '2026-10-03')));
+    assert.equal(selectedSave.area, 'ESTACION');
+    assert.deepEqual(selectedSave.changes.map(change => change.employeeId),
+      ['station-worker', 'station-worker']);
     // Reopening the same authorized area must refresh, not silently return
     // a stale calendar (regression for the original panel's save path).
     const loadsBefore = await page.evaluate(() => window.__loads);
