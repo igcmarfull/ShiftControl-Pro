@@ -576,6 +576,10 @@
           !selectedCells.size || saving || loading;
       }
       function selectCell(cell, employee, date) {
+        if (saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
         const key = employee.id + ':' + date;
         if (duplicateCells.has(key)) {
           status.textContent = 'No puedes seleccionar turnos duplicados hasta corregirlos.';
@@ -735,11 +739,19 @@
             cell.setAttribute('role', 'button');
             cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
             const edit = () => editShift(employee, date, plan);
-            cell.addEventListener('click', edit);
+            cell.addEventListener('click', event => {
+              if (event.ctrlKey || event.metaKey || event.shiftKey) selectCell(cell, employee, date);
+              else edit();
+            });
+            cell.addEventListener('contextmenu', event => {
+              event.preventDefault();
+              selectCell(cell, employee, date);
+            });
             cell.addEventListener('keydown', event => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                edit();
+                if (event.ctrlKey || event.metaKey || event.shiftKey) selectCell(cell, employee, date);
+                else edit();
               }
             });
             grid.append(cell);
