@@ -5,14 +5,11 @@ function requirePlanningMutationAccess(employeeId){
   if(!context?.companyId || !['ADMIN', 'CHIEF'].includes(context.role)){
     throw new Error('Se requiere una sesión de empresa válida.');
   }
-  // The current SPA persists one company-wide JSON document. Never allow
-  // area-assigned chiefs to mutate it before the isolated cutover.
-  if(context.role === 'CHIEF' && context.area){
-    throw new Error('Los cambios de turnos por área aún no están habilitados.');
-  }
-  if(context.role === 'CHIEF' && employeeId){
-    // Legacy chiefs remain on the legacy flow until the area rollout.
-    return context;
+  // Legacy PlanningModule writes the company-wide document. All CHIEF
+  // mutations must use ShiftControlAreaCalendar (area_state + RLS), including
+  // chiefs whose area assignment is missing or temporarily unavailable.
+  if(context.role === 'CHIEF'){
+    throw new Error('Utiliza el calendario de tu área para modificar turnos.');
   }
   return context;
 }
