@@ -843,6 +843,25 @@
         }
         updateSelection();
       }
+      // Match the legacy chief panel: paint a range by dragging across cells.
+      // The drag is selection-only; nothing is persisted until Apply is pressed.
+      let dragSelecting = false;
+      function beginDrag(event, cell, employee, date) {
+        if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey ||
+            stale || saving || loading) return;
+        dragSelecting = true;
+        selectCell(cell, employee, date);
+        // A drag must not accidentally open the single-cell editor on mouseup.
+        event.preventDefault();
+      }
+      function dragOver(cell, employee, date) {
+        if (!dragSelecting || stale || saving || loading) return;
+        const key = employee.id + ':' + date;
+        if (selectedCells.has(key)) return;
+        selectRange(cell, employee, date);
+      }
+      function endDrag() { dragSelecting = false; }
+      window.addEventListener('mouseup', endDrag);
       function commitSelection(code) {
         if (stale) return;
         if (!selectedCells.size || saving || loading) return;
