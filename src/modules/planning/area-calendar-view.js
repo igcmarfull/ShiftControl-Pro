@@ -20,10 +20,40 @@
     if (!document.getElementById('shiftcontrol-area-chief-style')) {
       const style = el('style');
       style.id = 'shiftcontrol-area-chief-style';
-      style.textContent = 'body.shiftcontrol-area-chief-mode .view,' +
-        'body.shiftcontrol-area-chief-mode .sidebar,' +
-        'body.shiftcontrol-area-chief-mode .mobile-nav {' +
-        'display:none!important}';
+      style.textContent = `
+        body.shiftcontrol-area-chief-mode .view,
+        body.shiftcontrol-area-chief-mode .sidebar,
+        body.shiftcontrol-area-chief-mode .mobile-nav {display:none!important}
+        body.shiftcontrol-area-chief-mode {min-height:100vh!important;overflow:auto!important}
+        body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {
+          box-sizing:border-box;position:relative!important;inset:auto!important;
+          display:block!important;visibility:visible!important;
+          width:min(1180px,calc(100% - 40px));min-height:70vh;
+          margin:32px auto!important;padding:32px!important;
+          border:1px solid rgba(148,163,184,.2);border-radius:20px;
+          background:#111827;color:#f8fafc;
+          box-shadow:0 20px 65px rgba(0,0,0,.24);
+          font-family:inherit;z-index:2;
+        }
+        #shiftcontrol-area-calendar h2 {font-size:clamp(24px,3vw,34px);font-weight:750;margin:0 0 20px}
+        #shiftcontrol-area-calendar .area-toolbar {display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+        #shiftcontrol-area-calendar button,#shiftcontrol-area-calendar select,
+        #shiftcontrol-area-calendar input {font:inherit;min-height:42px;border-radius:9px;padding:9px 12px}
+        #shiftcontrol-area-calendar button {background:#2563eb;border:1px solid #3b82f6;color:white;cursor:pointer;font-weight:600}
+        #shiftcontrol-area-calendar button:hover {background:#1d4ed8}
+        #shiftcontrol-area-calendar button:disabled {opacity:.5;cursor:wait}
+        #shiftcontrol-area-calendar .area-status {color:#cbd5e1;margin:0 0 20px}
+        #shiftcontrol-area-calendar .area-table-wrap {overflow-x:auto;border:1px solid #334155;border-radius:12px}
+        #shiftcontrol-area-calendar table {width:100%;border-collapse:collapse;min-width:550px}
+        #shiftcontrol-area-calendar th {background:#1e293b;color:#cbd5e1;text-align:left;font-size:13px}
+        #shiftcontrol-area-calendar td,#shiftcontrol-area-calendar th {padding:14px 16px;border-bottom:1px solid #334155}
+        #shiftcontrol-area-calendar tr:last-child td {border-bottom:0}
+        #shiftcontrol-area-calendar .area-form {display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:24px}
+        #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
+        #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
+        #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        @media(max-width:640px){body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {width:calc(100% - 20px);margin:10px auto!important;padding:18px!important}}
+      `;
       document.head.append(style);
     }
     if (!authorized) {
@@ -51,9 +81,11 @@
     container.style.margin = '18px';
     container.append(el('h2', 'Calendario · ' + areas[context.area]));
     const status = el('p', 'Cargando turnos del área…');
+    status.className = 'area-status';
     status.setAttribute('role', 'status');
     const content = el('div');
     const controls = el('div');
+    controls.className = 'area-toolbar';
     let saving = false;
     let loading = false;
     const reload = el('button', 'Actualizar turnos');
@@ -128,8 +160,17 @@
         row.append(cell);
         table.append(row);
       }
-      content.append(table);
+      const tableWrap = el('div');
+      tableWrap.className = 'area-table-wrap';
+      tableWrap.append(table);
+      content.append(tableWrap);
+      if (!view.plans.length) {
+        const empty = el('p', view.employees.length ? 'Todavía no hay turnos asignados. Agrega el primero abajo.' : 'No hay trabajadores asignados a esta área. Solicita al administrador que los asigne.');
+        empty.className = 'area-empty';
+        content.append(empty);
+      }
       const form = el('form');
+      form.className = 'area-form';
       const worker = el('select');
       worker.required = true;
       for (const employee of view.employees) {
@@ -148,7 +189,13 @@
       }
       const submit = el('button', 'Guardar turno');
       submit.type = 'submit';
-      form.append(worker, date, shift, submit);
+      for (const [title, field] of [['Trabajador', worker], ['Fecha', date], ['Turno', shift]]) {
+        const label = el('label', title);
+        label.append(field);
+        form.append(label);
+      }
+      submit.disabled = view.employees.length === 0;
+      form.append(submit);
       form.addEventListener('submit', async event => {
         event.preventDefault();
         if (!worker.value || !date.value) return;
