@@ -674,7 +674,17 @@
         save.type = 'button';
         const cancel = el('button', 'Cancelar');
         cancel.type = 'button';
-        cancel.addEventListener('click', () => editor.remove());
+        const closeEditor = () => editor.remove();
+        cancel.addEventListener('click', closeEditor);
+        picker.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            closeEditor();
+          } else if (event.key === 'Enter') {
+            event.preventDefault();
+            save.click();
+          }
+        });
         save.addEventListener('click', () => {
           if (saving || loading) return;
           const latest = window.AuthContext?.get?.();
