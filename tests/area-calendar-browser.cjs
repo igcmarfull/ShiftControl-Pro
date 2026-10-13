@@ -53,6 +53,21 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .area-staffing-summary').count(), 1,
       'Chief must see the area-only staffing coverage summary');
+    // Worker search must filter rows in both the original monthly grid and
+    // the weekly grid without exposing workers from another area.
+    const workerSearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
+    await workerSearch.fill('inexistente');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row:visible').count(), 0);
+    await workerSearch.fill('ESTACION');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row:visible').count(), 1);
+    await workerSearch.fill('');
+    await page.getByRole('button', { name: 'Vista semanal' }).click();
+    const weeklySearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
+    await weeklySearch.fill('inexistente');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .week-row:visible').count(), 0);
+    await weeklySearch.fill('ESTACION');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .week-row:visible').count(), 1);
+    await page.getByRole('button', { name: 'Planificación mensual' }).click();
     // Chief bulk editor must be available without crossing area boundaries.
     assert.equal(await page.getByRole('button', { name: 'Asignar rango de turnos' }).count(), 1);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .area-form').count(), 3);
