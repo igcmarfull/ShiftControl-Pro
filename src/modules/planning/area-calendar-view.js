@@ -674,7 +674,13 @@
         save.type = 'button';
         const cancel = el('button', 'Cancelar');
         cancel.type = 'button';
-        const closeEditor = () => editor.remove();
+        const closeEditor = () => {
+          editor.remove();
+          if (document.activeElement === picker || document.activeElement === cancel) {
+            const cell = content.querySelector('[data-employee-id="' + employee.id + '"][data-date="' + date + '"]');
+            if (cell?.focus) cell.focus();
+          }
+        };
         cancel.addEventListener('click', closeEditor);
         picker.addEventListener('keydown', event => {
           if (event.key === 'Escape') {
