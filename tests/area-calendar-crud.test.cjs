@@ -39,12 +39,17 @@ async function main() {
     await assert.rejects(api.upsertPlan({
       employeeId: 'other', date: '2026-10-13'
     }));
+    await api.upsertPlan({ employeeId: 'own', date: '2026-10-15', code: 'C',
+      id: 'injected-id', area: 'TIENDA', privateNotes: 'should-not-persist' });
+    assert.equal(remote.data.plans.find(p => p.date === '2026-10-15').id !== 'injected-id', true);
+    assert.equal(Object.hasOwn(remote.data.plans.find(p => p.date === '2026-10-15'), 'privateNotes'), false);
+    await api.removePlan('own', '2026-10-15');
     await assert.rejects(api.upsertPlan({ employeeId: 'own', date: '2026-02-31', code: 'A' }));
     await assert.rejects(api.removePlan('own', '2026-02-31'));
-    assert.equal(writes, 2);
+    assert.equal(writes, 4);
     await api.removePlan('own', '2026-10-13');
     assert.equal(remote.data.plans.length, 0);
-    assert.equal(writes, 3);
+    assert.equal(writes, 5);
     await api.removePlan('own', '2026-10-13');
     assert.equal(writes, 3);
   }
