@@ -187,6 +187,13 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-20"]').count(), 1);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-21"]').count(), 0);
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    // A date outside the displayed month must never select any cell.
+    await page.getByRole('textbox', { name: 'Fecha a seleccionar' }).evaluate(input => {
+      input.value = '2026-11-01';
+    });
+    await page.getByRole('button', { name: 'Seleccionar fecha', exact: true }).click();
+    await page.getByText('Selecciona una fecha válida del mes mostrado.').waitFor();
+    await page.getByText('0 celdas seleccionadas').waitFor();
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
