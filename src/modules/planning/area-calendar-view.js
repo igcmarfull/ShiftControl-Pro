@@ -8,6 +8,7 @@
   let selectedWeek = 0;
   let displayMode = 'monthly';
   let refreshActive = null;
+  let cleanupAdminListeners = null;
   const el = (tag, text) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = String(text);
@@ -114,6 +115,8 @@
         return;
       }
       generation++;
+      cleanupAdminListeners?.();
+      cleanupAdminListeners = null;
       refreshActive = null;
       if (root) root.remove();
       document.body.classList.remove('shiftcontrol-area-chief-mode');
@@ -159,6 +162,10 @@
       };
       window.addEventListener('focus', refreshWhenReturning);
       document.addEventListener('visibilitychange', refreshWhenReturning);
+      cleanupAdminListeners = () => {
+        window.removeEventListener('focus', refreshWhenReturning);
+        document.removeEventListener('visibilitychange', refreshWhenReturning);
+      };
       async function refreshAdmin() {
         const request = ++adminRequest;
         lastAdminRefresh = Date.now();
@@ -282,6 +289,8 @@
     }
     if (!authorized) {
       generation++;
+      cleanupAdminListeners?.();
+      cleanupAdminListeners = null;
       refreshActive = null;
       if (root) root.remove();
       document.body.classList.toggle('shiftcontrol-area-chief-mode', pendingArea);
@@ -299,6 +308,8 @@
       return;
     }
     generation++;
+    cleanupAdminListeners?.();
+    cleanupAdminListeners = null;
     refreshActive = null;
     if (root) root.remove();
     // Do not present this isolated fallback as the original admin planner.
