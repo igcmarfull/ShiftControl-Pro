@@ -81,6 +81,9 @@
         #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
         #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
         #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        #shiftcontrol-area-calendar .area-worker-filter {display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
+        #shiftcontrol-area-calendar .area-employee-search {width:min(320px,100%)}
+        #shiftcontrol-area-calendar .area-worker-count {color:#cbd5e1;font-size:13px}
         #shiftcontrol-area-calendar .area-editor-operational {color:#fbbf24;font-size:13px;flex-basis:100%}
         #shiftcontrol-area-calendar .area-single-editor:focus-within {border-color:#60a5fa}
         #shiftcontrol-area-calendar button:focus-visible,
@@ -690,6 +693,19 @@
       });
       selectionBar.append(selectionCount, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
+      // Match the original planner's quick worker navigation. The filter is
+      // local to this area snapshot and never broadens employee access.
+      const employeeSearch = el('input');
+      employeeSearch.type = 'search';
+      employeeSearch.placeholder = 'Buscar trabajador del área…';
+      employeeSearch.setAttribute('aria-label', 'Buscar trabajador del área');
+      employeeSearch.className = 'area-employee-search';
+      const workerCount = el('span', view.employees.length + ' trabajadores');
+      workerCount.className = 'area-worker-count';
+      const workerFilter = el('div');
+      workerFilter.className = 'area-worker-filter';
+      workerFilter.append(employeeSearch, workerCount);
+      content.append(workerFilter);
       const wrapper = el('div');
       wrapper.className = 'table-wrap';
       wrapper.style.overflowX = 'auto';
@@ -824,6 +840,19 @@
         wrapper.append(grid);
       }
       content.append(wrapper);
+      employeeSearch.addEventListener('input', () => {
+        const query = employeeSearch.value.trim().toLocaleLowerCase('es-CL');
+        let visible = 0;
+        for (const row of wrapper.querySelectorAll('.cal-row, .week-row')) {
+          const name = row.querySelector('.cal-name, .week-name');
+          const match = !query || (name?.textContent || '').toLocaleLowerCase('es-CL').includes(query);
+          row.hidden = !match;
+          row.style.display = match ? '' : 'none';
+          if (match) visible++;
+        }
+        workerCount.textContent = visible + ' de ' + view.employees.length + ' trabajadores';
+      });
+
       // Monthly staffing summary is derived exclusively from the loaded
       // area snapshot. No legacy global company data is consulted.
       const summaryPanel = el('section');
