@@ -157,12 +157,15 @@
       const monthly = el('button', 'Planificación mensual');
       const weekly = el('button', 'Vista semanal');
       const monthPicker = el('input');
+      const monthLabel = el('span', selectedMonth);
+      monthLabel.className = 'area-month-label';
       monthPicker.type = 'month';
       monthPicker.value = selectedMonth;
       monthPicker.setAttribute('aria-label', 'Mes de planificación');
       monthPicker.addEventListener('change', () => {
         if (/^\d{4}-\d{2}$/.test(monthPicker.value)) {
           selectedMonth = monthPicker.value;
+          monthLabel.textContent = selectedMonth;
           selectedWeek = 0;
           refresh();
         }
@@ -188,7 +191,7 @@
         nextWeek.addEventListener('click', () => { selectedWeek++; refresh(); });
         toolbar.append(prevWeek, nextWeek);
       }
-      toolbar.append(monthly, weekly, previous, monthPicker, next);
+      toolbar.append(monthly, weekly, previous, monthPicker, next, monthLabel);
       content.append(toolbar);
       const [year, month] = selectedMonth.split('-').map(Number);
       const days = new Date(year, month, 0).getDate();
