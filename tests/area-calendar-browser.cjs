@@ -214,6 +214,23 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Aplicar a selección' }).click();
     await page.getByText('No hay cambios: los turnos seleccionados ya tienen ese valor.').waitFor();
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    // A rejected write must preserve disabled controls and permit a retry.
+    await page.evaluate(() => {
+      window.__originalApplyPlans = window.ShiftControlAreaCalendar.applyPlanChanges;
+      window.ShiftControlAreaCalendar.applyPlanChanges = async () => {
+        throw new Error('Simulated save failure');
+      };
+    });
+    await page.getByRole('button', { name: 'Seleccionar turnos asignados' }).click();
+    await page.getByRole('combobox', { name: 'Turno para selección' }).selectOption('B');
+    await page.getByRole('button', { name: 'Aplicar a selección' }).click();
+    await page.getByText('No se guardó: Simulated save failure').waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Aplicar a selección' }).isDisabled(), false);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    assert.equal(await page.getByRole('button', { name: 'Aplicar a selección' }).isDisabled(), true);
+    await page.evaluate(() => {
+      window.ShiftControlAreaCalendar.applyPlanChanges = window.__originalApplyPlans;
+    });
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
