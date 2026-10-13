@@ -34,8 +34,12 @@
         /* Chief-only links to hidden company-wide screens must not lead
            users into blank pages. Keep the navigation shell, but make
            the isolated planner the active accessible destination. */
-        body.shiftcontrol-area-chief-mode .sidebar [data-view],
-        body.shiftcontrol-area-chief-mode .mobile-nav [data-view] {cursor:pointer}
+        body.shiftcontrol-area-chief-mode .sidebar [data-view]:not([data-view="planning"]),
+        body.shiftcontrol-area-chief-mode .mobile-nav [data-view]:not([data-view="planning"]) {
+          display:none!important
+        }
+        body.shiftcontrol-area-chief-mode .sidebar [data-view="planning"],
+        body.shiftcontrol-area-chief-mode .mobile-nav [data-view="planning"] {cursor:pointer}
         #shiftcontrol-area-calendar[data-mode="admin"] {
           max-width:calc(100% - 36px);margin:18px auto!important;
           padding:24px;background:#111827;color:#f8fafc;
@@ -307,6 +311,19 @@
     document.body.classList.add('shiftcontrol-area-chief-mode');
 
     document.body.append(container);
+    // Keep the original navigation usable for chiefs without routing them
+    // into hidden, company-wide legacy screens.
+    for (const nav of document.querySelectorAll(
+      '.sidebar [data-view="planning"], .mobile-nav [data-view="planning"]')) {
+      if (nav.dataset.areaCalendarBound === 'true') continue;
+      nav.dataset.areaCalendarBound = 'true';
+      nav.addEventListener('click', event => {
+        if (window.AuthContext?.get?.role !== 'CHIEF') return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        document.getElementById(ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, true);
+    }
     refreshActive = refresh;
     refresh();
     async function refresh() {
