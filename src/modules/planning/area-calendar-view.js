@@ -29,6 +29,8 @@
         /* Preserve the original navigation shell while preventing access
            to legacy company-wide views through the area chief UI. */
         body.shiftcontrol-area-chief-mode .view {display:none!important}
+        body.shiftcontrol-area-chief-mode #planning.view {display:block!important}
+        body.shiftcontrol-area-chief-mode #planning > :not(#shiftcontrol-area-calendar) {display:none!important}
         /* Chief calendar uses the existing application navigation shell. */
         body.shiftcontrol-area-chief-mode .sidebar,
         body.shiftcontrol-area-chief-mode .mobile-nav {visibility:visible!important}
@@ -150,6 +152,30 @@
         #shiftcontrol-area-calendar .area-quick-shift-menu button {
           background:#1e293b;border:1px solid #475569
         }
+        /* Dashboard visual refresh: navy canvas, readable cards and a dense
+           calendar, without changing any area-scoped persistence logic. */
+        body.shiftcontrol-area-chief-mode #planning {background:#0b1423!important;min-height:100vh;padding:14px 20px!important}
+        body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {
+          width:100%;margin:0!important;padding:22px 24px!important;
+          background:#0c1728!important;border:1px solid #263750!important;
+          border-radius:14px!important;color:#f1f5f9!important;
+        }
+        #shiftcontrol-area-calendar h2 {font-size:clamp(23px,2.4vw,30px);font-weight:750;letter-spacing:-.035em;margin:0 0 4px}
+        #shiftcontrol-area-calendar .area-dashboard-subtitle {color:#9fb0c8;font-size:13px;margin:0 0 22px}
+        #shiftcontrol-area-calendar .area-toolbar {background:#101f34;border:1px solid #293a52;border-radius:11px;padding:10px 12px;margin:0 0 14px;gap:9px}
+        #shiftcontrol-area-calendar button {background:#192a40;border:1px solid #34465f;border-radius:8px;color:#e5edf8;font-weight:600}
+        #shiftcontrol-area-calendar button:hover {background:#25415f}
+        #shiftcontrol-area-calendar .area-toolbar button:first-child {background:#1265df;border-color:#2077f3;color:white}
+        #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {background:#15263b;border:1px solid #354963;color:#e9f1fb;border-radius:8px}
+        #shiftcontrol-area-calendar .area-status {color:#94a9c5;font-size:12px;margin:10px 0}
+        #shiftcontrol-area-calendar .table-wrap {background:#0b1524;border:1px solid #2b3c55;border-radius:12px;overflow:auto!important}
+        #shiftcontrol-area-calendar .calendar-grid {border-color:#2b3c55}
+        #shiftcontrol-area-calendar .area-worker-filter {padding:10px 0}
+        #shiftcontrol-area-calendar .area-staffing-summary {background:#101e32;border:1px solid #2b3c55;border-radius:12px;padding:14px}
+        #shiftcontrol-area-calendar .area-advanced-tools {background:#111e30;border-color:#2d405a;border-radius:10px}
+        #shiftcontrol-area-calendar .area-empty {background:#132238;border:1px dashed #49617e;border-radius:10px;margin:14px 0}
+        @media(max-width:760px) {body.shiftcontrol-area-chief-mode #planning {padding:8px!important}
+          body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {padding:14px!important}}
         @media(max-width:640px){body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {width:calc(100% - 20px);margin:10px auto!important;padding:18px!important}}
       `;
       document.head.append(style);
@@ -436,7 +462,10 @@
     container.dataset.area = context.area;
     container.className = 'panel';
     container.style.margin = '18px';
-    container.append(el('h2', 'Calendario · ' + areas[context.area]));
+    container.append(el('h2', 'Planificación de turnos'));
+    const subtitle = el('p', 'Gestiona los turnos del personal · ' + areas[context.area]);
+    subtitle.className = 'area-dashboard-subtitle';
+    container.append(subtitle);
     const status = el('p', 'Cargando turnos del área…');
     status.className = 'area-status';
     status.setAttribute('role', 'status');
@@ -467,7 +496,10 @@
     // This only masks presentation; Supabase RLS remains mandatory.
     document.body.classList.add('shiftcontrol-area-chief-mode');
 
-    document.body.append(container);
+    // Render inside the original planning workspace, not below the entire
+    // application body (which previously left a blank main panel).
+    const planningWorkspace = document.getElementById('planning');
+    (planningWorkspace || document.body).append(container);
     // Keep the original navigation usable for chiefs without routing them
     // into hidden, company-wide legacy screens.
     for (const nav of (document.querySelectorAll?.(
