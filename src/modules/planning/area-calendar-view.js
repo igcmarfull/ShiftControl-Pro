@@ -743,6 +743,15 @@
       selectEmpty.type = 'button';
       const selectAssigned = el('button', 'Seleccionar turnos asignados');
       selectAssigned.type = 'button';
+      const selectMatching = el('button', 'Seleccionar turno por código');
+      selectMatching.type = 'button';
+      const matchingCode = el('select');
+      matchingCode.setAttribute('aria-label', 'Código a buscar');
+      for (const code of validCodes) {
+        const option = el('option', code);
+        option.value = code;
+        matchingCode.append(option);
+      }
       const selectWeekends = el('button', 'Seleccionar fines de semana');
       selectWeekends.type = 'button';
       const clearSelection = el('button', 'Limpiar selección');
@@ -923,6 +932,29 @@
         }
         updateSelection();
       });
+      // Target a specific existing shift code for bulk corrections without
+      // touching other assignments, blank dates, or filtered-out workers.
+      selectMatching.addEventListener('click', () => {
+        if (saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        const code = matchingCode.value;
+        if (!validCodes.includes(code)) return;
+        for (const cell of wrapper.querySelectorAll('.cal-cell[role="button"], .week-cell[role="button"]')) {
+          const row = cell.closest('.cal-row, .week-row');
+          if (row?.hidden || row?.style.display === 'none') continue;
+          const employeeId = cell.dataset.employeeId;
+          const date = cell.dataset.date;
+          if (!employeeId || !date) continue;
+          const key = employeeId + ':' + date;
+          if (duplicateCells.has(key) || selectedCells.has(key) || plans.get(key)?.code !== code) continue;
+          selectedCells.set(key, { employeeId, date });
+          cell.classList.add('selected');
+          cell.setAttribute('aria-pressed', 'true');
+        }
+        updateSelection();
+      });
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
       clearSelection.addEventListener('click', () => {
@@ -942,7 +974,7 @@
         event.preventDefault();
         clearSelection.click();
       });
-      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, selectionCode, applySelection, removeSelection, clearSelection);
+      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
       // local to this area snapshot and never broadens employee access.
