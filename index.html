@@ -11990,7 +11990,31 @@ function savePlanCell(code){
   renderAll();
 }
 function openBulkModal(){fillEmployeeSelects();const p=periodPrefix();bulkFrom.value=p+'-01';bulkTo.value=p+'-'+String(new Date(Number(p.slice(0,4)),Number(p.slice(5,7)),0).getDate()).padStart(2,'0');openModal('bulkModal')}
-bulkForm.addEventListener('submit',e=>{e.preventDefault();snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=PlanningModule.find(id,date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};PlanningModule.create(data);i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
+bulkForm.addEventListener('submit',e=>{e.preventDefault();
+  if(getAppRole?.()==='chief'){
+    const ids=[...bulkEmployees.selectedOptions].map(option=>option.value);
+    if(!ids.length)return alert('Selecciona al menos un trabajador.');
+    const from=new Date(bulkFrom.value+'T12:00:00Z');
+    const to=new Date(bulkTo.value+'T12:00:00Z');
+    const pattern=bulkPattern.value.split(',').map(code=>code.trim());
+    if(!Number.isFinite(from.getTime())||!Number.isFinite(to.getTime())||from>to||
+      !pattern.length||pattern.some(code=>!['A','B','C','D','L','V','P','X','Libre'].includes(code))){
+      return alert('Revisa las fechas y los códigos del patrón.');
+    }
+    const changes=[];
+    for(const id of ids){
+      let index=0;
+      for(let day=new Date(from);day<=to;day.setUTCDate(day.getUTCDate()+1)){
+        changes.push({employeeId:id,date:day.toISOString().slice(0,10),code:pattern[index++%pattern.length]});
+        if(changes.length>2000)return alert('El rango supera el máximo de 2.000 turnos.');
+      }
+    }
+    window.ShiftControlAreaCalendar.applyPlanChanges(changes)
+      .then(()=>{closeModal('bulkModal');window.ShiftControlAreaCalendarView?.mount?.();})
+      .catch(error=>alert('No se guardó la asignación: '+(error?.message||error)));
+    return;
+  }
+  snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=PlanningModule.find(id,date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};PlanningModule.create(data);i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
 
 function weekMonday(dateStr){
   const d=new Date((dateStr||isoToday)+'T12:00:00');
