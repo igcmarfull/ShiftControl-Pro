@@ -450,8 +450,11 @@
           error?.message || 'No se pudo consultar el calendario.';
         return;
       } finally {
-        loading = false;
-        if (!saving && token === generation) reload.disabled = false;
+        // A stale request must not unlock the controls of a newer session.
+        if (token === generation) {
+          loading = false;
+          if (!saving) reload.disabled = false;
+        }
       }
       const now = window.AuthContext?.get?.();
       if (token !== generation || now?.userId !== context.userId ||
