@@ -773,7 +773,10 @@
       removeSelection.type = 'button';
       removeSelection.disabled = true;
       function updateSelection() {
-        selectionCount.textContent = selectedCells.size + ' celdas seleccionadas';
+        const assignedCount = [...selectedCells.keys()].filter(key => plans.has(key)).length;
+        const emptyCount = selectedCells.size - assignedCount;
+        selectionCount.textContent = selectedCells.size + ' celdas seleccionadas' +
+          (selectedCells.size ? ' (' + assignedCount + ' con turno, ' + emptyCount + ' sin turno)' : '');
         applySelection.disabled = clearSelection.disabled = removeSelection.disabled =
           !selectedCells.size || saving || loading;
       }
