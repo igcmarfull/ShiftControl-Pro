@@ -151,6 +151,14 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .week-cell.selected').count(), 5);
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByRole('button', { name: 'Planificación mensual' }).click();
+    // Shift-click selects the contiguous span, including both endpoints.
+    // Ctrl-click still toggles individual cells and establishes the anchor.
+    const rangeCells = page.locator('#shiftcontrol-area-calendar .cal-row').first().locator('.cal-cell');
+    await rangeCells.nth(1).dispatchEvent('click', { ctrlKey: true });
+    await rangeCells.nth(5).dispatchEvent('click', { shiftKey: true });
+    await page.getByText('5 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected').count(), 5);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     // Multi-cell edits must be sent as one authorized area-scoped write.
     const firstCells = page.locator('#shiftcontrol-area-calendar .cal-row').first().locator('.cal-cell');
     // The test fixture does not load the legacy grid CSS, so its cells can
