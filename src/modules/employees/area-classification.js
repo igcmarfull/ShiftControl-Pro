@@ -41,6 +41,40 @@
       `Estación: ${summary.ESTACION} · Tienda: ${summary.TIENDA} · Sin asignar: ${summary.UNASSIGNED} · Total: ${summary.total}`
     ));
 
+    // ADMIN-only dry-run of the full legacy operational snapshot.
+    // Never writes to area_state or changes the existing calendar.
+    const preview = window.ShiftControlAreaPartition;
+    const state = window.ShiftControlState;
+    if (preview?.partitionEmployeesAndPlans && preview?.migrationReadiness &&
+        typeof state?.get === 'function') {
+      const section = create('section');
+      section.append(create('h3', 'Diagnóstico previo a separar las áreas'));
+      try {
+        const partition = preview.partitionEmployeesAndPlans(state.get());
+        const report = preview.migrationReadiness(partition);
+        section.append(create('p', report.ready
+          ? 'Sin registros pendientes de clasificación. La migración aún no se ha ejecutado.'
+          : 'Migración pendiente: existen registros que requieren revisión.'));
+        const labels = {
+          unassignedEmployees: 'Trabajadores sin área',
+          unassignedPlans: 'Turnos de trabajadores sin área',
+          unassignedExecutions: 'Asistencias de trabajadores sin área',
+          unassignedAdditional: 'Jornadas adicionales sin área',
+          unassignedAbsences: 'Ausencias de trabajadores sin área',
+          unresolvedPlans: 'Turnos sin trabajador identificado',
+          unresolvedExecutions: 'Asistencias sin trabajador identificado',
+          unresolvedAdditional: 'Jornadas adicionales sin trabajador identificado',
+          unresolvedAbsences: 'Ausencias sin trabajador identificado'
+        };
+        for (const item of report.blockers) {
+          section.append(create('p', labels[item.name] + ': ' + item.count));
+        }
+      } catch (error) {
+        section.append(create('p', 'No se pudo verificar: ' + (error?.message || 'datos inválidos')));
+      }
+      container.append(section);
+    }
+
     const pending = employees.getUnassigned();
     if (!pending.length) {
       container.append(create('p', 'No hay trabajadores pendientes de clasificación.'));
