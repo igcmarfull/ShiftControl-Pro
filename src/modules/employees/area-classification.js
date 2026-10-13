@@ -5,7 +5,7 @@
   'use strict';
 
   const AREA_LABELS = Object.freeze({
-    ESTACION: 'Estación de servicio',
+    ESTACION: 'Isla',
     TIENDA: 'Tienda de conveniencia'
   });
 
@@ -38,7 +38,7 @@
 
     const summary = employees.getAreaSummary();
     container.append(create('p',
-      `Estación: ${summary.ESTACION} · Tienda: ${summary.TIENDA} · Sin asignar: ${summary.UNASSIGNED} · Total: ${summary.total}`
+      `Isla: ${summary.ESTACION} · Tienda: ${summary.TIENDA} · Sin asignar: ${summary.UNASSIGNED} · Total: ${summary.total}`
     ));
 
     // ADMIN-only dry-run of the full legacy operational snapshot.
@@ -84,7 +84,7 @@
           try {
             const fresh = preview.prepareFreshCalendars(snapshot);
             freshSection.append(create('p',
-              'Trabajadores conservados: Estación ' + fresh.ESTACION.employees.length +
+              'Trabajadores conservados: Isla ' + fresh.ESTACION.employees.length +
               ' · Tienda ' + fresh.TIENDA.employees.length));
             freshSection.append(create('p',
               'Registros históricos de prueba que NO se copiarían: ' +
@@ -130,7 +130,7 @@
     }
 
     if (typeof employees.assignUnassignedToArea === 'function') {
-      const bulk = create('button', 'Asignar todos los pendientes a Estación');
+      const bulk = create('button', 'Asignar todos los pendientes a Isla');
       bulk.type = 'button';
       const bulkStatus = create('span');
       bulkStatus.setAttribute('role', 'status');
@@ -140,12 +140,12 @@
           const ids = pending.map(employee => employee.id);
           if (!window.confirm(
             '¿Confirmas que los ' + ids.length +
-            ' trabajadores SIN ÁREA pertenecen a Estación? ' +
+            ' trabajadores SIN ÁREA pertenecen a Isla? ' +
             'No se modificarán trabajadores ya asignados a Tienda.'
           )) return;
           const count = employees.assignUnassignedToArea('ESTACION', ids);
           render(container);
-          const notice = create('p', count + ' trabajadores clasificados en Estación.');
+          const notice = create('p', count + ' trabajadores clasificados en Isla.');
           notice.setAttribute('role', 'status');
           container.append(notice);
         } catch (error) {
