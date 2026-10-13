@@ -361,6 +361,40 @@
     return data ? structuredClone(data) : null;
   }
 
+  // Reject accidental cross-area or orphan operational records before an
+  // area-scoped write. The server must still enforce row-level authorization.
+  function validateOwnAreaPayload(data, area) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('Se requiere un estado de área válido.');
+    }
+    const collections = ['employees', 'plans', 'executions', 'additional', 'absences'];
+    for (const name of collections) {
+      if (!Array.isArray(data[name])) {
+        throw new Error('Falta una colección de área válida: ' + name);
+      }
+    }
+    const ids = new Set();
+    for (const employee of data.employees) {
+      if (!employee || employee.id == null || employee.area !== area ||
+          ids.has(employee.id)) {
+        throw new Error('Trabajador duplicado o fuera del área autorizada.');
+      }
+      ids.add(employee.id);
+    }
+    for (const name of collections.slice(1)) {
+      for (const item of data[name]) {
+        if (!item || !ids.has(item.employeeId)) {
+          throw new Error('Registro de ' + name + ' sin trabajador del área.');
+        }
+      }
+    }
+    // Shared/unassigned data belongs to ADMIN and must never be included.
+    if ('UNASSIGNED' in data || 'sharedHolidays' in data ||
+        'unresolvedPlans' in data || 'holidays' in data) {
+      throw new Error('El estado contiene datos fuera del área.');
+    }
+  }
+
   // Explicit area-scoped RPC, not connected to legacy save() or global state.
   // Optimistic revision prevents overwriting another editor's changes.
   async function writeOwnAreaState(key, nextData, expectedRevision) {
@@ -380,6 +414,7 @@
          (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1))) {
       throw new Error('Se requiere una revisión válida o null para crear.');
     }
+    validateOwnAreaPayload(nextData, context.area);
     const payload = structuredClone(nextData);
     // The RPC independently checks company membership and area on the server.
     const { data, error } = await getClient().rpc('save_area_state', {
