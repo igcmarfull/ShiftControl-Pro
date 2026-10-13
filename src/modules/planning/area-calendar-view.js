@@ -318,7 +318,7 @@
       if (nav.dataset.areaCalendarBound === 'true') continue;
       nav.dataset.areaCalendarBound = 'true';
       nav.addEventListener('click', event => {
-        if (window.AuthContext?.get?.role !== 'CHIEF') return;
+        if (window.AuthContext?.get?.()?.role !== 'CHIEF') return;
         event.preventDefault();
         event.stopImmediatePropagation();
         document.getElementById(ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
