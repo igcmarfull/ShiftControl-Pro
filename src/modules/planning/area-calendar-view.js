@@ -81,6 +81,11 @@
         #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
         #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
         #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        #shiftcontrol-area-calendar .area-single-editor:focus-within {border-color:#60a5fa}
+        #shiftcontrol-area-calendar button:focus-visible,
+        #shiftcontrol-area-calendar select:focus-visible,
+        #shiftcontrol-area-calendar .cal-cell:focus-visible,
+        #shiftcontrol-area-calendar .week-cell:focus-visible {outline:3px solid #93c5fd;outline-offset:2px}
         #shiftcontrol-area-calendar .area-single-editor {display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px;margin:12px 0;border:1px solid #64748b;border-radius:8px;background:#1e293b}
         #shiftcontrol-area-calendar .area-single-editor select {width:auto;min-width:130px}
         #shiftcontrol-area-calendar .area-calendar-selection {display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 18px}
