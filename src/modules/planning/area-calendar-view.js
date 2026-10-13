@@ -843,6 +843,61 @@
         }
         updateSelection();
       }
+      // Context menu restores the chief's quick shift assignment workflow.
+      // A single right click targets one cell; a right click within an existing
+      // multi-selection keeps that selection so an entire block can be assigned.
+      const quickMenu = el('div');
+      quickMenu.className = 'area-quick-shift-menu';
+      quickMenu.setAttribute('role', 'menu');
+      quickMenu.setAttribute('aria-label', 'Asignación rápida de turnos');
+      quickMenu.hidden = true;
+      quickMenu.style.cssText = 'position:fixed;z-index:9999;max-height:65vh;overflow:auto;background:var(--card,#fff);border:1px solid #aaa;border-radius:8px;padding:8px;box-shadow:0 6px 20px #0003';
+      const quickTitle = el('strong', 'Asignar turno');
+      quickMenu.append(quickTitle);
+      const quickActions = el('div');
+      quickActions.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(48px,1fr));gap:5px;margin-top:8px';
+      for (const code of [...validCodes, null]) {
+        const button = el('button', code === null ? 'Quitar turno' : code);
+        button.type = 'button';
+        button.setAttribute('role', 'menuitem');
+        button.addEventListener('click', () => {
+          quickMenu.hidden = true;
+          commitSelection(code);
+        });
+        quickActions.append(button);
+      }
+      quickMenu.append(quickActions);
+      content.append(quickMenu);
+      function closeQuickMenu() { quickMenu.hidden = true; }
+      function openQuickMenu(event, cell, employee, date) {
+        event.preventDefault();
+        if (stale || saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        const key = employee.id + ':' + date;
+        if (duplicateCells.has(key)) return;
+        if (!selectedCells.has(key)) {
+          for (const node of content.querySelectorAll('[data-employee-id][data-date].selected')) {
+            node.classList.remove('selected');
+            node.setAttribute('aria-pressed', 'false');
+          }
+          selectedCells.clear();
+          selectionAnchor = null;
+          selectCell(cell, employee, date);
+        }
+        quickTitle.textContent = selectedCells.size + ' celda(s) · asignar turno';
+        quickMenu.hidden = false;
+        quickMenu.style.left = Math.max(8, Math.min(event.clientX, window.innerWidth - 290)) + 'px';
+        quickMenu.style.top = Math.max(8, Math.min(event.clientY, window.innerHeight - 300)) + 'px';
+        quickActions.querySelector('button')?.focus();
+      }
+      content.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeQuickMenu();
+      });
+      content.addEventListener('click', event => {
+        if (!quickMenu.contains(event.target)) closeQuickMenu();
+      });
       // Ordinary clicks still open the editor. A drag starts only after the
       // pointer enters a second cell with the primary mouse button held.
       let dragOrigin = null;
@@ -1191,10 +1246,7 @@
                 else if (e.ctrlKey || e.metaKey) selectCell(cell, employee, date);
                 else edit();
               });
-              cell.addEventListener('contextmenu', e => {
-                e.preventDefault();
-                selectCell(cell, employee, date);
-              });
+              cell.addEventListener('contextmenu', e => openQuickMenu(e, cell, employee, date));
               cell.addEventListener('mousedown', e => beginDrag(e, cell, employee, date));
               cell.addEventListener('mouseenter', event => dragOver(cell, employee, date, event));
               cell.addEventListener('keydown', e => {
@@ -1258,10 +1310,7 @@
               else if (event.ctrlKey || event.metaKey) selectCell(cell, employee, date);
               else edit();
             });
-            cell.addEventListener('contextmenu', event => {
-              event.preventDefault();
-              selectCell(cell, employee, date);
-            });
+            cell.addEventListener('contextmenu', event => openQuickMenu(event, cell, employee, date));
             cell.addEventListener('mousedown', event => beginDrag(event, cell, employee, date));
             cell.addEventListener('mouseenter', () => dragOver(cell, employee, date));
             cell.addEventListener('keydown', event => {
