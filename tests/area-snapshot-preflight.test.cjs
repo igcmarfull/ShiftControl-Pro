@@ -52,3 +52,30 @@ test('refuses orphan attendance', () => {
   input.executions.push({ employeeId: 'missing' });
   assert.throws(() => api.prepareAreaSnapshots(input), /unresolvedExecutions/);
 });
+
+test('fresh-calendar preview retains classified workers but explicitly excludes historical test records', () => {
+  const input = example();
+  const output = api.prepareFreshCalendars(input);
+  assert.equal(output.previewOnly, true);
+  assert.equal(output.ESTACION.employees.length, 1);
+  assert.equal(output.TIENDA.employees.length, 1);
+  for (const area of ['ESTACION', 'TIENDA']) {
+    for (const collection of ['plans', 'executions', 'additional', 'absences']) {
+      assert.equal(output[area][collection].length, 0);
+    }
+  }
+  assert.equal(output.excludedTestRecords.plans, 2);
+  assert.equal(output.excludedTestRecords.executions, 1);
+  assert.equal(output.excludedTestRecords.additional, 1);
+  assert.equal(output.excludedTestRecords.absences, 1);
+  assert.equal(output.sharedHolidays.length, 1);
+  assert.equal(input.plans.length, 2);
+});
+test('fresh-calendar preview blocks unassigned workers and unknown fields', () => {
+  const input = example();
+  input.employees[0].area = null;
+  assert.throws(() => api.prepareFreshCalendars(input), /Clasifica todos/);
+  input.employees[0].area = 'ESTACION';
+  input.settings = { flag: true };
+  assert.throws(() => api.prepareFreshCalendars(input), /Campos sin revisar/);
+});
