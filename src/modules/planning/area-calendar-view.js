@@ -17,6 +17,15 @@
       Object.hasOwn(areas, context.area);
     // Fail closed for a CHIEF whose area has not yet been assigned.
     const pendingArea = context?.role === 'CHIEF' && !authorized;
+    if (!document.getElementById('shiftcontrol-area-chief-style')) {
+      const style = el('style');
+      style.id = 'shiftcontrol-area-chief-style';
+      style.textContent = 'body.shiftcontrol-area-chief-mode .view,' +
+        'body.shiftcontrol-area-chief-mode .sidebar,' +
+        'body.shiftcontrol-area-chief-mode .mobile-nav {' +
+        'display:none!important}';
+      document.head.append(style);
+    }
     if (!authorized) {
       generation++;
       if (root) root.remove();
@@ -62,15 +71,7 @@
     // Never leave the legacy company-wide grids visible to a scoped CHIEF.
     // This only masks presentation; Supabase RLS remains mandatory.
     document.body.classList.add('shiftcontrol-area-chief-mode');
-    if (!document.getElementById('shiftcontrol-area-chief-style')) {
-      const style = el('style');
-      style.id = 'shiftcontrol-area-chief-style';
-      style.textContent = 'body.shiftcontrol-area-chief-mode .view,' +
-        'body.shiftcontrol-area-chief-mode .sidebar,' +
-        'body.shiftcontrol-area-chief-mode .mobile-nav {' +
-        'display:none!important}';
-      document.head.append(style);
-    }
+
     document.body.append(container);
     refresh();
     async function refresh() {
