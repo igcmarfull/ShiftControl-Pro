@@ -113,3 +113,31 @@ test('legacy 13 Isla employees are recognized while unmapped fields block cutove
   assert.equal(input.employees[0].area,'Isla');
   assert.throws(()=>api.prepareFreshCalendars(input),/Campos sin revisar/);
 });
+
+test('preserving fresh preview keeps every administrative field in untouched legacy source', () => {
+  const input = example();
+  input.employees[0].area = 'Isla';
+  input.audit = [{id:'a'}];
+  input.cashShortages = [{id:'c'}];
+  input.settings = {sensitive:'admin'};
+  input.incidents = [{id:'i'}];
+  const original = structuredClone(input);
+  const preview = api.preparePreservingFreshCalendars(input);
+  assert.equal(preview.previewOnly,true);
+  assert.equal(preview.requiresBackupAndAdminReview,true);
+  assert.equal(preview.ESTACION.employees[0].area,'ESTACION');
+  assert.equal(preview.TIENDA.employees.length,1);
+  assert.equal(preview.ESTACION.plans.length,0);
+  assert.equal(preview.TIENDA.plans.length,0);
+  for (const key of ['audit','cashShortages','settings','incidents']) {
+    assert.ok(preview.preservedInLegacy.includes(key));
+    assert.equal(preview.ESTACION[key],undefined);
+    assert.equal(preview.TIENDA[key],undefined);
+  }
+  assert.deepEqual(input,original);
+});
+test('preserving fresh preview rejects unknown employee areas', () => {
+  const input = example();
+  input.employees[0].area='UNKNOWN';
+  assert.throws(()=>api.preparePreservingFreshCalendars(input),/sin área/);
+});
