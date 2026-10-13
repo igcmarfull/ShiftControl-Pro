@@ -926,6 +926,7 @@
       }
       content.addEventListener('mouseup', endDrag);
       content.addEventListener('mouseleave', endDrag);
+      content.addEventListener('click', () => { suppressDragClick = false; });
       function commitSelection(code) {
         if (stale) return;
         if (!selectedCells.size || saving || loading) return;
@@ -1602,7 +1603,7 @@
         if (token === generation) {
           saving = false;
           const refreshed = await refresh();
-          if (refreshed !== true && token === generation) {
+          if (refreshed !== true && generation === token + 1) {
             status.textContent = 'Los turnos se guardaron, pero no se pudo actualizar el calendario. Pulsa Actualizar turnos antes de seguir editando.';
           }
         }
