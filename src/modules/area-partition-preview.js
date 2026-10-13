@@ -135,6 +135,27 @@
     };
   }
 
+  // Non-destructive inventory of extra legacy keys. It is intentionally
+  // independent of snapshot creation so ADMIN can diagnose blockers before
+  // any migration attempt. Never serializes values from unknown fields.
+  function migrationFieldReport(source) {
+    const inventory = migrationInventory(source);
+    const partition = partitionEmployeesAndPlans(source);
+    const readiness = migrationReadiness(partition);
+    return {
+      totalFields: Object.keys(source).length,
+      recognizedFields: Object.keys(source).length - inventory.unexpected.length,
+      unmappedFields: structuredClone(inventory.unexpected),
+      counts: structuredClone(inventory.counts),
+      stationWorkers: partition.ESTACION.employees.length,
+      storeWorkers: partition.TIENDA.employees.length,
+      unassignedWorkers: partition.UNASSIGNED.employees.length,
+      safeToPrepare: inventory.complete && readiness.ready,
+      blockers: structuredClone(readiness.blockers),
+      previewOnly: true
+    };
+  }
+
   // Build two immutable-to-the-caller snapshots only after a complete
   // ownership and schema preflight. This NEVER writes to Supabase.
   function prepareAreaSnapshots(source) {
@@ -230,6 +251,7 @@
     snapshotForRole,
     migrationReadiness,
     migrationInventory,
+    migrationFieldReport,
     prepareAreaSnapshots,
     prepareFreshCalendars
   });
