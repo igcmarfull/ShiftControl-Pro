@@ -103,6 +103,21 @@ const assert = require('node:assert/strict');
     assert.equal(singleSave.plan.employeeId, 'station-worker');
     assert.equal(singleSave.plan.date, '2026-10-06');
     assert.equal(await editor.count(), 0);
+    // A pending edit must not save after the session changes to another area.
+    await page.locator('#shiftcontrol-area-calendar .cal-row').first()
+      .locator('.cal-cell').nth(6).dispatchEvent('click');
+    await page.locator('#shiftcontrol-area-calendar .area-single-editor').waitFor();
+    const savesBeforeSwitch = await page.evaluate(() => window.__saves.length);
+    await page.evaluate(() => {
+      window.__ctx = { companyId: 'test-company', userId: 'store-chief', role: 'CHIEF', area: 'TIENDA' };
+    });
+    await page.locator('#shiftcontrol-area-calendar .area-single-editor')
+      .getByRole('button', { name: 'Guardar turno' }).click();
+    assert.equal(await page.evaluate(() => window.__saves.length), savesBeforeSwitch,
+      'An editor opened by the station chief cannot save after changing to store chief');
+    await page.evaluate(() => {
+      window.__ctx = { companyId: 'test-company', userId: 'station-chief', role: 'CHIEF', area: 'ESTACION' };
+    });
     // Reopening the same authorized area must refresh, not silently return
     // a stale calendar (regression for the original panel's save path).
     const loadsBefore = await page.evaluate(() => window.__loads);
