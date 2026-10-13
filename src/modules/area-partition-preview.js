@@ -182,11 +182,45 @@
     return structuredClone(scoped);
   }
 
+  // Explicit fresh-calendar preview for disposable historical test records.
+  // Retains workers, never writes, and reports every collection that would be
+  // excluded. This must never be silently substituted for historical migration.
+  function prepareFreshCalendars(source) {
+    const inventory = migrationInventory(source);
+    if (!inventory.complete) {
+      throw new Error('Campos sin revisar: ' + inventory.unexpected.join(', '));
+    }
+    const partition = partitionEmployeesAndPlans(source);
+    if (partition.UNASSIGNED.employees.length) {
+      throw new Error('Clasifica todos los trabajadores antes de iniciar calendarios nuevos.');
+    }
+    const result = {};
+    for (const area of AREAS) {
+      result[area] = {
+        employees: structuredClone(partition[area].employees),
+        plans: [], executions: [], additional: [], absences: []
+      };
+    }
+    return {
+      ESTACION: result.ESTACION,
+      TIENDA: result.TIENDA,
+      sharedHolidays: structuredClone(partition.sharedHolidays),
+      excludedTestRecords: Object.fromEntries(
+        ['plans', 'executions', 'additional', 'absences'].map(
+          key => [key, (source[key] || []).length]
+        )
+      ),
+      // Require a deliberate ADMIN action and backup before using this output.
+      previewOnly: true
+    };
+  }
+
   window.ShiftControlAreaPartition = Object.freeze({
     partitionEmployeesAndPlans,
     snapshotForRole,
     migrationReadiness,
     migrationInventory,
-    prepareAreaSnapshots
+    prepareAreaSnapshots,
+    prepareFreshCalendars
   });
 })();
