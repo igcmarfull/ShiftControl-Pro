@@ -76,6 +76,33 @@
           'Inventario original: ' +
           Object.entries(counts).map(([name, count]) => name + ': ' + count).join(' · ')
         ));
+        // Separate, explicit preview for disposable historical test records.
+        // This does not change app_state, area_state, or the current calendar.
+        if (typeof preview.prepareFreshCalendars === 'function') {
+          const freshSection = create('section');
+          freshSection.append(create('h3', 'Vista previa: calendarios nuevos desde cero'));
+          try {
+            const fresh = preview.prepareFreshCalendars(snapshot);
+            freshSection.append(create('p',
+              'Trabajadores conservados: Estación ' + fresh.ESTACION.employees.length +
+              ' · Tienda ' + fresh.TIENDA.employees.length));
+            freshSection.append(create('p',
+              'Registros históricos de prueba que NO se copiarían: ' +
+              Object.entries(fresh.excludedTestRecords)
+                .map(([name, count]) => name + ': ' + count).join(' · ')));
+            freshSection.append(create('p',
+              'Feriados compartidos conservados para revisión ADMIN: ' +
+              fresh.sharedHolidays.length));
+            const notice = create('p',
+              'SOLO VISTA PREVIA. No borra horarios, no crea calendarios y no cambia permisos.');
+            notice.setAttribute('role', 'status');
+            freshSection.append(notice);
+          } catch (error) {
+            freshSection.append(create('p',
+              'No se pueden preparar calendarios nuevos: ' + (error?.message || 'datos inválidos')));
+          }
+          section.append(freshSection);
+        }
         const labels = {
           unassignedEmployees: 'Trabajadores sin área',
           unassignedPlans: 'Turnos de trabajadores sin área',
