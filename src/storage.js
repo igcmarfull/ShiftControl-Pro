@@ -254,6 +254,62 @@
     }
   }
 
+  // API de preparación para el nuevo almacenamiento por área.
+  // No se conecta todavía al estado global de la SPA: hacerlo antes de
+  // particionar cada módulo expondría o sobrescribiría datos de otra área.
+  const VALID_AREAS = ['ESTACION', 'TIENDA'];
+
+  function requireAreaAdmin(area) {
+    const context = window.AuthContext?.get?.() || null;
+    if (!context?.companyId || context.companyId !== activeCompanyId) {
+      throw new Error('La empresa activa no coincide con la sesión.');
+    }
+    if (context.role !== 'ADMIN') {
+      throw new Error('La migración de datos por área requiere un ADMIN.');
+    }
+    if (!VALID_AREAS.includes(area)) {
+      throw new Error('Área inválida.');
+    }
+    return context;
+  }
+
+  async function readAreaState(area, key) {
+    const context = requireAreaAdmin(area);
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    const { data, error } = await getClient()
+      .from('area_state')
+      .select('data, updated_at')
+      .eq('company_id', context.companyId)
+      .eq('area', area)
+      .eq('key', key)
+      .maybeSingle();
+    if (error) throw error;
+    return data || null;
+  }
+
+  async function writeAreaState(area, key, nextData) {
+    const context = requireAreaAdmin(area);
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    if (nextData === undefined || nextData === null) {
+      throw new Error('No se puede guardar un estado vacío.');
+    }
+    const { error } = await getClient()
+      .from('area_state')
+      .upsert({
+        company_id: context.companyId,
+        area,
+        key,
+        data: nextData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'company_id,area,key' });
+    if (error) throw error;
+    return true;
+  }
+
   const originalSave = window.save;
 
   if (typeof originalSave === 'function') {
@@ -279,6 +335,8 @@
     bootstrap,
     isReady: () => ready,
     getActiveCompanyId: () => activeCompanyId,
-    getTenantLocalKey
+    getTenantLocalKey,
+    readAreaState,
+    writeAreaState
   });
 })();
