@@ -71,6 +71,11 @@ const assert = require('node:assert/strict');
     await page.waitForFunction(() => window.__adminReads.length === 2);
     assert.deepEqual((await page.evaluate(() => window.__adminReads)).sort(), ['ESTACION', 'TIENDA']);
     assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1);
+    await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').count(), 2,
+      'Admin must see one monthly planning grid for each area');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell[role="button"]').count(), 0,
+      'Admin oversight must remain read-only');
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
     assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1,
       'Repeated admin mounts must not duplicate the panel');
