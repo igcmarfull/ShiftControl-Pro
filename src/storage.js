@@ -114,7 +114,9 @@
   // Safety gate: area-scoped CHIEFs must never access the legacy
   // company-wide JSON or its shared localStorage cache.
   function assertLegacyStateAccess(context) {
-    if (context?.role === 'CHIEF' && context?.area) {
+    // All CHIEFs must fail closed, including legacy memberships without an
+    // assigned area. An absent area is not permission for company-wide data.
+    if (context?.role === 'CHIEF') {
       const error = new Error(
         'El acceso por área todavía no está habilitado. Contacta al administrador.'
       );
