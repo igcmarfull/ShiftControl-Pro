@@ -4,6 +4,16 @@
   // Pure preview only: no database writes, no global state changes.
   // Do not treat this as a complete migration of operational state.
   const AREAS = ['ESTACION', 'TIENDA'];
+  function normalizeArea(area) {
+    if (area === 'Isla' || area === 'ESTACION') return 'ESTACION';
+    if (area === 'TIENDA') return 'TIENDA';
+    return null;
+  }
+  function normalizedEmployee(employee, area) {
+    const copy = structuredClone(employee);
+    if (area !== 'UNASSIGNED') copy.area = area;
+    return copy;
+  }
   function partitionEmployeesAndPlans(source) {
     if (!source || !Array.isArray(source.employees) || !Array.isArray(source.plans)) {
       throw new Error('Se requieren listas de trabajadores y turnos válidas.');
@@ -22,9 +32,9 @@
       if (owners.has(employee.id)) {
         throw new Error('Identificador de trabajador duplicado.');
       }
-      const area = AREAS.includes(employee.area) ? employee.area : 'UNASSIGNED';
+      const area = normalizeArea(employee.area) || 'UNASSIGNED';
       owners.set(employee.id, area);
-      output[area].employees.push(structuredClone(employee));
+      output[area].employees.push(normalizedEmployee(employee, area));
     }
     for (const plan of source.plans) {
       if (!plan || !owners.has(plan.employeeId)) {
