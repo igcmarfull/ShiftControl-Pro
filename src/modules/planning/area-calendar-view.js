@@ -328,6 +328,7 @@
     status.className = 'area-status';
     status.setAttribute('role', 'status');
     const content = el('div');
+    let preservedWorkerQuery = '';
     const controls = el('div');
     controls.className = 'area-toolbar';
     let saving = false;
@@ -768,6 +769,7 @@
       employeeSearch.placeholder = 'Buscar trabajador del área…';
       employeeSearch.setAttribute('aria-label', 'Buscar trabajador del área');
       employeeSearch.className = 'area-employee-search';
+      employeeSearch.value = preservedWorkerQuery;
       const workerCount = el('span', view.employees.length + ' trabajadores');
       workerCount.className = 'area-worker-count';
       const workerFilter = el('div');
@@ -925,6 +927,7 @@
       }
       content.append(wrapper);
       employeeSearch.addEventListener('input', () => {
+        preservedWorkerQuery = employeeSearch.value;
         const query = employeeSearch.value.trim().toLocaleLowerCase('es-CL');
         let visible = 0;
         for (const row of wrapper.querySelectorAll('.cal-row, .week-row')) {
