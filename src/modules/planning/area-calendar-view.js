@@ -1528,7 +1528,6 @@
         }
       } catch (error) {
         if (token === generation) {
-          if (!writeCompleted) stale = true;
           status.textContent = (writeCompleted ?
             'Se guardó, pero no se pudo actualizar el calendario: ' :
             'No se guardó: ') + (error?.message || 'error de sincronización');
@@ -1543,7 +1542,7 @@
           // A failed reload retains the old grid only as a read-only reference.
           // Restore editable controls only if the write itself failed; a
           // successful write requires a fresh snapshot before further edits.
-          if (!writeCompleted && !stale) lockedControls.forEach(({ node, disabled }) => {
+          if (!writeCompleted) lockedControls.forEach(({ node, disabled }) => {
             if (node.isConnected) node.disabled = disabled;
           });
         }
