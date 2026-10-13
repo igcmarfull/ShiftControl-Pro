@@ -31,9 +31,24 @@ const assert = require('node:assert/strict');
         })
       };
     });
+    await page.evaluate(() => {
+      const sidebar = document.createElement('nav');
+      sidebar.className = 'sidebar';
+      for (const destination of ['planning', 'employees']) {
+        const link = document.createElement('button');
+        link.dataset.view = destination;
+        link.textContent = destination;
+        sidebar.append(link);
+      }
+      document.body.append(sidebar);
+    });
     await page.addScriptTag({ content: view });
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
     await page.getByText('Calendario · Isla').waitFor();
+    assert.equal(await page.locator('.sidebar [data-view="employees"]').isVisible(), false,
+      'Chief must not navigate into company-wide legacy employee views');
+    assert.equal(await page.locator('.sidebar [data-view="planning"]').isVisible(), true,
+      'Chief planning navigation remains available');
     await page.locator('#shiftcontrol-area-calendar .cal-name strong').getByText('ESTACION worker').waitFor();
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .area-staffing-summary').count(), 1,
