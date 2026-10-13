@@ -911,6 +911,14 @@
         selectionAnchor = null;
         updateSelection();
       });
+      // Escape clears a pending multi-cell selection without opening an editor.
+      // Ignore inputs so it does not interfere with editing a shift or searching.
+      selectionBar.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || !selectedCells.size) return;
+        if (event.target?.closest?.('input, textarea, select')) return;
+        event.preventDefault();
+        clearSelection.click();
+      });
       selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectEmpty, selectAssigned, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
