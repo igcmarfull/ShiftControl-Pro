@@ -1,5 +1,22 @@
 (function(){
 
+function requirePlanningMutationAccess(employeeId){
+  const context = window.AuthContext?.get?.() || null;
+  if(!context?.companyId || !['ADMIN', 'CHIEF'].includes(context.role)){
+    throw new Error('Se requiere una sesión de empresa válida.');
+  }
+  // The current SPA persists one company-wide JSON document. Never allow
+  // area-assigned chiefs to mutate it before the isolated cutover.
+  if(context.role === 'CHIEF' && context.area){
+    throw new Error('Los cambios de turnos por área aún no están habilitados.');
+  }
+  if(context.role === 'CHIEF' && employeeId){
+    // Legacy chiefs remain on the legacy flow until the area rollout.
+    return context;
+  }
+  return context;
+}
+
 window.PlanningModule = {
 
   _getState(){
@@ -46,6 +63,8 @@ window.PlanningModule = {
 
 
   create(data){
+    requirePlanningMutationAccess(data?.employeeId);
+
 
     const state = this._getState();
 
@@ -88,6 +107,8 @@ window.PlanningModule = {
 
 
   remove(id){
+    requirePlanningMutationAccess();
+
 
     const state = this._getState();
 
@@ -107,6 +128,8 @@ window.PlanningModule = {
 
 
   clearEmployee(employeeId,date){
+    requirePlanningMutationAccess(employeeId);
+
 
     const state = this._getState();
 
@@ -125,6 +148,8 @@ window.PlanningModule = {
 
 
   removeEmployeePlans(employeeId){
+    requirePlanningMutationAccess(employeeId);
+
 
     const state = this._getState();
 
