@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const ID = 'shiftcontrol-area-calendar';
-  const areas = { ESTACION: 'Estación', TIENDA: 'Tienda' };
+  const areas = { ESTACION: 'Isla', TIENDA: 'Tienda' };
   let generation = 0;
   const el = (tag, text) => {
     const node = document.createElement(tag);
