@@ -774,7 +774,8 @@
       }
       function selectRange(cell, employee, date) {
         if (!selectionAnchor) return selectCell(cell, employee, date);
-        const cells = [...content.querySelectorAll('[data-employee-id][data-date][role="button"]')];
+        const cells = [...content.querySelectorAll('[data-employee-id][data-date][role="button"]')]
+          .filter(node => node.getClientRects().length > 0 || !node.closest('.cal-row, .week-row')?.hidden);
         const start = cells.findIndex(node => node.dataset.employeeId === selectionAnchor.employeeId &&
           node.dataset.date === selectionAnchor.date);
         const end = cells.indexOf(cell);
@@ -862,6 +863,7 @@
           cell.setAttribute('aria-pressed', 'false');
         }
         selectedCells.clear();
+        selectionAnchor = null;
         updateSelection();
       });
       selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectionCode, applySelection, removeSelection, clearSelection);
