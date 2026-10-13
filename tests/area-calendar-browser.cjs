@@ -231,6 +231,15 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').first().locator('.cal-row:visible').count(), 0);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').nth(1).locator('.cal-row:visible').count(), 1);
     await page.getByRole('searchbox', { name: 'Buscar trabajador en Isla' }).fill('');
+    // Both admin calendars follow the same month navigation, including year rollover.
+    await page.locator('#shiftcontrol-area-calendar input[type="month"]').fill('2026-01');
+    await page.getByRole('button', { name: 'Mes anterior' }).click();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar input[type="month"]').inputValue(), '2025-12');
+    await page.getByRole('button', { name: 'Mes siguiente' }).click();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar input[type="month"]').inputValue(), '2026-01');
+    await page.getByRole('button', { name: 'Mes siguiente' }).click();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar input[type="month"]').inputValue(), '2026-02');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .calendar-grid').count(), 2);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell[role="button"]').count(), 0,
       'Admin oversight must remain read-only');
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
