@@ -45,3 +45,15 @@ test('chief cannot bulk classify',()=>{
  assert.throws(()=>f.api.assignUnassignedToArea('ESTACION',['a','b']),/Solo ADMIN/);
  assert.equal(f.saves,0);
 });
+
+test('legacy Isla is already station and must not be bulk reclassified',()=>{
+ const f=fixture();
+ f.state.employees[0].area='Isla';
+ const summary=f.api.getAreaSummary();
+ assert.equal(summary.ESTACION,1);
+ assert.equal(summary.UNASSIGNED,1);
+ assert.equal(f.api.getUnassigned().length,1);
+ assert.equal(f.api.assignUnassignedToArea('ESTACION',['b']),1);
+ assert.equal(f.state.employees[0].area,'Isla');
+ assert.equal(f.state.employees[1].area,'ESTACION');
+});
