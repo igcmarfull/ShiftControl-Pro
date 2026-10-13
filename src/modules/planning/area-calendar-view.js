@@ -440,7 +440,8 @@
       loading = true;
       reload.disabled = true;
       const token = ++generation;
-      content.replaceChildren();
+      // Keep the existing calendar visible while reloading; disable edits until data is fresh.
+      status.textContent = 'Actualizando planificación…';
       let view;
       try {
         view = await window.ShiftControlAreaCalendar.load();
@@ -460,6 +461,7 @@
         status.textContent = 'El administrador aún no ha migrado los turnos de esta área.';
         return;
       }
+      content.replaceChildren();
       status.textContent = 'Turnos del área · revisión ' + view.revision;
       const toolbar = el('div');
       toolbar.className = 'area-toolbar';
