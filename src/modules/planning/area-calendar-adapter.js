@@ -91,13 +91,15 @@
       item.employeeId === plan.employeeId && item.date === plan.date);
     const allowedCodes = new Set(['A','B','C','D','L','V','P','X','Libre','Licencia','Vacaciones','Permiso']);
     if (!allowedCodes.has(plan.code)) throw new Error('Código de turno no autorizado.');
-    const incoming = structuredClone(plan);
+    // Only accept editable shift fields; callers cannot inject IDs or
+    // overwrite area-scoped metadata through a calendar cell.
+    const incoming = { employeeId: plan.employeeId, date: plan.date, code: plan.code };
     if (index >= 0) {
       // Keep the existing identity when editing an established shift.
       incoming.id = view.plans[index].id;
       view.plans[index] = { ...view.plans[index], ...incoming };
     } else {
-      incoming.id = incoming.id || crypto.randomUUID();
+      incoming.id = crypto.randomUUID();
       view.plans.push(incoming);
     }
     return save(view, key);
