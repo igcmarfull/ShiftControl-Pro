@@ -1013,7 +1013,8 @@
             cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
             const edit = () => editShift(employee, date, plan);
             cell.addEventListener('click', event => {
-              if (event.ctrlKey || event.metaKey || event.shiftKey) selectCell(cell, employee, date);
+              if (event.shiftKey) selectRange(cell, employee, date);
+              else if (event.ctrlKey || event.metaKey) selectCell(cell, employee, date);
               else edit();
             });
             cell.addEventListener('contextmenu', event => {
