@@ -208,7 +208,8 @@
         const requestedMonth = selectedMonth;
         reload.disabled = true;
         status.textContent = 'Consultando calendarios…';
-        content.replaceChildren();
+        // Keep the last successfully loaded calendars visible while both
+        // area snapshots are in flight. Replace only after session validation.
         try {
           const storage = window.ShiftControlStorage;
           if (typeof storage?.readAreaState !== 'function') {
@@ -219,6 +220,7 @@
           const current = window.AuthContext?.get?.();
           if (ownerGeneration !== generation || request !== adminRequest || current?.role !== 'ADMIN' ||
               current.userId !== context.userId || current.companyId !== context.companyId) return;
+          content.replaceChildren();
           for (const [index, area] of Object.keys(areas).entries()) {
             const section = el('section');
             section.append(el('h3', areas[area]));
