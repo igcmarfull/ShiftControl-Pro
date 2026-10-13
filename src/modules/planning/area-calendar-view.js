@@ -139,6 +139,19 @@
       monthPicker.value = selectedMonth;
       monthPicker.setAttribute('aria-label', 'Mes de supervisión');
       panel.append(monthPicker);
+      const previousMonth = el('button', 'Mes anterior');
+      const nextMonth = el('button', 'Mes siguiente');
+      previousMonth.type = nextMonth.type = 'button';
+      const navigateMonth = delta => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const target = new Date(year, month - 1 + delta, 1);
+        selectedMonth = target.getFullYear() + '-' + String(target.getMonth() + 1).padStart(2, '0');
+        monthPicker.value = selectedMonth;
+        void refreshAdmin();
+      };
+      previousMonth.addEventListener('click', () => navigateMonth(-1));
+      nextMonth.addEventListener('click', () => navigateMonth(1));
+      panel.append(previousMonth, nextMonth);
       const content = el('div');
       panel.append(content);
       // Preserve admin worker searches independently when switching months
