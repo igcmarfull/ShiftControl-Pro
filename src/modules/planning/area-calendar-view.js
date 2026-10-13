@@ -1070,6 +1070,21 @@
           row.style.display = match ? (row.classList.contains('week-row') ? 'contents' : '') : 'none';
           if (match) visible++;
         }
+        // A worker removed by the filter must not remain in a pending bulk edit.
+        for (const [key, selected] of selectedCells) {
+          const cell = [...wrapper.querySelectorAll('[data-employee-id][data-date]')].find(node =>
+            node.dataset.employeeId === selected.employeeId && node.dataset.date === selected.date);
+          if (cell?.closest('.cal-row, .week-row')?.hidden) {
+            selectedCells.delete(key);
+            cell.classList.remove('selected');
+            cell.setAttribute('aria-pressed', 'false');
+          }
+        }
+        if (selectionAnchor && ![...wrapper.querySelectorAll('[data-employee-id][data-date]')].some(node =>
+          node.dataset.employeeId === selectionAnchor.employeeId &&
+          node.dataset.date === selectionAnchor.date &&
+          !node.closest('.cal-row, .week-row')?.hidden)) selectionAnchor = null;
+        updateSelection();
         workerCount.textContent = visible + ' de ' + view.employees.length + ' trabajadores';
         resetSearch.disabled = !query;
       });
