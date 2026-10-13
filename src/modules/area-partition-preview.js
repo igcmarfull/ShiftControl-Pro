@@ -246,6 +246,42 @@
     };
   }
 
+  // Preview-only cutover plan: leave every non-calendar field in legacy
+  // app_state. No copying of administrative data to CHIEF-visible area_state.
+  // This is not permission to delete or lock down app_state.
+  function preparePreservingFreshCalendars(source) {
+    const inventory = migrationInventory(source);
+    const partition = partitionEmployeesAndPlans(source);
+    if (partition.UNASSIGNED.employees.length) {
+      throw new Error('Hay trabajadores sin área reconocida.');
+    }
+    const result = {};
+    for (const area of AREAS) {
+      result[area] = {
+        employees: structuredClone(partition[area].employees),
+        plans: [], executions: [], additional: [], absences: []
+      };
+    }
+    return {
+      ESTACION: result.ESTACION,
+      TIENDA: result.TIENDA,
+      preservedInLegacy: [...inventory.unexpected, 'holidays',
+        'plans', 'executions', 'additional', 'absences'].sort(),
+      excludedFromNewCalendars: Object.fromEntries(
+        ['plans', 'executions', 'additional', 'absences']
+          .map(key => [key, inventory.counts[key]])
+      ),
+      unresolvedLegacyRecords: {
+        plans: partition.unresolvedPlans.length,
+        executions: partition.unresolvedExecutions.length,
+        additional: partition.unresolvedAdditional.length,
+        absences: partition.unresolvedAbsences.length
+      },
+      requiresBackupAndAdminReview: true,
+      previewOnly: true
+    };
+  }
+
   window.ShiftControlAreaPartition = Object.freeze({
     partitionEmployeesAndPlans,
     snapshotForRole,
@@ -253,6 +289,7 @@
     migrationInventory,
     migrationFieldReport,
     prepareAreaSnapshots,
-    prepareFreshCalendars
+    prepareFreshCalendars,
+    preparePreservingFreshCalendars
   });
 })();
