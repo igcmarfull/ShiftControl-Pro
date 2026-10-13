@@ -75,8 +75,19 @@ window.EmployeeModule = {
     if(employee.area === normalized){
       return employee;
     }
+    const previousArea = employee.area;
     employee.area = normalized;
-    window.ShiftControlState?.save?.();
+    try {
+      if(typeof window.ShiftControlState?.save !== 'function'){
+        throw new Error('No está disponible el guardado de trabajadores.');
+      }
+      window.ShiftControlState.save();
+    } catch (error) {
+      // Never leave a visible area reassignment that failed to persist.
+      if(previousArea === undefined) delete employee.area;
+      else employee.area = previousArea;
+      throw error;
+    }
     return employee;
   },
 
