@@ -46,6 +46,7 @@
     const preview = window.ShiftControlAreaPartition;
     const state = window.ShiftControlState;
     if (preview?.partitionEmployeesAndPlans && preview?.migrationReadiness &&
+        preview?.migrationInventory &&
         typeof state?.get === 'function') {
       const section = create('section');
       section.append(create('h3', 'Diagnóstico previo a separar las áreas'));
@@ -63,9 +64,17 @@
           section.append(create('p',
             'La clasificación está completa, pero aún no es seguro migrar todo el estado.'));
         }
-        section.append(create('p', report.ready
-          ? 'Sin registros pendientes de clasificación. La migración aún no se ha ejecutado.'
-          : 'Migración pendiente: existen registros que requieren revisión.'));
+        const safeToPrepare = report.ready && inventory.complete;
+        const overall = create('p', safeToPrepare
+          ? 'Diagnóstico aprobado: no se detectaron registros ni campos pendientes. Esto NO ejecuta la migración.'
+          : 'NO APTO PARA MIGRAR: revisa los registros y campos indicados antes de copiar datos.');
+        overall.setAttribute('role', 'status');
+        section.append(overall);
+        const counts = inventory.counts;
+        section.append(create('p',
+          'Inventario original: ' +
+          Object.entries(counts).map(([name, count]) => name + ': ' + count).join(' · ')
+        ));
         const labels = {
           unassignedEmployees: 'Trabajadores sin área',
           unassignedPlans: 'Turnos de trabajadores sin área',
