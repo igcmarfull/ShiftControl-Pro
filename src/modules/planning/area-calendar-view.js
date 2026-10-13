@@ -37,7 +37,21 @@
     const status = el('p', 'Cargando turnos del área…');
     status.setAttribute('role', 'status');
     const content = el('div');
-    container.append(status, content);
+    const controls = el('div');
+    const reload = el('button', 'Actualizar turnos');
+    reload.type = 'button';
+    reload.addEventListener('click', () => refresh());
+    const signout = el('button', 'Cerrar sesión');
+    signout.type = 'button';
+    signout.addEventListener('click', async () => {
+      try {
+        await window.ShiftControlAuth.signOut();
+      } catch (error) {
+        status.textContent = error?.message || 'No fue posible cerrar sesión.';
+      }
+    });
+    controls.append(reload, signout);
+    container.append(controls, status, content);
     // Never leave the legacy company-wide grids visible to a scoped CHIEF.
     // This only masks presentation; Supabase RLS remains mandatory.
     document.body.classList.add('shiftcontrol-area-chief-mode');
