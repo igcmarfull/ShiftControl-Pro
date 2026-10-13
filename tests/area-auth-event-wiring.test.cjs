@@ -1,0 +1,12 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const auth = fs.readFileSync(path.join(__dirname, '../src/auth.js'), 'utf8');
+const view = fs.readFileSync(path.join(__dirname, '../src/modules/planning/area-calendar-view.js'), 'utf8');
+assert.match(auth, /function notifyContextChanged\(\)/);
+assert.match(auth, /new Event\('shiftcontrol:auth-context-changed'\)/);
+assert.match(auth, /currentContext=await loadContext\(user\);\s*clearLegacyAuth\(\);\s*notifyContextChanged\(\)/);
+assert.match(auth, /async function signOut\(\)[\s\S]*?currentContext=null;\s*notifyContextChanged\(\)/);
+assert.match(view, /window\.addEventListener\('shiftcontrol:auth-context-changed', mount\)/);
+console.log('Auth context events are wired to the scoped calendar.');
