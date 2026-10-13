@@ -100,6 +100,18 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByText('0 celdas seleccionadas').waitFor();
     await page.getByRole('button', { name: 'Mostrar todos' }).click();
+    // October 2026 has 22 weekdays. Weekend cells must stay unselected.
+    await page.getByRole('button', { name: 'Seleccionar días laborales' }).click();
+    await page.getByText('22 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected').count(), 22);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-03"]').count(), 0);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    await page.getByRole('button', { name: 'Vista semanal' }).click();
+    await page.getByRole('button', { name: 'Seleccionar días laborales' }).click();
+    await page.getByText('5 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .week-cell.selected').count(), 5);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    await page.getByRole('button', { name: 'Planificación mensual' }).click();
     // Multi-cell edits must be sent as one authorized area-scoped write.
     const firstCells = page.locator('#shiftcontrol-area-calendar .cal-row').first().locator('.cal-cell');
     // The test fixture does not load the legacy grid CSS, so its cells can
