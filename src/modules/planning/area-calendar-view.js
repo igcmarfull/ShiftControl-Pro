@@ -145,8 +145,23 @@
       else document.body.append(panel);
       const ownerGeneration = generation;
       let adminRequest = 0;
+      // The administrator's original workflow expects chief edits to become
+      // visible on return to Planning, without reloading the entire app.
+      let lastAdminRefresh = 0;
+      const refreshWhenReturning = () => {
+        const current = window.AuthContext?.get?.();
+        if (ownerGeneration !== generation || current?.role !== 'ADMIN' ||
+            current.userId !== context.userId || current.companyId !== context.companyId ||
+            !panel.isConnected || document.hidden ||
+            (planningView && !planningView.classList.contains('active'))) return;
+        if (Date.now() - lastAdminRefresh < 15000) return;
+        void refreshAdmin();
+      };
+      window.addEventListener('focus', refreshWhenReturning);
+      document.addEventListener('visibilitychange', refreshWhenReturning);
       async function refreshAdmin() {
         const request = ++adminRequest;
+        lastAdminRefresh = Date.now();
         const requestedMonth = selectedMonth;
         reload.disabled = true;
         status.textContent = 'Consultando calendarios…';
