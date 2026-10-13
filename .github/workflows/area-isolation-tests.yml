@@ -16,5 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check Node version
+        run: node --version
       - name: Run area tests
         run: node --test tests/area-snapshot-preflight.test.cjs tests/area-rls-policy.test.cjs
