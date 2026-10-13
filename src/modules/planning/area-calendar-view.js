@@ -160,11 +160,20 @@
         if (Date.now() - lastAdminRefresh < 15000) return;
         void refreshAdmin();
       };
+      // SPA navigation does not necessarily focus the browser window.
+      // When the administrator opens Planning, reload both chief-owned
+      // snapshots after the original navigation handler activates the view.
+      const refreshOnPlanningNavigation = event => {
+        if (!event.target?.closest?.('[data-view="planning"]')) return;
+        queueMicrotask(refreshWhenReturning);
+      };
       window.addEventListener('focus', refreshWhenReturning);
       document.addEventListener('visibilitychange', refreshWhenReturning);
+      document.addEventListener('click', refreshOnPlanningNavigation);
       cleanupAdminListeners = () => {
         window.removeEventListener('focus', refreshWhenReturning);
         document.removeEventListener('visibilitychange', refreshWhenReturning);
+        document.removeEventListener('click', refreshOnPlanningNavigation);
       };
       async function refreshAdmin() {
         const request = ++adminRequest;
