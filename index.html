@@ -11937,6 +11937,17 @@ function openCell(employeeId,date){cellEmployee.value=employeeId;cellDate.value=
 function savePlanCell(code){
   const employeeId=cellEmployee.value;
   const date=cellDate.value;
+  if(getAppRole?.()==='chief'){
+    const compact={Licencia:'L',Vacaciones:'V',Permiso:'P',Ausente:'X',Ausencia:'X'}[code]||code;
+    const action=compact==='Eliminar'
+      ?()=>window.ShiftControlAreaCalendar.removePlan(employeeId,date)
+      :()=>window.ShiftControlAreaCalendar.upsertPlan({employeeId,date,code:compact});
+    Promise.resolve().then(action).then(()=>{
+      closeModal('cellModal');
+      window.ShiftControlAreaCalendarView?.mount?.();
+    }).catch(error=>alert('No se guardó el turno: '+(error?.message||error)));
+    return;
+  }
   const prefix=date.slice(0,7);
 
   if(isClosed(prefix))
