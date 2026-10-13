@@ -129,6 +129,32 @@
       return;
     }
 
+    if (typeof employees.assignUnassignedToArea === 'function') {
+      const bulk = create('button', 'Asignar todos los pendientes a Estación');
+      bulk.type = 'button';
+      const bulkStatus = create('span');
+      bulkStatus.setAttribute('role', 'status');
+      bulk.addEventListener('click', () => {
+        try {
+          requireAdmin();
+          const ids = pending.map(employee => employee.id);
+          if (!window.confirm(
+            '¿Confirmas que los ' + ids.length +
+            ' trabajadores SIN ÁREA pertenecen a Estación? ' +
+            'No se modificarán trabajadores ya asignados a Tienda.'
+          )) return;
+          const count = employees.assignUnassignedToArea('ESTACION', ids);
+          render(container);
+          const notice = create('p', count + ' trabajadores clasificados en Estación.');
+          notice.setAttribute('role', 'status');
+          container.append(notice);
+        } catch (error) {
+          bulkStatus.textContent = error?.message || 'No fue posible clasificar trabajadores.';
+        }
+      });
+      container.append(bulk, bulkStatus);
+    }
+
     const list = create('div');
     for (const employee of pending) {
       const row = create('div');
