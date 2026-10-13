@@ -218,6 +218,15 @@ const assert = require('node:assert/strict');
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
     assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1,
       'Repeated admin mounts must not duplicate the panel');
+    // Returning to Planning explicitly reloads both areas even when a
+    // passive refresh happened less than 15 seconds ago.
+    await page.evaluate(() => {
+      document.getElementById('planning').classList.add('active');
+      window.__adminReads.length = 0;
+      document.querySelector('.sidebar [data-view="planning"]').click();
+    });
+    await page.waitForFunction(() => window.__adminReads.length === 2);
+    assert.deepEqual(await page.evaluate(() => window.__adminReads), ['ESTACION', 'TIENDA']);
     // An older request must not replace the selected month's results.
     await page.evaluate(() => {
       window.__pendingReads = [];
