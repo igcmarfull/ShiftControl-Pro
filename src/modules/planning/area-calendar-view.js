@@ -280,6 +280,29 @@
                   row.append(total);
                   grid.append(row);
                 }
+                // Chief and admin share the same worker-oriented calendar.
+                // Allow admin to locate a worker without modifying area data.
+                const search = el('input');
+                search.type = 'search';
+                search.placeholder = 'Buscar trabajador en ' + areas[area] + '…';
+                search.setAttribute('aria-label', 'Buscar trabajador en ' + areas[area]);
+                const count = el('span', data.employees.length + ' trabajadores');
+                const filter = el('div');
+                filter.className = 'area-worker-filter';
+                filter.append(search, count);
+                search.addEventListener('input', () => {
+                  const query = search.value.trim().toLocaleLowerCase('es-CL');
+                  let visible = 0;
+                  for (const row of grid.querySelectorAll('.cal-row')) {
+                    const name = row.querySelector('.cal-name');
+                    const match = !query || (name?.textContent || '').toLocaleLowerCase('es-CL').includes(query);
+                    row.hidden = !match;
+                    row.style.display = match ? '' : 'none';
+                    if (match) visible++;
+                  }
+                  count.textContent = visible + ' de ' + data.employees.length + ' trabajadores';
+                });
+                section.append(filter);
                 wrap.append(grid);
                 section.append(data.employees.length ? wrap :
                   el('p', 'Sin trabajadores registrados en esta área.'));
