@@ -448,7 +448,7 @@
       } catch (error) {
         if (token === generation) status.textContent =
           error?.message || 'No se pudo consultar el calendario.';
-        return;
+        return false;
       } finally {
         // A stale request must not unlock the controls of a newer session.
         if (token === generation) {
@@ -462,7 +462,7 @@
           now?.role !== 'CHIEF') return;
       if (!view) {
         status.textContent = 'El administrador aún no ha migrado los turnos de esta área.';
-        return;
+        return false;
       }
       content.replaceChildren();
       status.textContent = 'Turnos del área · revisión ' + view.revision;
@@ -1505,7 +1505,10 @@
         // button disabled while the fresh snapshot is being fetched.
         if (token === generation) {
           saving = false;
-          await refresh();
+          const refreshed = await refresh();
+          if (refreshed === false) {
+            status.textContent = 'Los turnos se guardaron, pero no se pudo actualizar el calendario. Pulsa Actualizar turnos antes de seguir editando.';
+          }
         }
       } catch (error) {
         if (token === generation) {
