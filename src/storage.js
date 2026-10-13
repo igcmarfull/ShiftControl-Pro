@@ -111,6 +111,18 @@
     return context;
   }
 
+  // Safety gate: area-scoped CHIEFs must never access the legacy
+  // company-wide JSON or its shared localStorage cache.
+  function assertLegacyStateAccess(context) {
+    if (context?.role === 'CHIEF' && context?.area) {
+      const error = new Error(
+        'El acceso por área todavía no está habilitado. Contacta al administrador.'
+      );
+      error.code = 'AUTH_AREA_STORAGE_CUTOVER_REQUIRED';
+      throw error;
+    }
+  }
+
   async function pushState() {
     const context = window.AuthContext?.get?.() || null;
 
@@ -124,6 +136,7 @@
     }
 
     try {
+      assertLegacyStateAccess(context);
       const currentState = window.ShiftControlState.get();
       const updatedAt = new Date().toISOString();
 
@@ -170,6 +183,8 @@
         activeCompanyId = null;
         return null;
       }
+
+      assertLegacyStateAccess(context);
 
       if (ready && activeCompanyId === context.companyId) {
         return window.ShiftControlState.get();
