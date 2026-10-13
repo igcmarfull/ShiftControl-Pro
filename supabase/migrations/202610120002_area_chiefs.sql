@@ -4,8 +4,11 @@
 -- jefaturas por área, implementar almacenamiento segregado y RLS por área.
 begin;
 
--- Mantener como máximo una jefatura legacy sin área.
-drop index if exists public.company_memberships_one_active_chief;
+-- Fase preparatoria: conservar la restricción legacy de una sola jefatura.
+-- NO eliminar company_memberships_one_active_chief en esta migración:
+-- assign_chief continúa en producción hasta el corte controlado.
+-- El índice por área se crea ahora, pero la restricción legacy seguirá
+-- impidiendo activar una segunda jefatura hasta una migración de cutover.
 create unique index if not exists company_memberships_one_active_chief_per_area
   on public.company_memberships (company_id, area)
   nulls not distinct
