@@ -381,8 +381,12 @@
         saving = false;
         if (token === generation) await refresh();
       } catch (error) {
-        if (token === generation) status.textContent =
-          'No se guardó: ' + (error?.message || 'error de sincronización');
+        if (token === generation) {
+          status.textContent = 'No se guardó: ' + (error?.message || 'error de sincronización');
+          if (/revisi[oó]n|conflict|concurren|desactualizad/i.test(error?.message || '')) {
+            status.textContent += ' Actualiza los turnos antes de intentar nuevamente.';
+          }
+        }
       } finally {
         saving = false;
         if (token === generation) {
