@@ -725,6 +725,9 @@
       selectionBar.className = 'area-calendar-selection';
       const selectionCount = el('span', '0 celdas seleccionadas');
       selectionCount.className = 'area-selection-count';
+      const selectionBreakdown = el('span');
+      selectionBreakdown.className = 'area-selection-breakdown';
+      selectionBreakdown.setAttribute('aria-live', 'polite');
       const selectionCode = el('select');
       selectionCode.setAttribute('aria-label', 'Turno para selección');
       for (const code of validCodes) {
@@ -775,8 +778,9 @@
       function updateSelection() {
         const assignedCount = [...selectedCells.keys()].filter(key => plans.has(key)).length;
         const emptyCount = selectedCells.size - assignedCount;
-        selectionCount.textContent = selectedCells.size + ' celdas seleccionadas' +
-          (selectedCells.size ? ' (' + assignedCount + ' con turno, ' + emptyCount + ' sin turno)' : '');
+        selectionCount.textContent = selectedCells.size + ' celdas seleccionadas';
+        selectionBreakdown.textContent = selectedCells.size ?
+          assignedCount + ' con turno · ' + emptyCount + ' sin turno' : '';
         applySelection.disabled = clearSelection.disabled = removeSelection.disabled =
           !selectedCells.size || saving || loading;
       }
@@ -1042,7 +1046,7 @@
         event.preventDefault();
         clearSelection.click();
       });
-      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, invertSelection, targetDate, selectDate, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
+      selectionBar.append(selectionCount, selectionBreakdown, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, invertSelection, targetDate, selectDate, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
       // local to this area snapshot and never broadens employee access.
