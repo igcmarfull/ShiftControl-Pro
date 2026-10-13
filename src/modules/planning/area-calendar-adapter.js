@@ -118,5 +118,51 @@
     return save(view, key);
   }
 
-  window.ShiftControlAreaCalendar = Object.freeze({ load, save, upsertPlan, removePlan });
+  // One area-scoped transaction for the original panel's pattern, bulk and
+  // duplicate-month actions. All assignments are validated before any write.
+  async function applyPlanChanges(changes, key) {
+    if (!Array.isArray(changes) || !changes.length || changes.length > 2000) {
+      throw new Error('Se requiere una lista de cambios de turnos válida.');
+    }
+    const view = await load(key);
+    if (!view) throw new Error('No existe calendario migrado para esta área.');
+    const employees = new Set(view.employees.map(employee => employee.id));
+    const allowedCodes = new Set(['A', 'B', 'C', 'D', 'Libre', 'Licencia', 'Vacaciones', 'Permiso']);
+    const normalized = changes.map(change => {
+      if (!change || !employees.has(change.employeeId) ||
+          typeof change.date !== 'string' ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(change.date) ||
+          new Date(change.date + 'T12:00:00').toISOString().slice(0, 10) !== change.date ||
+          (change.code !== null && !allowedCodes.has(change.code))) {
+        throw new Error('La asignación contiene trabajadores, fechas o turnos no autorizados.');
+      }
+      return { employeeId: change.employeeId, date: change.date, code: change.code };
+    });
+    const index = new Map(view.plans.map((plan, i) =>
+      [plan.employeeId + ':' + plan.date, i]));
+    for (const change of normalized) {
+      const lookup = change.employeeId + ':' + change.date;
+      const existing = index.get(lookup);
+      if (change.code === null) {
+        if (existing !== undefined) {
+          view.plans[existing] = null;
+          index.delete(lookup);
+        }
+      } else if (existing !== undefined) {
+        view.plans[existing] = { ...view.plans[existing], code: change.code };
+      } else {
+        index.set(lookup, view.plans.length);
+        view.plans.push({
+          id: crypto.randomUUID(),
+          employeeId: change.employeeId,
+          date: change.date,
+          code: change.code
+        });
+      }
+    }
+    view.plans = view.plans.filter(Boolean);
+    return save(view, key);
+  }
+
+  window.ShiftControlAreaCalendar = Object.freeze({ load, save, upsertPlan, removePlan, applyPlanChanges });
 })();
