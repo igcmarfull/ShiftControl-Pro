@@ -752,6 +752,12 @@
         option.value = code;
         matchingCode.append(option);
       }
+      const selectDate = el('button', 'Seleccionar fecha');
+      selectDate.type = 'button';
+      const targetDate = el('input');
+      targetDate.type = 'date';
+      targetDate.setAttribute('aria-label', 'Fecha a seleccionar');
+      targetDate.value = selectedMonth + '-01';
       const selectWeekends = el('button', 'Seleccionar fines de semana');
       selectWeekends.type = 'button';
       const clearSelection = el('button', 'Limpiar selección');
@@ -955,6 +961,26 @@
         }
         updateSelection();
       });
+      // Assign a single calendar date to all visible employees in the chief's area.
+      selectDate.addEventListener('click', () => {
+        if (saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        const date = targetDate.value;
+        if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return;
+        for (const cell of wrapper.querySelectorAll('.cal-cell[role="button"], .week-cell[role="button"]')) {
+          const row = cell.closest('.cal-row, .week-row');
+          if (row?.hidden || row?.style.display === 'none' || cell.dataset.date !== date) continue;
+          const employeeId = cell.dataset.employeeId;
+          const key = employeeId + ':' + date;
+          if (!employeeId || duplicateCells.has(key) || selectedCells.has(key)) continue;
+          selectedCells.set(key, { employeeId, date });
+          cell.classList.add('selected');
+          cell.setAttribute('aria-pressed', 'true');
+        }
+        updateSelection();
+      });
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
       clearSelection.addEventListener('click', () => {
@@ -974,7 +1000,7 @@
         event.preventDefault();
         clearSelection.click();
       });
-      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
+      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, targetDate, selectDate, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
       // local to this area snapshot and never broadens employee access.
