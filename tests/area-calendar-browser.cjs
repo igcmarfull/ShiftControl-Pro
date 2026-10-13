@@ -146,6 +146,14 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByText('0 celdas seleccionadas').waitFor();
     await page.getByRole('button', { name: 'Mostrar todos' }).click();
+    // Gap-filling must never include an existing shift (October 14) or
+    // workers hidden by the search filter.
+    await searchForBulk.fill('ESTACION');
+    await page.getByRole('button', { name: 'Seleccionar días sin turno' }).click();
+    await page.getByText('30 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-14"]').count(), 0);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    await page.getByRole('button', { name: 'Mostrar todos' }).click();
     // October 2026 has 22 weekdays. Weekend cells must stay unselected.
     await page.getByRole('button', { name: 'Seleccionar días laborales' }).click();
     await page.getByText('22 celdas seleccionadas').waitFor();
