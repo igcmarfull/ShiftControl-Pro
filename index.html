@@ -11393,8 +11393,9 @@ function fillEmployeeSelects(){
     const el=document.getElementById(id);
     if(!el)return;
     if(chiefMode){
-      el.innerHTML='<option value="Isla">Isla</option>';
-      el.value='Isla';
+      const chiefArea=window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__';
+      el.innerHTML='<option value="'+chiefArea+'">'+chiefArea+'</option>';
+      el.value=chiefArea;
       el.disabled=true;
     }else{
       const current=el.value;
@@ -11403,7 +11404,7 @@ function fillEmployeeSelects(){
       el.disabled=false;
     }
   });
-  const visibleEmployees=chiefMode?active.filter(e=>e.area==='Isla'):active;
+  const visibleEmployees=chiefMode?active.filter(e=>e.area===window.ShiftControlPermissions?.getChiefArea?.()):active;
   ['planEmployeeFilter','weekEmployeeFilter','actualEmployeeFilter'].forEach(id=>{const el=document.getElementById(id);if(el){const current=el.value;el.innerHTML='<option value="">Todos los trabajadores</option>'+visibleEmployees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');el.value=visibleEmployees.some(e=>e.id===current)?current:''}});
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
@@ -11604,14 +11605,14 @@ function renderPlanning(){updateSelectionBar();
   head+='<div class="sticky-summary">Resumen</div></div>';
   let body='';
   const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
-  const areaFilter=isChief?'Isla':(document.getElementById('planAreaFilter')?.value||'');
+  const areaFilter=isChief?(window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__'):(document.getElementById('planAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('planEmployeeFilter')?.value||'';
   const normalizeArea=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   const activeEmployees=window.EmployeeModule.getAll().filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
   let visibleEmployees=activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
   // En algunas bases antiguas el área de las atendedoras quedó vacía o con otra etiqueta.
   // La Jefa de Isla nunca debe recibir una grilla vacía por ese dato heredado.
-  if(isChief&&!visibleEmployees.length) visibleEmployees=activeEmployees;
+  // A CHIEF without an assigned area must never fall back to all employees.
   visibleEmployees.forEach(e=>{
     body+=`<div class="cal-row"><div class="cal-name"><div class="person"><div class="avatar">${initials(e.name)}</div><div><strong><span class="name-full">${e.name}</span><span class="name-short">${e.name.split(' ')[0]}</span></strong><span>Turno habitual ${e.shift}</span></div></div></div>`;
     let counts={A:0,B:0,C:0,D:0};
@@ -12084,7 +12085,7 @@ function renderActualCalendar(){
   const prefix=actualPeriodPrefix();
   const [year,month]=prefix.split('-').map(Number);
   const days=new Date(year,month,0).getDate();
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('actualAreaFilter')?.value||'');
+  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?(window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__'):(document.getElementById('actualAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('actualEmployeeFilter')?.value||'';
 
   const employees=window.EmployeeModule.getAll().filter(item=>
@@ -12191,7 +12192,7 @@ function renderWeekly(){
   const start=new Date(weekStart.value+'T12:00:00');
   const days=[];
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d.toISOString().slice(0,10))}
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('weekAreaFilter')?.value||'');
+  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?(window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__'):(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
   const list=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
