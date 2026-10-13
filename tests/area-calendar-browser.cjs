@@ -53,6 +53,37 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     assert.equal(await page.locator('#shiftcontrol-area-calendar .area-staffing-summary').count(), 1,
       'Chief must see the area-only staffing coverage summary');
+    // A chief's existing grid remains visible while a slow refresh is pending.
+    // A failed refresh must also preserve the last successful planning view.
+    await page.evaluate(() => {
+      window.__originalChiefLoad = window.ShiftControlAreaCalendar.load;
+      window.__resolveChiefLoad = null;
+      window.ShiftControlAreaCalendar.load = () => new Promise(resolve => {
+        window.__resolveChiefLoad = resolve;
+      });
+    });
+    await page.getByRole('button', { name: 'Actualizar turnos' }).click();
+    await page.waitForFunction(() => typeof window.__resolveChiefLoad === 'function');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row').count(), 1,
+      'Chief calendar should not disappear during a slow refresh');
+    assert.equal(await page.getByRole('button', { name: 'Actualizar turnos' }).isDisabled(), true);
+    await page.evaluate(async () => {
+      const result = await window.__originalChiefLoad();
+      window.__resolveChiefLoad(result);
+    });
+    await page.getByText(/Turnos del área · revisión/).waitFor();
+    await page.evaluate(() => {
+      window.ShiftControlAreaCalendar.load = async () => { throw new Error('Sin conexión de prueba'); };
+    });
+    await page.getByRole('button', { name: 'Actualizar turnos' }).click();
+    await page.getByText('Sin conexión de prueba').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row').count(), 1,
+      'Chief should retain the previous planning grid after a network error');
+    await page.evaluate(() => {
+      window.ShiftControlAreaCalendar.load = window.__originalChiefLoad;
+      delete window.__originalChiefLoad;
+      delete window.__resolveChiefLoad;
+    });
     // Worker search must filter rows in both the original monthly grid and
     // the weekly grid without exposing workers from another area.
     const workerSearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
