@@ -11393,8 +11393,9 @@ function fillEmployeeSelects(){
     const el=document.getElementById(id);
     if(!el)return;
     if(chiefMode){
-      el.innerHTML='<option value="Isla">Isla</option>';
-      el.value='Isla';
+      const chiefArea=window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__';
+      el.innerHTML='<option value="'+chiefArea+'">'+chiefArea+'</option>';
+      el.value=chiefArea;
       el.disabled=true;
     }else{
       const current=el.value;
@@ -11403,7 +11404,7 @@ function fillEmployeeSelects(){
       el.disabled=false;
     }
   });
-  const visibleEmployees=chiefMode?active.filter(e=>e.area==='Isla'):active;
+  const visibleEmployees=chiefMode?active.filter(e=>e.area===window.ShiftControlPermissions?.getChiefArea?.()):active;
   ['planEmployeeFilter','weekEmployeeFilter','actualEmployeeFilter'].forEach(id=>{const el=document.getElementById(id);if(el){const current=el.value;el.innerHTML='<option value="">Todos los trabajadores</option>'+visibleEmployees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');el.value=visibleEmployees.some(e=>e.id===current)?current:''}});
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
@@ -11604,14 +11605,14 @@ function renderPlanning(){updateSelectionBar();
   head+='<div class="sticky-summary">Resumen</div></div>';
   let body='';
   const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
-  const areaFilter=isChief?'Isla':(document.getElementById('planAreaFilter')?.value||'');
+  const areaFilter=isChief?(window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__'):(document.getElementById('planAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('planEmployeeFilter')?.value||'';
   const normalizeArea=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   const activeEmployees=window.EmployeeModule.getAll().filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
   let visibleEmployees=activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
   // En algunas bases antiguas el área de las atendedoras quedó vacía o con otra etiqueta.
   // La Jefa de Isla nunca debe recibir una grilla vacía por ese dato heredado.
-  if(isChief&&!visibleEmployees.length) visibleEmployees=activeEmployees;
+  // A CHIEF without an assigned area must never fall back to all employees.
   visibleEmployees.forEach(e=>{
     body+=`<div class="cal-row"><div class="cal-name"><div class="person"><div class="avatar">${initials(e.name)}</div><div><strong><span class="name-full">${e.name}</span><span class="name-short">${e.name.split(' ')[0]}</span></strong><span>Turno habitual ${e.shift}</span></div></div></div>`;
     let counts={A:0,B:0,C:0,D:0};
@@ -11675,7 +11676,27 @@ function renderPlanningInsights(prefix,days){
     <div class="planning-insight-card"><span>Turnos asignados</span><strong>${monthPlans.filter(p=>['A','B','C','D'].includes(p.code)).length}</strong><small>${totals.map(x=>`${x.code}: ${x.count}`).join(' · ')}</small></div>
     <div class="planning-insight-card ${streakAlerts.length?'warning':''}"><span>Alertas de carga</span><strong>${streakAlerts.length}</strong><small>${streakAlerts[0]||'Sin jornadas consecutivas críticas'}</small></div>`;
 }
-function duplicatePreviousMonth(){snapshot();
+async function duplicatePreviousMonth(){
+  if(getAppRole?.()==='chief'){
+    try {
+      const current=periodPrefix();
+      const [year,month]=current.split('-').map(Number);
+      const previous=new Date(Date.UTC(year,month-2,1)).toISOString().slice(0,7);
+      const view=await window.ShiftControlAreaCalendar.load();
+      if(!view)return alert('Todavía no hay calendario para esta área.');
+      const maxDay=new Date(year,month,0).getDate();
+      const changes=view.plans.filter(plan=>plan.date.startsWith(previous))
+        .filter(plan=>Number(plan.date.slice(-2))<=maxDay)
+        .map(plan=>({employeeId:plan.employeeId,
+          date:current+plan.date.slice(7),code:plan.code}));
+      if(!changes.length)return alert('El mes anterior no tiene turnos para copiar.');
+      if(!confirm('¿Copiar '+changes.length+' turnos de '+previous+' a '+current+'?'))return;
+      await window.ShiftControlAreaCalendar.applyPlanChanges(changes);
+      window.ShiftControlAreaCalendarView?.mount?.();
+    } catch(error){alert('No se pudo duplicar el mes: '+(error?.message||error));}
+    return;
+  }
+  snapshot();
   const current=periodPrefix();
   if(isClosed(current))return alert('El mes está cerrado.');
   const [y,m]=current.split('-').map(Number);
@@ -11936,6 +11957,17 @@ function openCell(employeeId,date){cellEmployee.value=employeeId;cellDate.value=
 function savePlanCell(code){
   const employeeId=cellEmployee.value;
   const date=cellDate.value;
+  if(getAppRole?.()==='chief'){
+    const compact={Licencia:'L',Vacaciones:'V',Permiso:'P',Ausente:'X',Ausencia:'X'}[code]||code;
+    const action=compact==='Eliminar'
+      ?()=>window.ShiftControlAreaCalendar.removePlan(employeeId,date)
+      :()=>window.ShiftControlAreaCalendar.upsertPlan({employeeId,date,code:compact});
+    Promise.resolve().then(action).then(()=>{
+      closeModal('cellModal');
+      window.ShiftControlAreaCalendarView?.mount?.();
+    }).catch(error=>alert('No se guardó el turno: '+(error?.message||error)));
+    return;
+  }
   const prefix=date.slice(0,7);
 
   if(isClosed(prefix))
@@ -11978,7 +12010,31 @@ function savePlanCell(code){
   renderAll();
 }
 function openBulkModal(){fillEmployeeSelects();const p=periodPrefix();bulkFrom.value=p+'-01';bulkTo.value=p+'-'+String(new Date(Number(p.slice(0,4)),Number(p.slice(5,7)),0).getDate()).padStart(2,'0');openModal('bulkModal')}
-bulkForm.addEventListener('submit',e=>{e.preventDefault();snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=PlanningModule.find(id,date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};PlanningModule.create(data);i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
+bulkForm.addEventListener('submit',e=>{e.preventDefault();
+  if(getAppRole?.()==='chief'){
+    const ids=[...bulkEmployees.selectedOptions].map(option=>option.value);
+    if(!ids.length)return alert('Selecciona al menos un trabajador.');
+    const from=new Date(bulkFrom.value+'T12:00:00Z');
+    const to=new Date(bulkTo.value+'T12:00:00Z');
+    const pattern=bulkPattern.value.split(',').map(code=>code.trim());
+    if(!Number.isFinite(from.getTime())||!Number.isFinite(to.getTime())||from>to||
+      !pattern.length||pattern.some(code=>!['A','B','C','D','L','V','P','X','Libre'].includes(code))){
+      return alert('Revisa las fechas y los códigos del patrón.');
+    }
+    const changes=[];
+    for(const id of ids){
+      let index=0;
+      for(let day=new Date(from);day<=to;day.setUTCDate(day.getUTCDate()+1)){
+        changes.push({employeeId:id,date:day.toISOString().slice(0,10),code:pattern[index++%pattern.length]});
+        if(changes.length>2000)return alert('El rango supera el máximo de 2.000 turnos.');
+      }
+    }
+    window.ShiftControlAreaCalendar.applyPlanChanges(changes)
+      .then(()=>{closeModal('bulkModal');window.ShiftControlAreaCalendarView?.mount?.();})
+      .catch(error=>alert('No se guardó la asignación: '+(error?.message||error)));
+    return;
+  }
+  snapshot();const ids=[...bulkEmployees.selectedOptions].map(o=>o.value);if(!ids.length)return alert('Selecciona al menos un trabajador.');const from=new Date(bulkFrom.value+'T12:00:00'),to=new Date(bulkTo.value+'T12:00:00');if(isClosed(bulkFrom.value.slice(0,7)))return alert('El mes está cerrado.');const pattern=bulkPattern.value.split(',');ids.forEach(id=>{let i=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){const date=d.toISOString().slice(0,10),existing=PlanningModule.find(id,date),data={id:existing?.id||safeRandomUUID(),employeeId:id,date,code:pattern[i%pattern.length]};PlanningModule.create(data);i++}});log(`Asignación masiva aplicada a ${ids.length} trabajador(es)`);save();closeModal('bulkModal');renderAll()});
 
 function weekMonday(dateStr){
   const d=new Date((dateStr||isoToday)+'T12:00:00');
@@ -12084,7 +12140,7 @@ function renderActualCalendar(){
   const prefix=actualPeriodPrefix();
   const [year,month]=prefix.split('-').map(Number);
   const days=new Date(year,month,0).getDate();
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('actualAreaFilter')?.value||'');
+  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?(window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__'):(document.getElementById('actualAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('actualEmployeeFilter')?.value||'';
 
   const employees=window.EmployeeModule.getAll().filter(item=>
@@ -12191,7 +12247,7 @@ function renderWeekly(){
   const start=new Date(weekStart.value+'T12:00:00');
   const days=[];
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d.toISOString().slice(0,10))}
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('weekAreaFilter')?.value||'');
+  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?(window.ShiftControlPermissions?.getChiefArea?.()||'__UNASSIGNED__'):(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
   const list=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
@@ -13702,6 +13758,20 @@ function markAllPresent(){
   save();renderAll();toast(`${added} trabajadores marcados presentes`);
 }
 function openPatternModal(){
+  if(getAppRole?.()==='chief'){
+    window.ShiftControlAreaCalendar.load().then(view=>{
+      if(!view)return alert('Todavía no hay calendario para esta área.');
+      patternEmployees.innerHTML=view.employees.map(e=>
+        '<option value="'+escapeHtml(e.id)+'">'+escapeHtml(e.name)+'</option>').join('');
+      patternSelect.innerHTML=state.settings.patterns.map(p=>
+        '<option value="'+escapeHtml(p.id)+'">'+escapeHtml(p.name)+'</option>').join('');
+      const prefix=periodPrefix();
+      patternFrom.value=prefix+'-01';
+      patternTo.value=prefix+'-'+String(new Date(Number(prefix.slice(0,4)),Number(prefix.slice(5,7)),0).getDate()).padStart(2,'0');
+      openModal('patternModal');
+    }).catch(error=>alert('No se pudo abrir patrones: '+(error?.message||error)));
+    return;
+  }
   patternEmployees.innerHTML=window.EmployeeModule.getAll().filter(e=>e.active).map(e=>`<option value="${e.id}">${e.name} · ${e.area}</option>`).join('');
   patternSelect.innerHTML=state.settings.patterns.map(p=>`<option value="${p.id}">${p.name} · ${p.sequence.join('-')}</option>`).join('');
   const prefix=periodPrefix();
@@ -13710,8 +13780,40 @@ function openPatternModal(){
   patternTo.value=prefix+'-'+String(new Date(py,pm,0).getDate()).padStart(2,'0');
   openModal('patternModal');
 }
-function applyPattern(){
+async function applyPattern(){
   if(!requireAppPermission('planning.manage'))return;
+  if(getAppRole?.()==='chief'){
+    const ids=[...patternEmployees.selectedOptions].map(o=>o.value);
+    const pattern=state.settings.patterns.find(p=>p.id===patternSelect.value);
+    if(!ids.length||!pattern?.sequence?.length)return alert('Selecciona trabajadores y un patrón.');
+    const from=new Date(patternFrom.value+'T12:00:00Z');
+    const to=new Date(patternTo.value+'T12:00:00Z');
+    if(!Number.isFinite(from.getTime())||!Number.isFinite(to.getTime())||from>to)
+      return alert('Rango inválido.');
+    try {
+      const view=await window.ShiftControlAreaCalendar.load();
+      if(!view)return alert('Todavía no hay calendario para esta área.');
+      const exceptions=new Set(['P','L','V','X']);
+      const existing=new Map(view.plans.map(p=>[p.employeeId+':'+p.date,p]));
+      const changes=[];
+      let index=0;
+      for(let day=new Date(from);day<=to;day.setUTCDate(day.getUTCDate()+1)){
+        const date=day.toISOString().slice(0,10);
+        for(const employeeId of ids){
+          const prior=existing.get(employeeId+':'+date);
+          if(patternKeepExceptions.checked&&prior&&exceptions.has(prior.code))continue;
+          changes.push({employeeId,date,code:pattern.sequence[index%pattern.sequence.length]});
+          if(changes.length>2000)return alert('El patrón supera el máximo de 2.000 turnos.');
+        }
+        index++;
+      }
+      if(!changes.length)return alert('No hay turnos para modificar.');
+      await window.ShiftControlAreaCalendar.applyPlanChanges(changes);
+      closeModal('patternModal');
+      window.ShiftControlAreaCalendarView?.mount?.();
+    } catch(error){alert('No se pudo aplicar el patrón: '+(error?.message||error));}
+    return;
+  }
   const ids=[...patternEmployees.selectedOptions].map(o=>o.value);
   const pattern=state.settings.patterns.find(p=>p.id===patternSelect.value);
   if(!ids.length||!pattern)return alert('Selecciona al menos un trabajador y un patrón.');
@@ -20418,6 +20520,11 @@ window.EmployeeModule = window.EmployeeModule || {
 };
 </script>
 
+<script src="src/modules/area-partition-preview.js"></script>
+<script src="src/modules/employees/area-classification.js"></script>
+<script src="src/modules/employees/area-classification-entry.js"></script>
+<script src="src/modules/planning/area-calendar-adapter.js"></script>
+<script src="src/modules/planning/area-calendar-view.js"></script>
 <script src="src/app/app.js"></script>
 
 <script>

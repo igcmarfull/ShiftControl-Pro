@@ -1,0 +1,49 @@
+name: Area isolation tests
+on:
+  push:
+    branches: [feature/areas-estacion-tienda]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: area_rls_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Node version
+        run: node --version
+      - name: Run area tests
+        run: node --test tests/*.test.cjs
+      - name: Install Chromium browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run Chromium area calendar test
+        run: node tests/area-calendar-browser.cjs
+      - name: Verify isolated PostgreSQL service
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d area_rls_test -v ON_ERROR_STOP=1 -c 'SELECT current_database();'
+      - name: Run PostgreSQL RLS integration tests
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d area_rls_test -v ON_ERROR_STOP=1 -f tests/area-rls-postgres.sql

@@ -1,5 +1,33 @@
 (function(){
 
+// Areas are explicit. Legacy employees without an area remain unassigned
+// until an ADMIN classifies them; never infer an area automatically.
+const VALID_AREAS = ['ESTACION', 'TIENDA'];
+function effectiveArea(area){
+  return area === 'Isla' ? 'ESTACION' : (VALID_AREAS.includes(area) ? area : null);
+}
+
+function normalizeArea(area){
+  const normalized = String(area || '').trim().toUpperCase();
+  if(!VALID_AREAS.includes(normalized)){
+    throw new Error('Area invalida: use ESTACION o TIENDA.');
+  }
+  return normalized;
+}
+
+function requireEmployeeMutationAccess(){
+  const context = window.AuthContext?.get?.() || null;
+  if(!context?.companyId || !['ADMIN','CHIEF'].includes(context.role)){
+    throw new Error('Se requiere una sesión de empresa válida.');
+  }
+  // Until area-specific persistence is live, CHIEF must not mutate the
+  // company-wide JSON, even via a module method bypassing the UI.
+  if(context.role === 'CHIEF' && context.area){
+    throw new Error('Los cambios por área aún no están habilitados.');
+  }
+  return context;
+}
+
 window.EmployeeModule = {
 
   _getState(){
@@ -22,6 +50,101 @@ window.EmployeeModule = {
   },
 
 
+  getByArea(area){
+    const normalized = normalizeArea(area);
+    return this.getAll().filter(employee => effectiveArea(employee.area) === normalized);
+  },
+
+  getUnassigned(){
+    return this.getAll().filter(employee => !effectiveArea(employee.area));
+  },
+
+  // Only ADMIN may classify legacy employees. This is a local state helper,
+  // not a substitute for server-side RLS or area-isolated persistence.
+  assignArea(id, area){
+    const context = window.AuthContext?.get?.() || null;
+    if(context?.role !== 'ADMIN' || !context.companyId){
+      throw new Error('Solo ADMIN puede asignar el área de un trabajador.');
+    }
+    const normalized = normalizeArea(area);
+    const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('No se encontró el estado de trabajadores.');
+    }
+    const employee = state.employees.find(item => item.id === id);
+    if(!employee){
+      throw new Error('Trabajador no encontrado.');
+    }
+    if(employee.area === normalized){
+      return employee;
+    }
+    const previousArea = employee.area;
+    employee.area = normalized;
+    try {
+      if(typeof window.ShiftControlState?.save !== 'function'){
+        throw new Error('No está disponible el guardado de trabajadores.');
+      }
+      window.ShiftControlState.save();
+    } catch (error) {
+      // Never leave a visible area reassignment that failed to persist.
+      if(previousArea === undefined) delete employee.area;
+      else employee.area = previousArea;
+      throw error;
+    }
+    return employee;
+  },
+
+  // Explicit ADMIN bulk classification, only for workers without an area.
+  // One save and full rollback if local persistence rejects the change.
+  assignUnassignedToArea(area, expectedIds){
+    const context = window.AuthContext?.get?.() || null;
+    if(context?.role !== 'ADMIN' || !context.companyId){
+      throw new Error('Solo ADMIN puede clasificar trabajadores.');
+    }
+    const normalized = normalizeArea(area);
+    const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('No se encontró el estado de trabajadores.');
+    }
+    const pending = this.getUnassigned();
+    const ids = pending.map(employee => employee.id);
+    if(!Array.isArray(expectedIds) || ids.length !== expectedIds.length ||
+       ids.some((id, index) => id !== expectedIds[index])){
+      throw new Error('La lista de trabajadores cambió. Revisa antes de confirmar.');
+    }
+    if(new Set(ids).size !== ids.length || ids.some(id => id == null)){
+      throw new Error('Existen identificadores de trabajador inválidos o duplicados.');
+    }
+    if(!pending.length) return 0;
+    const previous = pending.map(employee => ({ employee, area: employee.area,
+      hadArea: Object.prototype.hasOwnProperty.call(employee, 'area') }));
+    for(const employee of pending) employee.area = normalized;
+    try {
+      if(typeof window.ShiftControlState?.save !== 'function'){
+        throw new Error('No está disponible el guardado de trabajadores.');
+      }
+      window.ShiftControlState.save();
+    } catch(error) {
+      for(const item of previous){
+        if(item.hadArea) item.employee.area = item.area;
+        else delete item.employee.area;
+      }
+      throw error;
+    }
+    return pending.length;
+  },
+
+  // Preview counts before migration; no records are changed.
+  getAreaSummary(){
+    const employees = this.getAll();
+    return {
+      ESTACION: employees.filter(item => effectiveArea(item.area) === 'ESTACION').length,
+      TIENDA: employees.filter(item => effectiveArea(item.area) === 'TIENDA').length,
+      UNASSIGNED: employees.filter(item => !effectiveArea(item.area)).length,
+      total: employees.length
+    };
+  },
+
   find(id){
 
     return this.getAll().find(
@@ -39,11 +162,13 @@ window.EmployeeModule = {
 
 
   create(data){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 
-    if(!state.employees){
-      state.employees=[];
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('Estado de trabajadores no disponible.');
     }
 
     const exists = state.employees.some(
@@ -54,12 +179,20 @@ window.EmployeeModule = {
       return null;
     }
 
+    const normalizedData = {...data};
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area') && window.AuthContext?.get?.()?.role !== 'ADMIN') {
+      throw new Error('Solo ADMIN puede modificar el área de un trabajador.');
+    }
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area')){
+      normalizedData.area = normalizeArea(normalizedData.area);
+    }
+
     const employee={
       id: typeof safeRandomUUID==='function'
         ? safeRandomUUID()
         : crypto.randomUUID(),
 
-      ...data,
+      ...normalizedData,
 
       start: data.start || new Date().toISOString().slice(0,10),
 
@@ -79,13 +212,26 @@ window.EmployeeModule = {
 
 
   update(id,data){
+    requireEmployeeMutationAccess();
+
+
+    const normalizedData = {...data};
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area') && window.AuthContext?.get?.()?.role !== 'ADMIN') {
+      throw new Error('Solo ADMIN puede modificar el área de un trabajador.');
+    }
+    if(Object.prototype.hasOwnProperty.call(normalizedData, 'area')){
+      normalizedData.area = normalizeArea(normalizedData.area);
+    }
 
     const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('Estado de trabajadores no disponible.');
+    }
 
     state.employees = state.employees.map(
       employee =>
         employee.id===id
-        ? {...employee,...data}
+        ? {...employee,...normalizedData}
         : employee
     );
 
@@ -99,8 +245,13 @@ window.EmployeeModule = {
 
 
   remove(id){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('Estado de trabajadores no disponible.');
+    }
 
     state.employees =
       state.employees.filter(
@@ -117,6 +268,8 @@ window.EmployeeModule = {
 
 
   addDocument(id,document){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 
@@ -141,6 +294,8 @@ window.EmployeeModule = {
 
 
   removeDocument(id,index){
+    requireEmployeeMutationAccess();
+
 
     const state = this._getState();
 

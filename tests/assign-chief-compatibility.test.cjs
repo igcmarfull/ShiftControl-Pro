@@ -1,0 +1,11 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const source = fs.readFileSync(path.join(__dirname, '../supabase/functions/assign-chief/index.ts'), 'utf8');
+assert.match(source, /const areaChiefsEnabled\s*=\s*Deno\.env\.get\("SHIFTCONTROL_AREA_CHIEFS_ENABLED"\) === "true"/);
+assert.match(source, /areaChiefsEnabled && area !== "ESTACION"/);
+assert.match(source, /areaChiefsEnabled \? "assign_chief_area" : "assign_chief"/);
+assert.match(source, /\.\.\.\(areaChiefsEnabled \? \{ p_area: area \} : \{\}\)/);
+assert.doesNotMatch(source, /Las jefaturas por área aún no están habilitadas/);
+console.log('Legacy chief RPC retained until explicitly enabled.');

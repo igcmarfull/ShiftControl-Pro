@@ -111,6 +111,31 @@
     return context;
   }
 
+  // Safety gate: area-scoped CHIEFs must never access the legacy
+  // company-wide JSON or its shared localStorage cache.
+  function assertLegacyStateAccess(context) {
+    // All CHIEFs must fail closed, including legacy memberships without an
+    // assigned area. An absent area is not permission for company-wide data.
+    if (context?.role === 'CHIEF') {
+      const error = new Error(
+        'El acceso por área todavía no está habilitado. Contacta al administrador.'
+      );
+      error.code = 'AUTH_AREA_STORAGE_CUTOVER_REQUIRED';
+      throw error;
+    }
+  }
+
+  function assertBootstrapSession(context) {
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId || current.role !== context.role ||
+        current.area !== context.area) {
+      const error = new Error('La sesión cambió durante la carga. Vuelve a ingresar.');
+      error.code = 'AUTH_SESSION_CHANGED_DURING_BOOTSTRAP';
+      throw error;
+    }
+  }
+
   async function pushState() {
     const context = window.AuthContext?.get?.() || null;
 
@@ -119,14 +144,22 @@
       !context?.companyId ||
       context.companyId !== activeCompanyId
     ) {
-      pendingSave = true;
+      // A save from a signed-out or switched account must never be queued
+      // for replay under whichever company signs in next.
+      pendingSave = Boolean(context?.companyId &&
+        context.companyId === activeCompanyId);
       return null;
     }
 
     try {
-      const currentState = window.ShiftControlState.get();
+      assertLegacyStateAccess(context);
+      assertBootstrapSession(context);
+      const currentState = structuredClone(window.ShiftControlState.get());
       const updatedAt = new Date().toISOString();
 
+      // Do not cache a stale company's state if a login switch happened
+      // between scheduling and executing this asynchronous push.
+      assertBootstrapSession(context);
       writeTenantState(context.companyId, currentState, updatedAt);
 
       const { error } = await getClient()
@@ -171,6 +204,20 @@
         return null;
       }
 
+      // Area chiefs use the isolated area_state calendar, never app_state.
+      // Clear any previous tenant bootstrap state and let the area view load
+      // exclusively through its RLS-protected area-specific adapter.
+      if (context.role === 'CHIEF') {
+        ready = false;
+        activeCompanyId = null;
+        pendingSave = false;
+        clearTimeout(saveTimer);
+        assertBootstrapSession(context);
+        return null;
+      }
+
+      assertLegacyStateAccess(context);
+
       if (ready && activeCompanyId === context.companyId) {
         return window.ShiftControlState.get();
       }
@@ -186,6 +233,7 @@
           .eq('key', config.stateKey)
           .maybeSingle();
 
+        assertBootstrapSession(context);
         if (error) throw error;
 
         if (data?.data) {
@@ -218,6 +266,9 @@
         await pushState();
         return currentState;
       } catch (error) {
+        // Never recover another account's cached company data after logout
+        // or a company switch while the network request was pending.
+        assertBootstrapSession(context);
         const tenantState =
           readTenantState(context.companyId) ||
           legacyStateFor(context.companyId);
@@ -254,21 +305,209 @@
     }
   }
 
+  // API de preparación para el nuevo almacenamiento por área.
+  // No se conecta todavía al estado global de la SPA: hacerlo antes de
+  // particionar cada módulo expondría o sobrescribiría datos de otra área.
+  const VALID_AREAS = ['ESTACION', 'TIENDA'];
+
+  function requireAreaAdmin(area) {
+    const context = window.AuthContext?.get?.() || null;
+    if (!context?.companyId || context.companyId !== activeCompanyId) {
+      throw new Error('La empresa activa no coincide con la sesión.');
+    }
+    if (context.role !== 'ADMIN') {
+      throw new Error('La migración de datos por área requiere un ADMIN.');
+    }
+    if (!VALID_AREAS.includes(area)) {
+      throw new Error('Área inválida.');
+    }
+    return context;
+  }
+
+  async function readAreaState(area, key) {
+    const context = requireAreaAdmin(area);
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    const { data, error } = await getClient()
+      .from('area_state')
+      .select('data, updated_at, revision')
+      .eq('company_id', context.companyId)
+      .eq('area', area)
+      .eq('key', key)
+      .maybeSingle();
+    if (error) throw error;
+    // Prevent an in-flight ADMIN read from returning records after an
+    // account/company switch. The UI performs its own generation check too.
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId || current.role !== 'ADMIN' ||
+        activeCompanyId !== context.companyId) {
+      throw new Error('La sesión cambió durante la consulta. Vuelve a ingresar.');
+    }
+    return data ? structuredClone(data) : null;
+  }
+
+  async function writeAreaState(area, key, nextData, expectedRevision) {
+    const context = requireAreaAdmin(area);
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    if (nextData === undefined || nextData === null) {
+      throw new Error('No se puede guardar un estado vacío.');
+    }
+    if (expectedRevision !== null &&
+        (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1)) {
+      throw new Error('Se requiere una revisión válida o null para crear.');
+    }
+    if (expectedRevision === undefined) {
+      throw new Error('Indica la revisión leída; null solo para registros nuevos.');
+    }
+    const { data, error } = await getClient()
+      .rpc('save_area_state', {
+        p_company_id: context.companyId,
+        p_area: area,
+        p_key: key,
+        p_data: nextData,
+        p_expected_revision: expectedRevision
+      });
+    if (error) throw error;
+    return data;
+  }
+
+  // Read-only isolated API for area CHIEFs. Never hydrate the legacy global
+  // company state or localStorage from this response.
+  async function readOwnAreaState(key) {
+    const context = window.AuthContext?.get?.() || null;
+    if (!context?.companyId || context.role !== 'CHIEF' ||
+        !VALID_AREAS.includes(context.area)) {
+      throw new Error('Se requiere una jefatura con área asignada.');
+    }
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    const { data, error } = await getClient()
+      .from('area_state')
+      .select('data, updated_at, revision')
+      .eq('company_id', context.companyId)
+      .eq('area', context.area)
+      .eq('key', key)
+      .maybeSingle();
+    if (error) throw error;
+    // A sign-out or account switch while the request was in flight must
+    // never deliver the previous chief's records to the new session.
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId ||
+        current.role !== context.role || current.area !== context.area) {
+      throw new Error('La sesión cambió durante la consulta. Vuelve a ingresar.');
+    }
+    if (!data) return null;
+    // Fail closed if an incorrectly populated row contains another area's
+    // operational records. Never hand it to a calendar or another module.
+    validateOwnAreaPayload(data.data, context.area);
+    return structuredClone(data);
+  }
+
+  // Reject accidental cross-area or orphan operational records before an
+  // area-scoped write. The server must still enforce row-level authorization.
+  function validateOwnAreaPayload(data, area) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('Se requiere un estado de área válido.');
+    }
+    const collections = ['employees', 'plans', 'executions', 'additional', 'absences'];
+    // The scoped format is intentionally closed: unknown top-level keys
+    // could contain shared settings, another area's schedule or audit data.
+    for (const name of Object.keys(data)) {
+      if (!collections.includes(name)) {
+        throw new Error('Colección no autorizada en estado de área: ' + name);
+      }
+    }
+    for (const name of collections) {
+      if (!Array.isArray(data[name])) {
+        throw new Error('Falta una colección de área válida: ' + name);
+      }
+    }
+    const ids = new Set();
+    for (const employee of data.employees) {
+      if (!employee || employee.id == null || employee.area !== area ||
+          ids.has(employee.id)) {
+        throw new Error('Trabajador duplicado o fuera del área autorizada.');
+      }
+      ids.add(employee.id);
+    }
+    for (const name of collections.slice(1)) {
+      for (const item of data[name]) {
+        if (!item || !ids.has(item.employeeId)) {
+          throw new Error('Registro de ' + name + ' sin trabajador del área.');
+        }
+      }
+    }
+    // Shared/unassigned data belongs to ADMIN and must never be included.
+    if ('UNASSIGNED' in data || 'sharedHolidays' in data ||
+        'unresolvedPlans' in data || 'holidays' in data) {
+      throw new Error('El estado contiene datos fuera del área.');
+    }
+  }
+
+  // Explicit area-scoped RPC, not connected to legacy save() or global state.
+  // Optimistic revision prevents overwriting another editor's changes.
+  async function writeOwnAreaState(key, nextData, expectedRevision) {
+    const context = window.AuthContext?.get?.() || null;
+    if (!context?.companyId || context.role !== 'CHIEF' ||
+        !VALID_AREAS.includes(context.area)) {
+      throw new Error('Se requiere una jefatura con área asignada.');
+    }
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    if (nextData === undefined || nextData === null) {
+      throw new Error('No se puede guardar un estado vacío.');
+    }
+    if (expectedRevision === undefined ||
+        (expectedRevision !== null &&
+         (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1))) {
+      throw new Error('Se requiere una revisión válida o null para crear.');
+    }
+    validateOwnAreaPayload(nextData, context.area);
+    const payload = structuredClone(nextData);
+    // The RPC independently checks company membership and area on the server.
+    const { data, error } = await getClient().rpc('save_area_state', {
+      p_company_id: context.companyId,
+      p_area: context.area,
+      p_key: key,
+      p_data: payload,
+      p_expected_revision: expectedRevision
+    });
+    if (error) throw error;
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId ||
+        current.role !== context.role || current.area !== context.area) {
+      throw new Error('La sesión cambió durante el guardado. Verifica antes de reintentar.');
+    }
+    return data;
+  }
+
   const originalSave = window.save;
 
   if (typeof originalSave === 'function') {
     window.save = function () {
-      originalSave.apply(this, arguments);
+      const context = window.AuthContext?.get?.() || null;
+      // Reject before the legacy save() writes company-wide localStorage.
+      // This is defense-in-depth, not a replacement for database RLS.
+      assertLegacyStateAccess(context);
+      const result = originalSave.apply(this, arguments);
 
-      const companyId = window.AuthContext?.get?.()?.companyId;
-      if (ready && companyId && companyId === activeCompanyId) {
+      if (ready && context.companyId && context.companyId === activeCompanyId) {
         writeTenantState(
-          companyId,
+          context.companyId,
           window.ShiftControlState.get()
         );
+        schedulePush();
       }
 
-      schedulePush();
+      return result;
     };
   } else {
     warn('No se encontró la función principal save().');
@@ -279,6 +518,10 @@
     bootstrap,
     isReady: () => ready,
     getActiveCompanyId: () => activeCompanyId,
-    getTenantLocalKey
+    getTenantLocalKey,
+    readAreaState,
+    writeAreaState,
+    readOwnAreaState,
+    writeOwnAreaState
   });
 })();

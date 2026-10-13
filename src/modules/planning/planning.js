@@ -1,5 +1,19 @@
 (function(){
 
+function requirePlanningMutationAccess(employeeId){
+  const context = window.AuthContext?.get?.() || null;
+  if(!context?.companyId || !['ADMIN', 'CHIEF'].includes(context.role)){
+    throw new Error('Se requiere una sesión de empresa válida.');
+  }
+  // Legacy PlanningModule writes the company-wide document. All CHIEF
+  // mutations must use ShiftControlAreaCalendar (area_state + RLS), including
+  // chiefs whose area assignment is missing or temporarily unavailable.
+  if(context.role === 'CHIEF'){
+    throw new Error('Utiliza el calendario de tu área para modificar turnos.');
+  }
+  return context;
+}
+
 window.PlanningModule = {
 
   _getState(){
@@ -22,6 +36,18 @@ window.PlanningModule = {
   },
 
 
+  // Presentation helper only. Authorization must also be enforced by Supabase.
+  getByArea(area){
+    const normalized = String(area || '').trim().toUpperCase();
+    if(!['ESTACION', 'TIENDA'].includes(normalized)){
+      throw new Error('Area invalida: use ESTACION o TIENDA.');
+    }
+
+    const employees = window.EmployeeModule?.getByArea?.(normalized) || [];
+    const employeeIds = new Set(employees.map(employee => employee.id));
+    return this.getAll().filter(plan => employeeIds.has(plan.employeeId));
+  },
+
   find(employeeId,date){
 
     return this.getAll().find(
@@ -34,6 +60,8 @@ window.PlanningModule = {
 
 
   create(data){
+    requirePlanningMutationAccess(data?.employeeId);
+
 
     const state = this._getState();
 
@@ -76,6 +104,8 @@ window.PlanningModule = {
 
 
   remove(id){
+    requirePlanningMutationAccess();
+
 
     const state = this._getState();
 
@@ -95,6 +125,8 @@ window.PlanningModule = {
 
 
   clearEmployee(employeeId,date){
+    requirePlanningMutationAccess(employeeId);
+
 
     const state = this._getState();
 
@@ -113,6 +145,8 @@ window.PlanningModule = {
 
 
   removeEmployeePlans(employeeId){
+    requirePlanningMutationAccess(employeeId);
+
 
     const state = this._getState();
 

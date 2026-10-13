@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Prueba de clasificación por área</title></head>
+<body>
+<h1>Prueba manual: clasificación por área</h1>
+<p>Esta página usa datos ficticios en memoria y NO conecta con Supabase.</p>
+<div id="panel"></div>
+<pre id="result"></pre>
+<script>
+'use strict';
+const employees = [
+  {id:'e1', name:'Trabajadora sin área'},
+  {id:'e2', name:'Trabajador Estación', area:'ESTACION'},
+  {id:'e3', name:'Trabajadora Tienda', area:'TIENDA'}
+];
+let saved = 0;
+window.AuthContext = { get: () => ({companyId:'test-company', role:'ADMIN'}) };
+window.ShiftControlState = {
+  get: () => ({employees}),
+  save: () => { saved += 1; }
+};
+</script>
+<script src="../src/modules/employees/employees.js"></script>
+<script src="../src/modules/employees/area-classification.js"></script>
+<script>
+'use strict';
+const results = [];
+function check(label, condition) {
+  results.push((condition ? 'OK' : 'ERROR') + ': ' + label);
+}
+const before = EmployeeModule.getAreaSummary();
+check('Hay una persona sin asignar', before.UNASSIGNED === 1);
+check('Las otras áreas se mantienen', before.ESTACION === 1 && before.TIENDA === 1);
+EmployeeAreaClassification.render(document.getElementById('panel'));
+check('Se muestra el selector', !!document.querySelector('#panel select'));
+const prior = employees.map(item => ({...item}));
+window.AuthContext.get = () => ({companyId:'test-company', role:'CHIEF', area:'ESTACION'});
+try {
+  EmployeeModule.assignArea('e1', 'TIENDA');
+  check('CHIEF no puede asignar', false);
+} catch (error) {
+  check('CHIEF no puede asignar', true);
+}
+check('Sin cambios después de rechazo', JSON.stringify(employees) === JSON.stringify(prior));
+window.AuthContext.get = () => ({companyId:'test-company', role:'ADMIN'});
+EmployeeModule.assignArea('e1', 'TIENDA');
+check('ADMIN asigna a Tienda', EmployeeModule.getAreaSummary().TIENDA === 2);
+check('Se solicita guardado', saved === 1);
+check('Estación no cambió', EmployeeModule.getAreaSummary().ESTACION === 1);
+document.getElementById('result').textContent = results.join('\n');
+</script>
+</body>
+</html>

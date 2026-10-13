@@ -1,5 +1,17 @@
 (function(){
 
+function requireAttendanceMutationAccess(){
+  const context = window.AuthContext?.get?.() || null;
+  if(!context?.companyId || !['ADMIN','CHIEF'].includes(context.role)){
+    throw new Error('Se requiere una sesión de empresa válida.');
+  }
+  // Attendance still shares company-wide state. Never allow an area CHIEF
+  // to mutate it before the server-enforced area storage cutover.
+  if(context.role === 'CHIEF' && context.area){
+    throw new Error('Los cambios de asistencia por área aún no están habilitados.');
+  }
+}
+
 window.AttendanceModule = {
 
   _getState(){
@@ -27,6 +39,8 @@ window.AttendanceModule = {
   },
 
   add(data, {save=true}={}){
+    // Non-persisted hydration is allowed during startup; real writes remain gated.
+    if (save !== false) requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -45,6 +59,8 @@ window.AttendanceModule = {
   },
 
   patch(id, changes, {save=true}={}){
+    // Non-persisted hydration is allowed during startup; real writes remain gated.
+    if (save !== false) requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -71,6 +87,8 @@ window.AttendanceModule = {
   },
 
   replaceAll(items, {save=true}={}){
+    // Non-persisted hydration is allowed during startup; real writes remain gated.
+    if (save !== false) requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -101,6 +119,7 @@ window.AttendanceModule = {
 
 
   create(data){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -143,6 +162,7 @@ window.AttendanceModule = {
 
 
   remove(id){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -160,6 +180,7 @@ window.AttendanceModule = {
 
 
   clearDate(date){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -177,6 +198,7 @@ window.AttendanceModule = {
 
 
   removeWhere(callback){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -194,6 +216,7 @@ window.AttendanceModule = {
 
 
   removeGeneratedByAbsence(absenceId){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -211,6 +234,7 @@ window.AttendanceModule = {
 
 
   removeEmployee(employeeId){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -228,6 +252,7 @@ window.AttendanceModule = {
 
 
   removeEmployeeReferences(employeeId){
+    requireAttendanceMutationAccess();
 
     const state = this._getState();
 

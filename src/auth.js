@@ -229,6 +229,7 @@
       companyId:company.id,
       companyName:company.name,
       role:membership.role,
+      area:['ESTACION','TIENDA'].includes(membership.area) ? membership.area : null,
       legacyRole:legacyRole(membership.role)
     };
 
@@ -251,11 +252,25 @@
       );
     }
 
-    const membershipResult=await supabaseClient
+    // Prefer the area-aware schema. During staged deployment the migration
+    // may not yet exist; only fall back for an explicitly missing column.
+    let membershipResult=await supabaseClient
       .from('company_memberships')
-      .select('company_id, user_id, role, active')
+      .select('company_id, user_id, role, active, area')
       .eq('user_id',user.id)
       .eq('active',true);
+
+    if(membershipResult.error &&
+      (membershipResult.error.code==='42703' ||
+       membershipResult.error.code==='PGRST204' ||
+       membershipResult.error.code==='PGRST200') &&
+      /area/i.test(membershipResult.error.message||'')){
+      membershipResult=await supabaseClient
+        .from('company_memberships')
+        .select('company_id, user_id, role, active')
+        .eq('user_id',user.id)
+        .eq('active',true);
+    }
 
     if(membershipResult.error)throw membershipResult.error;
 
@@ -297,14 +312,20 @@
     );
   }
 
+  function notifyContextChanged(){
+    window.dispatchEvent(new Event('shiftcontrol:auth-context-changed'));
+  }
+
   async function activate(user){
     if(!user){
       currentContext=null;
+      notifyContextChanged();
       return null;
     }
 
     currentContext=await loadContext(user);
     clearLegacyAuth();
+    notifyContextChanged();
     return currentContext;
   }
 
@@ -386,6 +407,7 @@
   async function signOut(){
     const {error}=await getClient().auth.signOut({scope:'local'});
     currentContext=null;
+    notifyContextChanged();
     setPersistencePreference(true);
     clearLegacyAuth();
     if(error)throw error;
