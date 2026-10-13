@@ -125,6 +125,44 @@
     };
   }
 
+  // Build two immutable-to-the-caller snapshots only after a complete
+  // ownership and schema preflight. This NEVER writes to Supabase.
+  function prepareAreaSnapshots(source) {
+    const inventory = migrationInventory(source);
+    const partition = partitionEmployeesAndPlans(source);
+    const readiness = migrationReadiness(partition);
+    if (!inventory.complete || !readiness.ready) {
+      const problems = [
+        ...inventory.unexpected.map(key => 'Campo sin mapear: ' + key),
+        ...readiness.blockers.map(item => item.name + ': ' + item.count)
+      ];
+      throw new Error('Migración bloqueada. ' + problems.join('; '));
+    }
+    const names = ['employees', 'plans', 'executions', 'additional', 'absences'];
+    const result = {};
+    for (const area of AREAS) {
+      const data = {};
+      for (const name of names) {
+        data[name] = structuredClone(partition[area][name]);
+      }
+      result[area] = data;
+    }
+    // Verify no operational record was omitted or duplicated.
+    for (const name of names) {
+      const original = source[name] || [];
+      const count = result.ESTACION[name].length + result.TIENDA[name].length;
+      if (count !== original.length) {
+        throw new Error('Cantidad inconsistente de ' + name + '.');
+      }
+    }
+    return {
+      ESTACION: result.ESTACION,
+      TIENDA: result.TIENDA,
+      // Holidays are shared and must not leak into area snapshots.
+      sharedHolidays: structuredClone(partition.sharedHolidays)
+    };
+  }
+
   // A CHIEF receives only a detached, area-scoped snapshot. This is a
   // preparation helper, NOT a substitute for Supabase RLS or secure bootstrap.
   function snapshotForRole(partition, context) {
@@ -148,6 +186,7 @@
     partitionEmployeesAndPlans,
     snapshotForRole,
     migrationReadiness,
-    migrationInventory
+    migrationInventory,
+    prepareAreaSnapshots
   });
 })();
