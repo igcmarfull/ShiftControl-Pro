@@ -60,12 +60,17 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row:visible').count(), 0);
     await workerSearch.fill('ESTACION');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row:visible').count(), 1);
-    await workerSearch.fill('');
+    await page.getByRole('button', { name: 'Mostrar todos' }).click();
+    assert.equal(await workerSearch.inputValue(), '');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-row:visible').count(), 1);
     await page.getByRole('button', { name: 'Vista semanal' }).click();
     const weeklySearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
     await weeklySearch.fill('inexistente');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .week-row:visible').count(), 0);
     await weeklySearch.fill('ESTACION');
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .week-row:visible').count(), 1);
+    await page.getByRole('button', { name: 'Mostrar todos' }).click();
+    assert.equal(await weeklySearch.inputValue(), '');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .week-row:visible').count(), 1);
     await page.getByRole('button', { name: 'Planificación mensual' }).click();
     // Chief bulk editor must be available without crossing area boundaries.
