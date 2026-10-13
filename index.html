@@ -11676,7 +11676,27 @@ function renderPlanningInsights(prefix,days){
     <div class="planning-insight-card"><span>Turnos asignados</span><strong>${monthPlans.filter(p=>['A','B','C','D'].includes(p.code)).length}</strong><small>${totals.map(x=>`${x.code}: ${x.count}`).join(' · ')}</small></div>
     <div class="planning-insight-card ${streakAlerts.length?'warning':''}"><span>Alertas de carga</span><strong>${streakAlerts.length}</strong><small>${streakAlerts[0]||'Sin jornadas consecutivas críticas'}</small></div>`;
 }
-function duplicatePreviousMonth(){snapshot();
+async function duplicatePreviousMonth(){
+  if(getAppRole?.()==='chief'){
+    try {
+      const current=periodPrefix();
+      const [year,month]=current.split('-').map(Number);
+      const previous=new Date(Date.UTC(year,month-2,1)).toISOString().slice(0,7);
+      const view=await window.ShiftControlAreaCalendar.load();
+      if(!view)return alert('Todavía no hay calendario para esta área.');
+      const maxDay=new Date(year,month,0).getDate();
+      const changes=view.plans.filter(plan=>plan.date.startsWith(previous))
+        .filter(plan=>Number(plan.date.slice(-2))<=maxDay)
+        .map(plan=>({employeeId:plan.employeeId,
+          date:current+plan.date.slice(7),code:plan.code}));
+      if(!changes.length)return alert('El mes anterior no tiene turnos para copiar.');
+      if(!confirm('¿Copiar '+changes.length+' turnos de '+previous+' a '+current+'?'))return;
+      await window.ShiftControlAreaCalendar.applyPlanChanges(changes);
+      window.ShiftControlAreaCalendarView?.mount?.();
+    } catch(error){alert('No se pudo duplicar el mes: '+(error?.message||error));}
+    return;
+  }
+  snapshot();
   const current=periodPrefix();
   if(isClosed(current))return alert('El mes está cerrado.');
   const [y,m]=current.split('-').map(Number);
@@ -13738,6 +13758,20 @@ function markAllPresent(){
   save();renderAll();toast(`${added} trabajadores marcados presentes`);
 }
 function openPatternModal(){
+  if(getAppRole?.()==='chief'){
+    window.ShiftControlAreaCalendar.load().then(view=>{
+      if(!view)return alert('Todavía no hay calendario para esta área.');
+      patternEmployees.innerHTML=view.employees.map(e=>
+        '<option value="'+escapeHtml(e.id)+'">'+escapeHtml(e.name)+'</option>').join('');
+      patternSelect.innerHTML=state.settings.patterns.map(p=>
+        '<option value="'+escapeHtml(p.id)+'">'+escapeHtml(p.name)+'</option>').join('');
+      const prefix=periodPrefix();
+      patternFrom.value=prefix+'-01';
+      patternTo.value=prefix+'-'+String(new Date(Number(prefix.slice(0,4)),Number(prefix.slice(5,7)),0).getDate()).padStart(2,'0');
+      openModal('patternModal');
+    }).catch(error=>alert('No se pudo abrir patrones: '+(error?.message||error)));
+    return;
+  }
   patternEmployees.innerHTML=window.EmployeeModule.getAll().filter(e=>e.active).map(e=>`<option value="${e.id}">${e.name} · ${e.area}</option>`).join('');
   patternSelect.innerHTML=state.settings.patterns.map(p=>`<option value="${p.id}">${p.name} · ${p.sequence.join('-')}</option>`).join('');
   const prefix=periodPrefix();
@@ -13746,8 +13780,40 @@ function openPatternModal(){
   patternTo.value=prefix+'-'+String(new Date(py,pm,0).getDate()).padStart(2,'0');
   openModal('patternModal');
 }
-function applyPattern(){
+async function applyPattern(){
   if(!requireAppPermission('planning.manage'))return;
+  if(getAppRole?.()==='chief'){
+    const ids=[...patternEmployees.selectedOptions].map(o=>o.value);
+    const pattern=state.settings.patterns.find(p=>p.id===patternSelect.value);
+    if(!ids.length||!pattern?.sequence?.length)return alert('Selecciona trabajadores y un patrón.');
+    const from=new Date(patternFrom.value+'T12:00:00Z');
+    const to=new Date(patternTo.value+'T12:00:00Z');
+    if(!Number.isFinite(from.getTime())||!Number.isFinite(to.getTime())||from>to)
+      return alert('Rango inválido.');
+    try {
+      const view=await window.ShiftControlAreaCalendar.load();
+      if(!view)return alert('Todavía no hay calendario para esta área.');
+      const exceptions=new Set(['P','L','V','X']);
+      const existing=new Map(view.plans.map(p=>[p.employeeId+':'+p.date,p]));
+      const changes=[];
+      let index=0;
+      for(let day=new Date(from);day<=to;day.setUTCDate(day.getUTCDate()+1)){
+        const date=day.toISOString().slice(0,10);
+        for(const employeeId of ids){
+          const prior=existing.get(employeeId+':'+date);
+          if(patternKeepExceptions.checked&&prior&&exceptions.has(prior.code))continue;
+          changes.push({employeeId,date,code:pattern.sequence[index%pattern.sequence.length]});
+          if(changes.length>2000)return alert('El patrón supera el máximo de 2.000 turnos.');
+        }
+        index++;
+      }
+      if(!changes.length)return alert('No hay turnos para modificar.');
+      await window.ShiftControlAreaCalendar.applyPlanChanges(changes);
+      closeModal('patternModal');
+      window.ShiftControlAreaCalendarView?.mount?.();
+    } catch(error){alert('No se pudo aplicar el patrón: '+(error?.message||error));}
+    return;
+  }
   const ids=[...patternEmployees.selectedOptions].map(o=>o.value);
   const pattern=state.settings.patterns.find(p=>p.id===patternSelect.value);
   if(!ids.length||!pattern)return alert('Selecciona al menos un trabajador y un patrón.');
