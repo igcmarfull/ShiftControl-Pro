@@ -29,14 +29,14 @@ const assert = require('node:assert/strict');
     await page.addScriptTag({ content: view });
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
     await page.getByText('Calendario · Estación').waitFor();
-    await page.getByText('ESTACION worker').waitFor();
+    await page.getByRole('cell', { name: 'ESTACION worker' }).waitFor();
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     await page.evaluate(() => {
       window.__ctx = { companyId: 'test-company', userId: 'store-chief', role: 'CHIEF', area: 'TIENDA' };
       window.ShiftControlAreaCalendarView.mount();
     });
     await page.getByText('Calendario · Tienda').waitFor();
-    await page.getByText('TIENDA worker').waitFor();
+    await page.getByRole('cell', { name: 'TIENDA worker' }).waitFor();
     assert.equal(await page.getByText('ESTACION worker').count(), 0);
     await page.evaluate(() => {
       window.__ctx = { companyId: 'test-company', userId: 'store-chief', role: 'CHIEF', area: null };
