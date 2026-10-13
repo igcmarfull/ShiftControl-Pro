@@ -762,6 +762,8 @@
       // Prevent selecting stale/off-screen dates by constraining the input.
       targetDate.min = selectedMonth + '-01';
       targetDate.max = selectedMonth + '-' + String(days).padStart(2, '0');
+      const invertSelection = el('button', 'Invertir selección visible');
+      invertSelection.type = 'button';
       const selectWeekends = el('button', 'Seleccionar fines de semana');
       selectWeekends.type = 'button';
       const clearSelection = el('button', 'Limpiar selección');
@@ -990,6 +992,34 @@
         }
         updateSelection();
       });
+      // Toggle all visible editable cells atomically. Hidden employees and
+      // duplicate records remain untouched; only the chief's area is eligible.
+      invertSelection.addEventListener('click', () => {
+        if (saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        for (const cell of wrapper.querySelectorAll('.cal-cell[role="button"], .week-cell[role="button"]')) {
+          const row = cell.closest('.cal-row, .week-row');
+          if (row?.hidden || row?.style.display === 'none') continue;
+          const employeeId = cell.dataset.employeeId;
+          const date = cell.dataset.date;
+          if (!employeeId || !date) continue;
+          const key = employeeId + ':' + date;
+          if (duplicateCells.has(key)) continue;
+          if (selectedCells.has(key)) {
+            selectedCells.delete(key);
+            cell.classList.remove('selected');
+            cell.setAttribute('aria-pressed', 'false');
+          } else {
+            selectedCells.set(key, { employeeId, date });
+            cell.classList.add('selected');
+            cell.setAttribute('aria-pressed', 'true');
+          }
+        }
+        selectionAnchor = null;
+        updateSelection();
+      });
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
       clearSelection.addEventListener('click', () => {
@@ -1009,7 +1039,7 @@
         event.preventDefault();
         clearSelection.click();
       });
-      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, targetDate, selectDate, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
+      selectionBar.append(selectionCount, selectVisible, selectFilteredWeekdays, selectWeekends, selectEmpty, selectAssigned, invertSelection, targetDate, selectDate, matchingCode, selectMatching, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
       // local to this area snapshot and never broadens employee access.
