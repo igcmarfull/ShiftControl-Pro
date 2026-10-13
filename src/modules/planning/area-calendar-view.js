@@ -542,6 +542,69 @@
           ? window.ShiftControlAreaCalendar.upsertPlan({ employeeId: employee.id, date, code: value })
           : window.ShiftControlAreaCalendar.removePlan(employee.id, date));
       }
+      // Original planner-style multi-cell selection, committed as one
+      // authorized area transaction rather than writing the company state.
+      const selectedCells = new Map();
+      const selectionBar = el('div');
+      selectionBar.className = 'area-calendar-selection';
+      const selectionCount = el('span', '0 celdas seleccionadas');
+      const selectionCode = el('select');
+      selectionCode.setAttribute('aria-label', 'Turno para selección');
+      for (const code of validCodes) {
+        const option = el('option', code);
+        option.value = code;
+        selectionCode.append(option);
+      }
+      const applySelection = el('button', 'Aplicar a selección');
+      applySelection.type = 'button';
+      applySelection.disabled = true;
+      const clearSelection = el('button', 'Limpiar selección');
+      clearSelection.type = 'button';
+      clearSelection.disabled = true;
+      const removeSelection = el('button', 'Quitar turnos seleccionados');
+      removeSelection.type = 'button';
+      removeSelection.disabled = true;
+      function updateSelection() {
+        selectionCount.textContent = selectedCells.size + ' celdas seleccionadas';
+        applySelection.disabled = clearSelection.disabled = removeSelection.disabled =
+          !selectedCells.size || saving || loading;
+      }
+      function selectCell(cell, employee, date) {
+        const key = employee.id + ':' + date;
+        if (duplicateCells.has(key)) {
+          status.textContent = 'No puedes seleccionar turnos duplicados hasta corregirlos.';
+          return;
+        }
+        if (selectedCells.has(key)) {
+          selectedCells.delete(key);
+          cell.classList.remove('selected');
+          cell.setAttribute('aria-pressed', 'false');
+        } else {
+          selectedCells.set(key, { employeeId: employee.id, date });
+          cell.classList.add('selected');
+          cell.setAttribute('aria-pressed', 'true');
+        }
+        updateSelection();
+      }
+      function commitSelection(code) {
+        if (!selectedCells.size || saving || loading) return;
+        const changes = [...selectedCells.values()].map(cell => ({ ...cell, code }));
+        if (!window.confirm('¿Aplicar ' + (code || 'eliminación') + ' a ' +
+          changes.length + ' celdas de ' + areas[view.area || window.AuthContext?.get?.()?.area] + '?')) return;
+        void mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
+      }
+      applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
+      removeSelection.addEventListener('click', () => commitSelection(null));
+      clearSelection.addEventListener('click', () => {
+        for (const cell of wrapper.querySelectorAll('.cal-cell.selected')) {
+          cell.classList.remove('selected');
+          cell.setAttribute('aria-pressed', 'false');
+        }
+        selectedCells.clear();
+        updateSelection();
+      });
+      selectionBar.append(selectionCount, selectionCode, applySelection, removeSelection, clearSelection);
+      content.append(selectionBar);
       const wrapper = el('div');
       wrapper.className = 'table-wrap';
       wrapper.style.overflowX = 'auto';
@@ -595,7 +658,14 @@
               cell.setAttribute('role', 'button');
               cell.setAttribute('aria-label', cell.title + '. Editar turno');
               const edit = () => editShift(employee, date, plan);
-              cell.addEventListener('click', edit);
+              cell.addEventListener('click', e => {
+                if (e.ctrlKey || e.metaKey || e.shiftKey) selectCell(cell, employee, date);
+                else edit();
+              });
+              cell.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                selectCell(cell, employee, date);
+              });
               cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); edit(); }
               });
