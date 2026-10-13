@@ -848,10 +848,14 @@
           return;
         }
         const overwritten = changes.filter(cell => plans.has(cell.employeeId + ':' + cell.date)).length;
-        const created = changes.length - overwritten;
+        const created = code === null ? 0 : changes.length - overwritten;
+        const actionSummary = code === null ?
+          overwritten + ' turnos existentes serán eliminados.' :
+          overwritten + ' turnos existentes serán reemplazados; ' +
+          created + ' turnos nuevos serán asignados.';
         if (!window.confirm('¿Aplicar ' + (code || 'eliminación') + ' a ' +
           changes.length + ' celdas de ' + areas[context.area] + '? ' +
-          overwritten + ' turnos existentes afectados; ' + created + ' fechas vacías.')) return;
+          actionSummary)) return;
         void mutate(() => {
           const latest = window.AuthContext?.get?.();
           if (latest?.role !== 'CHIEF' || latest.userId !== context.userId ||
