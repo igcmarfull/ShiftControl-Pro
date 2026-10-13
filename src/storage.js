@@ -358,7 +358,11 @@
         current.role !== context.role || current.area !== context.area) {
       throw new Error('La sesión cambió durante la consulta. Vuelve a ingresar.');
     }
-    return data ? structuredClone(data) : null;
+    if (!data) return null;
+    // Fail closed if an incorrectly populated row contains another area's
+    // operational records. Never hand it to a calendar or another module.
+    validateOwnAreaPayload(data.data, context.area);
+    return structuredClone(data);
   }
 
   // Reject accidental cross-area or orphan operational records before an
