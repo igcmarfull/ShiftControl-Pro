@@ -39,7 +39,8 @@ window.AttendanceModule = {
   },
 
   add(data, {save=true}={}){
-    requireAttendanceMutationAccess();
+    // Non-persisted hydration is allowed during startup; real writes remain gated.
+    if (save !== false) requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -58,7 +59,8 @@ window.AttendanceModule = {
   },
 
   patch(id, changes, {save=true}={}){
-    requireAttendanceMutationAccess();
+    // Non-persisted hydration is allowed during startup; real writes remain gated.
+    if (save !== false) requireAttendanceMutationAccess();
 
     const state = this._getState();
 
@@ -85,7 +87,8 @@ window.AttendanceModule = {
   },
 
   replaceAll(items, {save=true}={}){
-    requireAttendanceMutationAccess();
+    // Non-persisted hydration is allowed during startup; real writes remain gated.
+    if (save !== false) requireAttendanceMutationAccess();
 
     const state = this._getState();
 
