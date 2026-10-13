@@ -1,5 +1,12 @@
 (function(){
 
+function assertAreaCutoverReady(){
+  const context = window.AuthContext?.get?.();
+  if(context?.role === 'CHIEF' && context.area){
+    throw new Error('Operación pendiente de migración por área.');
+  }
+}
+
 window.AbsenceModule = {
 
   _getState(){
@@ -26,6 +33,7 @@ window.AbsenceModule = {
   },
 
   add(data, {save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
@@ -39,6 +47,7 @@ window.AbsenceModule = {
   },
 
   update(id, changes, {save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
@@ -60,6 +69,7 @@ window.AbsenceModule = {
   },
 
   remove(id, {save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
@@ -80,6 +90,7 @@ window.AbsenceModule = {
   },
 
   replaceAll(items, {save=true}={}){
+    assertAreaCutoverReady();
     const state = this._getState();
 
     if(!state){
