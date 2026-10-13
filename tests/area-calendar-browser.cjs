@@ -73,12 +73,11 @@ const assert = require('node:assert/strict');
       ['2026-10-19', '2026-10-20']);
     // Multi-cell edits must be sent as one authorized area-scoped write.
     const firstCells = page.locator('#shiftcontrol-area-calendar .cal-row').first().locator('.cal-cell');
-    // The monthly grid is horizontally scrollable; trigger the same trusted
-    // modifier-click handler after scrolling each target into view.
-    await firstCells.nth(2).scrollIntoViewIfNeeded();
-    await firstCells.nth(2).click({ modifiers: ['Control'], force: true });
-    await firstCells.nth(3).scrollIntoViewIfNeeded();
-    await firstCells.nth(3).click({ modifiers: ['Control'], force: true });
+    // The test fixture does not load the legacy grid CSS, so its cells can
+    // have zero-size hit targets. Dispatch modifier-click events directly to
+    // exercise the real handler without relying on layout geometry.
+    await firstCells.nth(2).dispatchEvent('click', { ctrlKey: true });
+    await firstCells.nth(3).dispatchEvent('click', { ctrlKey: true });
     await page.getByText('2 celdas seleccionadas').waitFor();
     await page.getByRole('button', { name: 'Aplicar a selección' }).click();
     await page.waitForFunction(() => window.__saves.some(entry =>
