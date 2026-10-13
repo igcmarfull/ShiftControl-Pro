@@ -89,6 +89,8 @@
     }
     const index = view.plans.findIndex(item =>
       item.employeeId === plan.employeeId && item.date === plan.date);
+    const allowedCodes = new Set(['A','B','C','D','L','V','P','X','Libre','Licencia','Vacaciones','Permiso']);
+    if (!allowedCodes.has(plan.code)) throw new Error('Código de turno no autorizado.');
     const incoming = structuredClone(plan);
     if (index >= 0) {
       // Keep the existing identity when editing an established shift.
@@ -133,7 +135,7 @@
     const view = await load(key);
     if (!view) throw new Error('No existe calendario migrado para esta área.');
     const employees = new Set(view.employees.map(employee => employee.id));
-    const allowedCodes = new Set(['A', 'B', 'C', 'D', 'Libre', 'Licencia', 'Vacaciones', 'Permiso']);
+    const allowedCodes = new Set(['A', 'B', 'C', 'D', 'L', 'V', 'P', 'X', 'Libre', 'Licencia', 'Vacaciones', 'Permiso']);
     const normalized = changes.map(change => {
       if (!change || !employees.has(change.employeeId) ||
           typeof change.date !== 'string' ||
