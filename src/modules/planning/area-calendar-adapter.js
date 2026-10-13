@@ -55,6 +55,7 @@
     if (!Number.isSafeInteger(view.revision) || view.revision < 1) {
       throw new Error('El calendario debe existir y tener una revisión válida antes de guardar.');
     }
+    assertUniquePlans(view.plans);
     const storage = window.ShiftControlStorage;
     if (typeof storage?.writeOwnAreaState !== 'function') {
       throw new Error('El guardado por área no está disponible.');
