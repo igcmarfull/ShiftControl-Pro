@@ -79,3 +79,19 @@ test('fresh-calendar preview blocks unassigned workers and unknown fields', () =
   input.settings = { flag: true };
   assert.throws(() => api.prepareFreshCalendars(input), /Campos sin revisar/);
 });
+
+test('legacy Isla workers map to station without mutating original employees', () => {
+  const input = example();
+  input.employees[0].area = 'Isla';
+  const migrated = api.prepareAreaSnapshots(input);
+  const fresh = api.prepareFreshCalendars(input);
+  assert.equal(migrated.ESTACION.employees[0].area, 'ESTACION');
+  assert.equal(fresh.ESTACION.employees[0].area, 'ESTACION');
+  assert.equal(fresh.TIENDA.employees.length, 1);
+  assert.equal(input.employees[0].area, 'Isla');
+});
+test('unknown area still blocks migration', () => {
+  const input = example();
+  input.employees[0].area = 'BODEGA';
+  assert.throws(() => api.prepareFreshCalendars(input), /Clasifica todos/);
+});
