@@ -60,6 +60,90 @@
       `;
       document.head.append(style);
     }
+    if (context?.role === 'ADMIN' && context.companyId && context.userId) {
+      generation++;
+      refreshActive = null;
+      if (root) root.remove();
+      document.body.classList.remove('shiftcontrol-area-chief-mode');
+      const panel = el('section');
+      panel.id = ID;
+      panel.dataset.owner = context.userId;
+      panel.dataset.company = context.companyId;
+      panel.className = 'panel';
+      panel.style.margin = '18px';
+      panel.append(el('h2', 'Calendarios por área · Supervisión'));
+      const status = el('p', 'Consultando turnos de Isla y Tienda…');
+      status.setAttribute('role', 'status');
+      panel.append(status);
+      const reload = el('button', 'Actualizar calendarios');
+      reload.type = 'button';
+      panel.append(reload);
+      const content = el('div');
+      panel.append(content);
+      document.body.append(panel);
+      const ownerGeneration = generation;
+      async function refreshAdmin() {
+        reload.disabled = true;
+        status.textContent = 'Consultando calendarios…';
+        content.replaceChildren();
+        try {
+          const storage = window.ShiftControlStorage;
+          if (typeof storage?.readAreaState !== 'function') {
+            throw new Error('No está disponible la lectura de calendarios por área.');
+          }
+          const results = await Promise.allSettled(
+            Object.keys(areas).map(area => storage.readAreaState(area, 'main')));
+          const current = window.AuthContext?.get?.();
+          if (ownerGeneration !== generation || current?.role !== 'ADMIN' ||
+              current.userId !== context.userId || current.companyId !== context.companyId) return;
+          for (const [index, area] of Object.keys(areas).entries()) {
+            const section = el('section');
+            section.append(el('h3', areas[area]));
+            const result = results[index];
+            if (result.status === 'rejected') {
+              section.append(el('p', 'No se pudo consultar: ' + (result.reason?.message || 'error de acceso')));
+            } else if (!result.value) {
+              section.append(el('p', 'Esta área aún no tiene un calendario migrado.'));
+            } else {
+              const data = result.value.data;
+              if (!data || !Array.isArray(data.employees) || !Array.isArray(data.plans)) {
+                section.append(el('p', 'El calendario contiene datos inválidos.'));
+              } else {
+                section.append(el('p', 'Revisión ' + result.value.revision +
+                  ' · ' + data.employees.length + ' trabajadores · ' +
+                  data.plans.length + ' turnos registrados'));
+                const table = el('table');
+                const header = el('tr');
+                for (const title of ['Trabajador', 'Fecha', 'Turno']) header.append(el('th', title));
+                table.append(header);
+                const names = new Map(data.employees.map(person => [person.id, person.name || person.id]));
+                const currentMonth = selectedMonth;
+                const monthPlans = data.plans.filter(plan => plan.date?.startsWith(currentMonth + '-'))
+                  .sort((a, b) => a.date.localeCompare(b.date));
+                for (const plan of monthPlans) {
+                  const tr = el('tr');
+                  for (const value of [names.get(plan.employeeId) || 'Sin asignar', plan.date, plan.code]) {
+                    tr.append(el('td', value || ''));
+                  }
+                  table.append(tr);
+                }
+                section.append(monthPlans.length ? table : el('p', 'Sin turnos registrados este mes.'));
+              }
+            }
+            content.append(section);
+          }
+          status.textContent = 'Calendarios de ' + selectedMonth + ' · solo lectura';
+        } catch (error) {
+          if (ownerGeneration === generation) status.textContent =
+            'No se pudieron consultar los calendarios: ' + (error?.message || 'error');
+        } finally {
+          if (ownerGeneration === generation) reload.disabled = false;
+        }
+      }
+      reload.addEventListener('click', refreshAdmin);
+      void refreshAdmin();
+      return;
+    }
     if (!authorized) {
       generation++;
       refreshActive = null;
