@@ -55,9 +55,25 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     await page.evaluate(() => {
       window.__ctx = { companyId: 'test-company', userId: 'admin', role: 'ADMIN', area: null };
+      window.__adminReads = [];
+      window.ShiftControlStorage = {
+        readAreaState: async area => {
+          window.__adminReads.push(area);
+          return { revision: 2, data: {
+            employees: [{ id: area + '-worker', name: area + ' worker' }],
+            plans: [{ employeeId: area + '-worker', date: '2026-10-14', code: 'B' }]
+          } };
+        }
+      };
       window.ShiftControlAreaCalendarView.mount();
     });
-    assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 0);
-    console.log('PASS Chromium: station/store switching, no stale rows, missing-area fail closed, admin unmount');
+    await page.getByText('Calendarios por área · Supervisión').waitFor();
+    await page.waitForFunction(() => window.__adminReads.length === 2);
+    assert.deepEqual((await page.evaluate(() => window.__adminReads)).sort(), ['ESTACION', 'TIENDA']);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1);
+    await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
+    assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1,
+      'Repeated admin mounts must not duplicate the panel');
+    console.log('PASS Chromium: station/store switching, no stale rows, missing-area fail closed, dual-area admin oversight');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
