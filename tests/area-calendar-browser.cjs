@@ -28,7 +28,7 @@ const assert = require('node:assert/strict');
     });
     await page.addScriptTag({ content: view });
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
-    await page.getByText('Calendario · Estación').waitFor();
+    await page.getByText('Calendario · Isla').waitFor();
     await page.getByRole('cell', { name: 'ESTACION worker' }).waitFor();
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     await page.evaluate(() => {
