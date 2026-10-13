@@ -33,6 +33,30 @@
       }
       output[owners.get(plan.employeeId)].plans.push(structuredClone(plan));
     }
+    // Attendance, additional shifts and absences are employee-owned records.
+    // Never guess ownership for missing, empty or unknown employee IDs.
+    for (const collection of ['executions', 'additional', 'absences']) {
+      if (source[collection] !== undefined && !Array.isArray(source[collection])) {
+        throw new Error('Colección inválida: ' + collection);
+      }
+      for (const area of [...AREAS, 'UNASSIGNED']) {
+        output[area][collection] = [];
+      }
+      output['unresolved' + collection[0].toUpperCase() + collection.slice(1)] = [];
+      for (const item of source[collection] || []) {
+        const owner = item && owners.get(item.employeeId);
+        const target = owner
+          ? output[owner][collection]
+          : output['unresolved' + collection[0].toUpperCase() + collection.slice(1)];
+        target.push(structuredClone(item));
+      }
+    }
+    // Holidays are not assigned to an employee in the current model.
+    // They must remain shared/admin-managed; never copy into area buckets.
+    if (source.holidays !== undefined && !Array.isArray(source.holidays)) {
+      throw new Error('Colección inválida: holidays');
+    }
+    output.sharedHolidays = structuredClone(source.holidays || []);
     return output;
   }
 
