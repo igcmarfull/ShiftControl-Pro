@@ -6,6 +6,7 @@
   let generation = 0;
   let selectedMonth = new Date().toISOString().slice(0, 7);
   let displayMode = 'monthly';
+  let refreshActive = null;
   const el = (tag, text) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = String(text);
@@ -60,6 +61,7 @@
     }
     if (!authorized) {
       generation++;
+      refreshActive = null;
       if (root) root.remove();
       document.body.classList.toggle('shiftcontrol-area-chief-mode', pendingArea);
       if (pendingArea) {
@@ -71,8 +73,12 @@
     }
     if (root && root.dataset.owner === context.userId &&
         root.dataset.company === context.companyId &&
-        root.dataset.area === context.area) return;
+        root.dataset.area === context.area) {
+      if (typeof refreshActive === 'function') void refreshActive();
+      return;
+    }
     generation++;
+    refreshActive = null;
     if (root) root.remove();
     // Do not present this isolated fallback as the original admin planner.
     // The legacy planner still uses company-wide state, while CHIEF data is
@@ -115,6 +121,7 @@
     document.body.classList.add('shiftcontrol-area-chief-mode');
 
     document.body.append(container);
+    refreshActive = refresh;
     refresh();
     async function refresh() {
       if (saving || loading) return;
