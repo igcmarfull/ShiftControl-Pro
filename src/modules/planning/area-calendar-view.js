@@ -687,7 +687,11 @@
                 if (e.shiftKey && e.button === 0) e.preventDefault();
               });
               cell.addEventListener('keydown', e => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); edit(); }
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (e.ctrlKey || e.metaKey || e.shiftKey) selectCell(cell, employee, date);
+                  else edit();
+                }
               });
             }
             row.append(cell);
