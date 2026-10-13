@@ -142,15 +142,22 @@
       !context?.companyId ||
       context.companyId !== activeCompanyId
     ) {
-      pendingSave = true;
+      // A save from a signed-out or switched account must never be queued
+      // for replay under whichever company signs in next.
+      pendingSave = Boolean(context?.companyId &&
+        context.companyId === activeCompanyId);
       return null;
     }
 
     try {
       assertLegacyStateAccess(context);
-      const currentState = window.ShiftControlState.get();
+      assertBootstrapSession(context);
+      const currentState = structuredClone(window.ShiftControlState.get());
       const updatedAt = new Date().toISOString();
 
+      // Do not cache a stale company's state if a login switch happened
+      // between scheduling and executing this asynchronous push.
+      assertBootstrapSession(context);
       writeTenantState(context.companyId, currentState, updatedAt);
 
       const { error } = await getClient()
