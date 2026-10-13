@@ -337,7 +337,15 @@
       .eq('key', key)
       .maybeSingle();
     if (error) throw error;
-    return data || null;
+    // Prevent an in-flight ADMIN read from returning records after an
+    // account/company switch. The UI performs its own generation check too.
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId || current.role !== 'ADMIN' ||
+        activeCompanyId !== context.companyId) {
+      throw new Error('La sesión cambió durante la consulta. Vuelve a ingresar.');
+    }
+    return data ? structuredClone(data) : null;
   }
 
   async function writeAreaState(area, key, nextData, expectedRevision) {
