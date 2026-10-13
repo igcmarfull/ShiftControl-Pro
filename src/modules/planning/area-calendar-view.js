@@ -1488,9 +1488,11 @@
       saving = true;
       const token = generation;
       reload.disabled = true;
-      content.querySelectorAll('button, input, select').forEach(node => {
-        node.disabled = true;
-      });
+      // Remember each control's original disabled state. A failed write must
+      // never re-enable buttons that require a selection or other prerequisites.
+      const lockedControls = [...content.querySelectorAll('button, input, select')]
+        .map(node => ({ node, disabled: node.disabled }));
+      lockedControls.forEach(({ node }) => { node.disabled = true; });
       status.textContent = 'Guardando en Supabase…';
       try {
         await action();
@@ -1509,8 +1511,8 @@
         saving = false;
         if (token === generation) {
           reload.disabled = loading;
-          content.querySelectorAll('button, input, select').forEach(node => {
-            node.disabled = false;
+          lockedControls.forEach(({ node, disabled }) => {
+            if (node.isConnected) node.disabled = disabled;
           });
         }
       }
