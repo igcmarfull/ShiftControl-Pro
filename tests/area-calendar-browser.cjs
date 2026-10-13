@@ -194,6 +194,16 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Seleccionar fecha', exact: true }).click();
     await page.getByText('Selecciona una fecha válida del mes mostrado.').waitFor();
     await page.getByText('0 celdas seleccionadas').waitFor();
+    // Inverting a single selected day selects its 30 complements, and back.
+    await page.getByRole('textbox', { name: 'Fecha a seleccionar' }).fill('2026-10-20');
+    await page.getByRole('button', { name: 'Seleccionar fecha', exact: true }).click();
+    await page.getByText('1 celdas seleccionadas').waitFor();
+    await page.getByRole('button', { name: 'Invertir selección visible' }).click();
+    await page.getByText('30 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-20"]').count(), 0);
+    await page.getByRole('button', { name: 'Invertir selección visible' }).click();
+    await page.getByText('1 celdas seleccionadas').waitFor();
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
