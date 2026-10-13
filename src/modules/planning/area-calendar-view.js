@@ -714,6 +714,10 @@
             const plan = plans.get(employee.id + ':' + date);
             const cell = el('div', plan?.code || 'Sin turno');
             cell.className = 'week-cell';
+            const operational = decorateCell(cell, employee.id, date);
+            cell.title = (employee.name || employee.id) + ' · ' + date +
+              ' · ' + (plan?.code || 'Sin turno') +
+              (operational ? ' · ' + operational : '');
             cell.tabIndex = 0;
             cell.setAttribute('role', 'button');
             cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
