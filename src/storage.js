@@ -123,6 +123,17 @@
     }
   }
 
+  function assertBootstrapSession(context) {
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId || current.role !== context.role ||
+        current.area !== context.area) {
+      const error = new Error('La sesión cambió durante la carga. Vuelve a ingresar.');
+      error.code = 'AUTH_SESSION_CHANGED_DURING_BOOTSTRAP';
+      throw error;
+    }
+  }
+
   async function pushState() {
     const context = window.AuthContext?.get?.() || null;
 
@@ -201,6 +212,7 @@
           .eq('key', config.stateKey)
           .maybeSingle();
 
+        assertBootstrapSession(context);
         if (error) throw error;
 
         if (data?.data) {
@@ -233,6 +245,9 @@
         await pushState();
         return currentState;
       } catch (error) {
+        // Never recover another account's cached company data after logout
+        // or a company switch while the network request was pending.
+        assertBootstrapSession(context);
         const tenantState =
           readTenantState(context.companyId) ||
           legacyStateFor(context.companyId);
