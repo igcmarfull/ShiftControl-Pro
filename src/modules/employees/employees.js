@@ -43,6 +43,30 @@ window.EmployeeModule = {
     return this.getAll().filter(employee => !VALID_AREAS.includes(employee.area));
   },
 
+  // Only ADMIN may classify legacy employees. This is a local state helper,
+  // not a substitute for server-side RLS or area-isolated persistence.
+  assignArea(id, area){
+    const context = window.AuthContext?.get?.() || null;
+    if(context.role !== 'ADMIN' || !context.companyId){
+      throw new Error('Solo ADMIN puede asignar el área de un trabajador.');
+    }
+    const normalized = normalizeArea(area);
+    const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('No se encontró el estado de trabajadores.');
+    }
+    const employee = state.employees.find(item => item.id === id);
+    if(!employee){
+      throw new Error('Trabajador no encontrado.');
+    }
+    if(employee.area === normalized){
+      return employee;
+    }
+    employee.area = normalized;
+    window.ShiftControlState?.save?.();
+    return employee;
+  },
+
   find(id){
 
     return this.getAll().find(
