@@ -1,0 +1,51 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const source = fs.readFileSync(path.join(__dirname, '../src/modules/planning/area-calendar-adapter.js'), 'utf8');
+const clone = x => JSON.parse(JSON.stringify(x));
+async function main() {
+  for (const area of ['ESTACION', 'TIENDA']) {
+    const context = { companyId: 'c', userId: 'u', role: 'CHIEF', area };
+    let remote = { revision: 1, data: {
+      employees: [{ id: 'own', area }], plans: [],
+      executions: [], additional: [], absences: []
+    } };
+    let writes = 0;
+    const window = {
+      AuthContext: { get: () => context },
+      ShiftControlStorage: {
+        readOwnAreaState: async () => clone(remote),
+        writeOwnAreaState: async (key, data, revision) => {
+          assert.equal(revision, remote.revision);
+          writes++;
+          remote = { revision: revision + 1, data };
+          return remote.revision;
+        }
+      }
+    };
+    vm.runInNewContext(source, {
+      window, structuredClone: clone,
+      crypto: { randomUUID: () => 'new-' + writes }
+    });
+    const api = window.ShiftControlAreaCalendar;
+    await api.upsertPlan({ employeeId: 'own', date: '2026-10-13', shift: 'A' });
+    assert.equal(remote.data.plans.length, 1);
+    assert.equal(remote.revision, 2);
+    await api.upsertPlan({ employeeId: 'own', date: '2026-10-13', shift: 'B' });
+    assert.equal(remote.data.plans.length, 1);
+    assert.equal(remote.data.plans[0].shift, 'B');
+    await assert.rejects(api.upsertPlan({
+      employeeId: 'other', date: '2026-10-13'
+    }));
+    assert.equal(writes, 2);
+    await api.removePlan('own', '2026-10-13');
+    assert.equal(remote.data.plans.length, 0);
+    assert.equal(writes, 3);
+    await api.removePlan('own', '2026-10-13');
+    assert.equal(writes, 3);
+  }
+  console.log('Area shift create/edit/remove regression passed.');
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });
