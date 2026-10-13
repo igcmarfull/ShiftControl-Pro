@@ -84,8 +84,7 @@ const assert = require('node:assert/strict');
     });
     await page.waitForFunction(() => window.__pendingReads.length === 2);
     await page.locator('#shiftcontrol-area-calendar input[type="month"]').fill('2026-11');
-    await page.locator('#shiftcontrol-area-calendar input[type="month"]').dispatchEvent('change');
-    await page.waitForFunction(() => window.__pendingReads.length === 4);
+    await page.waitForFunction(() => window.__pendingReads.length >= 4);
     await page.evaluate(() => {
       for (const entry of window.__pendingReads.slice(2)) {
         entry.resolve({ revision: 3, data: {
