@@ -46,9 +46,9 @@ for (const area of ['ESTACION', 'TIENDA']) {
   const chief = fixture('CHIEF', area);
   const before = JSON.stringify(chief.state);
   assert.throws(() => chief.window.EmployeeModule.assignArea('e3', area), /Solo ADMIN/);
-  assert.throws(() => chief.window.EmployeeModule.create({ name: 'Nuevo' }), /calendario de tu área/);
-  assert.throws(() => chief.window.EmployeeModule.update('e1', { name: 'Otro' }), /calendario de tu área/);
-  assert.throws(() => chief.window.EmployeeModule.remove('e1'), /calendario de tu área/);
+  assert.throws(() => chief.window.EmployeeModule.create({ name: 'Nuevo' }), /aún no están habilitados/);
+  assert.throws(() => chief.window.EmployeeModule.update('e1', { name: 'Otro' }), /aún no están habilitados/);
+  assert.throws(() => chief.window.EmployeeModule.remove('e1'), /aún no están habilitados/);
   assert.throws(() => chief.window.PlanningModule.create({ employeeId: 'e1', date: '2026-10-13' }), /calendario de tu área/);
   assert.throws(() => chief.window.PlanningModule.remove('p1'), /calendario de tu área/);
   assert.throws(() => chief.window.PlanningModule.clearEmployee('e1', '2026-10-12'), /calendario de tu área/);
