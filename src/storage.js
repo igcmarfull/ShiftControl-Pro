@@ -204,6 +204,18 @@
         return null;
       }
 
+      // Area chiefs use the isolated area_state calendar, never app_state.
+      // Clear any previous tenant bootstrap state and let the area view load
+      // exclusively through its RLS-protected area-specific adapter.
+      if (context.role === 'CHIEF') {
+        ready = false;
+        activeCompanyId = null;
+        pendingSave = false;
+        clearTimeout(saveTimer);
+        assertBootstrapSession(context);
+        return null;
+      }
+
       assertLegacyStateAccess(context);
 
       if (ready && activeCompanyId === context.companyId) {
