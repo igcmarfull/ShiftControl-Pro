@@ -72,6 +72,17 @@
     return { ...structuredClone(payload), area: after.area, revision };
   }
 
+  function assertUniquePlans(plans) {
+    const seen = new Set();
+    for (const plan of plans) {
+      const key = plan.employeeId + ':' + plan.date;
+      if (seen.has(key)) {
+        throw new Error('Hay turnos duplicados en el calendario. Solicita corregirlos antes de guardar.');
+      }
+      seen.add(key);
+    }
+  }
+
   // Scoped calendar mutations. Never use the legacy PlanningModule or
   // company-wide ShiftControlState; optimistic save rejects stale revisions.
   async function upsertPlan(plan, key) {
@@ -84,6 +95,7 @@
     if (!view) {
       throw new Error('No existe calendario migrado para esta área.');
     }
+    assertUniquePlans(view.plans);
     if (!view.employees.some(employee => employee.id === plan.employeeId)) {
       throw new Error('El trabajador no pertenece al área de esta jefatura.');
     }
@@ -112,6 +124,7 @@
     }
     const view = await load(key);
     if (!view) throw new Error('No existe calendario migrado para esta área.');
+    assertUniquePlans(view.plans);
     if (!view.employees.some(employee => employee.id === employeeId)) {
       throw new Error('El trabajador no pertenece al área de esta jefatura.');
     }
@@ -136,6 +149,7 @@
     }
     const view = await load(key);
     if (!view) throw new Error('No existe calendario migrado para esta área.');
+    assertUniquePlans(view.plans);
     const employees = new Set(view.employees.map(employee => employee.id));
     const allowedCodes = new Set(['A', 'B', 'C', 'D', 'L', 'V', 'P', 'X', 'Libre', 'Licencia', 'Vacaciones', 'Permiso']);
     const normalized = changes.map(change => {
