@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP on
+create role anon;
 create role authenticated;
 create schema auth;
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
