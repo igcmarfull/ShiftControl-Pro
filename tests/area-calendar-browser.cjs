@@ -59,6 +59,9 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     await page.evaluate(() => {
       window.__ctx = { companyId: 'test-company', userId: 'admin', role: 'ADMIN', area: null };
+      const planning = document.createElement('section');
+      planning.id = 'planning';
+      document.body.append(planning);
       window.__adminReads = [];
       window.ShiftControlStorage = {
         readAreaState: async area => {
@@ -72,6 +75,8 @@ const assert = require('node:assert/strict');
       window.ShiftControlAreaCalendarView.mount();
     });
     await page.getByText('Calendarios por área · Supervisión').waitFor();
+    assert.equal(await page.locator('#planning > #shiftcontrol-area-calendar').count(), 1,
+      'Admin oversight must be embedded in the original planning view');
     await page.waitForFunction(() => window.__adminReads.length === 2);
     assert.deepEqual((await page.evaluate(() => window.__adminReads)).sort(), ['ESTACION', 'TIENDA']);
     assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1);
