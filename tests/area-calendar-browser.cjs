@@ -154,6 +154,13 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-14"]').count(), 0);
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByRole('button', { name: 'Mostrar todos' }).click();
+    // A search change must discard previously selected workers hidden by the filter.
+    await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
+    await page.getByText('31 celdas seleccionadas').waitFor();
+    await searchForBulk.fill('no-such-worker');
+    await page.getByText('0 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected').count(), 0);
+    await page.getByRole('button', { name: 'Mostrar todos' }).click();
     // October 2026 has 22 weekdays. Weekend cells must stay unselected.
     await page.getByRole('button', { name: 'Seleccionar días laborales' }).click();
     await page.getByText('22 celdas seleccionadas').waitFor();
