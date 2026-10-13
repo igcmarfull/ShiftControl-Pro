@@ -192,6 +192,29 @@
         toolbar.append(prevWeek, nextWeek);
       }
       toolbar.append(monthly, weekly, previous, monthPicker, next, monthLabel);
+      const duplicate = el('button', 'Copiar mes anterior (solo vacíos)');
+      duplicate.type = 'button';
+      duplicate.addEventListener('click', () => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const prior = new Date(year, month - 2, 1);
+        const sourceMonth = prior.getFullYear() + '-' + String(prior.getMonth() + 1).padStart(2, '0');
+        const lastDay = new Date(year, month, 0).getDate();
+        const assigned = new Set(view.plans.map(plan => plan.employeeId + ':' + plan.date));
+        const changes = view.plans.filter(plan => plan.date?.startsWith(sourceMonth + '-') &&
+          /^\\d{4}-\\d{2}-\\d{2}$/.test(plan.date) &&
+          Number(plan.date.slice(-2)) <= lastDay &&
+          !assigned.has(plan.employeeId + ':' + selectedMonth + plan.date.slice(-3)))
+          .map(plan => ({ employeeId: plan.employeeId,
+            date: selectedMonth + plan.date.slice(-3), code: plan.code }));
+        if (!changes.length) {
+          status.textContent = 'No hay turnos nuevos que copiar al mes seleccionado.';
+          return;
+        }
+        if (!window.confirm('Copiar ' + changes.length + ' turnos de ' + sourceMonth +
+          ' a ' + selectedMonth + '? Solo se completarán días sin turno.')) return;
+        mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
+      });
+      toolbar.append(duplicate);
       content.append(toolbar);
       const [year, month] = selectedMonth.split('-').map(Number);
       const days = new Date(year, month, 0).getDate();
