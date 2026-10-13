@@ -95,3 +95,21 @@ test('unknown area still blocks migration', () => {
   input.employees[0].area = 'BODEGA';
   assert.throws(() => api.prepareFreshCalendars(input), /Clasifica todos/);
 });
+
+test('legacy 13 Isla employees are recognized while unmapped fields block cutover', () => {
+  const input = {
+    employees: Array.from({length:13},(_,i)=>({id:'isla-'+i,area:'Isla'})),
+    plans: [], executions: [], additional: [], absences: [], holidays: [],
+    settings: {preserve:true}
+  };
+  const report = api.migrationFieldReport(input);
+  assert.equal(report.stationWorkers,13);
+  assert.equal(report.storeWorkers,0);
+  assert.equal(report.unassignedWorkers,0);
+  assert.equal(report.totalFields,7);
+  assert.equal(report.recognizedFields,6);
+  assert.equal(report.unmappedFields[0],'settings');
+  assert.equal(report.safeToPrepare,false);
+  assert.equal(input.employees[0].area,'Isla');
+  assert.throws(()=>api.prepareFreshCalendars(input),/Campos sin revisar/);
+});
