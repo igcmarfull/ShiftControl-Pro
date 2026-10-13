@@ -35,7 +35,8 @@ const assert = require('node:assert/strict');
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
     // Chief bulk editor must be available without crossing area boundaries.
     assert.equal(await page.getByRole('button', { name: 'Asignar rango de turnos' }).count(), 1);
-    assert.equal(await page.locator('#shiftcontrol-area-calendar .area-form').count(), 2);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .area-form').count(), 3);
+    assert.equal(await page.getByRole('button', { name: 'Aplicar patrón semanal' }).count(), 1);
     // Reopening the same authorized area must refresh, not silently return
     // a stale calendar (regression for the original panel's save path).
     const loadsBefore = await page.evaluate(() => window.__loads);
