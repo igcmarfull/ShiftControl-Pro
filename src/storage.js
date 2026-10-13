@@ -280,7 +280,7 @@
     }
     const { data, error } = await getClient()
       .from('area_state')
-      .select('data, updated_at')
+      .select('data, updated_at, revision')
       .eq('company_id', context.companyId)
       .eq('area', area)
       .eq('key', key)
@@ -289,7 +289,7 @@
     return data || null;
   }
 
-  async function writeAreaState(area, key, nextData) {
+  async function writeAreaState(area, key, nextData, expectedRevision) {
     const context = requireAreaAdmin(area);
     if (typeof key !== 'string' || !key.trim()) {
       throw new Error('Clave de almacenamiento inválida.');
@@ -297,17 +297,23 @@
     if (nextData === undefined || nextData === null) {
       throw new Error('No se puede guardar un estado vacío.');
     }
-    const { error } = await getClient()
-      .from('area_state')
-      .upsert({
-        company_id: context.companyId,
-        area,
-        key,
-        data: nextData,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'company_id,area,key' });
+    if (expectedRevision !== null &&
+        (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1)) {
+      throw new Error('Se requiere una revisión válida o null para crear.');
+    }
+    if (expectedRevision === undefined) {
+      throw new Error('Indica la revisión leída; null solo para registros nuevos.');
+    }
+    const { data, error } = await getClient()
+      .rpc('save_area_state', {
+        p_company_id: context.companyId,
+        p_area: area,
+        p_key: key,
+        p_data: nextData,
+        p_expected_revision: expectedRevision
+      });
     if (error) throw error;
-    return true;
+    return data;
   }
 
   const originalSave = window.save;
