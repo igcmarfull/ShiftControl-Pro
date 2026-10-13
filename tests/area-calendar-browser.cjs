@@ -11,10 +11,12 @@ const assert = require('node:assert/strict');
     await page.evaluate(() => {
       window.__ctx = { companyId: 'test-company', userId: 'station-chief', role: 'CHIEF', area: 'ESTACION' };
       window.__saves = [];
+      window.__loads = 0;
       window.AuthContext = { get: () => window.__ctx };
       window.ShiftControlAuth = { signOut: async () => {} };
       window.ShiftControlAreaCalendar = {
         load: async () => {
+          window.__loads++;
           const area = window.__ctx.area;
           return {
             area, revision: 1,
@@ -31,6 +33,13 @@ const assert = require('node:assert/strict');
     await page.getByText('Calendario · Isla').waitFor();
     await page.locator('#shiftcontrol-area-calendar .cal-name strong').getByText('ESTACION worker').waitFor();
     assert.equal(await page.getByText('TIENDA worker').count(), 0);
+    // Reopening the same authorized area must refresh, not silently return
+    // a stale calendar (regression for the original panel's save path).
+    const loadsBefore = await page.evaluate(() => window.__loads);
+    await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
+    await page.waitForFunction(previous => window.__loads > previous, loadsBefore);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1);
+
     await page.evaluate(() => {
       window.__ctx = { companyId: 'test-company', userId: 'store-chief', role: 'CHIEF', area: 'TIENDA' };
       window.ShiftControlAreaCalendarView.mount();
