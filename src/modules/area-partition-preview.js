@@ -60,5 +60,27 @@
     return output;
   }
 
-  window.ShiftControlAreaPartition = Object.freeze({ partitionEmployeesAndPlans });
+  // A CHIEF receives only a detached, area-scoped snapshot. This is a
+  // preparation helper, NOT a substitute for Supabase RLS or secure bootstrap.
+  function snapshotForRole(partition, context) {
+    if (!context || !context.companyId) {
+      throw new Error('Se requiere una sesión de empresa válida.');
+    }
+    if (context.role === 'ADMIN') {
+      return structuredClone(partition);
+    }
+    if (context.role !== 'CHIEF' || !AREAS.includes(context.area)) {
+      throw new Error('No existe acceso autorizado a esta área.');
+    }
+    const scoped = partition && partition[context.area];
+    if (!scoped || !Array.isArray(scoped.employees) || !Array.isArray(scoped.plans)) {
+      throw new Error('Datos de área no disponibles.');
+    }
+    return structuredClone(scoped);
+  }
+
+  window.ShiftControlAreaPartition = Object.freeze({
+    partitionEmployeesAndPlans,
+    snapshotForRole
+  });
 })();
