@@ -77,6 +77,11 @@
         #shiftcontrol-area-calendar .area-form label {display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;flex:1 1 150px}
         #shiftcontrol-area-calendar input,#shiftcontrol-area-calendar select {width:100%;box-sizing:border-box;background:#1e293b;color:#f8fafc;border:1px solid #475569}
         #shiftcontrol-area-calendar .area-empty {padding:26px 18px;color:#94a3b8;text-align:center}
+        #shiftcontrol-area-calendar .area-staffing-summary {margin-top:26px}
+        #shiftcontrol-area-calendar .area-staffing-summary h3 {margin:0 0 12px;font-size:18px}
+        #shiftcontrol-area-calendar .area-staffing-summary .area-table-wrap {max-height:340px;overflow:auto}
+        #shiftcontrol-area-calendar .area-staffing-summary th {position:sticky;top:0;z-index:1}
+        #shiftcontrol-area-calendar .area-staffing-summary td {font-size:13px;padding:8px 12px}
         @media(max-width:640px){body.shiftcontrol-area-chief-mode #shiftcontrol-area-calendar {width:calc(100% - 20px);margin:10px auto!important;padding:18px!important}}
       `;
       document.head.append(style);
