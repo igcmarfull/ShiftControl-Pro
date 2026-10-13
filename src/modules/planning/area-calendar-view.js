@@ -625,7 +625,14 @@
         const changes = [...selectedCells.values()].map(cell => ({ ...cell, code }));
         if (!window.confirm('¿Aplicar ' + (code || 'eliminación') + ' a ' +
           changes.length + ' celdas de ' + areas[context.area] + '?')) return;
-        void mutate(() => window.ShiftControlAreaCalendar.applyPlanChanges(changes));
+        void mutate(() => {
+          const latest = window.AuthContext?.get?.();
+          if (latest?.role !== 'CHIEF' || latest.userId !== context.userId ||
+              latest.companyId !== context.companyId || latest.area !== context.area) {
+            throw new Error('La sesión cambió. No se guardaron los turnos.');
+          }
+          return window.ShiftControlAreaCalendar.applyPlanChanges(changes);
+        });
       }
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
