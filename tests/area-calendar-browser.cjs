@@ -97,6 +97,7 @@ const assert = require('node:assert/strict');
     const firstCell = page.locator('#shiftcontrol-area-calendar .cal-row .cal-cell[role="button"]').first();
     await firstCell.click({ button: 'right' });
     await page.getByRole('menu', { name: 'Asignación rápida de turnos' }).waitFor();
+    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('menuitem', { name: 'B', exact: true }).click();
     await page.getByText(/Turnos del área · revisión/).waitFor();
     assert.equal(await page.getByRole('menu', { name: 'Asignación rápida de turnos' }).isVisible(), false);
