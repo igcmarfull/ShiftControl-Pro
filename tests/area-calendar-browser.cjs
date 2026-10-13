@@ -152,6 +152,19 @@ const assert = require('node:assert/strict');
     assert.equal(singleSave.plan.employeeId, 'station-worker');
     assert.equal(singleSave.plan.date, '2026-10-06');
     assert.equal(await editor.count(), 0);
+    // Keyboard Escape cancels an edit, Enter saves it without browser prompts.
+    await page.locator('#shiftcontrol-area-calendar .cal-row').first()
+      .locator('.cal-cell').nth(7).dispatchEvent('click');
+    const savesBeforeEscape = await page.evaluate(() => window.__saves.length);
+    await editor.getByRole('combobox', { name: 'Código de turno' }).press('Escape');
+    assert.equal(await editor.count(), 0);
+    assert.equal(await page.evaluate(() => window.__saves.length), savesBeforeEscape);
+    await page.locator('#shiftcontrol-area-calendar .cal-row').first()
+      .locator('.cal-cell').nth(7).dispatchEvent('click');
+    await editor.getByRole('combobox', { name: 'Código de turno' }).selectOption('A');
+    await editor.getByRole('combobox', { name: 'Código de turno' }).press('Enter');
+    await page.waitForFunction(() => window.__saves.some(entry => entry.plan?.code === 'A' && entry.plan?.date === '2026-10-08'));
+    assert.equal(await editor.count(), 0);
     // A pending edit must not save after the session changes to another area.
     await page.locator('#shiftcontrol-area-calendar .cal-row').first()
       .locator('.cal-cell').nth(6).dispatchEvent('click');
