@@ -91,6 +91,46 @@ window.EmployeeModule = {
     return employee;
   },
 
+  // Explicit ADMIN bulk classification, only for workers without an area.
+  // One save and full rollback if local persistence rejects the change.
+  assignUnassignedToArea(area, expectedIds){
+    const context = window.AuthContext?.get?.() || null;
+    if(context?.role !== 'ADMIN' || !context.companyId){
+      throw new Error('Solo ADMIN puede clasificar trabajadores.');
+    }
+    const normalized = normalizeArea(area);
+    const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('No se encontró el estado de trabajadores.');
+    }
+    const pending = this.getUnassigned();
+    const ids = pending.map(employee => employee.id);
+    if(!Array.isArray(expectedIds) || ids.length !== expectedIds.length ||
+       ids.some((id, index) => id !== expectedIds[index])){
+      throw new Error('La lista de trabajadores cambió. Revisa antes de confirmar.');
+    }
+    if(new Set(ids).size !== ids.length || ids.some(id => id == null)){
+      throw new Error('Existen identificadores de trabajador inválidos o duplicados.');
+    }
+    if(!pending.length) return 0;
+    const previous = pending.map(employee => ({ employee, area: employee.area,
+      hadArea: Object.prototype.hasOwnProperty.call(employee, 'area') }));
+    for(const employee of pending) employee.area = normalized;
+    try {
+      if(typeof window.ShiftControlState?.save !== 'function'){
+        throw new Error('No está disponible el guardado de trabajadores.');
+      }
+      window.ShiftControlState.save();
+    } catch(error) {
+      for(const item of previous){
+        if(item.hadArea) item.employee.area = item.area;
+        else delete item.employee.area;
+      }
+      throw error;
+    }
+    return pending.length;
+  },
+
   // Preview counts before migration; no records are changed.
   getAreaSummary(){
     const employees = this.getAll();
