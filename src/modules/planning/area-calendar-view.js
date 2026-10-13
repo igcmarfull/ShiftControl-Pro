@@ -141,6 +141,9 @@
       panel.append(monthPicker);
       const content = el('div');
       panel.append(content);
+      // Preserve admin worker searches independently when switching months
+      // or refreshing snapshots from the two chiefs.
+      const adminWorkerQueries = { ESTACION: '', TIENDA: '' };
       // Keep oversight inside the original planning screen when present,
       // rather than attaching a second unrelated page below the entire SPA.
       const planningView = document.getElementById('planning');
@@ -288,11 +291,13 @@
                 search.type = 'search';
                 search.placeholder = 'Buscar trabajador en ' + areas[area] + '…';
                 search.setAttribute('aria-label', 'Buscar trabajador en ' + areas[area]);
+                search.value = adminWorkerQueries[area];
                 const count = el('span', data.employees.length + ' trabajadores');
                 const filter = el('div');
                 filter.className = 'area-worker-filter';
                 filter.append(search, count);
                 search.addEventListener('input', () => {
+                  adminWorkerQueries[area] = search.value;
                   const query = search.value.trim().toLocaleLowerCase('es-CL');
                   let visible = 0;
                   for (const row of grid.querySelectorAll('.cal-row')) {
@@ -304,6 +309,7 @@
                   }
                   count.textContent = visible + ' de ' + data.employees.length + ' trabajadores';
                 });
+                search.dispatchEvent(new Event('input'));
                 section.append(filter);
                 wrap.append(grid);
                 section.append(data.employees.length ? wrap :
