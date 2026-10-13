@@ -113,8 +113,8 @@ window.EmployeeModule = {
 
     const state = this._getState();
 
-    if(!state.employees){
-      state.employees=[];
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('Estado de trabajadores no disponible.');
     }
 
     const exists = state.employees.some(
@@ -170,6 +170,9 @@ window.EmployeeModule = {
     }
 
     const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('Estado de trabajadores no disponible.');
+    }
 
     state.employees = state.employees.map(
       employee =>
@@ -192,6 +195,9 @@ window.EmployeeModule = {
 
 
     const state = this._getState();
+    if(!state || !Array.isArray(state.employees)){
+      throw new Error('Estado de trabajadores no disponible.');
+    }
 
     state.employees =
       state.employees.filter(
