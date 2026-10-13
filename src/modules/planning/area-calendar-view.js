@@ -165,7 +165,9 @@
       // snapshots after the original navigation handler activates the view.
       const refreshOnPlanningNavigation = event => {
         if (!event.target?.closest?.('[data-view="planning"]')) return;
-        queueMicrotask(refreshWhenReturning);
+        // The legacy navigation may activate the planning screen after
+        // bubbling completes. Defer the visibility check to the next task.
+        setTimeout(refreshWhenReturning, 0);
       };
       window.addEventListener('focus', refreshWhenReturning);
       document.addEventListener('visibilitychange', refreshWhenReturning);
