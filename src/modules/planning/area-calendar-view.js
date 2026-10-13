@@ -31,6 +31,11 @@
         /* Chief calendar uses the existing application navigation shell. */
         body.shiftcontrol-area-chief-mode .sidebar,
         body.shiftcontrol-area-chief-mode .mobile-nav {visibility:visible!important}
+        /* Chief-only links to hidden company-wide screens must not lead
+           users into blank pages. Keep the navigation shell, but make
+           the isolated planner the active accessible destination. */
+        body.shiftcontrol-area-chief-mode .sidebar [data-view],
+        body.shiftcontrol-area-chief-mode .mobile-nav [data-view] {cursor:pointer}
         #shiftcontrol-area-calendar[data-mode="admin"] {
           max-width:calc(100% - 36px);margin:18px auto!important;
           padding:24px;background:#111827;color:#f8fafc;
