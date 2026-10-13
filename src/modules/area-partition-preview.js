@@ -67,6 +67,20 @@
         !partition.UNASSIGNED) {
       throw new Error('Partición incompleta.');
     }
+    const required = [
+      ['UNASSIGNED', 'employees'], ['UNASSIGNED', 'plans'],
+      ['UNASSIGNED', 'executions'], ['UNASSIGNED', 'additional'],
+      ['UNASSIGNED', 'absences'], ['unresolvedPlans'],
+      ['unresolvedExecutions'], ['unresolvedAdditional'],
+      ['unresolvedAbsences']
+    ];
+    for (const [bucket, collection] of required) {
+      const records = collection ? partition[bucket]?.[collection] : partition[bucket];
+      if (!Array.isArray(records)) {
+        throw new Error('Partición inválida: ' + bucket +
+          (collection ? '.' + collection : ''));
+      }
+    }
     const counts = {
       unassignedEmployees: partition.UNASSIGNED.employees.length,
       unassignedPlans: partition.UNASSIGNED.plans.length,
