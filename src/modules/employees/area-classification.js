@@ -51,9 +51,10 @@
       const section = create('section');
       section.append(create('h3', 'Diagnóstico previo a separar las áreas'));
       try {
-        const partition = preview.partitionEmployeesAndPlans(state.get());
+        const snapshot = state.get();
+        const partition = preview.partitionEmployeesAndPlans(snapshot);
         const report = preview.migrationReadiness(partition);
-        const inventory = preview.migrationInventory(state.get());
+        const inventory = preview.migrationInventory(snapshot);
         section.append(create('p', 'Campos adicionales pendientes de revisión: ' +
           inventory.unexpected.length));
         if (inventory.unexpected.length) {
