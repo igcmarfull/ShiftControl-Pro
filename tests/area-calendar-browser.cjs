@@ -74,6 +74,38 @@ const assert = require('node:assert/strict');
     await page.evaluate(() => window.ShiftControlAreaCalendarView.mount());
     assert.equal(await page.locator('#shiftcontrol-area-calendar').count(), 1,
       'Repeated admin mounts must not duplicate the panel');
+    // An older request must not replace the selected month's results.
+    await page.evaluate(() => {
+      window.__pendingReads = [];
+      window.ShiftControlStorage.readAreaState = area => new Promise(resolve => {
+        window.__pendingReads.push({ area, resolve });
+      });
+      window.ShiftControlAreaCalendarView.mount();
+    });
+    await page.waitForFunction(() => window.__pendingReads.length === 2);
+    await page.locator('#shiftcontrol-area-calendar input[type="month"]').fill('2026-11');
+    await page.locator('#shiftcontrol-area-calendar input[type="month"]').dispatchEvent('change');
+    await page.waitForFunction(() => window.__pendingReads.length === 4);
+    await page.evaluate(() => {
+      for (const entry of window.__pendingReads.slice(2)) {
+        entry.resolve({ revision: 3, data: {
+          employees: [{ id: entry.area + '-worker', name: entry.area + ' worker' }],
+          plans: [{ employeeId: entry.area + '-worker', date: '2026-11-04', code: 'C' }]
+        } });
+      }
+    });
+    await page.getByText('Calendarios de 2026-11 · solo lectura').waitFor();
+    await page.evaluate(() => {
+      for (const entry of window.__pendingReads.slice(0, 2)) {
+        entry.resolve({ revision: 2, data: {
+          employees: [{ id: entry.area + '-worker', name: entry.area + ' worker' }],
+          plans: [{ employeeId: entry.area + '-worker', date: '2026-10-14', code: 'A' }]
+        } });
+      }
+    });
+    await page.waitForTimeout(50);
+    assert.equal(await page.getByText('Calendarios de 2026-11 · solo lectura').count(), 1);
+    assert.equal(await page.locator('#shiftcontrol-area-calendar td').filter({ hasText: '2026-10-14' }).count(), 0);
     console.log('PASS Chromium: station/store switching, no stale rows, missing-area fail closed, dual-area admin oversight');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
