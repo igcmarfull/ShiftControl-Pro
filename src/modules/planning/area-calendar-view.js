@@ -127,21 +127,71 @@
                 section.append(el('p', 'Revisión ' + result.value.revision +
                   ' · ' + data.employees.length + ' trabajadores · ' +
                   data.plans.length + ' turnos registrados'));
-                const table = el('table');
-                const header = el('tr');
-                for (const title of ['Trabajador', 'Fecha', 'Turno']) header.append(el('th', title));
-                table.append(header);
-                const names = new Map(data.employees.map(person => [person.id, person.name || person.id]));
-                const monthPlans = data.plans.filter(plan => plan.date?.startsWith(requestedMonth + '-'))
-                  .sort((a, b) => a.date.localeCompare(b.date));
-                for (const plan of monthPlans) {
-                  const tr = el('tr');
-                  for (const value of [names.get(plan.employeeId) || 'Sin asignar', plan.date, plan.code]) {
-                    tr.append(el('td', value || ''));
-                  }
-                  table.append(tr);
+                // Use the same monthly planning grid structure as the chief
+                // calendar, but without edit handlers for ADMIN oversight.
+                const monthPlans = data.plans.filter(plan =>
+                  typeof plan.date === 'string' && plan.date.startsWith(requestedMonth + '-'));
+                const byEmployeeDay = new Map(monthPlans.map(plan =>
+                  [plan.employeeId + ':' + plan.date, plan]));
+                const [year, month] = requestedMonth.split('-').map(Number);
+                const days = new Date(year, month, 0).getDate();
+                const wrap = el('div');
+                wrap.className = 'table-wrap';
+                wrap.style.overflowX = 'auto';
+                const grid = el('div');
+                grid.className = 'calendar-grid';
+                grid.style.minWidth = '1050px';
+                const head = el('div');
+                head.className = 'cal-head';
+                const workerHead = el('div', 'Trabajador');
+                workerHead.className = 'sticky-name';
+                head.append(workerHead);
+                for (let day = 1; day <= 31; day++) {
+                  head.append(el('div', day <= days ? String(day) : ''));
                 }
-                section.append(monthPlans.length ? table : el('p', 'Sin turnos registrados este mes.'));
+                const summaryHead = el('div', 'Resumen');
+                summaryHead.className = 'sticky-summary';
+                head.append(summaryHead);
+                grid.append(head);
+                for (const employee of data.employees) {
+                  const row = el('div');
+                  row.className = 'cal-row';
+                  const name = el('div');
+                  name.className = 'cal-name';
+                  const person = el('div');
+                  person.className = 'person';
+                  const label = el('strong', employee.name || employee.id);
+                  person.append(label);
+                  name.append(person);
+                  row.append(name);
+                  const counts = {};
+                  for (let day = 1; day <= 31; day++) {
+                    const cell = el('div');
+                    cell.className = 'cal-cell';
+                    if (day <= days) {
+                      const date = requestedMonth + '-' + String(day).padStart(2, '0');
+                      const plan = byEmployeeDay.get(employee.id + ':' + date);
+                      if (plan?.code) {
+                        const dot = el('div', plan.code);
+                        dot.className = 'cal-dot plan-' + plan.code;
+                        cell.append(dot);
+                        counts[plan.code] = (counts[plan.code] || 0) + 1;
+                      }
+                      cell.title = (employee.name || employee.id) + ' · ' + date +
+                        ' · ' + (plan?.code || 'Sin turno');
+                    }
+                    row.append(cell);
+                  }
+                  const total = el('div', Object.entries(counts)
+                    .map(([code, count]) => code + ' ' + count).join(' · ') || 'Sin turnos');
+                  total.className = 'cal-summary';
+                  row.append(total);
+                  grid.append(row);
+                }
+                wrap.append(grid);
+                section.append(data.employees.length ? wrap :
+                  el('p', 'Sin trabajadores registrados en esta área.'));
+                if (!monthPlans.length) section.append(el('p', 'Sin turnos registrados este mes.'));
               }
             }
             content.append(section);
