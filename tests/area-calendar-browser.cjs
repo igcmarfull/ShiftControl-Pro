@@ -154,6 +154,11 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-14"]').count(), 0);
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
     await page.getByRole('button', { name: 'Mostrar todos' }).click();
+    // Assigned-only selection targets the existing October 14 shift, not gaps.
+    await page.getByRole('button', { name: 'Seleccionar turnos asignados' }).click();
+    await page.getByText('1 celdas seleccionadas').waitFor();
+    assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-14"]').count(), 1);
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
