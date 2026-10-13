@@ -579,6 +579,10 @@
       form.addEventListener('submit', async event => {
         event.preventDefault();
         if (!worker.value || !date.value) return;
+        if (duplicateCells.has(worker.value + ':' + date.value)) {
+          status.textContent = 'No se puede guardar: hay turnos duplicados para esa fecha.';
+          return;
+        }
         await mutate(() => window.ShiftControlAreaCalendar.upsertPlan({
           employeeId: worker.value, date: date.value, code: shift.value
         }));
