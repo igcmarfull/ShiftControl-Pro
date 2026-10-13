@@ -91,6 +91,15 @@ const assert = require('node:assert/strict');
       ['station-worker', 'station-worker']);
     assert.deepEqual(bulkSave.changes.map(change => change.date),
       ['2026-10-19', '2026-10-20']);
+    // Select-all respects the worker search and only selects actual days,
+    // never the blank padding cells at the end of a short month.
+    const searchForBulk = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
+    await searchForBulk.fill('ESTACION');
+    await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
+    await page.getByText('31 celdas seleccionadas').waitFor();
+    await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    await page.getByText('0 celdas seleccionadas').waitFor();
+    await page.getByRole('button', { name: 'Mostrar todos' }).click();
     // Multi-cell edits must be sent as one authorized area-scoped write.
     const firstCells = page.locator('#shiftcontrol-area-calendar .cal-row').first().locator('.cal-cell');
     // The test fixture does not load the legacy grid CSS, so its cells can
