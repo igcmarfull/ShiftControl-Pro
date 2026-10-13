@@ -624,6 +624,8 @@
       const applySelection = el('button', 'Aplicar a selección');
       applySelection.type = 'button';
       applySelection.disabled = true;
+      const selectVisible = el('button', 'Seleccionar turnos visibles');
+      selectVisible.type = 'button';
       const clearSelection = el('button', 'Limpiar selección');
       clearSelection.type = 'button';
       clearSelection.disabled = true;
@@ -681,6 +683,23 @@
           return window.ShiftControlAreaCalendar.applyPlanChanges(changes);
         });
       }
+      selectVisible.addEventListener('click', () => {
+        if (saving || loading) return;
+        const current = window.AuthContext?.get?.();
+        if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        for (const cell of wrapper.querySelectorAll('.cal-cell[role="button"], .week-cell[role="button"]')) {
+          const row = cell.closest('.cal-row, .week-row');
+          if (row?.hidden || row?.style.display === 'none') continue;
+          const key = cell.dataset.employeeId + ':' + cell.dataset.date;
+          if (!cell.dataset.employeeId || !cell.dataset.date || duplicateCells.has(key) ||
+              selectedCells.has(key)) continue;
+          selectedCells.set(key, { employeeId: cell.dataset.employeeId, date: cell.dataset.date });
+          cell.classList.add('selected');
+          cell.setAttribute('aria-pressed', 'true');
+        }
+        updateSelection();
+      });
       applySelection.addEventListener('click', () => commitSelection(selectionCode.value));
       removeSelection.addEventListener('click', () => commitSelection(null));
       clearSelection.addEventListener('click', () => {
@@ -691,7 +710,7 @@
         selectedCells.clear();
         updateSelection();
       });
-      selectionBar.append(selectionCount, selectionCode, applySelection, removeSelection, clearSelection);
+      selectionBar.append(selectionCount, selectVisible, selectionCode, applySelection, removeSelection, clearSelection);
       content.append(selectionBar);
       // Match the original planner's quick worker navigation. The filter is
       // local to this area snapshot and never broadens employee access.
@@ -764,6 +783,8 @@
               cell.title = (employee.name || 'Trabajador') + ' · ' + date + ' · ' +
                 (plan?.code || 'Sin turno') + (operational ? ' · ' + operational : '');
               cell.tabIndex = 0;
+              cell.dataset.employeeId = employee.id;
+              cell.dataset.date = date;
               cell.setAttribute('role', 'button');
               cell.setAttribute('aria-label', cell.title + '. Editar turno');
               const edit = () => editShift(employee, date, plan);
@@ -827,6 +848,8 @@
               ' · ' + (plan?.code || 'Sin turno') +
               (operational ? ' · ' + operational : '');
             cell.tabIndex = 0;
+            cell.dataset.employeeId = employee.id;
+            cell.dataset.date = date;
             cell.setAttribute('role', 'button');
             cell.setAttribute('aria-label', (employee.name || 'Trabajador') + ' · ' + date + '. Editar turno');
             const edit = () => editShift(employee, date, plan);
