@@ -335,17 +335,21 @@
 
   if (typeof originalSave === 'function') {
     window.save = function () {
-      originalSave.apply(this, arguments);
+      const context = window.AuthContext?.get?.() || null;
+      // Reject before the legacy save() writes company-wide localStorage.
+      // This is defense-in-depth, not a replacement for database RLS.
+      assertLegacyStateAccess(context);
+      const result = originalSave.apply(this, arguments);
 
-      const companyId = window.AuthContext?.get?.()?.companyId;
-      if (ready && companyId && companyId === activeCompanyId) {
+      if (ready && context.companyId && context.companyId === activeCompanyId) {
         writeTenantState(
-          companyId,
+          context.companyId,
           window.ShiftControlState.get()
         );
+        schedulePush();
       }
 
-      schedulePush();
+      return result;
     };
   } else {
     warn('No se encontró la función principal save().');
