@@ -720,6 +720,7 @@
       // Original planner-style multi-cell selection, committed as one
       // authorized area transaction rather than writing the company state.
       const selectedCells = new Map();
+      let selectionAnchor = null;
       const selectionBar = el('div');
       selectionBar.className = 'area-calendar-selection';
       const selectionCount = el('span', '0 celdas seleccionadas');
@@ -767,6 +768,26 @@
           selectedCells.set(key, { employeeId: employee.id, date });
           cell.classList.add('selected');
           cell.setAttribute('aria-pressed', 'true');
+        }
+        selectionAnchor = { employeeId: employee.id, date };
+        updateSelection();
+      }
+      function selectRange(cell, employee, date) {
+        if (!selectionAnchor) return selectCell(cell, employee, date);
+        const cells = [...content.querySelectorAll('[data-employee-id][data-date][role="button"]')];
+        const start = cells.findIndex(node => node.dataset.employeeId === selectionAnchor.employeeId &&
+          node.dataset.date === selectionAnchor.date);
+        const end = cells.indexOf(cell);
+        if (start < 0 || end < 0) return selectCell(cell, employee, date);
+        const current = window.AuthContext?.get?.();
+        if (saving || loading || current?.role !== 'CHIEF' || current.userId !== context.userId ||
+            current.companyId !== context.companyId || current.area !== context.area) return;
+        for (const node of cells.slice(Math.min(start, end), Math.max(start, end) + 1)) {
+          const key = node.dataset.employeeId + ':' + node.dataset.date;
+          if (duplicateCells.has(key)) continue;
+          selectedCells.set(key, { employeeId: node.dataset.employeeId, date: node.dataset.date });
+          node.classList.add('selected');
+          node.setAttribute('aria-pressed', 'true');
         }
         updateSelection();
       }
@@ -923,7 +944,8 @@
               cell.setAttribute('aria-label', cell.title + '. Editar turno');
               const edit = () => editShift(employee, date, plan);
               cell.addEventListener('click', e => {
-                if (e.ctrlKey || e.metaKey || e.shiftKey) selectCell(cell, employee, date);
+                if (e.shiftKey) selectRange(cell, employee, date);
+                else if (e.ctrlKey || e.metaKey) selectCell(cell, employee, date);
                 else edit();
               });
               cell.addEventListener('contextmenu', e => {
@@ -936,7 +958,8 @@
               cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  if (e.ctrlKey || e.metaKey || e.shiftKey) selectCell(cell, employee, date);
+                  if (e.shiftKey) selectRange(cell, employee, date);
+                else if (e.ctrlKey || e.metaKey) selectCell(cell, employee, date);
                   else edit();
                 }
               });
