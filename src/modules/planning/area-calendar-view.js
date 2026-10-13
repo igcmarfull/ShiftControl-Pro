@@ -216,9 +216,11 @@
               if (!data || !Array.isArray(data.employees) || !Array.isArray(data.plans)) {
                 section.append(el('p', 'El calendario contiene datos inválidos.'));
               } else {
+                const monthCount = data.plans.filter(plan =>
+                  typeof plan.date === 'string' && plan.date.startsWith(requestedMonth + '-')).length;
                 section.append(el('p', 'Revisión ' + result.value.revision +
                   ' · ' + data.employees.length + ' trabajadores · ' +
-                  data.plans.length + ' turnos registrados'));
+                  monthCount + ' turnos en ' + requestedMonth));
                 // Use the same monthly planning grid structure as the chief
                 // calendar, but without edit handlers for ADMIN oversight.
                 const monthPlans = data.plans.filter(plan =>
