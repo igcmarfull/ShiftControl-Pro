@@ -390,6 +390,12 @@
       p_expected_revision: expectedRevision
     });
     if (error) throw error;
+    const current = window.AuthContext?.get?.() || null;
+    if (!current || current.companyId !== context.companyId ||
+        current.userId !== context.userId ||
+        current.role !== context.role || current.area !== context.area) {
+      throw new Error('La sesión cambió durante el guardado. Verifica antes de reintentar.');
+    }
     return data;
   }
 
