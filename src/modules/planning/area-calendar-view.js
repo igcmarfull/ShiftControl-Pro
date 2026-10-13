@@ -72,6 +72,10 @@
         root.dataset.area === context.area) return;
     generation++;
     if (root) root.remove();
+    // Do not present this isolated fallback as the original admin planner.
+    // The legacy planner still uses company-wide state, while CHIEF data is
+    // stored in RLS-protected area_state. Reusing its handlers without an
+    // area-scoped adapter could expose or overwrite unrelated records.
     const container = el('section');
     container.id = ID;
     container.dataset.owner = context.userId;
