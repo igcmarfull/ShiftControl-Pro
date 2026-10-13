@@ -22,6 +22,18 @@ window.PlanningModule = {
   },
 
 
+  // Presentation helper only. Authorization must also be enforced by Supabase.
+  getByArea(area){
+    const normalized = String(area || '').trim().toUpperCase();
+    if(!['ESTACION', 'TIENDA'].includes(normalized)){
+      throw new Error('Area invalida: use ESTACION o TIENDA.');
+    }
+
+    const employees = window.EmployeeModule?.getByArea?.(normalized) || [];
+    const employeeIds = new Set(employees.map(employee => employee.id));
+    return this.getAll().filter(plan => employeeIds.has(plan.employeeId));
+  },
+
   find(employeeId,date){
 
     return this.getAll().find(
