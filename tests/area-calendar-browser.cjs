@@ -159,6 +159,12 @@ const assert = require('node:assert/strict');
     await page.getByText('1 celdas seleccionadas').waitFor();
     assert.equal(await page.locator('#shiftcontrol-area-calendar .cal-cell.selected[data-date="2026-10-14"]').count(), 1);
     await page.getByRole('button', { name: 'Limpiar selección' }).click();
+    // Escape from the bulk-selection toolbar clears pending cells.
+    await page.getByRole('button', { name: 'Seleccionar turnos asignados' }).click();
+    await page.getByText('1 celdas seleccionadas').waitFor();
+    await page.getByRole('button', { name: 'Limpiar selección' }).focus();
+    await page.keyboard.press('Escape');
+    await page.getByText('0 celdas seleccionadas').waitFor();
     // A search change must discard previously selected workers hidden by the filter.
     await page.getByRole('button', { name: 'Seleccionar turnos visibles' }).click();
     await page.getByText('31 celdas seleccionadas').waitFor();
