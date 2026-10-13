@@ -972,7 +972,12 @@
         if (current?.role !== 'CHIEF' || current.userId !== context.userId ||
             current.companyId !== context.companyId || current.area !== context.area) return;
         const date = targetDate.value;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < targetDate.min ||
+            date > targetDate.max || targetDate.validity.rangeUnderflow ||
+            targetDate.validity.rangeOverflow) {
+          status.textContent = 'Selecciona una fecha válida del mes mostrado.';
+          return;
+        }
         for (const cell of wrapper.querySelectorAll('.cal-cell[role="button"], .week-cell[role="button"]')) {
           const row = cell.closest('.cal-row, .week-row');
           if (row?.hidden || row?.style.display === 'none' || cell.dataset.date !== date) continue;
