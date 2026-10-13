@@ -92,6 +92,14 @@ const assert = require('node:assert/strict');
     await page.getByText(/Turnos del área · revisión/).waitFor();
     assert.equal(await page.getByRole('searchbox', { name: 'Buscar trabajador del área' }).isDisabled(), false,
       'Successful retry must restore editable controls');
+    // Right-click exposes the original chief's quick shift assignment,
+    // scoped to the selected area, without opening the single-cell editor.
+    const firstCell = page.locator('#shiftcontrol-area-calendar .cal-row .cal-cell[role="button"]').first();
+    await firstCell.click({ button: 'right' });
+    await page.getByRole('menu', { name: 'Asignación rápida de turnos' }).waitFor();
+    await page.getByRole('menuitem', { name: 'B', exact: true }).click();
+    await page.getByText(/Turnos del área · revisión/).waitFor();
+    assert.equal(await page.getByRole('menu', { name: 'Asignación rápida de turnos' }).isVisible(), false);
     // Worker search must filter rows in both the original monthly grid and
     // the weekly grid without exposing workers from another area.
     const workerSearch = page.getByRole('searchbox', { name: 'Buscar trabajador del área' });
