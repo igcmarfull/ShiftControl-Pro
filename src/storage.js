@@ -331,6 +331,28 @@
     return data;
   }
 
+  // Read-only isolated API for area CHIEFs. Never hydrate the legacy global
+  // company state or localStorage from this response.
+  async function readOwnAreaState(key) {
+    const context = window.AuthContext?.get?.() || null;
+    if (!context?.companyId || context.role !== 'CHIEF' ||
+        !VALID_AREAS.includes(context.area)) {
+      throw new Error('Se requiere una jefatura con área asignada.');
+    }
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Clave de almacenamiento inválida.');
+    }
+    const { data, error } = await getClient()
+      .from('area_state')
+      .select('data, updated_at, revision')
+      .eq('company_id', context.companyId)
+      .eq('area', context.area)
+      .eq('key', key)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? structuredClone(data) : null;
+  }
+
   const originalSave = window.save;
 
   if (typeof originalSave === 'function') {
@@ -362,6 +384,7 @@
     getActiveCompanyId: () => activeCompanyId,
     getTenantLocalKey,
     readAreaState,
-    writeAreaState
+    writeAreaState,
+    readOwnAreaState
   });
 })();
