@@ -153,7 +153,7 @@
       monthPicker.value = selectedMonth;
       monthPicker.setAttribute('aria-label', 'Mes de planificación');
       monthPicker.addEventListener('change', () => {
-        if (/^\\d{4}-\\d{2}$/.test(monthPicker.value)) {
+        if (/^\d{4}-\d{2}$/.test(monthPicker.value)) {
           selectedMonth = monthPicker.value;
           refresh();
         }
@@ -202,7 +202,7 @@
           name.className = 'cal-name';
           const person = el('div');
           person.className = 'person';
-          const avatar = el('div', (employee.name || '?').split(/\\s+/).slice(0,2).map(s => s[0]).join('').toUpperCase());
+          const avatar = el('div', (employee.name || '?').split(/\s+/).slice(0,2).map(s => s[0]).join('').toUpperCase());
           avatar.className = 'avatar';
           const nameText = el('strong', employee.name || employee.id);
           person.append(avatar, nameText);
