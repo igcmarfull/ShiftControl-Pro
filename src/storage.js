@@ -380,12 +380,13 @@
          (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1))) {
       throw new Error('Se requiere una revisión válida o null para crear.');
     }
+    const payload = structuredClone(nextData);
     // The RPC independently checks company membership and area on the server.
     const { data, error } = await getClient().rpc('save_area_state', {
       p_company_id: context.companyId,
       p_area: context.area,
       p_key: key,
-      p_data: nextData,
+      p_data: payload,
       p_expected_revision: expectedRevision
     });
     if (error) throw error;
