@@ -56,3 +56,15 @@ Estructura en `index.html` (`#workcenter`) y estilos `.wc-*` en `src/ui-papel.cs
 Los paneles que ya generaban los datos (prioridades, pendientes accionables, entrega de turno) se mantienen y solo se reubican (`mountWorkCenter`); el panel original de flujos queda oculto porque la línea de tiempo lo reemplaza. No se cambió ninguna regla de negocio. En celular el orden es: atención, pendientes, cierre guiado, asistencia y pagos.
 
 Verificación: capturas con datos simulados (claro/oscuro, escritorio y celular) y perfil Jefa de Isla sin errores de consola. Sin datos reales de producción.
+
+## Ausencias y cobertura (rediseño)
+
+`renderAbsencePanel()` (en `index.html`) sigue siendo el único renderizador; se conservaron los ids que usan otras partes (`absenceStatsGrid`, `absenceControlCard`, `absenceTypeFilter`, `absenceSearch`, `uncoveredShiftsList`, `upcomingReturnsList`) y las acciones existentes (`openAbsenceReplacementCenter`, `deleteAbsence`, `openWorkerDrawer`). Estilos `.ab-*` en `src/ui-papel.css`.
+
+- **Tarjetas:** ausencias activas con desglose por tipo (licencias, vacaciones, permisos, otras); turnos por cubrir desde hoy (los de fechas pasadas se indican aparte); vuelven esta semana (el «retorno» es el día siguiente al fin de la ausencia); cobertura de los casos no finalizados.
+- **Lista:** pestañas Todas / Activas / Por cubrir / Finalizadas (el filtro de cobertura anterior se reemplazó por la pestaña «Por cubrir»; `absenceMobilePending()` la usa). Las activas muestran el avance («Día X de N»), las finalizadas quedan atenuadas y sin botón de urgencia.
+- **Turnos sin cobertura:** agrupados por ausencia. Los de hoy en adelante tienen «Cubrir»; los de fechas anteriores quedan como historial («Ver detalle»).
+- **Franja de 14 días:** por día, turnos afectados cubiertos o con faltantes.
+- No cambia ninguna regla de cobertura: usa `absenceCoverage()` y `absenceCurrentStatus()` tal como estaban.
+
+Verificación: capturas con datos simulados (claro/oscuro, escritorio y celular) sin errores de consola. Sin datos reales de producción.
