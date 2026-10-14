@@ -5979,7 +5979,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <section id="daily-summary" class="view">
       <div class="topbar">
         <div>
-          <h2>Cierre operativo del día</h2>
+          <h2>Cierre del día</h2>
           <p>Caja, personal, operación y finanzas de hoy en un solo lugar.</p>
         </div>
       </div>
@@ -7332,7 +7332,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </section>
 
 <section id="evaluations" class="view ops-module-view">
-  <div class="topbar"><div><h2>Evaluación mensual del personal</h2></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn primary" onclick="newEvaluation()">＋ Nueva evaluación</button></div></div>
+  <div class="topbar ev-top"><div><h2>Evaluación mensual del personal</h2><p class="ev-sub">Cada persona mantiene su propia ficha. Evalúa a quienes faltan este mes.</p></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn" onclick="newEvaluation()">Nuevo personal</button><button class="btn primary" id="evNextBtn" onclick="evaluateNext()">Evaluar siguiente</button></div></div>
+  <section class="ev-hero" id="evHero"></section>
   <div class="eval-summary-grid">
     <article class="eval-summary-card tone-green"><span class="eval-summary-icon">✓</span><div><span>Completadas</span><strong id="evalCompletedCount">0</strong><small>Evaluaciones cerradas</small></div></article>
     <article class="eval-summary-card tone-orange"><span class="eval-summary-icon">⏳</span><div><span>Borradores</span><strong id="evalDraftCount">0</strong><small>Pendientes de revisión</small></div></article>
@@ -7449,6 +7450,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     </article>
     <article class="ops-panel evaluation-list-panel">
       <div class="ops-panel-head"><div><h3>Evaluaciones del mes</h3><p>Cada persona mantiene su propia ficha; puedes tener varias abiertas simultáneamente.</p></div></div>
+      <div class="ev-tabs" id="evTabs" role="tablist"></div>
       <div class="eval-toolbar">
         <div class="eval-search"><span>⌕</span><input type="text" id="evalSearchInput" placeholder="Buscar trabajador..." oninput="onEvalFilterChange()"></div>
         <select class="eval-filter" id="evalStatusFilter" onchange="onEvalFilterChange()">
@@ -14254,41 +14256,93 @@ function renderDailySummaryContent(root){
   if(dueTomorrow.length)financeChips.push({tone:'critical',label:`${dueTomorrow.length} factura(s) vence(n) mañana`,view:'invoices'});
   if(!financeChips.length)financeChips.push({tone:'ok',label:'Sin pendientes financieros',view:'finance'});
 
-  const toneLabel={ok:'Al día',warning:'Atención',critical:'Urgente'};
+  const reviewedCount=snapshot.rows.length-pendingCount;
+  const incidentsToday=snapshot.openIncidents.filter(item=>(item.createdAt||'').slice(0,10)===date);
+  const steps=[
+    pendingCount>0
+      ?{state:'warn',title:'Revisar asistencia',detail:`${pendingCount} trabajador(es) sin marcar`,view:'today',action:'Revisar'}
+      :{state:'ok',title:'Revisar asistencia',detail:snapshot.rows.length?`${reviewedCount} de ${snapshot.rows.length} trabajadores revisados`:'Sin turnos planificados'},
+    uncoveredCount>0
+      ?{state:'bad',title:'Confirmar cobertura',detail:`${uncoveredCount} turno(s) sin cobertura`,view:'today',action:'Resolver'}
+      :{state:'ok',title:'Confirmar cobertura',detail:'Todos los turnos cubiertos'},
+    checklistDone
+      ?{state:'ok',title:'Completar checklist',detail:'Control operativo enviado'}
+      :{state:'warn',title:'Completar checklist',detail:'Todavía no se envía el checklist de hoy',view:'checklists',action:'Ir al checklist'},
+    incidentsToday.length
+      ?{state:'bad',title:'Revisar incidencias',detail:`${incidentsToday.length} abierta(s) de hoy`,view:'incidents',action:'Resolver'}
+      :{state:'ok',title:'Revisar incidencias',detail:'Sin incidencias abiertas hoy'},
+    cash.tone==='ok'
+      ?{state:'ok',title:'Conciliar caja',detail:'Cuadratura realizada, sin diferencia'}
+      :{state:cash.tone==='critical'?'bad':'warn',title:'Conciliar caja',detail:cash.tone==='critical'?cash.detail:'Todavía no hay cuadratura de hoy',view:'finance',action:cash.tone==='critical'?'Revisar':'Registrar'}
+  ];
+  const done=steps.filter(step=>step.state==='ok').length;
+  const blockers=steps.filter(step=>step.state!=='ok');
+  const next=blockers[0];
+  const present=snapshot.executions.filter(x=>x.status==='Presente').length;
+  const leaves=snapshot.executions.filter(x=>['Licencia','Vacaciones','Permiso'].includes(x.status)).length;
+  const difference=todaysReconciliations.reduce((sum,r)=>sum+Number(r.difference||0),0);
+  const shortages=(window.ShortageModule?.getAll?.()||[]).filter(r=>r.date===date).reduce((sum,r)=>sum+Math.abs(Number(r.amount||0)),0);
+  const unpaid=(window.AdditionalModule?.getAll?.()||[]).filter(a=>a.paid!=='Pagado').reduce((sum,a)=>sum+Number(a.amount||0),0);
 
-  const card=(title,state,view)=>`
-    <button type="button" class="daily-summary-card tone-${state.tone}" onclick="showView('${view}')">
-      <div class="daily-summary-card-head"><span>${v14Esc(title)}</span><b class="daily-summary-pill">${toneLabel[state.tone]}</b></div>
-      <strong>${v14Esc(state.label)}</strong>
-      ${state.detail?`<small>${v14Esc(state.detail)}</small>`:''}
-    </button>`;
+  // Últimas jornadas: se marca «sin cerrar» solo si ese día tenía turnos planificados
+  const weekdays=['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+  const days=Array.from({length:7},(_,index)=>{
+    const d=new Date(date+'T12:00:00');
+    d.setDate(d.getDate()-(6-index));
+    const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const isClosed=!!window.DailyClosureModule?.isClosed?.(iso);
+    const planned=iso===date||v14TodayRows(iso).length>0;
+    const state=isClosed?'c':iso===date?'t':planned?'o':'n';
+    return {iso,label:index===6&&iso===isoToday?'Hoy':weekdays[d.getDay()],day:d.getDate(),state};
+  });
+  const dayText={c:'Cerrada',t:'Abierta',o:'Sin cerrar',n:'Sin turnos'};
+
+  const ring=pct=>`<div class="wc-donut" style="width:84px;height:84px"><svg viewBox="0 0 128 128" style="width:84px;height:84px" aria-hidden="true"><circle class="bg" cx="64" cy="64" r="54" style="stroke-width:11"/><circle class="fg" cx="64" cy="64" r="54" style="stroke-width:11" stroke-dasharray="339.29" stroke-dashoffset="${(339.29*(1-pct)).toFixed(1)}"/></svg><div class="c"><b style="font-size:20px">${Math.round(pct*100)}%</b></div></div>`;
+  const stepHtml=step=>`<div class="cd-step ${step.state}"><span class="dot">${step.state==='ok'?'✓':'!'}</span><div><strong>${v14Esc(step.title)}</strong><small>${v14Esc(step.detail)}</small></div>${step.state==='ok'?'<span class="okt">Listo</span>':`<button type="button" class="go pri" onclick="showView('${step.view}')">${v14Esc(step.action)}</button>`}</div>`;
+  const block=closed
+    ?`<div class="cd-block ok"><span class="ic">✓</span><div><strong>La jornada del ${fmt(date)} está cerrada</strong><ul><li>Para corregir algo, reabre la jornada.</li></ul></div></div>`
+    :blockers.length
+      ?`<div class="cd-block"><span class="ic">!</span><div><strong>Faltan ${blockers.length} cosa${blockers.length===1?'':'s'} para dejar todo al día</strong><ul>${blockers.map(step=>`<li>${v14Esc(step.detail)}</li>`).join('')}</ul></div></div>`
+      :`<div class="cd-block ok"><span class="ic">✓</span><div><strong>Todo listo para cerrar la jornada</strong></div></div>`;
 
   root.innerHTML=`
     ${v14PastDateNotice(date)}
-    <div class="daily-summary-header tone-${general.tone}">
-      <div>
-        <span class="daily-summary-eyebrow">${fmt(date)}</span>
-        <h3>${v14Esc(general.label)}</h3>
-        <p>El estado general refleja el cierre de asistencia, cobertura, incidencias y checklist — es independiente de los avisos financieros de abajo.</p>
+    <div class="cdm">
+      <div class="cd-bar">
+        <span class="cd-state ${closed?'closed':''}"><i></i>${closed?'Jornada cerrada':'Jornada abierta'} · ${fmt(date)}</span>
+        ${closed?'<button type="button" class="b2" onclick="reopenToday()">Reabrir jornada</button>':'<button type="button" class="b2 pri" onclick="dailySummaryClose()">Cerrar jornada</button>'}
       </div>
-      <b class="daily-summary-pill large">${toneLabel[general.tone]}</b>
-    </div>
-    <div class="daily-summary-grid">
-      ${card('Caja',cash,'finance')}
-      ${card('Personal',staff,'today')}
-      ${card('Operación',ops,'checklists')}
-    </div>
-    <div class="daily-summary-finance">
-      <div class="daily-summary-finance-head"><span>Finanzas</span></div>
-      <div class="daily-summary-chips">
-        ${financeChips.map(chip=>`<button type="button" class="daily-summary-chip tone-${chip.tone}" onclick="showView('${chip.view}')">${v14Esc(chip.label)}</button>`).join('')}
+      ${block}
+      <div class="cd-grid">
+        <section class="abx-panel"><div class="abx-ph"><h4>Lista de cierre</h4><span>${done} de ${steps.length} listos</span></div>
+          <div class="cd-ring">${ring(done/steps.length)}<div><h4>${blockers.length?'Falta poco':'Todo en orden'}</h4><p>${next?`Siguiente paso: ${v14Esc(next.title.toLowerCase())}`:closed?'La jornada ya está cerrada':'Puedes cerrar la jornada'}</p></div></div>
+          <div class="cd-list">${steps.map(stepHtml).join('')}</div></section>
+        <section class="abx-panel"><div class="abx-ph"><h4>Resumen del día</h4><span>${fmt(date)}</span></div>
+          <div class="cd-sum"><div><span>Presentes</span><b>${present}</b><small>de ${snapshot.rows.length} planificados</small></div><div><span>Atrasos</span><b>${lateCount}</b><small>${lateCount?'registrados':'sin atrasos'}</small></div><div><span>Licencias</span><b>${leaves}</b><small>permisos y vacaciones</small></div><div><span>Sin confirmar</span><b class="${pendingCount?'w':''}">${pendingCount}</b><small>${pendingCount?'por revisar':'todo revisado'}</small></div></div>
+          <div class="cd-money"><div class="abx-ph" style="margin:14px 0 4px"><h4>Finanzas</h4></div>
+            <div class="cd-ml"><span>Diferencia de cuadratura</span><b>${todaysReconciliations.length?money(difference):'—'}</b></div>
+            <div class="cd-ml"><span>Faltantes de caja de hoy</span><b>${money(shortages)}</b></div>
+            <div class="cd-ml"><span>Turnos extra por pagar</span><b>${money(unpaid)}</b></div>
+            <div class="daily-summary-chips" style="margin-top:12px">${financeChips.map(chip=>`<button type="button" class="daily-summary-chip tone-${chip.tone}" onclick="showView('${chip.view}')">${v14Esc(chip.label)}</button>`).join('')}</div></div></section>
       </div>
-    </div>
-    <div class="daily-summary-footer">
-      <span>Responsable: ${v14Esc(authenticatedDisplayName()||'—')}</span>
-      <span>${new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</span>
+      <section class="abx-panel"><div class="abx-ph"><h4>Últimas jornadas</h4><span>Cierres de los últimos 7 días</span></div>
+        <div class="cd-days">${days.map(item=>`<div class="cd-d ${item.state}" title="${fmt(item.iso)}">${item.label}<b>${item.day}</b><span>${dayText[item.state]}</span></div>`).join('')}</div></section>
+      <div class="cd-foot"><span>Responsable: ${v14Esc(authenticatedDisplayName()||'—')}</span><span>${new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</span></div>
     </div>
   `;
+}
+// Cierra la jornada con el mismo flujo de «Confirmar jornada»; antes avisa de lo que ese flujo no revisa.
+function dailySummaryClose(){
+  const date=v14Today();
+  const snapshot=v14DailySnapshot();
+  const warnings=[];
+  if(!snapshot.completedChecklist)warnings.push('el checklist de hoy no se envió');
+  const incidents=snapshot.openIncidents.filter(item=>(item.createdAt||'').slice(0,10)===date).length;
+  if(incidents)warnings.push(`hay ${incidents} incidencia(s) abierta(s) de hoy`);
+  const reconciliations=(window.FinanceReconciliationModule?.getAll?.()||[]).filter(r=>r.date===date);
+  if(!reconciliations.length)warnings.push('no se registró la cuadratura de caja');
+  if(warnings.length&&!confirm(`Antes de cerrar la jornada:\n\n• ${warnings.join('\n• ')}\n\n¿Cerrar igualmente?`))return;
+  confirmToday();
 }
 
 async function renderTeam(){
@@ -17968,6 +18022,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/ui-papel.js"></script>
 <script src="src/ui-workcenter.js"></script>
 <script src="src/ui-today.js"></script>
+<script src="src/ui-evaluaciones.js"></script>
 <script src="src/storage.js"></script>
 
 <script src="src/app/state.js"></script>
