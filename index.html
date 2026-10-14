@@ -17389,9 +17389,13 @@ async function renderTeam(){
 
     const areaSupported=(memberships||[]).every(item=>'area' in item);
     const chiefTitle=area=>window.ShiftControlAreas?.info(area)?.chiefTitle||(area==='TIENDA'?'Jefa de Tienda':'Jefa de Isla');
+    // En Supabase la jefatura de isla se registra como "ESTACION".
+    const membershipArea=item=>window.ShiftControlAreas?.normalizeArea?.(item?.area)||'ISLA';
     const chiefFor=area=>(memberships||[]).find(item=>
-      item.role==='CHIEF'&&item.active&&(item.area||'ISLA')===area
+      item.role==='CHIEF'&&item.active&&membershipArea(item)===area
     );
+    // El historial guarda el área en la columna area o en el rol (CHIEF_TIENDA).
+    const eventArea=ev=>window.ShiftControlAreas?.normalizeArea?.(ev.area||String(ev.role||'').replace(/^CHIEF_/,''))||'ISLA';
 
     const eventQuery=columns=>client
       .from('team_role_events')
@@ -17399,9 +17403,9 @@ async function renderTeam(){
       .eq('company_id',context.companyId)
       .order('created_at',{ascending:false})
       .limit(20);
-    let {data:events,error:eventsError}=await eventQuery('id, action, area, actor_user_id, target_user_id, previous_user_id, created_at');
+    let {data:events,error:eventsError}=await eventQuery('id, role, action, area, actor_user_id, target_user_id, previous_user_id, created_at');
     if(eventsError?.code==='42703'){
-      ({data:events}=await eventQuery('id, action, actor_user_id, target_user_id, previous_user_id, created_at'));
+      ({data:events}=await eventQuery('id, role, action, actor_user_id, target_user_id, previous_user_id, created_at'));
     }
 
     // Sin la migración de áreas solo existe la jefatura de isla.
@@ -17425,7 +17429,7 @@ async function renderTeam(){
         <h4>Historial</h4>
         ${(events&&events.length)?events.map(ev=>`
           <div class="team-history-row">
-            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de ${chiefTitle(ev.area||'ISLA')}</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
+            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de ${chiefTitle(eventArea(ev))}</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
             <small>${new Date(ev.created_at).toLocaleString('es-CL')} · por ${nameFor(ev.actor_user_id)}</small>
           </div>
         `).join(''):'<div class="ops-empty">Sin movimientos registrados.</div>'}

@@ -90,7 +90,8 @@
 
   function getArea(){
     if(getRole()!=='CHIEF')return null;
-    return String(getContext()?.area||'ISLA').toUpperCase()==='TIENDA'
+    // Cualquier área distinta de tienda (ISLA, ESTACION o vacía) es la isla.
+    return String(getContext()?.area||'').trim().toUpperCase()==='TIENDA'
       ?'TIENDA'
       :'ISLA';
   }

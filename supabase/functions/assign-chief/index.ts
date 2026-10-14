@@ -85,10 +85,11 @@ Deno.serve(async (req: Request) => {
     const email = String((body as Record<string, unknown>).email || "").trim().toLowerCase();
     const displayName = String((body as Record<string, unknown>).displayName || "").trim();
     // Sin área se asume isla, para mantener compatibilidad con la app anterior.
-    const area = String((body as Record<string, unknown>).area || "ISLA").trim().toUpperCase();
+    const requestedArea = String((body as Record<string, unknown>).area || "ISLA").trim().toUpperCase();
+    const area = requestedArea === "ISLA" ? "ESTACION" : requestedArea;
     const areaLabel = area === "TIENDA" ? "Jefa de Tienda" : "Jefa de Isla";
 
-    if (area !== "ISLA" && area !== "TIENDA") {
+    if (area !== "ESTACION" && area !== "TIENDA") {
       return jsonResponse({ error: "Área inválida." }, 400);
     }
 

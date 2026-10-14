@@ -32,9 +32,10 @@
       .toLowerCase();
   }
 
+  // En Supabase la jefatura de isla se registra como "ESTACION".
   function normalizeArea(value){
     const text=normalizeText(value);
-    if(text==='isla')return 'ISLA';
+    if(text==='isla'||text==='estacion')return 'ISLA';
     if(text==='tienda')return 'TIENDA';
     return null;
   }

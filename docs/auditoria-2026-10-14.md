@@ -157,21 +157,36 @@ Límite conocido: la separación es de la aplicación. Una jefa con
 conocimientos técnicos podría leer el JSON completo desde Supabase. Aislarlo
 en la base de datos requiere dividir `app_state` por área.
 
+### Estado real de Supabase (revisado el 14-10-2026 con acceso de lectura)
+
+- Producción ya tenía aplicadas migraciones que no estaban en el repositorio:
+  la corrección de la recursión (`20260804000002`, con `is_company_admin`),
+  la columna `company_memberships.area` con valores `ESTACION` y `TIENDA`,
+  `area_state`, `assign_chief_area` (traduce `ISLA` a `ESTACION` y no permite
+  asignar administradores), una jefatura activa por área y un respaldo en
+  `shiftcontrol_backup.snapshot_before_area_cutover`. Se copiaron al
+  repositorio con sus versiones exactas (contenido verificado por hash).
+- La Edge Function `assign-chief` desplegada corresponde a la de esta rama con
+  la traducción a `ESTACION`; el repositorio quedó igual a lo desplegado.
+- Las migraciones `20261014000001` y `20261014000002` de esta rama se
+  eliminaron: la primera ya estaba resuelta y la segunda era incompatible con
+  los valores `ESTACION`/`TIENDA`. La app interpreta `ESTACION` como isla.
+- Existen ya una jefatura activa de isla (`ESTACION`) y una de tienda.
+- Pendiente de aplicar: `20261014120000_evidence_storage.sql`.
+
 Para activarla en producción, en este orden:
 
 1. Clasificar al personal con área "Isla" o "Tienda" desde «Trabajadores».
-2. Aplicar `20261014000001_fix_memberships_admin_policy.sql`,
-   `20261014000002_chief_areas.sql` y
-   `20261014000003_evidence_storage.sql` (bucket privado de fotos del
-   checklist y respaldos de facturas).
-3. Desplegar la Edge Function `assign-chief`.
-4. Asignar la Jefa de Tienda desde «Equipo de estación».
+2. Aplicar `20261014120000_evidence_storage.sql` (bucket privado de fotos
+   del checklist y respaldos de facturas). Las demás migraciones y la Edge
+   Function ya están en producción.
+3. Publicar la rama en Vercel (fusionar en `main`).
 
 Sin los pasos 2 y 3, la aplicación sigue funcionando como antes con una sola
 Jefa de Isla.
 
 ## Decisiones pendientes del propietario
 
-1. Aplicar en Supabase la migración `20261014000001` (y revisar si
-   `20260804000001` ya está aplicada o corregida a mano).
+1. Autorizar la aplicación de `20261014120000_evidence_storage.sql` y la
+   publicación de la rama.
 2. Autorizar la limpieza de datos incrustados en `index.html`.
