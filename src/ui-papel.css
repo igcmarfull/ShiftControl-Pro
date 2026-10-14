@@ -546,7 +546,7 @@ body:not(.light) .person .avatar,body:not(.light) .cal-name .avatar{background:#
 @media (min-width:768px){
   #today .cards,#today .today-intelligence{display:none!important}
   .od-top{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
-  .od-low{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch;margin-top:16px}
+  .od-low{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch;margin-top:16px}
   .od-low .ic-cp{display:flex;flex-direction:column}
   .od-low .ic-bars{height:120px}
   .od-low .ic-bar i{max-width:30px}
