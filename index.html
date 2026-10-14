@@ -9100,6 +9100,29 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       .team-history-row small{color:var(--muted);font-size:11.5px;white-space:nowrap}
     </style>
 
+    <style>
+      #checklists .ops-check-item{flex-wrap:wrap}
+      .ops-check-detail-wrap{flex:1 0 100%;width:100%;min-width:0;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+      .ops-check-detail-wrap>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--muted)}
+      .ops-check-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px;cursor:default;width:100%;min-width:0;box-sizing:border-box}
+      .ops-check-detail .field{width:100%;min-width:0;box-sizing:border-box}
+      .ops-check-detail label{display:block;margin:0}
+      .ops-check-detail label>span,.ops-check-evidence>span{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin:0 0 4px}
+      .ops-check-detail .full{grid-column:1/-1}
+      .ops-check-detail textarea.field{width:100%;resize:vertical;min-height:54px}
+      .ops-evidence-list{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+      .ops-evidence-thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;border:1px solid var(--line);display:block;background:var(--soft)}
+      .ops-evidence-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .ops-evidence-add{cursor:pointer}
+      .ops-evidence-empty{color:var(--muted);font-size:12px}
+      .ops-check-follow{font-size:12px;padding:8px 10px;border-radius:10px;border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+      .ops-check-follow.resolved{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+      .store-followup small{display:block}
+      .store-followup.resolved{opacity:.7}
+      .store-followup-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+      @media(max-width:680px){.ops-check-detail{grid-template-columns:1fr}}
+    </style>
+
     <section id="team" class="view">
       <div class="topbar">
         <div>
@@ -17022,7 +17045,9 @@ function renderAdminInbox(){
       Object.values(item.items||{}).includes('issue')||(item.notes||'').trim()
     )
   );
+  const storeFollowUpsOpen=storeChecklistFollowUps().filter(item=>item.status==='open');
   const pendingItems=[
+    ...storeFollowUpsOpen.map(item=>({kind:'checklist',id:item.key,title:`Incumplimiento Tienda · ${item.title}`,detail:`${item.entry.date||'Sin fecha'} · ${item.detail.responsible||'Sin responsable'} · ${item.detail.note||'Sin observaciones'}`,action:'Revisar checklist'})),
     ...checklistEntries.map(([key,item])=>({kind:'checklist',id:key,title:`Revisión checklist diario · ${opsAreaLabel(window.ShiftControlAreas?.checklistArea?.(key,item)||'ISLA')}`,detail:`${item.date||'Sin fecha'} · ${item.completedBy||'Jefa de Isla'}`,action:'Revisar checklist'})),
     ...openIncidents.map(item=>({kind:'incident',id:item.id,title:item.title||'Incidencia abierta',detail:`${opsAreaLabel(window.ShiftControlAreas?.recordArea?.(item)||'ISLA')} · ${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,action:'Ver incidencias'})),
     ...pendingEvaluations.map(item=>({kind:'evaluation',id:item.id,title:'Evaluaciones pendientes de aprobación',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.period||'Período'} · ${item.evaluator||'Sin evaluador'}`,action:'Revisar evaluaciones'})),
@@ -17083,6 +17108,8 @@ function renderAdminInbox(){
           ${pendingItems.length?pendingItems.map(item=>`<article><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(item.detail)}</small></div><button type="button" onclick="${viewOnclick(item.kind==='checklist'?'checklists':item.kind==='evaluation'?'evaluations':item.kind==='incident'?'incidents':'today')}">${v14Esc(item.action)}</button></article>`).join(''):'<div class="ops-empty">No hay pendientes administrativos.</div>'}
         </div>
       </section>
+
+      ${storeChecklistFollowUpSection()}
 
       <section class="admin-room-panel admin-room-activity">
         <div class="admin-room-panel-head"><h4>Actividad reciente</h4><span>${audit.length}</span></div>
@@ -18026,11 +18053,17 @@ function setOpsAdminArea(value){
   if(typeof renderOpsChecklistHistory==='function')renderOpsChecklistHistory();
   if(typeof renderHandoffs==='function')renderHandoffs();
 }
-// La tienda usa los ítems generales; surtidores y patio son de la isla.
+// Controles propios de la operación de tienda.
+const OPS_STORE_CHECKLIST_ITEMS=[['temperaturas','Temperaturas de frío','Control de cámaras, refrigeradores y congeladores'],['vencimientos','Vencimientos y rotación FEFO','Revisión de vencimientos y rotación de productos'],['sanitizacion','Limpieza Fast Food y Bakery','Limpieza y sanitización de equipos'],['reposicion','Reposición de mercadería','Reposición y detección de quiebres de stock'],['caja','Control de caja','Diferencias y procedimientos de cierre'],['equipos_tienda','Equipos de tienda','Verificación de funcionamiento'],['mermas','Control de mermas','Control y registro de mermas'],['bodega','Bodega 6S','Orden, limpieza y organización']];
+// La tienda usa los ítems generales (sin surtidores ni patio, que son de la
+// isla) y sus controles propios.
 function opsChecklistItems(){
   return opsArea()==='TIENDA'
-    ?OPS_CHECKLIST_ITEMS.filter(([id])=>!['surtidores','patio'].includes(id))
+    ?OPS_CHECKLIST_ITEMS.filter(([id])=>!['surtidores','patio'].includes(id)).concat(OPS_STORE_CHECKLIST_ITEMS)
     :OPS_CHECKLIST_ITEMS;
+}
+function opsChecklistItemTitle(id){
+  return OPS_CHECKLIST_ITEMS.concat(OPS_STORE_CHECKLIST_ITEMS).find(([itemId])=>itemId===id)?.[1]||id;
 }
 const EVAL_CRITERIA={Asistencia:['Puntualidad','Asistencia','Cumplimiento de turnos'],Trabajo:['Desempeño general','Atención al cliente','Protocolo de atención','Trabajo en equipo','Responsabilidad','Iniciativa'],Actitud:['Disposición','Respeto','Comunicación']};
 let opsIncidentFilter='all', currentEvaluation={scores:{}};
@@ -18442,7 +18475,169 @@ function selectChecklistDateForReview(){
   const target=entries.find(x=>x.reviewStatus!=='reviewed')||entries[0];
   if(target)el.value=target.date;
 }
-function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
+// ===== Checklist de tienda: responsable, fecha, observaciones y evidencia =====
+const CHECKLIST_EVIDENCE_BUCKET='checklist-evidence';
+const CHECKLIST_EVIDENCE_MAX=4;
+const checklistEvidenceUrls=new Map();
+function checklistLocalDateTime(date=new Date()){
+  const pad=value=>String(value).padStart(2,'0');
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+function checklistDetailBlock(id,st,d){
+  if(opsArea()!=='TIENDA'||!st)return '';
+  const detail=d.details?.[id]||{};
+  const evidence=Array.isArray(detail.evidence)?detail.evidence:[];
+  const follow=detail.followUp;
+  const followText=follow?.status==='resolved'
+    ?`Resuelto por ${opsEsc(follow.resolvedBy||'el gerente')}${follow.resolution?`: ${opsEsc(follow.resolution)}`:''}`
+    :'Incumplimiento en seguimiento del gerente';
+  // Los puntos conformes sin observaciones ni fotos se muestran plegados.
+  const open=st==='issue'||evidence.length||detail.note||follow;
+  return `<details class="ops-check-detail-wrap"${open?' open':''}><summary>Responsable, fecha y evidencia${detail.responsible?` · ${opsEsc(detail.responsible)}`:''}</summary><div class="ops-check-detail">
+    <label><span>Responsable</span><input class="field" value="${opsEsc(detail.responsible||'')}" onchange="updateChecklistDetail('${id}','responsible',this.value)"></label>
+    <label><span>Fecha y hora</span><input class="field" type="datetime-local" value="${opsEsc(detail.checkedAt||'')}" onchange="updateChecklistDetail('${id}','checkedAt',this.value)"></label>
+    <label class="full"><span>Observaciones${st==='issue'?' (obligatorias)':''}</span><textarea class="field" rows="2" onchange="updateChecklistDetail('${id}','note',this.value)">${opsEsc(detail.note||'')}</textarea></label>
+    <div class="full ops-check-evidence"><span>Evidencia fotográfica</span><div class="ops-evidence-list">
+      ${evidence.map(item=>`<a class="ops-evidence-thumb" data-evidence-path="${opsEsc(item.path)}" target="_blank" rel="noopener" title="${opsEsc(item.name||'Foto')}"><img alt="Evidencia ${opsEsc(opsChecklistItemTitle(id))}"></a>`).join('')}
+      <label class="btn small ops-evidence-add">＋ Foto<input type="file" accept="image/*" capture="environment" hidden onchange="uploadChecklistEvidence('${id}',this)"></label>
+      ${evidence.length?'':'<small class="ops-evidence-empty">Sin fotos</small>'}
+    </div></div>
+    ${follow?`<div class="full ops-check-follow ${follow.status==='resolved'?'resolved':'open'}">${followText}</div>`:''}
+  </div></details>`;
+}
+function updateChecklistDetail(id,field,value){
+  if(getAppRole()==='admin')return;
+  const d=getOpsChecklist();
+  if(d.completed)return;
+  d.details={...(d.details||{})};
+  d.details[id]={...(d.details[id]||{}),[field]:String(value||'').trim()};
+  d.updatedAt=new Date().toISOString();
+  saveOpsChecklist(d);
+}
+// Reduce la foto antes de subirla (lado mayor 1600 px, JPEG).
+async function compressChecklistPhoto(file){
+  try{
+    const bitmap=await createImageBitmap(file);
+    const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.round(bitmap.width*scale);
+    canvas.height=Math.round(bitmap.height*scale);
+    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.75));
+    if(blob)return blob;
+  }catch(_error){}
+  return file;
+}
+async function uploadChecklistEvidence(id,input){
+  const file=input?.files?.[0];
+  if(input)input.value='';
+  if(!file||getAppRole()==='admin')return;
+  if(!/^image\//.test(file.type))return alert('Selecciona una imagen.');
+  const key=opsChecklistKey();
+  const d=getOpsChecklist();
+  if(d.completed)return alert('El checklist ya fue enviado.');
+  if((d.details?.[id]?.evidence||[]).length>=CHECKLIST_EVIDENCE_MAX)return alert(`Puedes adjuntar hasta ${CHECKLIST_EVIDENCE_MAX} fotos por punto.`);
+  const companyId=window.AuthContext?.get?.()?.companyId;
+  if(!companyId)return alert('Tu sesión no es válida. Vuelve a iniciar sesión.');
+  const date=d.date||checklistDate?.value||isoToday;
+  const path=`${companyId}/checklists/${opsArea()}/${date}/${id}-${safeRandomUUID()}.jpg`;
+  showToast('Subiendo foto…');
+  try{
+    const blob=await compressChecklistPhoto(file);
+    if(blob.size>5*1024*1024)return alert('La foto supera 5 MB incluso después de reducirla.');
+    const {error}=await window.ShiftControlAuth.getClient().storage
+      .from(CHECKLIST_EVIDENCE_BUCKET)
+      .upload(path,blob,{contentType:blob.type||'image/jpeg',upsert:false});
+    if(error)throw error;
+    // Se vuelve a leer el checklist: pudo cambiar mientras se subía la foto.
+    const entry=ChecklistModule.get(key)||d;
+    const details={...(entry.details||{})};
+    const current=details[id]||{};
+    details[id]={...current,evidence:[...(current.evidence||[]),{path,name:file.name||'foto.jpg',uploadedAt:new Date().toISOString(),uploadedBy:authenticatedDisplayName()}]};
+    entry.details=details;
+    entry.area=opsArea();
+    entry.updatedAt=new Date().toISOString();
+    ChecklistModule.set(key,entry,{save:false});
+    opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());
+    save();
+    renderOpsChecklist();
+    showToast('Foto agregada');
+  }catch(error){
+    alert(`No fue posible subir la foto: ${error?.message||error}`);
+  }
+}
+// Las fotos son privadas: se muestran con enlaces firmados temporales.
+async function hydrateChecklistEvidence(root=document){
+  const links=[...root.querySelectorAll('[data-evidence-path]')];
+  if(!links.length)return;
+  let client=null;
+  try{client=window.ShiftControlAuth.getClient()}catch(_error){return}
+  for(const link of links){
+    const path=link.dataset.evidencePath;
+    let url=checklistEvidenceUrls.get(path);
+    if(!url){
+      try{
+        const {data,error}=await client.storage.from(CHECKLIST_EVIDENCE_BUCKET).createSignedUrl(path,3600);
+        if(error||!data?.signedUrl)continue;
+        url=data.signedUrl;
+        checklistEvidenceUrls.set(path,url);
+        setTimeout(()=>checklistEvidenceUrls.delete(path),50*60*1000);
+      }catch(_error){continue}
+    }
+    link.href=url;
+    const image=link.querySelector('img');
+    if(image&&image.getAttribute('src')!==url)image.src=url;
+  }
+}
+// Incumplimientos de checklists de tienda enviados, para el seguimiento del gerente.
+function storeChecklistFollowUps(){
+  return Object.entries(opsChecklistStore()).flatMap(([key,entry])=>{
+    if(window.ShiftControlAreas?.checklistArea?.(key,entry)!=='TIENDA'||!entry?.completed)return [];
+    return Object.entries(entry.details||{})
+      .filter(([,detail])=>detail?.followUp)
+      .map(([id,detail])=>({key,entry,id,detail,title:opsChecklistItemTitle(id),status:detail.followUp.status==='resolved'?'resolved':'open'}));
+  }).sort((a,b)=>String(b.entry.date||'').localeCompare(String(a.entry.date||'')));
+}
+function resolveChecklistFollowUp(key,id){
+  if(getAppRole()!=='admin')return;
+  const entry=ChecklistModule.get(key);
+  const detail=entry?.details?.[id];
+  if(!detail?.followUp)return alert('No se encontró el incumplimiento.');
+  const resolution=prompt(`¿Cómo se resolvió "${opsChecklistItemTitle(id)}"?`,'');
+  if(resolution===null)return;
+  if(!resolution.trim())return alert('Indica cómo se resolvió.');
+  entry.details={...entry.details,[id]:{...detail,followUp:{...detail.followUp,status:'resolved',resolvedAt:new Date().toISOString(),resolvedBy:authenticatedDisplayName(),resolution:resolution.trim()}}};
+  ChecklistModule.set(key,entry,{save:false});
+  opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());
+  save();
+  if(typeof v12Activity==='function')v12Activity('Incumplimiento de checklist resuelto',`Tienda · ${entry.date} · ${opsChecklistItemTitle(id)}`);
+  renderAdminInbox();
+  renderOpsChecklist();
+  showToast('Incumplimiento resuelto');
+}
+function storeChecklistFollowUpSection(){
+  const items=storeChecklistFollowUps();
+  if(!items.length)return '';
+  const open=items.filter(item=>item.status==='open');
+  const resolved=items.filter(item=>item.status==='resolved').slice(0,5);
+  const jsArg=value=>JSON.stringify(String(value||'')).replace(/"/g,'&quot;');
+  const row=item=>{
+    const photos=(item.detail.evidence||[]).length;
+    const meta=[fmt(item.entry.date),item.detail.responsible||item.entry.completedBy||'Sin responsable',photos?`${photos} foto(s)`:'Sin fotos'].join(' · ');
+    const note=item.status==='resolved'
+      ?`Resuelto por ${item.detail.followUp.resolvedBy||'—'}: ${item.detail.followUp.resolution||''}`
+      :(item.detail.note||'Sin observaciones');
+    return `<article class="store-followup ${item.status}"><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(meta)}</small><small>${v14Esc(note)}</small></div><div class="store-followup-actions"><button type="button" onclick="adminInboxOpenChecklist(${jsArg(item.key)})">Ver checklist</button>${item.status==='open'?`<button type="button" onclick="resolveChecklistFollowUp(${jsArg(item.key)},${jsArg(item.id)})">Marcar resuelto</button>`:''}</div></article>`;
+  };
+  return `<section class="admin-room-panel admin-room-store-followups">
+    <div class="admin-room-panel-head"><h4>Incumplimientos checklist Tienda</h4><span>${open.length} abierto(s)</span></div>
+    <div class="admin-room-all-list">
+      ${open.length?open.map(row).join(''):'<div class="ops-empty">Sin incumplimientos abiertos.</div>'}
+      ${resolved.map(row).join('')}
+    </div>
+  </section>`;
+}
+function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;if(opsArea()==='TIENDA'){d.details={...(d.details||{})};const current=d.details[id]||{};d.details[id]={...current,responsible:current.responsible||authenticatedDisplayName(),checkedAt:current.checkedAt||checklistLocalDateTime()}}d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
 function saveOpsChecklistNotes(){const d=getOpsChecklist();d.notes=checklistNotes.value;saveOpsChecklist(d)}
 function createIncidentFromChecklist(id,title){if(!ensureIncidentPermission())return;showView('incidents');setTimeout(()=>{incidentTitle.value=`Checklist: ${title}`;incidentDescription.value=`Problema detectado en ${title}, durante el turno ${v14CurrentShift()}.`;incidentShift.value=v14CurrentShift();incidentType.value=id==='surtidores'?'Equipo':'Instalaciones';incidentTitle.focus()},80)}
 function completeOpsChecklist(){const d=getOpsChecklist(),unanswered=opsChecklistItems().filter(([id])=>!d.items[id]);if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Confirmar igualmente?`))return;d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();saveOpsChecklist(d);renderOpsChecklist();showToast('Checklist confirmado')}
@@ -18453,7 +18648,15 @@ const CHECKLIST_ICONS={
   banos:'<svg viewBox="0 0 24 24"><path d="M7 3c0 2-2 2-2 4s2 2 2 4"/><path d="M4 13h16l-1 4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/></svg>',
   patio:'<svg viewBox="0 0 24 24"><path d="M4 21l5-5"/><path d="M9 16l8-8 3 3-8 8z"/><path d="M17 8l2-5 2 2-5 2z"/></svg>',
   instalaciones:'<svg viewBox="0 0 24 24"><path d="M9 21V9l3-6 3 6v12"/><path d="M5 21V13l4-2"/><path d="M19 21V13l-4-2"/></svg>',
-  entrega:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>'
+  entrega:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
+  temperaturas:'<svg viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></svg>',
+  vencimientos:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>',
+  sanitizacion:'<svg viewBox="0 0 24 24"><path d="M12 3l1.6 3.4L17 8l-3.4 1.6L12 13l-1.6-3.4L7 8l3.4-1.6z"/><path d="M18 14l.8 1.7 1.7.8-1.7.8L18 19l-.8-1.7-1.7-.8 1.7-.8zM6 15l.8 1.7 1.7.8-1.7.8L6 20l-.8-1.7-1.7-.8 1.7-.8z"/></svg>',
+  reposicion:'<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg>',
+  caja:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.2"/></svg>',
+  equipos_tienda:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+  mermas:'<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>',
+  bodega:'<svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M7 21v-8h10v8M7 17h10"/></svg>'
 };
 function renderOpsChecklist(){
   const root=document.getElementById('checklistItems');
@@ -18474,6 +18677,7 @@ function renderOpsChecklist(){
         </div>
         ${st==='issue'?`<div class="check-issue-action"><span>Este problema puede convertirse en una incidencia trazable.</span><button class="btn small check-incident-btn" onclick="createIncidentFromChecklist('${id}','${opsEsc(title)}')">Crear incidencia vinculada</button></div>`:''}
       </div>
+      ${checklistDetailBlock(id,st,d)}
     </div>`
   }).join('');
   checklistProgressLabel.textContent=`${pct}%`;
@@ -18728,6 +18932,16 @@ function payExtraV12(id){if(!requireAppPermission('payments.manage'))return;cons
 // Todo checklist enviado queda pendiente de revisión del administrador, sin excepciones.
 completeOpsChecklist=function(){
  const d=getOpsChecklist(),unanswered=opsChecklistItems().filter(([id])=>!d.items[id]);
+ if(opsArea()==='TIENDA'){
+  const issues=opsChecklistItems().filter(([id])=>d.items[id]==='issue');
+  const withoutNote=issues.filter(([id])=>!String(d.details?.[id]?.note||'').trim());
+  if(withoutNote.length)return alert(`Agrega observaciones a los puntos con problema: ${withoutNote.map(([,title])=>title).join(', ')}.`);
+  const withoutResponsible=issues.filter(([id])=>!String(d.details?.[id]?.responsible||'').trim());
+  if(withoutResponsible.length)return alert(`Indica el responsable de: ${withoutResponsible.map(([,title])=>title).join(', ')}.`);
+  // Cada incumplimiento queda abierto para el seguimiento del gerente.
+  d.details={...(d.details||{})};
+  issues.forEach(([id])=>{if(!d.details[id].followUp)d.details[id]={...d.details[id],followUp:{status:'open',openedAt:new Date().toISOString()}}});
+ }
  if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Enviar igualmente?`))return;
  d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();
  const hasIssue=Object.values(d.items||{}).includes('issue')||(d.notes||'').trim();
@@ -18816,6 +19030,9 @@ renderOpsChecklist=function(){
     btn.setAttribute('aria-disabled',locked?'true':'false');
   });
   if(notes){notes.disabled=locked;notes.readOnly=locked;}
+  root?.querySelectorAll('.ops-check-detail input,.ops-check-detail textarea').forEach(field=>{field.disabled=locked});
+  root?.querySelectorAll('.ops-evidence-add').forEach(label=>{label.style.display=locked?'none':''});
+  hydrateChecklistEvidence(root||document);
   if(button){
     if(role==='admin'){
       button.style.display='none';

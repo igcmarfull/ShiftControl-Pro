@@ -137,6 +137,15 @@ jefa registra y ve las de su área y el gerente alterna entre Isla y Tienda.
 Las entregas de turno, que antes quedaban solo en el navegador de quien las
 registraba, ahora se sincronizan con Supabase (hallazgo adicional corregido).
 
+El checklist de tienda tiene los cinco puntos generales y ocho controles de
+la operación (temperaturas, vencimientos FEFO, limpieza Fast Food y Bakery,
+reposición, caja, equipos, mermas y bodega 6S), con responsable, fecha,
+observaciones y fotos por punto. Los incumplimientos quedan en seguimiento en
+la Bandeja ADMIN hasta que el gerente los resuelve. Verificado en navegador:
+foto reducida y subida, miniatura visible para la jefa y el gerente, bloqueo
+de envío sin observaciones, resolución con comentario visible para la jefa, y
+mensaje claro si el bucket aún no existe.
+
 Límite conocido: la separación es de la aplicación. Una jefa con
 conocimientos técnicos podría leer el JSON completo desde Supabase. Aislarlo
 en la base de datos requiere dividir `app_state` por área.
@@ -144,8 +153,10 @@ en la base de datos requiere dividir `app_state` por área.
 Para activarla en producción, en este orden:
 
 1. Clasificar al personal con área "Isla" o "Tienda" desde «Trabajadores».
-2. Aplicar `20261014000001_fix_memberships_admin_policy.sql` y luego
-   `20261014000002_chief_areas.sql`.
+2. Aplicar `20261014000001_fix_memberships_admin_policy.sql`,
+   `20261014000002_chief_areas.sql` y
+   `20261014000003_checklist_evidence_storage.sql` (bucket privado de fotos
+   del checklist).
 3. Desplegar la Edge Function `assign-chief`.
 4. Asignar la Jefa de Tienda desde «Equipo de estación».
 
@@ -156,7 +167,5 @@ Jefa de Isla.
 
 1. Aplicar en Supabase la migración `20261014000001` (y revisar si
    `20260804000001` ya está aplicada o corregida a mano).
-2. Definir si el checklist de tienda necesita ítems propios (hoy usa los
-   generales: personal, presentación, baños, instalaciones y entrega) y si la
-   Jefa de Tienda debe ver «Facturas y compras».
+2. Definir si la Jefa de Tienda debe ver «Facturas y compras».
 3. Autorizar la limpieza de datos incrustados en `index.html`.

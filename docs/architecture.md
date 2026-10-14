@@ -251,8 +251,18 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   (`src/app/permissions.js`, `CHIEF_TIENDA`), sobre los datos de la tienda.
 - Incidencias (`incidents`) y entregas de turno (`handoffs`) guardan `area`;
   los registros sin área son de isla. Los checklists de tienda usan la clave
-  `TIENDA:<fecha>` y los de isla, `<fecha>`. La tienda usa los ítems generales
-  del checklist, sin surtidores ni patio.
+  `TIENDA:<fecha>` y los de isla, `<fecha>`.
+- El checklist de tienda tiene 13 puntos: los cinco generales (sin surtidores
+  ni patio) y ocho controles propios (`OPS_STORE_CHECKLIST_ITEMS`). Cada punto
+  respondido guarda en `details[<punto>]` responsable, fecha y hora,
+  observaciones y evidencia fotográfica. Un punto con problema exige
+  observaciones y responsable; al enviar el checklist queda con
+  `followUp.status = 'open'` y aparece en la Bandeja ADMIN hasta que el
+  gerente lo marca resuelto con un comentario. El checklist de isla no cambia.
+- Las fotos se reducen en el navegador (JPEG, lado mayor 1600 px) y se suben
+  al bucket privado `checklist-evidence` de Supabase Storage con la ruta
+  `<empresa>/checklists/<área>/<fecha>/<archivo>`. El checklist guarda solo la
+  ruta; las imágenes se muestran con enlaces firmados de una hora.
 - En incidencias, checklist y entrega de turno el administrador elige el área
   que revisa con un selector Isla/Tienda.
 - Las entregas de turno se guardan en `state.handoffs` mediante
