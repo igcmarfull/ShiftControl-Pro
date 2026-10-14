@@ -81,3 +81,14 @@ Verificación: capturas con datos simulados (claro/oscuro, escritorio y celular)
 - Se quitaron las descripciones de cada módulo. Las pestañas **Avisos** y **Navegar** no cambian.
 
 Verificación: pruebas en navegador con datos simulados (administrador y Jefa de Isla; claro/oscuro): plegar grupos, búsqueda con foco conservado, mensaje sin resultados y navegación. Sin pruebas con datos reales.
+
+## Incidencias operativas (rediseño)
+
+`renderOpsIncidents()` (en `index.html`) sigue siendo el renderizador; se conservan `IncidentModule`, `updateOpsIncidentStatus`, `archiveOpsIncident`, `saveOpsIncident`, el formulario (mismos ids) y los contadores `incidentOpenCount`, `incidentReviewCount` e `incidentResolvedCount`. Estilos `.ic-*` / `.inc-*` en `src/ui-papel.css`.
+
+- **Lista:** pestañas Todas / Abiertas / En revisión / Resueltas con contador, filtro de prioridad y buscador (título, descripción, reportante, responsable y tipo). Agrupada en Abiertas, En revisión y Resueltas; las resueltas quedan atenuadas. Cada fila lleva ícono por tipo, prioridad, tipo, turno, responsable y las mismas acciones de antes (tomar en revisión, marcar resuelta, reabrir, archivar según el rol).
+- **Gráficos** (`renderIncidentCharts`): incidencias por semana (8 semanas, por `createdAt`) y por tipo (máx. 5), de las incidencias no archivadas del área. Un solo color; cada barra tiene `title` con el detalle.
+- **Escritorio (≥ 821 px):** el formulario «Registrar incidencia» pasa a un panel lateral que abre «Nueva incidencia» (`focusIncidentForm` → `openIncidentDrawer`), se cierra con ✕, el fondo o Esc, y también al guardar. En celular el formulario sigue en la página, después de la lista, y el gráfico «Por tipo» se oculta.
+- El texto del adjunto ahora dice «Por ahora solo se guarda el nombre del archivo.»
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): pestañas, búsqueda con foco conservado, filtro de prioridad, abrir/cerrar el panel, guardado, cambio de estado. Sin pruebas con datos reales.

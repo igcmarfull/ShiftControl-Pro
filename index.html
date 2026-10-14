@@ -7254,9 +7254,11 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <article class="ops-summary-card success"><span>Resueltas</span><strong id="incidentResolvedCount">0</strong><small>Historial conservado</small></article>
   </div>
 
+  <div id="incidentCharts" class="ic-charts"></div>
+
   <div class="ops-two-column">
-    <article class="ops-panel ops-form-panel role-chief-visible role-admin-visible">
-      <div class="ops-panel-head"><div><h3>Registrar incidencia</h3><p>La jefa de isla carga la novedad; el administrador puede revisarla o editarla.</p></div><span class="ops-pill">Operación</span></div>
+    <article class="ops-panel ops-form-panel role-chief-visible role-admin-visible" id="incidentFormPanel">
+      <div class="ops-panel-head"><div><h3>Registrar incidencia</h3><p>La jefa de isla carga la novedad; el administrador puede revisarla o editarla.</p></div><span class="ops-pill">Operación</span><button type="button" class="inc-close" onclick="closeIncidentDrawer()" aria-label="Cerrar">✕</button></div>
       <form id="incidentForm" class="ops-form" onsubmit="saveOpsIncident(event)">
         <div class="form-group full"><label>Título breve</label><input class="field" id="incidentTitle" maxlength="80" placeholder="Ej. Surtidor 3 fuera de servicio" required></div>
         <div class="form-group"><label>Tipo</label><select class="select" id="incidentType"><option>Equipo</option><option>Personal</option><option>Instalaciones</option><option>Combustible</option><option>Cliente</option><option>Otro</option></select></div>
@@ -7266,18 +7268,23 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <div class="form-group"><label>Asignada a</label><input class="field" id="incidentOwner" placeholder="Sin asignar"></div>
         <div class="form-group"><label>Fecha compromiso</label><input class="field" type="date" id="incidentDueDate"></div>
         <div class="form-group full"><label>Descripción</label><textarea id="incidentDescription" rows="4" placeholder="Describe qué ocurrió, dónde y qué acción inmediata se tomó" required></textarea></div>
-        <div class="form-group full"><label>Foto o respaldo</label><input class="field" type="file" id="incidentFile" accept="image/*,.pdf"><small class="muted">En esta demo se guarda el nombre del archivo; al conectar Supabase se podrá subir realmente.</small></div>
+        <div class="form-group full"><label>Foto o respaldo</label><input class="field" type="file" id="incidentFile" accept="image/*,.pdf"><small class="muted">Por ahora solo se guarda el nombre del archivo.</small></div>
         <div class="full actions" style="justify-content:flex-end"><button type="reset" class="btn">Limpiar</button><button class="btn primary">Guardar incidencia</button></div>
       </form>
     </article>
 
-    <article class="ops-panel">
-      <div class="ops-panel-head"><div><h3>Seguimiento</h3><p>Filtra rápidamente por estado.</p></div>
-        <div class="ops-filter-row"><button class="ops-filter active" data-incident-filter="all" onclick="filterOpsIncidents('all',this)">Todas</button><button class="ops-filter" data-incident-filter="open" onclick="filterOpsIncidents('open',this)">Abiertas</button><button class="ops-filter" data-incident-filter="review" onclick="filterOpsIncidents('review',this)">En revisión</button><button class="ops-filter" data-incident-filter="resolved" onclick="filterOpsIncidents('resolved',this)">Resueltas</button></div>
+    <article class="ops-panel ic-main">
+      <div class="ic-tools">
+        <div class="ic-tabs" id="incidentTabs" role="tablist" aria-label="Estado de las incidencias"></div>
+        <div class="ic-f">
+          <select class="select" id="incidentPriorityFilter" onchange="setIncidentPriorityFilter(this.value)" aria-label="Prioridad"><option value="">Toda prioridad</option><option value="Alta">Alta</option><option value="Media">Media</option><option value="Baja">Baja</option></select>
+          <input class="field" id="incidentSearch" type="search" placeholder="Buscar incidencia…" oninput="setIncidentSearch(this.value)">
+        </div>
       </div>
       <div id="incidentList" class="ops-list"></div>
     </article>
   </div>
+  <div class="inc-backdrop" onclick="closeIncidentDrawer()"></div>
 </section>
 
 <section id="checklists" class="view ops-module-view">
@@ -15021,6 +15028,7 @@ window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>applyAppRole(false
 
 // --- V5: incidencias, checklist, entrega y evaluaciones ---
 function focusIncidentForm(){
+  openIncidentDrawer();
   const field=document.getElementById('incidentTitle');
   if(field){field.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>field.focus(),280)}
 }
@@ -15354,12 +15362,91 @@ async function migrateLegacyIncidents(){
 }
 window.migrateLegacyIncidents=migrateLegacyIncidents;
 function ensureIncidentPermission(){return true}
-function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],displayName=authenticatedDisplayName();IncidentModule.add({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||displayName,owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,area:opsArea(),createdAt:new Date().toISOString(),createdBy:displayName,updates:[]},{prepend:true,save:false});persistOpsIncidents();event.target.reset();incidentReporter.value=displayName;incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
+function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],displayName=authenticatedDisplayName();IncidentModule.add({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||displayName,owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,area:opsArea(),createdAt:new Date().toISOString(),createdBy:displayName,updates:[]},{prepend:true,save:false});persistOpsIncidents();event.target.reset();incidentReporter.value=displayName;incidentPriority.value='Media';renderOpsIncidents();closeIncidentDrawer();showToast('Incidencia registrada')}
 function showToast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
 function filterOpsIncidents(f,b){opsIncidentFilter=f;document.querySelectorAll('[data-incident-filter]').forEach(x=>x.classList.toggle('active',x.dataset.incidentFilter===f));renderOpsIncidents()}
 function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const x=IncidentModule.findById(id);if(!x)return;const role=getAppRole(),chiefReview=role==='chief'&&x.status==='open'&&status==='review';if(role!=='admin'&&!chiefReview)return alert('Solo el administrador puede resolver o reabrir incidencias.');const changes={status,updates:[...(x.updates||[]),{at:new Date().toISOString(),text:`Estado cambiado a ${status}`}]};if(status==='resolved')changes.resolvedAt=new Date().toISOString();IncidentModule.patch(id,changes,{save:false});persistOpsIncidents();renderOpsIncidents()}
 function archiveOpsIncident(id){if(!ensureIncidentPermission())return;if(getAppRole()!=='admin')return alert('Solo el administrador puede archivar incidencias.');if(!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const x=IncidentModule.patch(id,{archived:true},{save:false});if(x)persistOpsIncidents();renderOpsIncidents()}
-function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived&&opsRecordInArea(x)),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'},isAdmin=getAppRole()==='admin';root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
+let incidentSearchText='',incidentPriorityValue='';
+function setIncidentSearch(value){incidentSearchText=String(value||'');renderOpsIncidents()}
+function setIncidentPriorityFilter(value){incidentPriorityValue=String(value||'');renderOpsIncidents()}
+function openIncidentDrawer(){document.getElementById('incidents')?.classList.add('inc-drawer-open')}
+function closeIncidentDrawer(){document.getElementById('incidents')?.classList.remove('inc-drawer-open')}
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeIncidentDrawer()});
+const INCIDENT_ICONS={
+  Equipo:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+  Personal:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/>',
+  Instalaciones:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>',
+  Combustible:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  Cliente:'<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>',
+  Otro:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>'
+};
+function incidentWeekStart(date){
+  const d=new Date(date.getFullYear(),date.getMonth(),date.getDate(),12);
+  d.setDate(d.getDate()-((d.getDay()+6)%7));
+  return d;
+}
+function renderIncidentCharts(list){
+  const root=document.getElementById('incidentCharts');
+  if(!root)return;
+  const months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const thisWeek=incidentWeekStart(new Date());
+  const weeks=Array.from({length:8},(_,index)=>{const d=new Date(thisWeek);d.setDate(d.getDate()-(7-index)*7);return d});
+  const counts=weeks.map(()=>0);
+  const types={};
+  list.forEach(item=>{
+    const created=new Date(item.createdAt||'');
+    if(Number.isNaN(created.getTime()))return;
+    const start=incidentWeekStart(created).getTime();
+    const index=weeks.findIndex(week=>week.getTime()===start);
+    if(index<0)return;
+    counts[index]++;
+    const type=item.type||'Otro';
+    types[type]=(types[type]||0)+1;
+  });
+  const total=counts.reduce((sum,n)=>sum+n,0);
+  const max=Math.max(1,...counts);
+  const typeRows=Object.entries(types).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const typeMax=Math.max(1,...typeRows.map(row=>row[1]));
+  const label=(week,index)=>index===weeks.length-1?'Esta sem.':`${week.getDate()} ${months[week.getMonth()]}`;
+  const empty='<div class="ic-chart-empty">Sin incidencias en las últimas 8 semanas.</div>';
+  const html=`
+    <section class="ic-cp"><div class="ic-ch"><div><h4>Incidencias por semana</h4><div class="sub">Últimas 8 semanas</div></div><div class="tot"><b>${total}</b>en total</div></div>
+      ${total?`<div class="ic-bars">${counts.map((n,index)=>`<div class="ic-bar ${index===counts.length-1?'now':''}" title="Semana del ${weeks[index].getDate()} ${months[weeks[index].getMonth()]}: ${n} incidencia${n===1?'':'s'}"><b style="--top:${Math.round(88*(1-n/max))}px">${n}</b><i style="height:${Math.max(4,Math.round(88*n/max))}px"></i><span>${label(weeks[index],index)}</span></div>`).join('')}</div>`:empty}
+    </section>
+    <section class="ic-cp"><div class="ic-ch"><div><h4>Por tipo</h4><div class="sub">Últimas 8 semanas</div></div></div>
+      ${typeRows.length?`<div class="ic-hb">${typeRows.map(([type,n])=>`<div title="${opsEsc(type)}: ${n}"><span>${opsEsc(type)}</span><span class="tr"><i style="width:${Math.round(n/typeMax*100)}%"></i></span><em>${n}</em></div>`).join('')}</div>`:empty}
+    </section>`;
+  if(root.dataset.sig!==html){root.dataset.sig=html;root.innerHTML=html}
+}
+function renderOpsIncidents(){
+  const list=opsIncidents().filter(x=>!x.archived&&opsRecordInArea(x));
+  const counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};
+  if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;
+  if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;
+  if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;
+  renderIncidentCharts(list);
+  const tabs=document.getElementById('incidentTabs');
+  if(tabs)tabs.innerHTML=[['all','Todas',list.length],['open','Abiertas',counts.open],['review','En revisión',counts.review],['resolved','Resueltas',counts.resolved]].map(([key,text,n])=>`<button type="button" role="tab" class="${opsIncidentFilter===key?'active':''}" data-incident-filter="${key}" onclick="filterOpsIncidents('${key}',this)">${text}<em>${n}</em></button>`).join('');
+  const root=document.getElementById('incidentList');
+  if(!root)return;
+  const query=incidentSearchText.trim().toLowerCase();
+  const rank={Alta:0,Media:1,Baja:2};
+  const matches=list.filter(x=>(opsIncidentFilter==='all'||x.status===opsIncidentFilter)
+    &&(!incidentPriorityValue||x.priority===incidentPriorityValue)
+    &&(!query||[x.title,x.description,x.reporter,x.createdBy,x.owner,x.type].some(v=>String(v||'').toLowerCase().includes(query))));
+  const labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'};
+  const isAdmin=getAppRole()==='admin';
+  const row=x=>`<div class="ic-row ${x.status==='resolved'?'done':''}" style="--c:var(--${x.priority==='Alta'?'red':x.priority==='Media'?'orange':'blue'})"><span class="ic-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${INCIDENT_ICONS[x.type]||INCIDENT_ICONS.Otro}</svg></span><div class="ic-txt"><strong>${opsEsc(x.title)}</strong><small>${opsEsc(x.description)}</small></div><div class="ic-chips"><span class="ic-chip">${opsEsc(x.priority)}</span><span class="ic-chip n">${opsEsc(x.type)}</span><span class="ic-chip n">${opsEsc(x.shift)}</span></div><div class="ic-who"><small>Reportó: ${opsEsc(x.reporter||x.createdBy)}</small><small>Asignada: ${opsEsc(x.owner)}${x.dueDate?` · Compromiso ${opsEsc(x.dueDate)}`:''}</small></div><div class="ic-acts">${x.status==='open'?`<button type="button" class="ic-btn pri" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button type="button" class="ic-btn ${x.status==='review'?'pri':''}" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button type="button" class="ic-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button type="button" class="ic-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></div>`;
+  const sorted=group=>matches.filter(x=>x.status===group).sort((a,b)=>(rank[a.priority]??3)-(rank[b.priority]??3)||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const groups=[['open','Abiertas'],['review','En revisión'],['resolved','Resueltas']].filter(([key])=>opsIncidentFilter==='all'||opsIncidentFilter===key);
+  root.className='ic-list';
+  root.innerHTML=groups.map(([key,text])=>{
+    const rows=sorted(key);
+    if(!rows.length&&(key!=='open'||opsIncidentFilter!=='all'||incidentSearchText||incidentPriorityValue))return '';
+    return `<div class="ic-gh">${text}${rows.length?` · ${rows.length}`:''}</div>${rows.length?rows.map(row).join(''):'<div class="ic-empty"><span class="ok">✓</span>No hay incidencias abiertas. ¡Todo al día!</div>'}`;
+  }).join('')||'<div class="ops-empty">No hay incidencias que coincidan.</div>';
+}
 function readLegacyChecklists(){
   try{
     const parsed=JSON.parse(localStorage.getItem(window.OPS_CHECKLISTS_KEY)||'null');
