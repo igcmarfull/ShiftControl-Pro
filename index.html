@@ -6898,11 +6898,29 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
           <input type="hidden" id="assignChiefArea" value="ISLA">
           <div class="form-group full"><label>Nombre</label><input class="field" id="assignChiefName" placeholder="Nombre completo" required></div>
           <div class="form-group full"><label>Correo</label><input class="field" type="email" id="assignChiefEmail" placeholder="nombre@empresa.cl" required></div>
+          <div class="form-group full"><label>Teléfono (opcional)</label><input class="field" type="tel" id="assignChiefPhone" placeholder="+56 9 1234 5678" maxlength="30" autocomplete="off"></div>
           <div id="assignChiefError" class="login-error" role="alert"></div>
           <p class="muted" style="margin:0;font-size:12.5px">Si el correo no tiene cuenta todavía, se le manda una invitación para crear su contraseña. Si ya tiene cuenta, solo se le asigna el rol.</p>
           <div class="full actions" style="justify-content:flex-end">
             <button type="button" class="btn" onclick="closeModal('assignChiefModal')">Cancelar</button>
             <button class="btn primary" id="assignChiefSubmit" type="submit">Enviar invitación</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal" id="chiefContactModal">
+      <div class="modal-card">
+        <div class="modal-head"><h3 id="chiefContactTitle">Editar contacto</h3><button class="close" onclick="closeModal('chiefContactModal')">×</button></div>
+        <form id="chiefContactForm" class="form-grid">
+          <input type="hidden" id="chiefContactArea" value="ISLA">
+          <div class="form-group full"><label>Correo de contacto</label><input class="field" type="email" id="chiefContactEmail" placeholder="nombre@empresa.cl" maxlength="254"></div>
+          <div class="form-group full"><label>Teléfono</label><input class="field" type="tel" id="chiefContactPhone" placeholder="+56 9 1234 5678" maxlength="30" autocomplete="off"></div>
+          <div id="chiefContactError" class="login-error" role="alert"></div>
+          <p class="muted" style="margin:0;font-size:12.5px">Es solo un dato de contacto. No cambia el correo con el que inicia sesión.</p>
+          <div class="full actions" style="justify-content:flex-end">
+            <button type="button" class="btn" onclick="closeModal('chiefContactModal')">Cancelar</button>
+            <button class="btn primary" id="chiefContactSubmit" type="submit">Guardar</button>
           </div>
         </form>
       </div>
@@ -14361,7 +14379,11 @@ async function renderTeam(){
       .from('company_memberships')
       .select(columns)
       .eq('company_id',context.companyId);
-    let {data:memberships,error:membershipsError}=await membershipQuery('user_id, role, area, active, created_at');
+    let {data:memberships,error:membershipsError}=await membershipQuery('user_id, role, area, active, created_at, contact_email, contact_phone');
+    // Bases sin la migración de contacto: se pide sin esas columnas.
+    if(membershipsError?.code==='42703'){
+      ({data:memberships,error:membershipsError}=await membershipQuery('user_id, role, area, active, created_at'));
+    }
     // Bases sin la migración de áreas: la jefatura existente es de isla.
     if(membershipsError?.code==='42703'){
       ({data:memberships,error:membershipsError}=await membershipQuery('user_id, role, active, created_at'));
@@ -14406,30 +14428,48 @@ async function renderTeam(){
 
     // Sin la migración de áreas solo existe la jefatura de isla.
     const areas=areaSupported?['ISLA','TIENDA']:['ISLA'];
+    const contactSupported=(memberships||[]).every(item=>'contact_email' in item);
+    const activeIn=area=>(window.ShiftControlState?.get?.()?.employees||window.state?.employees||[]).filter(e=>e.active!==false&&(window.ShiftControlAreas?.employeeArea?.(e)||'ISLA')===area).length;
+    const initialsOf=text=>String(text||'?').trim().split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase();
+    window.teamContactState={};
     const chiefCard=area=>{
       const chief=chiefFor(area);
       const title=chiefTitle(area);
-      return `
-      <div class="team-current-card">
-        <div class="team-current-head"><span>${title} actual</span></div>
-        ${chief
-          ?`<strong>${nameFor(chief.user_id)}</strong><small>Desde ${fmt(String(chief.created_at||'').slice(0,10))}</small>`
-          :`<div class="ops-empty">Todavía no hay una ${title} asignada.</div>`}
-        <button type="button" class="btn primary" onclick="openAssignChiefModal('${area}')">${chief?'Reemplazar':'Asignar'} ${title}</button>
-      </div>`;
+      const tone=area==='TIENDA'?'purple':'blue';
+      const label=area==='TIENDA'?'Tienda':'Isla';
+      if(!chief){
+        return `<section class="tm-card"><div class="tm-top"><span class="tm-kick">${title} actual</span><span class="tm-tag" style="--c:var(--${tone})">${label}</span></div><div class="ops-empty">Todavía no hay una ${title} asignada.</div><button type="button" class="tm-btn" onclick="openAssignChiefModal('${area}')">Asignar ${title}</button></section>`;
+      }
+      const since=String(chief.created_at||'').slice(0,10);
+      const days=since?Math.max(0,Math.floor((Date.now()-new Date(since+'T12:00:00').getTime())/86400000)):null;
+      const rawName=namesById[chief.user_id]||'Cuenta sin nombre';
+      const email=chief.contact_email||'';
+      const phone=chief.contact_phone||'';
+      window.teamContactState[area]={email,phone,title};
+      const telHref=phone.replace(/[^0-9+]/g,'');
+      const contact=contactSupported
+        ?`<div class="tm-meta">${email?`<a href="mailto:${v14Esc(email)}">✉ ${v14Esc(email)}</a>`:'<span class="dim">Sin correo de contacto</span>'}${phone?`<a href="tel:${v14Esc(telHref)}">☎ ${v14Esc(phone)}</a>`:'<span class="dim">Sin teléfono</span>'}</div>`
+        :'';
+      const workers=activeIn(area);
+      return `<section class="tm-card"><div class="tm-top"><span class="tm-kick">${title} actual</span><span class="tm-tag" style="--c:var(--${tone})">${label}</span></div>
+        <div class="tm-who"><span class="tm-av">${v14Esc(initialsOf(rawName))}</span><div><strong>${v14Esc(rawName)}</strong><small>En el cargo desde ${fmt(since)}${days===null?'':` · ${days} ${days===1?'día':'días'}`}</small></div></div>
+        ${contact}
+        <div class="tm-meta"><span><b>${workers}</b> ${workers===1?'trabajador activo':'trabajadores activos'}</span></div>
+        <div class="tm-actions"><button type="button" class="tm-btn" onclick="openAssignChiefModal('${area}')">Reemplazar ${title}</button>${contactSupported?`<button type="button" class="tm-btn" onclick="openChiefContactModal('${area}')">Editar contacto</button>`:''}</div></section>`;
     };
 
     root.innerHTML=`
-      ${areas.map(chiefCard).join('')}
-      <div class="team-history">
+      <div class="tm-cols">${areas.map(chiefCard).join('')}</div>
+      <section class="tm-hist">
         <h4>Historial</h4>
         ${(events&&events.length)?events.map(ev=>`
-          <div class="team-history-row">
+          <div class="tm-row">
+            <i class="tm-dot" style="--c:var(--${eventArea(ev)==='TIENDA'?'purple':'blue'})"></i>
             <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de ${chiefTitle(eventArea(ev))}</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
             <small>${new Date(ev.created_at).toLocaleString('es-CL')} · por ${nameFor(ev.actor_user_id)}</small>
           </div>
-        `).join(''):'<div class="ops-empty">Sin movimientos registrados.</div>'}
-      </div>
+        `).join(''):'<div class="ops-empty">Aún no hay cambios de jefatura.</div>'}
+      </section>
     `;
   }catch(error){
     root.innerHTML=`<div class="ops-empty">No se pudo cargar el equipo.<br><small>${v14Esc(error?.message||String(error))}</small></div>`;
@@ -14449,11 +14489,47 @@ function openAssignChiefModal(area='ISLA'){
   openModal('assignChiefModal');
 }
 
+function openChiefContactModal(area){
+  if(!requireAppPermission('team.manage','Solo el administrador puede editar el contacto de una jefatura.'))return;
+  const areaKey=area==='TIENDA'?'TIENDA':'ISLA';
+  const current=window.teamContactState?.[areaKey]||{};
+  document.getElementById('chiefContactArea').value=areaKey;
+  document.getElementById('chiefContactTitle').textContent=`Contacto · ${current.title||(areaKey==='TIENDA'?'Jefa de Tienda':'Jefa de Isla')}`;
+  document.getElementById('chiefContactEmail').value=current.email||'';
+  document.getElementById('chiefContactPhone').value=current.phone||'';
+  document.getElementById('chiefContactError').textContent='';
+  openModal('chiefContactModal');
+}
+document.getElementById('chiefContactForm')?.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const errorEl=document.getElementById('chiefContactError');
+  const submitBtn=document.getElementById('chiefContactSubmit');
+  errorEl.textContent='';
+  submitBtn.disabled=true;
+  try{
+    const client=window.ShiftControlAuth.getClient();
+    const {error}=await client.rpc('update_chief_contact',{
+      p_area:document.getElementById('chiefContactArea').value,
+      p_email:document.getElementById('chiefContactEmail').value.trim(),
+      p_phone:document.getElementById('chiefContactPhone').value.trim()
+    });
+    if(error)throw new Error(/format|check constraint/i.test(error.message||'')?'Revisa el formato del correo o del teléfono.':(error.message||'No se pudo guardar.'));
+    closeModal('chiefContactModal');
+    showToast('Contacto actualizado');
+    renderTeam();
+  }catch(error){
+    errorEl.textContent=error.message||'Ocurrió un error inesperado.';
+  }finally{
+    submitBtn.disabled=false;
+  }
+});
+
 document.getElementById('assignChiefForm')?.addEventListener('submit',async event=>{
   event.preventDefault();
 
   const email=document.getElementById('assignChiefEmail').value.trim().toLowerCase();
   const displayName=document.getElementById('assignChiefName').value.trim();
+  const phone=(document.getElementById('assignChiefPhone')?.value||'').trim();
   const area=document.getElementById('assignChiefArea')?.value==='TIENDA'?'TIENDA':'ISLA';
   const errorEl=document.getElementById('assignChiefError');
   const submitBtn=document.getElementById('assignChiefSubmit');
@@ -14485,8 +14561,11 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
     }
     if(data?.error)throw new Error(data.error);
 
+    // Contacto de la jefatura: si falla, la asignación ya quedó hecha y se avisa aparte.
+    const {error:contactError}=await client.rpc('update_chief_contact',{p_area:area,p_email:email,p_phone:phone});
     closeModal('assignChiefModal');
     showToast(area==='TIENDA'?'Jefa de Tienda actualizada':'Jefa de Isla actualizada');
+    if(contactError)setTimeout(()=>showToast('No se pudo guardar el contacto: '+contactError.message),1800);
     renderTeam();
   }catch(error){
     if(errorEl)errorEl.textContent=error.message||'Ocurrió un error inesperado.';

@@ -150,3 +150,15 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 - Chip de estado junto a los botones de la cabecera, copiado de `#v16Health`.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular), sin errores de consola; el panel plegable conserva su estado al volver a dibujar. Limitaciones: no se probó con datos reales ni con una sesión real de Jefa de Isla (el servidor simulado no distingue áreas).
+
+## Equipo de estación (rediseño y contacto)
+
+`renderTeam()` (en `index.html`) dibuja dos tarjetas (Jefa de Isla y Jefa de Tienda) y el historial como lista con punto por área. Cada tarjeta muestra iniciales, nombre, «En el cargo desde … · N días», contacto, trabajadores activos del área (`ShiftControlAreas.employeeArea`; sin área cuenta como Isla) y los botones «Reemplazar» y «Editar contacto».
+
+- **Contacto:** columnas `contact_email` y `contact_phone` en `company_memberships` (migración `20261014224739_chief_contact.sql`, ya aplicada en Supabase). Se eligió esa tabla y no `profiles` porque `profiles` la leen todos los compañeros de empresa; aquí solo la ven el administrador y la propia persona. La única vía de escritura es `update_chief_contact(p_area, p_email, p_phone)`, que exige ser administrador activo, valida formato y solo toca la jefatura activa del área. El correo de contacto es informativo: no cambia el correo de inicio de sesión.
+- **Flujo:** el formulario de asignar/reemplazar pide teléfono (opcional) y, tras invocar `assign-chief`, llama a `update_chief_contact` con correo y teléfono (si falla, la asignación ya quedó hecha y se avisa aparte). «Editar contacto» abre un modal propio. `assign-chief` no cambió.
+- **Compatibilidad:** si la base no tiene las columnas nuevas, `renderTeam()` reintenta sin ellas y oculta el contacto y el botón.
+- Las jefaturas asignadas antes de esta migración quedan con contacto vacío («Sin correo de contacto» / «Sin teléfono») hasta que se complete con «Editar contacto».
+- Reversión: `drop function public.update_chief_contact(text,text,text); alter table public.company_memberships drop column contact_email, drop column contact_phone;`
+
+Verificación: pruebas en navegador con servidor simulado (claro/oscuro, escritorio y celular): las tarjetas muestran contacto, «Editar contacto» guarda y actualiza los enlaces `mailto:`/`tel:`, y el formulario de asignar guarda correo y teléfono. Se comprobó en Supabase que las columnas existen y que `anon` no puede ejecutar la función (`authenticated` sí). No se probó con una sesión real de administrador.
