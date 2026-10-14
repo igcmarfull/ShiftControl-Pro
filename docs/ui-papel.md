@@ -42,3 +42,17 @@ No se muestran depósitos: el módulo no expone un estado de «sin arquear» ver
 La tarjeta de estado superior pasó a ser «Requiere atención» / «Todo al día» según haya urgentes (antes decía siempre «Operación estable»).
 
 Verificación: capturas con datos simulados en claro/oscuro, escritorio y celular, y prueba de filtros y de «Aprobar factura». Sin datos reales de producción: conviene revisar que «Cierres atrasados» tenga sentido con el uso real de los cierres.
+
+## Centro de trabajo (rediseño)
+
+Estructura en `index.html` (`#workcenter`) y estilos `.wc-*` en `src/ui-papel.css`. `src/ui-workcenter.js` (IIFE, se carga después de `ui-papel.js`) solo dibuja lo visual:
+
+- **Anillo de avance:** lee el contador del cierre guiado (`#v17CloseProgress`, p. ej. «3/7»).
+- **Línea de tiempo del turno:** usa los porcentajes de los flujos ya calculados (`#v16Workflows`) y el horario del turno de `settings.A/B/C` (por defecto 07–15, 15–23, 23–07). El marcador «Ahora» sale del reloj.
+- **Estadísticas y chip de integridad:** conservan los ids `v52PendingTotal`, `v52HighTotal`, `v52FlowTotal`, `v52WorkStatus` que ya actualiza el script V52. El panel de integridad solo se muestra si hay hallazgos.
+- **Asistencia del turno:** `v14DailySnapshot()` (presentes, atrasados, excepciones, sin confirmar y cobertura por turno A/B/C).
+- **Pagos pendientes:** `AdditionalModule.getAll()` con `paid !== 'Pagado'`; solo para el administrador. Las barras muestran los 6 turnos extra más recientes.
+
+Los paneles que ya generaban los datos (prioridades, pendientes accionables, entrega de turno) se mantienen y solo se reubican (`mountWorkCenter`); el panel original de flujos queda oculto porque la línea de tiempo lo reemplaza. No se cambió ninguna regla de negocio. En celular el orden es: atención, pendientes, cierre guiado, asistencia y pagos.
+
+Verificación: capturas con datos simulados (claro/oscuro, escritorio y celular) y perfil Jefa de Isla sin errores de consola. Sin datos reales de producción.
