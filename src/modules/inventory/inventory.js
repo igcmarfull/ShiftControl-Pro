@@ -58,6 +58,96 @@ function unitPlural(name){
   return word.replace(/ó/g,'o').replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ú/g,'u')+'es';
 }
 
+/* ------------------------------------------------- íconos y gráficos */
+
+const ICONS={
+  tienda:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/>',
+  cigarrillos:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 9h12"/><path d="M10 13h4"/>',
+  lubricantes:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  home:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  mov:'<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  apr:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  aud:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
+  box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  out:'<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  low:'<path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  receipt:'<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',
+  waste:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+  issue:'<path d="M7 17L17 7"/><path d="M8 7h9v9"/>',
+  transfer:'<path d="M7 4L3 8l4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/>',
+  adjustment:'<path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/>',
+  opening:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  reversal:'<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  arrow:'<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
+  check:'<path d="M5 12l5 5 9-10"/>'
+};
+const KIND_ICON={opening:'opening',receipt:'receipt',issue:'issue',waste:'waste',transfer_out:'transfer',transfer_in:'transfer',adjustment:'adjustment',reversal:'reversal'};
+const ico=name=>`<svg class="inv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name]||ICONS.box}</svg>`;
+const tile=(name,tone,size)=>`<span class="inv-tile${size?` ${size}`:''}${tone?` ${tone}`:''}" aria-hidden="true">${ico(name)}</span>`;
+
+// Tramos de un círculo: normales, bajo mínimo y agotados. Los largos se calculan
+// aquí para que el dibujo no dependa de calc() en CSS.
+function arcs(parts,total,length,radius){
+  const live=parts.filter(([,n])=>n>0);
+  if(!(total>0)||!live.length)return '';
+  const gap=live.length>1?9:0;
+  let acc=0;
+  return live.map(([cls,n])=>{
+    const len=n/total*length;
+    const dash=Math.max(0.01,len-gap);
+    const out=`<circle class="seg ${cls}" cx="50" cy="50" r="${radius}" stroke-dasharray="${dash.toFixed(2)} ${(length*2).toFixed(2)}" stroke-dashoffset="${(-(acc+gap/2)).toFixed(2)}"/>`;
+    acc+=len;
+    return out;
+  }).join('');
+}
+function ringSvg(ok,low,out,total){
+  const radius=40;
+  const length=2*Math.PI*radius;
+  return `<svg class="inv-ring" viewBox="0 0 100 100" role="img" aria-label="${ok} normales, ${low} bajo mínimo, ${out} agotados"><circle class="trk" cx="50" cy="50" r="${radius}"/><g transform="rotate(-90 50 50)">${arcs([['a',ok],['b',low],['c',out]],total,length,radius)}</g></svg>`;
+}
+// Tablero semicircular con aguja (el mismo dato, otra forma; lo usa el estilo «Estación»).
+function gaugeSvg(ok,low,out,total){
+  const radius=42;
+  const length=Math.PI*radius;
+  const pct=total>0?ok/total:0;
+  const ticks=Array.from({length:11},(_,i)=>{
+    const angle=(180+i*18)*Math.PI/180;
+    const r1=i%5===0?30:32;
+    const r2=36;
+    return `<line x1="${(50+r1*Math.cos(angle)).toFixed(2)}" y1="${(50+r1*Math.sin(angle)).toFixed(2)}" x2="${(50+r2*Math.cos(angle)).toFixed(2)}" y2="${(50+r2*Math.sin(angle)).toFixed(2)}"/>`;
+  }).join('');
+  return `<svg class="inv-gauge" viewBox="0 0 100 60" role="img" aria-label="${ok} normales, ${low} bajo mínimo, ${out} agotados"><g transform="rotate(180 50 50)"><circle class="trk" cx="50" cy="50" r="${radius}" stroke-dasharray="${length.toFixed(2)} ${(length*2).toFixed(2)}"/>${arcs([['a',ok],['b',low],['c',out]],total,length,radius)}</g><g class="ticks">${ticks}</g><g transform="rotate(${(-90+pct*180).toFixed(1)} 50 50)"><line class="needle" x1="50" y1="50" x2="50" y2="17"/></g><circle class="hub" cx="50" cy="50" r="3.2"/></svg>`;
+}
+
+// Avatares con iniciales: un color estable por categoría, marca o presentación.
+// Así un aceite de 1 L y uno de 4 L se distinguen de un vistazo, sin fotos.
+const HUES=[215,262,330,24,152,188,44,290,8,100];
+function hueOf(text){
+  let hash=0;
+  for(const char of String(text||''))hash=(hash*31+char.charCodeAt(0))>>>0;
+  return HUES[hash%HUES.length];
+}
+function initialsOf(text){
+  const words=String(text||'').replace(/[^\p{L}\p{N} ]/gu,' ').trim().split(/\s+/).filter(Boolean);
+  return ((words[0]||'?')[0]+(words[1]?words[1][0]:'')).toUpperCase();
+}
+function avatar(product,item,size){
+  let seed,label;
+  if(item.code==='lubricantes'){
+    seed=product.presentation||product.name;
+    label=(product.presentation||'').replace(/\s+/g,'')||initialsOf(product.name);
+  }else if(item.code==='cigarrillos'&&attrOf(product,'variety')){
+    seed=product.brand||product.name;
+    label=attrOf(product,'variety').trim().slice(0,2).toUpperCase();
+  }else{
+    seed=item.code==='tienda'?(product.category||product.name):(product.brand||product.name);
+    label=initialsOf(product.name);
+  }
+  return `<span class="inv-av${size?` ${size}`:''}" style="--h:${hueOf(seed)}" aria-hidden="true">${esc(label.slice(0,3))}</span>`;
+}
+
 /* ---------------------------------------------------------------- capas */
 
 let layer=null;
@@ -272,25 +362,35 @@ function statusPills(product,item){
   if(!product.active)pills.push('<span class="inv-pill">Inactivo</span>');
   return pills.length?pills.join(' '):'<span class="inv-pill ok">Normal</span>';
 }
-function gauge(product){
+function gauge(product,extra){
   const ratio=product.min_stock?Math.max(0,Math.min(100,product.stock/(product.min_stock*2)*100)):(product.stock>0?100:0);
   const tone=product.stock<=0?'no':product.stock<product.min_stock?'lo':'';
-  return `<span class="inv-gg ${tone}" aria-hidden="true"><i style="width:${ratio}%"></i></span>`;
+  return `<span class="inv-gg ${tone}${extra?` ${extra}`:''}" aria-hidden="true"><i style="width:${ratio}%"></i></span>`;
 }
 function attrOf(product,key){return (product.attrs&&product.attrs[key])||''}
-function tabs(){
-  const items=[['home','Panel']];
-  invList().filter(item=>item.active).forEach(item=>items.push([`inv:${item.code}`,item.name]));
-  items.push(['mov','Movimientos'],['apr','Aprobaciones']);
-  if(isAdmin())items.push(['aud','Auditoría']);
-  const pending=S.overview?.pending_total||0;
-  return `<div class="inv-tabs" role="tablist">${items.map(([key,label])=>`<button role="tab" class="${S.view===key||(S.view.startsWith('count:')&&key==='inv:'+S.view.slice(6))?'on':''}" data-go="${key}">${esc(label)}${key==='apr'&&pending?`<span class="inv-badge">${pending}</span>`:''}</button>`).join('')}</div>`;
+// «Marca Variedad» sin repetir la marca si el nombre ya la trae.
+function titleOf(product,base){
+  const brand=String(product.brand||'').trim();
+  const text=String(base||product.name||'').trim();
+  if(!brand||text.toLowerCase().includes(brand.toLowerCase()))return text;
+  return `${brand} ${text}`;
 }
-function head(title,sub,actions,eyebrow){
-  return `<div class="inv-head"><div>${eyebrow?`<div class="inv-eb">${esc(eyebrow)}</div>`:''}<h2>${esc(title)}</h2>${sub?`<p class="inv-sub">${sub}</p>`:''}</div><div class="inv-acts">${actions||''}</div></div>`;
+function tabs(){
+  const items=[['home','Panel','home']];
+  invList().filter(item=>item.active).forEach(item=>items.push([`inv:${item.code}`,item.name,item.code]));
+  items.push(['mov','Movimientos','mov'],['apr','Aprobaciones','apr']);
+  if(isAdmin())items.push(['aud','Auditoría','aud']);
+  const pending=S.overview?.pending_total||0;
+  return `<div class="inv-tabs" role="tablist">${items.map(([key,label,icon])=>`<button role="tab" class="${S.view===key||(S.view.startsWith('count:')&&key==='inv:'+S.view.slice(6))?'on':''}" data-go="${key}">${ico(icon)}<span>${esc(label)}</span>${key==='apr'&&pending?`<span class="inv-badge">${pending}</span>`:''}</button>`).join('')}</div>`;
+}
+function nav(){
+  return `<div class="inv-nav">${tabs()}${syncHtml()}</div>`;
+}
+function head(title,sub,actions,eyebrow,lead){
+  return `<div class="inv-head"><div class="inv-hmain">${lead||''}<div>${eyebrow?`<div class="inv-eb">${esc(eyebrow)}</div>`:''}<h2>${esc(title)}</h2>${sub?`<p class="inv-sub">${sub}</p>`:''}</div></div><div class="inv-acts">${actions||''}</div></div>`;
 }
 function syncHtml(){
-  const time=S.lastSync?S.lastSync.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'';
+  const time=S.lastSync?S.lastSync.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'';
   return S.online
     ?`<div class="inv-sync" id="invSync"><i></i><span>Sincronizado${time?` · ${time}`:''}</span></div>`
     :`<div class="inv-sync off" id="invSync"><i></i><span>Sin conexión con el servidor. Lo que ves puede estar desactualizado.</span> <button class="inv-btn sm" data-act="retry">Reintentar</button></div>`;
@@ -325,21 +425,34 @@ function viewSetup(){
     <p class="inv-sub" style="color:var(--text)">Tu área todavía no tiene inventarios. El administrador los activa y los asigna.</p></div>`;
 }
 
+function statsHtml(items){
+  const sum=key=>items.reduce((total,item)=>total+Number(item[key]||0),0);
+  const refs=sum('refs');
+  const need=sum('low')+sum('out');
+  const soon=sum('expiring')+sum('expired');
+  const waste=sum('waste_month');
+  const cell=(icon,tone,label,value,note)=>`<div class="inv-stile">${tile(icon,tone)}<div><span class="k">${label}</span><b class="inv-num">${fmt(value)}</b><span class="s">${note}</span></div></div>`;
+  return `<div class="inv-stats">${cell('box','info','Referencias activas',refs,plural(items.length,'inventario','inventarios'))}${cell('low',need?'warn':'ok','Para reponer',need,need?'bajo mínimo o agotadas':'sin faltantes')}${cell('clock',soon?'or':'ok','Por vencer',soon,soon?'vencidas o próximas':'sin vencimientos')}${cell('waste',waste?'bad':'','Mermas del mes',waste,'unidades registradas')}</div>`;
+}
+
 function viewHome(){
   const items=invList();
   const data=S.homeData||{movs:[],products:[],wastes:[]};
   const cards=items.map(item=>{
     const healthy=Math.max(0,item.refs-item.low-item.out);
     const attention=item.low+item.out+item.expired+item.expiring;
+    const pct=item.refs?Math.round(healthy/item.refs*100):0;
+    const pctHtml=`<b class="inv-num">${pct}<small>%</small></b><span>en orden</span>`;
     return `<section class="inv-card ${item.code}${item.active?'':' inv-inactive'}">
-      <div><h3>${esc(item.name)}</h3><div class="area">Área ${esc(item.area)}${item.active?'':' · desactivado'}</div></div>
-      <dl class="inv-kp"><div><dt>Referencias</dt><dd class="inv-num">${fmt(item.refs)}</dd></div>
-        <div><dt>${item.control_unit==='cajetilla'?'Cajetillas':'Unidades en stock'}</dt><dd class="inv-num big">${fmt(item.stock_total)}</dd></div>
-        <div><dt>Requieren atención</dt><dd class="inv-num ${attention?'w':''}">${fmt(attention)}</dd></div></dl>
-      <div class="inv-hb" role="img" aria-label="Estado de las referencias"><i class="a" style="width:${item.refs?healthy/item.refs*100:0}%"></i><i class="b" style="width:${item.refs?item.low/item.refs*100:0}%"></i><i class="c" style="width:${item.refs?item.out/item.refs*100:0}%"></i></div>
+      <header class="inv-ch">${tile(item.code,'','lg')}<div class="inv-chn"><h3>${esc(item.name)}</h3><div class="area">Área ${esc(item.area)}${item.active?'':' · desactivado'}</div></div>${attention?`<span class="inv-pill warn">${attention} por revisar</span>`:'<span class="inv-pill ok">Todo en orden</span>'}</header>
+      <div class="inv-viz">
+        <div class="inv-ringbox">${ringSvg(healthy,item.low,item.out,item.refs)}<div class="inv-ringc">${pctHtml}</div></div>
+        <div class="inv-gaugebox">${gaugeSvg(healthy,item.low,item.out,item.refs)}<div class="inv-gaugec">${pctHtml}</div></div>
+        <div class="inv-stat"><span class="k">${item.control_unit==='cajetilla'?'Cajetillas':'Unidades en stock'}</span><b class="inv-num big">${fmt(item.stock_total)}</b><span class="s">${plural(item.refs,'referencia','referencias')}</span></div>
+      </div>
       <div class="inv-hl"><span style="--d:var(--green)"><b>${healthy}</b> normales</span><span style="--d:var(--yellow)"><b>${item.low}</b> bajo mínimo</span><span style="--d:var(--red)"><b>${item.out}</b> agotados</span></div>
       ${item.code==='tienda'&&(item.expiring||item.expired)?`<div class="inv-note warn">${item.expired?`${plural(item.expired,'producto vencido','productos vencidos')}. `:''}${item.expiring?`${plural(item.expiring,'producto vence','productos vencen')} en ${item.expiry_alert_days} días o menos.`:''}</div>`:''}
-      ${item.active?`<div class="inv-acts"><button class="inv-btn pri" data-go="inv:${item.code}">Abrir</button><button class="inv-btn" data-act="count" data-code="${item.code}">Tomar inventario</button></div>`:''}
+      ${item.active?`<div class="inv-acts"><button class="inv-btn pri" data-go="inv:${item.code}">Abrir ${ico('arrow')}</button><button class="inv-btn" data-act="count" data-code="${item.code}">Tomar inventario</button></div>`:''}
     </section>`;
   }).join('');
 
@@ -354,7 +467,7 @@ function viewHome(){
     });
   });
   attention.sort((a,b)=>a.rank-b.rank);
-  const attentionHtml=attention.slice(0,8).map(({product,item,pill})=>`<div class="inv-row"><div class="t"><b>${esc(product.name)}</b><span>${esc(item.name)} · stock ${fmt(product.stock)} / mín. ${fmt(product.min_stock)}</span></div><span class="inv-pill ${pill[0]}">${esc(pill[1])}</span></div>`).join('')||'<div class="inv-empty">Sin alertas.</div>';
+  const attentionHtml=attention.slice(0,8).map(({product,item,pill})=>`<div class="inv-row">${tile(pill[1]==='Agotado'?'out':pill[0]==='warn'?'low':'clock',pill[0])}<div class="t"><b>${esc(product.name)}</b><span>${esc(item.name)} · stock ${fmt(product.stock)} / mín. ${fmt(product.min_stock)}</span></div>${gauge(product,'inv-mini')}<span class="inv-pill ${pill[0]}">${esc(pill[1])}</span></div>`).join('')||'<div class="inv-empty">Sin alertas.</div>';
 
   const recent=(data.movs||[]).map(movRow).join('')||'<div class="inv-empty">Aún no hay movimientos.</div>';
   const reasons={};
@@ -375,8 +488,9 @@ function viewHome(){
       <p class="inv-sub" style="margin-top:8px;font-size:12px">«Ajustes automáticos hasta 0» significa que toda diferencia de conteo espera tu aprobación. La asignación de área se aplica en el servidor: una jefa solo ve los inventarios de su área.</p></div>`
     :`<div class="inv-box"><h3>Tu acceso</h3><p class="inv-sub" style="color:var(--text)">${items.filter(item=>item.active).map(item=>esc(item.name)).join(' · ')||'Sin inventarios'}</p><p class="inv-sub" style="font-size:12px">Puedes registrar recepciones, mermas, salidas justificadas y conteos. Los ajustes los aprueba el administrador.</p></div>`;
 
-  return `${head('Inventarios',`Hola, ${esc(Api.context()?.displayName||'')}. ${items.length===3?'Ves los tres inventarios.':`Ves ${items.map(item=>esc(item.name)).join(' y ')}.`}`)}${tabs()}${syncHtml()}
-    ${pending?`<div class="inv-note warn inv-banner"><span><b>${plural(pending,'ajuste','ajustes')} por revisar.</b> ${isAdmin()?'Esperan tu aprobación.':'Los aprueba el administrador.'}</span><button class="inv-btn sm" data-go="apr">Ver</button></div>`:''}
+  return `${head('Inventarios',`Hola, ${esc(Api.context()?.displayName||'')}. ${items.length===3?'Ves los tres inventarios.':`Ves ${items.map(item=>esc(item.name)).join(' y ')}.`}`)}${nav()}
+    ${pending?`<div class="inv-note warn inv-banner"><span>${ico('apr')}<span class="tx"><b>${plural(pending,'ajuste','ajustes')} por revisar.</b> ${isAdmin()?'Esperan tu aprobación.':'Los aprueba el administrador.'}</span></span><button class="inv-btn sm" data-go="apr">Ver</button></div>`:''}
+    ${statsHtml(items)}
     <div class="inv-cards">${cards}</div>
     <div class="inv-two"><div class="inv-box"><h3>Requiere atención <small>${attention.length} alertas</small></h3>${attentionHtml}</div>
       <div class="inv-box"><h3>Últimos movimientos <button class="inv-btn sm" data-go="mov">Historial</button></h3>${recent}</div></div>
@@ -384,7 +498,7 @@ function viewHome(){
 }
 
 function movRow(m){
-  return `<div class="inv-row"><div class="t"><b>${esc(m.product_name)}</b><span>${esc(m.created_by_name||'—')} · ${fstamp(m.created_at)}${m.reason?` · ${esc(m.reason)}`:''}${m.note?` · ${esc(m.note)}`:''}</span></div><span class="inv-pill ${KIND_TONE[m.kind]||''}">${KIND_LABEL[m.kind]||m.kind}</span><b class="inv-num ${m.qty>0?'inv-pos':'inv-neg'}" style="min-width:52px;text-align:right">${m.qty>0?'+':''}${fmt(m.qty)}</b></div>`;
+  return `<div class="inv-row">${tile(KIND_ICON[m.kind]||'box',KIND_TONE[m.kind]||'')}<div class="t"><b>${esc(m.product_name)}</b><span>${KIND_LABEL[m.kind]||m.kind} · ${esc(m.created_by_name||'—')} · ${fstamp(m.created_at)}${m.reason?` · ${esc(m.reason)}`:''}${m.note?` · ${esc(m.note)}`:''}</span></div><b class="inv-num inv-qty ${m.qty>0?'inv-pos':'inv-neg'}">${m.qty>0?'+':''}${fmt(m.qty)}</b></div>`;
 }
 
 function filteredProducts(item){
@@ -412,26 +526,27 @@ function matches(product,q){
 function listHtml(item){
   const rows=filteredProducts(item);
   const columns={
-    tienda:['Código','Producto','Categoría','Ubicación','Stock','Mín.','Próx. vencimiento','Estado'],
-    cigarrillos:['Código','Producto','Presentación','Stock','Cartones','Mín.','Estado'],
-    lubricantes:['SKU','Producto','Viscosidad','Presentación','Ubicación','Stock','Mín.','Estado']
+    tienda:['Producto','Categoría','Ubicación','Stock','Mín.','Próx. vencimiento','Estado'],
+    cigarrillos:['Producto','Presentación','Stock','Cartones','Mín.','Estado'],
+    lubricantes:['Producto','Viscosidad','Presentación','Ubicación','Stock','Mín.','Estado']
   }[item.code];
+  const productCell=(product,name,meta)=>`<div class="inv-pc">${avatar(product,item)}<div class="tx"><span class="nm">${esc(name)}</span><div class="mt">${meta}</div></div></div>`;
   const stockCell=product=>`<div class="inv-sc"><span class="inv-stk inv-num">${fmt(product.stock)}</span>${gauge(product)}</div>`;
   const cells=product=>{
     const lot=(product.stock_detail||[]).find(row=>row.expires_on);
-    if(item.code==='tienda')return [esc(product.code),`<span class="nm">${esc(product.name)}</span><div class="mt">${esc([product.brand,product.presentation].filter(Boolean).join(' · '))}</div>`,esc(product.category),esc(product.default_location||'—'),stockCell(product),fmt(product.min_stock),product.next_expiry?`${fshort(product.next_expiry)} <span class="inv-dim">(${esc(lot?.lot_code||'')})</span>`:'—',statusPills(product,item)];
+    if(item.code==='tienda')return [productCell(product,product.name,esc([product.code,product.brand,product.presentation].filter(Boolean).join(' · '))),esc(product.category),esc(product.default_location||'—'),stockCell(product),fmt(product.min_stock),product.next_expiry?`${fshort(product.next_expiry)} <span class="inv-dim">(${esc(lot?.lot_code||'')})</span>`:'—',statusPills(product,item)];
     if(item.code==='cigarrillos'){
       const factor=product.receive_factor||1;
-      return [esc(product.code),`<span class="nm">${esc(product.brand)} ${esc(attrOf(product,'variety')||product.name)}</span>`,esc(product.presentation),stockCell(product),product.receive_unit?`<span class="inv-dim inv-num">${Math.floor(product.stock/factor)} + ${product.stock%factor}</span>`:'—',fmt(product.min_stock),statusPills(product,item)];
+      return [productCell(product,titleOf(product,attrOf(product,'variety')||product.name),esc(product.code)),esc(product.presentation),stockCell(product),product.receive_unit?`<span class="inv-dim inv-num">${Math.floor(product.stock/factor)} + ${product.stock%factor}</span>`:'—',fmt(product.min_stock),statusPills(product,item)];
     }
-    return [esc(product.code),`<span class="nm">${esc(product.brand)} ${esc(product.name.replace(product.brand,'').trim())}</span><div class="mt">${esc(attrOf(product,'spec'))}</div>`,esc(attrOf(product,'viscosity')||'—'),`<b>${esc(product.presentation)}</b>`,esc(product.default_location||'—'),stockCell(product),fmt(product.min_stock),statusPills(product,item)];
+    return [productCell(product,titleOf(product,product.name),esc([product.code,attrOf(product,'spec')].filter(Boolean).join(' · '))),esc(attrOf(product,'viscosity')||'—'),`<b>${esc(product.presentation)}</b>`,esc(product.default_location||'—'),stockCell(product),fmt(product.min_stock),statusPills(product,item)];
   };
-  const body=rows.map(product=>`<tr class="go${product.active?'':' inv-inactive'}" data-open="${product.id}">${cells(product).map((html,index)=>{
+  const body=rows.map(product=>`<tr class="go${product.active?'':' inv-inactive'}" data-open="${product.id}" data-st="${product.status}">${cells(product).map((html,index)=>{
     const label=columns[index];
-    const cls=[index===0?'hid':index===1?'ttl':'',label==='Ubicación'?'nw':label==='Categoría'?'cat':label==='Estado'?'est':'',(label==='Mín.'||label==='Cartones')?'r':''].filter(Boolean).join(' ');
+    const cls=[index===0?'ttl':'',label==='Ubicación'?'nw':label==='Categoría'?'cat':label==='Estado'?'est':'',(label==='Mín.'||label==='Cartones')?'r':''].filter(Boolean).join(' ');
     return `<td data-l="${label}" class="${cls}">${html}</td>`;
   }).join('')}</tr>`).join('');
-  return `<div class="inv-tw"><table><thead><tr>${columns.map(label=>`<th class="${label==='Mín.'||label==='Cartones'?'r':''}">${label}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="9" class="inv-empty">${(S.products[item.id]||[]).length?'Sin resultados con estos filtros.':'Aún no hay productos en este inventario.'}</td></tr>`}</tbody></table></div>`;
+  return `<div class="inv-tw"><table><thead><tr>${columns.map(label=>`<th class="${label==='Mín.'||label==='Cartones'?'r':''}">${label}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="9" class="inv-empty">${(S.products[item.id]||[]).length?'Sin resultados con estos filtros.':`Aún no hay productos en este inventario.${isAdmin()?`<br><button class="inv-btn pri" style="margin-top:12px" data-act="product-new" data-code="${item.code}">Crear el primer producto</button>`:''}`}</td></tr>`}</tbody></table></div>`;
 }
 function renderList(){
   const item=invByCode(S.view.slice(4));
@@ -456,7 +571,7 @@ function viewInventory(){
   const actions=`<button class="inv-btn" data-act="receive" data-code="${item.code}">Recepción</button><button class="inv-btn pri" data-act="count" data-code="${item.code}">Tomar inventario</button>${isAdmin()?`<button class="inv-btn" data-act="product-new" data-code="${item.code}">+ Producto</button><button class="inv-btn" data-act="opening" data-code="${item.code}">Saldo inicial</button>`:''}`;
   let content='';
   if(S.sub==='products'){
-    content=`<div class="inv-tools"><label class="inv-search"><span class="inv-dim">⌕</span><input id="invQ" type="search" placeholder="${item.code==='cigarrillos'?'Buscar marca, variedad o código':item.code==='lubricantes'?'Buscar marca, viscosidad o SKU':'Buscar producto, código o código de barras'}" value="${esc(S.filters.q)}" autocomplete="off"></label>
+    content=`<div class="inv-tools"><label class="inv-search"><span class="inv-dim inv-sico">${ico('search')}</span><input id="invQ" type="search" placeholder="${item.code==='cigarrillos'?'Buscar marca, variedad o código':item.code==='lubricantes'?'Buscar marca, viscosidad o SKU':'Buscar producto, código o código de barras'}" value="${esc(S.filters.q)}" autocomplete="off"></label>
       ${scannerSupported()?'<button class="inv-btn" data-act="scan-search" aria-label="Escanear código de barras">Escanear</button>':''}
       <select class="inv-sel" id="invSt" aria-label="Filtrar por estado"><option value="todos">Todos los estados</option><option value="bajo"${S.filters.st==='bajo'?' selected':''}>Stock bajo</option><option value="agotado"${S.filters.st==='agotado'?' selected':''}>Agotados</option>${item.code==='tienda'?`<option value="vence"${S.filters.st==='vence'?' selected':''}>Por vencer</option>`:''}<option value="inactivo"${S.filters.st==='inactivo'?' selected':''}>Inactivos</option></select></div>
       <div class="inv-chips" id="invChips">${chipsHtml(item)}</div>
@@ -468,7 +583,7 @@ function viewInventory(){
   }else{
     content=reportsHtml(item);
   }
-  return `${head(item.name,`${fmt(products.length)} referencias activas · área ${esc(item.area)}${item.active?'':' · inventario desactivado'}`,actions,'Inventarios')}${tabs()}${syncHtml()}${subTabs}${content}`;
+  return `${head(item.name,`${fmt(products.length)} referencias activas · área ${esc(item.area)}${item.active?'':' · inventario desactivado'}`,actions,'Inventarios',tile(item.code,'','xl'))}${nav()}${subTabs}${content}`;
 }
 
 function receiptsHtml(item){
@@ -510,7 +625,7 @@ function viewMovements(){
     <td data-l="Motivo">${esc([m.reason,m.note,m.reference].filter(Boolean).join(' · '))}${m.reverses_id?' <span class="inv-pill pu">corrección</span>':''}</td>
     <td>${isAdmin()&&!reversed&&!['reversal','opening','receipt'].includes(m.kind)?`<button class="inv-btn sm" data-act="reverse" data-id="${m.id}">Corregir</button>`:reversed?'<span class="inv-dim" style="font-size:12px">corregido</span>':''}</td></tr>`;
   }).join('');
-  return `${head('Movimientos','Historial completo. Los movimientos no se editan ni se borran: se corrigen con un movimiento compensatorio.')}${tabs()}${syncHtml()}
+  return `${head('Movimientos','Historial completo. Los movimientos no se editan ni se borran: se corrigen con un movimiento compensatorio.')}${nav()}
     <div class="inv-chips">${filters.map(([key,label])=>`<button class="inv-chip ${S.movFilter.inv===key?'on':''}" data-minv="${key}">${esc(label)}</button>`).join('')}</div>
     <div class="inv-chips">${kinds.map(([key,label])=>`<button class="inv-chip ${S.movFilter.kind===key?'on':''}" data-mkind="${key}">${label}</button>`).join('')}</div>
     <div class="inv-tw"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th class="r">Cantidad</th><th>Usuario</th><th>Motivo / referencia</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="inv-empty">Sin movimientos.</td></tr>'}</tbody></table></div>`;
@@ -532,14 +647,14 @@ function viewApprovals(){
       ${entry.status==='pending'?(isAdmin()?`<div class="inv-acts" style="margin-top:12px"><button class="inv-btn ok" data-act="adj-approve" data-id="${entry.id}">Aprobar ajuste</button><button class="inv-btn bad" data-act="adj-reject" data-id="${entry.id}">Rechazar</button></div>`:'<p class="inv-sub" style="margin-top:10px">Solo el administrador aprueba los ajustes.</p>')
       :`<div class="inv-sub" style="margin-top:8px">Revisado por ${esc(entry.reviewed_by_name||'—')} · ${fstamp(entry.reviewed_at)}${entry.review_note?` · ${esc(entry.review_note)}`:''}</div>`}</div>`;
   };
-  return `${head('Aprobaciones','Los conteos con diferencia no cambian el stock hasta que el administrador los aprueba.')}${tabs()}${syncHtml()}
+  return `${head('Aprobaciones','Los conteos con diferencia no cambian el stock hasta que el administrador los aprueba.')}${nav()}
     ${pending.length?pending.map(card).join(''):'<div class="inv-box"><div class="inv-empty">No hay ajustes pendientes.</div></div>'}
     ${done.length?`<h3 style="margin:22px 0 10px;font-size:14px">Revisados</h3>${done.slice(0,30).map(card).join('')}`:''}`;
 }
 
 function viewAudit(){
   const rows=S.audit.map(entry=>`<tr><td data-l="Fecha" class="nw inv-dim">${fstamp(entry.at)}</td><td data-l="Usuario" class="ttl">${esc(entry.user_name||'—')}</td><td data-l="Acción"><span class="inv-pill info">${esc(entry.action)}</span></td><td data-l="Detalle" class="inv-dim">${esc(JSON.stringify(entry.details||{}).slice(0,140))}</td></tr>`).join('');
-  return `${head('Auditoría','Quién hizo qué y cuándo. Solo el administrador la consulta y no se puede borrar.')}${tabs()}${syncHtml()}
+  return `${head('Auditoría','Quién hizo qué y cuándo. Solo el administrador la consulta y no se puede borrar.')}${nav()}
     <div class="inv-tw"><table><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="inv-empty">Sin registros.</td></tr>'}</tbody></table></div>`;
 }
 
@@ -658,7 +773,7 @@ function viewCount(){
   });
   const conflictCount=Object.keys(count.conflicts).length;
   return `${head(`Toma de inventario · ${item.name}`,'Cuenta lo que ves en el estante. El stock del sistema se muestra solo al revisar.',`<button class="inv-btn" data-go="inv:${item.code}">Salir del conteo</button>`,'Inventarios')}${syncHtml()}
-    <div class="inv-tools"><label class="inv-search"><span class="inv-dim">⌕</span><input id="invQ" type="search" placeholder="Buscar producto o código" value="${esc(S.filters.q)}" autocomplete="off"></label>
+    <div class="inv-tools"><label class="inv-search"><span class="inv-dim inv-sico">${ico('search')}</span><input id="invQ" type="search" placeholder="Buscar producto o código" value="${esc(S.filters.q)}" autocomplete="off"></label>
       ${scannerSupported()?'<button class="inv-btn" data-act="scan-count" aria-label="Escanear código de barras">Escanear</button>':''}</div>
     <div class="inv-chips">${[['all','Todos'],['pending','Pendientes'],['done','Contados']].map(([key,label])=>`<button class="inv-chip ${count.filter===key?'on':''}" data-cfilter="${key}">${label}</button>`).join('')}</div>
     <div style="margin:4px 0 14px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px"><span id="invProgText">${done} de ${list.length} contados</span><span id="invSaveState">${esc(count.saveState||'')}</span></div><div class="inv-prog"><b id="invProgBar" style="width:${list.length?done/list.length*100:0}%"></b></div></div>
@@ -671,7 +786,7 @@ function countRow(product){
   const value=count.values[product.id];
   const counted=value&&value.qty!=='';
   const conflict=count.conflicts[product.id];
-  return `<div class="inv-crow ${counted?'done':''} ${conflict?'conflict':''}" data-row="${product.id}"><div class="nmc"><b>${esc(product.name)}</b><span>${esc(product.code)}${product.default_location?` · ${esc(product.default_location)}`:''}${product.control_unit==='cajetilla'?' · en cajetillas':''}${count.others[product.id]?` · contó ${esc(count.others[product.id])}`:''}</span>
+  return `<div class="inv-crow ${counted?'done':''} ${conflict?'conflict':''}" data-row="${product.id}"><div class="nmc"><div class="inv-pc">${avatar(product,invByCode(count.code)||{code:''})}<div class="tx"><b>${esc(product.name)}</b><span>${esc(product.code)}${product.default_location?` · ${esc(product.default_location)}`:''}</span>${product.control_unit==='cajetilla'||count.others[product.id]?`<span class="x">${[product.control_unit==='cajetilla'?'en cajetillas':'',count.others[product.id]?`contó ${esc(count.others[product.id])}`:''].filter(Boolean).join(' · ')}</span>`:''}</div></div>
     ${conflict?`<div class="inv-err" style="margin-top:6px">${esc(conflict.counted_by||'Otra persona')} contó <b>${fmt(conflict.counted_qty)}</b> a las ${fstamp(conflict.counted_at)}. <button class="inv-btn sm" data-act="conflict-take" data-id="${product.id}">Usar ese valor</button> <button class="inv-btn sm" data-act="conflict-keep" data-id="${product.id}">Mantener el mío</button></div>`:''}</div>
     <div class="inv-cnt"><button data-step="${product.id}:-1" aria-label="Restar uno a ${esc(product.name)}">−</button><input inputmode="numeric" pattern="[0-9]*" data-cnt="${product.id}" value="${esc(value?value.qty:'')}" placeholder="—" aria-label="Cantidad contada de ${esc(product.name)}"><button data-step="${product.id}:1" aria-label="Sumar uno a ${esc(product.name)}">+</button></div></div>`;
 }
@@ -826,7 +941,7 @@ function renderDrawer(product,item,movs){
     cigarrillos:`<div><dt>Marca</dt><dd>${esc(product.brand||'—')}</dd></div><div><dt>Variedad</dt><dd>${esc(attrOf(product,'variety')||'—')}</dd></div><div><dt>Recepción</dt><dd>${product.receive_unit?`1 ${esc(product.receive_unit)} = ${fmt(product.receive_factor)} cajetillas`:'Solo cajetillas'}</dd></div>`,
     lubricantes:`<div><dt>Marca</dt><dd>${esc(product.brand||'—')}</dd></div><div><dt>Viscosidad</dt><dd>${esc(attrOf(product,'viscosity')||'—')}</dd></div><div><dt>Especificación</dt><dd>${esc(attrOf(product,'spec')||'—')}</dd></div>`
   }[item.code];
-  $('invDrw').innerHTML=`<div class="inv-xh"><div><span class="inv-pill ${item.code==='cigarrillos'?'pu':item.code==='lubricantes'?'info':'ok'}">${esc(item.name)}</span><h3 style="margin:8px 0 0;font-size:20px">${esc(product.name)}</h3></div><button class="inv-x" data-act="close" aria-label="Cerrar">×</button></div>
+  $('invDrw').innerHTML=`<div class="inv-xh"><div class="inv-pc">${avatar(product,item,'lg')}<div class="tx"><span class="inv-pill ${item.code==='cigarrillos'?'pu':item.code==='lubricantes'?'info':'ok'}">${esc(item.name)}</span><h3 style="margin:8px 0 0;font-size:20px">${esc(product.name)}</h3></div></div><button class="inv-x" data-act="close" aria-label="Cerrar">×</button></div>
     <div class="inv-hero" style="--inv-ac:${item.code==='cigarrillos'?'var(--purple)':item.code==='lubricantes'?'var(--blue)':'var(--cyan)'}"><div style="display:flex;gap:12px;align-items:flex-end;justify-content:space-between"><div><span class="inv-big inv-num">${fmt(product.stock)}</span><div class="inv-sub">${esc(unitPlural(product.control_unit))} · calculado de los movimientos</div></div><div style="text-align:right">${statusPills(product,item)}<div class="inv-sub" style="margin-top:6px">Mínimo <b class="inv-num" style="color:var(--text)">${fmt(product.min_stock)}</b></div></div></div>${gauge(product)}<div class="lg"><span>0</span><span>mínimo</span><span>${fmt(product.min_stock*2)}+</span></div></div>
     <dl class="inv-dl"><div><dt>Código interno</dt><dd>${esc(product.code)}</dd></div><div><dt>Código de barras</dt><dd class="inv-num">${esc(product.barcode||'—')}</dd></div>${extra}<div><dt>Presentación</dt><dd>${esc(product.presentation||'—')}</dd></div><div><dt>Unidad de control</dt><dd>${esc(product.control_unit)}</dd></div><div><dt>Ubicación</dt><dd>${esc(product.default_location||'—')}</dd></div><div><dt>Estado</dt><dd>${product.active?'Activo':'Inactivo'}</dd></div><div><dt>Creado</dt><dd>${fdate(product.created_at)}${product.created_by_name?` · ${esc(product.created_by_name)}`:''}</dd></div></dl>
     ${Object.keys(places).length>1?`<h4 style="margin:0 0 6px">Stock por ubicación</h4>${Object.entries(places).map(([name,qty])=>`<div class="inv-lotrow"><div class="t"><b>${esc(name)}</b></div><b class="inv-num">${fmt(qty)}</b></div>`).join('')}`:''}
@@ -1362,7 +1477,7 @@ function render(){
   if(!root)return;
   root.dataset.inv=S.view.startsWith('inv:')?S.view.slice(4):S.view.startsWith('count:')?S.view.slice(6):'';
   let html;
-  if(S.status==='loading'&&!S.overview)html=`${head('Inventarios','')}<div class="inv-empty">Cargando inventarios…</div>`;
+  if(S.status==='loading'&&!S.overview)html=`${head('Inventarios','Cargando tus inventarios…')}<div class="inv-skel" aria-busy="true"><div class="inv-stats"><i></i><i></i><i></i><i></i></div><div class="inv-cards"><i class="c"></i><i class="c"></i><i class="c"></i></div></div>`;
   else if(S.status==='unavailable')html=viewUnavailable();
   else if(S.status==='error')html=viewError();
   else if(!invList().length)html=viewSetup();
