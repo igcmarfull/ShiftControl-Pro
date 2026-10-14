@@ -1,9 +1,9 @@
 // Edge Function: assign-chief
 //
-// Asigna o reemplaza la Jefa de Isla (rol CHIEF) de la empresa del
-// administrador que llama. Es la única pieza del sistema que usa la
+// Asigna o reemplaza la Jefa de Isla o de Tienda (rol CHIEF con área ISLA o
+// TIENDA) de la empresa del administrador que llama. Es la única pieza del sistema que usa la
 // service_role key — nunca vive en el navegador. La app la invoca con
-// supabaseClient.functions.invoke('assign-chief', { body: { email, displayName } }).
+// supabaseClient.functions.invoke('assign-chief', { body: { email, displayName, area } }).
 //
 // Reglas que esta función garantiza:
 // - Solo un ADMIN activo puede llamarla (se verifica acá, no se confía en
@@ -84,9 +84,16 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const email = String((body as Record<string, unknown>).email || "").trim().toLowerCase();
     const displayName = String((body as Record<string, unknown>).displayName || "").trim();
+    // Sin área se asume isla, para mantener compatibilidad con la app anterior.
+    const area = String((body as Record<string, unknown>).area || "ISLA").trim().toUpperCase();
+    const areaLabel = area === "TIENDA" ? "Jefa de Tienda" : "Jefa de Isla";
+
+    if (area !== "ISLA" && area !== "TIENDA") {
+      return jsonResponse({ error: "Área inválida." }, 400);
+    }
 
     if (!email || !displayName) {
-      return jsonResponse({ error: "Indica el correo y el nombre de la nueva Jefa de Isla." }, 400);
+      return jsonResponse({ error: `Indica el correo y el nombre de la nueva ${areaLabel}.` }, 400);
     }
 
     // 4. Resolver la cuenta destino: invitar si es nueva, reutilizar si ya existe.
@@ -150,12 +157,14 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Ese correo ya pertenece a otra empresa." }, 400);
     }
 
-    // 6. Asignar/reemplazar de forma atómica.
+    // 6. Asignar/reemplazar de forma atómica (función assign_chief_area,
+    //    migración 20261014000002).
     const { data: result, error: assignError } = await admin
-      .rpc("assign_chief", {
+      .rpc("assign_chief_area", {
         p_company_id: companyId,
         p_target_user_id: targetUserId,
         p_actor_user_id: callerId,
+        p_area: area,
       })
       .single();
 
@@ -166,6 +175,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(
       {
         ok: true,
+        area,
         action: result?.action,
         targetUserId,
         previousUserId: result?.previous_user_id ?? null,

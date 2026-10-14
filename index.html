@@ -9104,7 +9104,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <div class="topbar">
         <div>
           <h2>Equipo de estación</h2>
-          <p>Administra quién tiene el rol de Jefa de Isla.</p>
+          <p>Administra quién es la Jefa de Isla y la Jefa de Tienda.</p>
         </div>
       </div>
       <div id="teamRoot">
@@ -9116,6 +9116,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <div class="modal-card">
         <div class="modal-head"><h3 id="assignChiefTitle">Asignar Jefa de Isla</h3><button class="close" onclick="closeModal('assignChiefModal')">×</button></div>
         <form id="assignChiefForm" class="form-grid">
+          <input type="hidden" id="assignChiefArea" value="ISLA">
           <div class="form-group full"><label>Nombre</label><input class="field" id="assignChiefName" placeholder="Nombre completo" required></div>
           <div class="form-group full"><label>Correo</label><input class="field" type="email" id="assignChiefEmail" placeholder="nombre@empresa.cl" required></div>
           <div id="assignChiefError" class="login-error" role="alert"></div>
@@ -10743,7 +10744,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </div>
 
 <div class="modal" id="employeeModal"><div class="modal-card"><div class="modal-head"><h3 id="employeeTitle">Agregar trabajador</h3><button class="close" onclick="closeModal(&#39;employeeModal&#39;)">×</button></div><form id="employeeForm" class="form-grid">
-<input type="hidden" id="employeeId"><div class="form-group full"><label>Nombre completo</label><input class="field" id="employeeName" required=""></div><div class="form-group"><label>RUT</label><input class="field" id="employeeRut"></div><div class="form-group"><label>Cargo</label><input class="field" id="employeeRole"></div><div class="form-group"><label>Área</label><input class="field" id="employeeArea"></div><div class="form-group"><label>Turno habitual</label><select class="select" id="employeeShift"><option>A</option><option>B</option><option>C</option></select></div><div class="form-group"><label>Fecha de ingreso</label><input class="field" type="date" id="employeeStart"></div><div class="form-group"><label>Estado</label><select class="select" id="employeeActive"><option value="true">Activo</option><option value="false">Inactivo</option></select></div><div class="form-group"><label>Teléfono</label><input class="field" type="tel" id="employeePhone" placeholder="+56 9 1234 5678"></div><div class="form-group"><label>Correo</label><input class="field" type="email" id="employeeEmail" placeholder="nombre@empresa.cl"></div><div class="form-group full"><label>Dirección</label><input class="field" id="employeeAddress"></div><div class="form-group"><label>Contacto de emergencia</label><input class="field" id="employeeEmergency" placeholder="Nombre y teléfono"></div><div class="form-group"><label>AFP</label><input class="field" id="employeeAfp"></div><div class="form-group"><label>Sistema de salud</label><input class="field" id="employeeHealthSystem" placeholder="Fonasa / Isapre"></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeModal(&#39;employeeModal&#39;)">Cancelar</button><button class="btn primary">Guardar</button></div></form></div></div>
+<input type="hidden" id="employeeId"><div class="form-group full"><label>Nombre completo</label><input class="field" id="employeeName" required=""></div><div class="form-group"><label>RUT</label><input class="field" id="employeeRut"></div><div class="form-group"><label>Cargo</label><input class="field" id="employeeRole"></div><div class="form-group"><label>Área</label><input class="field" id="employeeArea" list="employeeAreaOptions"><datalist id="employeeAreaOptions"><option value="Isla"></option><option value="Tienda"></option></datalist></div><div class="form-group"><label>Turno habitual</label><select class="select" id="employeeShift"><option>A</option><option>B</option><option>C</option></select></div><div class="form-group"><label>Fecha de ingreso</label><input class="field" type="date" id="employeeStart"></div><div class="form-group"><label>Estado</label><select class="select" id="employeeActive"><option value="true">Activo</option><option value="false">Inactivo</option></select></div><div class="form-group"><label>Teléfono</label><input class="field" type="tel" id="employeePhone" placeholder="+56 9 1234 5678"></div><div class="form-group"><label>Correo</label><input class="field" type="email" id="employeeEmail" placeholder="nombre@empresa.cl"></div><div class="form-group full"><label>Dirección</label><input class="field" id="employeeAddress"></div><div class="form-group"><label>Contacto de emergencia</label><input class="field" id="employeeEmergency" placeholder="Nombre y teléfono"></div><div class="form-group"><label>AFP</label><input class="field" id="employeeAfp"></div><div class="form-group"><label>Sistema de salud</label><input class="field" id="employeeHealthSystem" placeholder="Fonasa / Isapre"></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeModal(&#39;employeeModal&#39;)">Cancelar</button><button class="btn primary">Guardar</button></div></form></div></div>
 
 <div class="modal" id="cellModal"><div class="modal-card"><div class="modal-head"><h3 id="cellTitle">Editar día</h3><button class="close" onclick="closeModal(&#39;cellModal&#39;)">×</button></div><input type="hidden" id="cellEmployee"><input type="hidden" id="cellDate"><div class="quick-grid">
 <button class="quick-btn" onclick="savePlanCell(&#39;A&#39;)">Turno A</button><button class="quick-btn" onclick="savePlanCell(&#39;B&#39;)">Turno B</button><button class="quick-btn" onclick="savePlanCell(&#39;C&#39;)">Turno C</button><button class="quick-btn" onclick="savePlanCell(&#39;D&#39;)">Descanso</button><button class="quick-btn" onclick="savePlanCell(&#39;L&#39;)">Licencia</button><button class="quick-btn" onclick="savePlanCell(&#39;V&#39;)">Vacaciones</button><button class="quick-btn" onclick="savePlanCell(&#39;P&#39;)">Permiso</button><button class="quick-btn" onclick="savePlanCell(&#39;X&#39;)">Ausencia</button><button class="quick-btn" onclick="savePlanCell(&#39;Eliminar&#39;)">Eliminar</button>
@@ -11377,13 +11378,24 @@ function fillPeriods(){
   ['planMonth','reportMonth'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){e.innerHTML=monthNames.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');e.value=cm}});
   ['planYear','reportYear'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){for(let y=today.getFullYear()+1;y>=today.getFullYear()-5;y--)e.innerHTML+=`<option value="${y}">${y}</option>`;e.value=cy}});
 }
-// La Jefa de Isla ve al personal con área "Isla". En bases antiguas el área
-// quedó vacía o con otra etiqueta; entonces se muestra todo el personal activo,
-// igual que en la planificación mensual.
-function chiefIslandEmployees(list){
-  const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-  const island=list.filter(e=>normalize(e.area)==='isla');
-  return island.length?island:list;
+// Cada jefa ve solo el personal de su área (Isla o Tienda). En bases antiguas
+// sin área "Isla", la Jefa de Isla ve a todo el personal que no es de tienda.
+function chiefAreaEmployees(list){
+  const areas=window.ShiftControlAreas;
+  if(!areas)return list;
+  return areas.employeesForArea(list,areas.getSessionArea()||'ISLA');
+}
+// Área para una trabajadora creada por una jefa. En bases antiguas sin
+// personal clasificado como "Isla" se deja vacía, para no ocultar al resto.
+function chiefNewEmployeeArea(){
+  const areas=window.ShiftControlAreas;
+  const area=areas?.getSessionArea()||'ISLA';
+  if(area==='ISLA'&&!window.EmployeeModule.getAll().some(e=>areas?.employeeArea(e)==='ISLA'))return '';
+  return areas?.info(area)?.label||'Isla';
+}
+function chiefAreaLabel(){
+  const areas=window.ShiftControlAreas;
+  return areas?.info(areas.getSessionArea()||'ISLA')?.label||'Isla';
 }
 function fillEmployeeSelects(){
   if(!window.EmployeeModule){
@@ -11401,8 +11413,9 @@ function fillEmployeeSelects(){
     const el=document.getElementById(id);
     if(!el)return;
     if(chiefMode){
-      el.innerHTML='<option value="Isla">Isla</option>';
-      el.value='Isla';
+      const label=chiefAreaLabel();
+      el.innerHTML=`<option value="${label}">${label}</option>`;
+      el.value=label;
       el.disabled=true;
     }else{
       const current=el.value;
@@ -11411,7 +11424,7 @@ function fillEmployeeSelects(){
       el.disabled=false;
     }
   });
-  const visibleEmployees=chiefMode?chiefIslandEmployees(active):active;
+  const visibleEmployees=chiefMode?chiefAreaEmployees(active):active;
   ['planEmployeeFilter','weekEmployeeFilter','actualEmployeeFilter'].forEach(id=>{const el=document.getElementById(id);if(el){const current=el.value;el.innerHTML='<option value="">Todos los trabajadores</option>'+visibleEmployees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');el.value=visibleEmployees.some(e=>e.id===current)?current:''}});
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
@@ -11612,11 +11625,11 @@ function renderPlanning(){updateSelectionBar();
   head+='<div class="sticky-summary">Resumen</div></div>';
   let body='';
   const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
-  const areaFilter=isChief?'Isla':(document.getElementById('planAreaFilter')?.value||'');
+  const areaFilter=isChief?'':(document.getElementById('planAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('planEmployeeFilter')?.value||'';
   const normalizeArea=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   const activeEmployees=window.EmployeeModule.getAll().filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
-  let visibleEmployees=activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
+  let visibleEmployees=isChief?chiefAreaEmployees(activeEmployees):activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
   // En algunas bases antiguas el área de las atendedoras quedó vacía o con otra etiqueta.
   // La Jefa de Isla nunca debe recibir una grilla vacía por ese dato heredado.
   if(isChief&&!visibleEmployees.length) visibleEmployees=activeEmployees;
@@ -12100,7 +12113,7 @@ function renderActualCalendar(){
     item.active&&
     (!area||item.area===area)
   );
-  const employees=(isChief?chiefIslandEmployees(areaEmployees):areaEmployees).filter(item=>
+  const employees=(isChief?chiefAreaEmployees(areaEmployees):areaEmployees).filter(item=>
     !employeeFilter||item.id===employeeFilter
   );
 
@@ -12206,7 +12219,7 @@ function renderWeekly(){
   const area=isChief?'':(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
   const areaList=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area));
-  const list=(isChief?chiefIslandEmployees(areaList):areaList).filter(e=>!empFilter||e.id===empFilter);
+  const list=(isChief?chiefAreaEmployees(areaList):areaList).filter(e=>!empFilter||e.id===empFilter);
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
   list.forEach(e=>{
     const weeklyDetail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(e.shift||'—'):(e.area||'');
@@ -12377,7 +12390,8 @@ function todayPlannedRows(date){
 function loadTodayBaseSchedule(){
   const date=todayUI.date.value||isoToday;
   const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
-  const active=window.EmployeeModule.getAll().filter(e=>e.active).filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla');
+  const activeAll=window.EmployeeModule.getAll().filter(e=>e.active);
+  const active=role==='chief'?chiefAreaEmployees(activeAll):activeAll;
   if(!active.length)return alert('No hay trabajadores activos.');
   snapshot();
   let created=0;
@@ -14097,8 +14111,15 @@ function renderEmployees(){
     total.innerHTML=`<span>♙</span> ${list.length} mostrado${list.length===1?'':'s'} · ${active} activos`;
   }
 }
-function openEmployeeModal(){employeeForm.reset();employeeId.value='';employeeStart.value=isoToday;employeeActive.value='true';employeeTitle.textContent='Agregar trabajador';openModal('employeeModal')}
-function editEmployee(id){const e=employee(id);employeeId.value=e.id;employeeName.value=e.name;employeeRut.value=e.rut||'';employeeRole.value=e.role||'';employeeArea.value=e.area||'';employeeShift.value=e.shift;employeeStart.value=e.start||'';employeeActive.value=String(e.active);employeePhone.value=e.phone||'';employeeEmail.value=e.email||'';employeeAddress.value=e.address||'';employeeEmergency.value=e.emergency||'';employeeAfp.value=e.afp||'';employeeHealthSystem.value=e.healthSystem||'';employeeTitle.textContent='Editar trabajador';openModal('employeeModal')}
+function openEmployeeModal(){employeeForm.reset();employeeId.value='';employeeStart.value=isoToday;employeeActive.value='true';employeeTitle.textContent='Agregar trabajador';lockEmployeeAreaForChief(chiefNewEmployeeArea());openModal('employeeModal')}
+function editEmployee(id){const e=employee(id);employeeId.value=e.id;employeeName.value=e.name;employeeRut.value=e.rut||'';employeeRole.value=e.role||'';employeeArea.value=e.area||'';employeeShift.value=e.shift;employeeStart.value=e.start||'';employeeActive.value=String(e.active);employeePhone.value=e.phone||'';employeeEmail.value=e.email||'';employeeAddress.value=e.address||'';employeeEmergency.value=e.emergency||'';employeeAfp.value=e.afp||'';employeeHealthSystem.value=e.healthSystem||'';employeeTitle.textContent='Editar trabajador';lockEmployeeAreaForChief(e.area||'');openModal('employeeModal')}
+function lockEmployeeAreaForChief(value){
+  const field=document.getElementById('employeeArea');
+  if(!field)return;
+  const chief=typeof getAppRole==='function'&&getAppRole()==='chief';
+  field.readOnly=chief;
+  if(chief)field.value=value;
+}
 employeeForm.addEventListener('submit',e=>{
   e.preventDefault();
 
@@ -14122,7 +14143,8 @@ employeeForm.addEventListener('submit',e=>{
     name,
     rut,
     role:document.getElementById('employeeRole').value.trim(),
-    area:document.getElementById('employeeArea').value.trim(),
+    // La jefa no cambia el área: conserva la existente o usa la suya al crear.
+    area:getAppRole()==='chief'?(id?(previous.area||''):chiefNewEmployeeArea()):document.getElementById('employeeArea').value.trim(),
     shift:document.getElementById('employeeShift').value||'A',
     start:document.getElementById('employeeStart').value||isoToday,
     active:document.getElementById('employeeActive').value!=='false',
@@ -17176,10 +17198,15 @@ async function renderTeam(){
       return;
     }
 
-    const {data:memberships,error:membershipsError}=await client
+    const membershipQuery=columns=>client
       .from('company_memberships')
-      .select('user_id, role, active, created_at')
+      .select(columns)
       .eq('company_id',context.companyId);
+    let {data:memberships,error:membershipsError}=await membershipQuery('user_id, role, area, active, created_at');
+    // Bases sin la migración de áreas: la jefatura existente es de isla.
+    if(membershipsError?.code==='42703'){
+      ({data:memberships,error:membershipsError}=await membershipQuery('user_id, role, active, created_at'));
+    }
 
     if(membershipsError){
       root.innerHTML=`<div class="ops-empty">No se pudo cargar el equipo.<br><small>${v14Esc(membershipsError.message)}</small></div>`;
@@ -17197,28 +17224,45 @@ async function renderTeam(){
     }
     const nameFor=id=>v14Esc(namesById[id]||'Cuenta sin nombre');
 
-    const currentChief=(memberships||[]).find(item=>item.role==='CHIEF'&&item.active);
+    const areaSupported=(memberships||[]).every(item=>'area' in item);
+    const chiefTitle=area=>window.ShiftControlAreas?.info(area)?.chiefTitle||(area==='TIENDA'?'Jefa de Tienda':'Jefa de Isla');
+    const chiefFor=area=>(memberships||[]).find(item=>
+      item.role==='CHIEF'&&item.active&&(item.area||'ISLA')===area
+    );
 
-    const {data:events}=await client
+    const eventQuery=columns=>client
       .from('team_role_events')
-      .select('id, action, actor_user_id, target_user_id, previous_user_id, created_at')
+      .select(columns)
       .eq('company_id',context.companyId)
       .order('created_at',{ascending:false})
       .limit(20);
+    let {data:events,error:eventsError}=await eventQuery('id, action, area, actor_user_id, target_user_id, previous_user_id, created_at');
+    if(eventsError?.code==='42703'){
+      ({data:events}=await eventQuery('id, action, actor_user_id, target_user_id, previous_user_id, created_at'));
+    }
+
+    // Sin la migración de áreas solo existe la jefatura de isla.
+    const areas=areaSupported?['ISLA','TIENDA']:['ISLA'];
+    const chiefCard=area=>{
+      const chief=chiefFor(area);
+      const title=chiefTitle(area);
+      return `
+      <div class="team-current-card">
+        <div class="team-current-head"><span>${title} actual</span></div>
+        ${chief
+          ?`<strong>${nameFor(chief.user_id)}</strong><small>Desde ${fmt(String(chief.created_at||'').slice(0,10))}</small>`
+          :`<div class="ops-empty">Todavía no hay una ${title} asignada.</div>`}
+        <button type="button" class="btn primary" onclick="openAssignChiefModal('${area}')">${chief?'Reemplazar':'Asignar'} ${title}</button>
+      </div>`;
+    };
 
     root.innerHTML=`
-      <div class="team-current-card">
-        <div class="team-current-head"><span>Jefa de Isla actual</span></div>
-        ${currentChief
-          ?`<strong>${nameFor(currentChief.user_id)}</strong><small>Desde ${fmt(String(currentChief.created_at||'').slice(0,10))}</small>`
-          :'<div class="ops-empty">Todavía no hay una Jefa de Isla asignada.</div>'}
-        <button type="button" class="btn primary" onclick="openAssignChiefModal()">${currentChief?'Reemplazar Jefa de Isla':'Asignar Jefa de Isla'}</button>
-      </div>
+      ${areas.map(chiefCard).join('')}
       <div class="team-history">
         <h4>Historial</h4>
         ${(events&&events.length)?events.map(ev=>`
           <div class="team-history-row">
-            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de Jefa de Isla</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
+            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de ${chiefTitle(ev.area||'ISLA')}</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
             <small>${new Date(ev.created_at).toLocaleString('es-CL')} · por ${nameFor(ev.actor_user_id)}</small>
           </div>
         `).join(''):'<div class="ops-empty">Sin movimientos registrados.</div>'}
@@ -17229,9 +17273,14 @@ async function renderTeam(){
   }
 }
 
-function openAssignChiefModal(){
-  if(!requireAppPermission('team.manage','Solo el administrador puede asignar la Jefa de Isla.'))return;
+function openAssignChiefModal(area='ISLA'){
+  if(!requireAppPermission('team.manage','Solo el administrador puede asignar jefaturas.'))return;
   document.getElementById('assignChiefForm')?.reset();
+  const areaKey=area==='TIENDA'?'TIENDA':'ISLA';
+  const areaInput=document.getElementById('assignChiefArea');
+  if(areaInput)areaInput.value=areaKey;
+  const title=document.getElementById('assignChiefTitle');
+  if(title)title.textContent=`Asignar ${areaKey==='TIENDA'?'Jefa de Tienda':'Jefa de Isla'}`;
   const errorEl=document.getElementById('assignChiefError');
   if(errorEl)errorEl.textContent='';
   openModal('assignChiefModal');
@@ -17242,6 +17291,7 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
 
   const email=document.getElementById('assignChiefEmail').value.trim().toLowerCase();
   const displayName=document.getElementById('assignChiefName').value.trim();
+  const area=document.getElementById('assignChiefArea')?.value==='TIENDA'?'TIENDA':'ISLA';
   const errorEl=document.getElementById('assignChiefError');
   const submitBtn=document.getElementById('assignChiefSubmit');
 
@@ -17258,7 +17308,7 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
 
   try{
     const client=window.ShiftControlAuth.getClient();
-    const {data,error}=await client.functions.invoke('assign-chief',{body:{email,displayName}});
+    const {data,error}=await client.functions.invoke('assign-chief',{body:{email,displayName,area}});
 
     if(error){
       let message=error.message||'No se pudo completar la acción.';
@@ -17273,7 +17323,7 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
     if(data?.error)throw new Error(data.error);
 
     closeModal('assignChiefModal');
-    showToast('Jefa de Isla actualizada');
+    showToast(area==='TIENDA'?'Jefa de Tienda actualizada':'Jefa de Isla actualizada');
     renderTeam();
   }catch(error){
     if(errorEl)errorEl.textContent=error.message||'Ocurrió un error inesperado.';
@@ -17783,9 +17833,8 @@ function roleCanOpenView(_role,viewId){
   return window.ShiftControlPermissions?.canOpenView?.(viewId)===true;
 }
 function roleHomeView(){
-  return window.ShiftControlPermissions?.getRole?.()==='ADMIN'
-    ?'admin-inbox'
-    :'operational-home';
+  if(window.ShiftControlPermissions?.getRole?.()==='ADMIN')return 'admin-inbox';
+  return roleCanOpenView(null,'operational-home')?'operational-home':'today';
 }
 function requireAppPermission(action,message){
   return window.ShiftControlPermissions?.requireAction?.(action,message)===true;
@@ -17821,9 +17870,9 @@ function authenticatedDisplayProfile(){
 
   return {
     displayName,
-    initials:initials||(role==='chief'?'JI':'AD'),
+    initials:initials||(role==='chief'?(chiefAreaLabel()==='Tienda'?'JT':'JI'):'AD'),
     title:role==='chief'
-      ?'Jefa de isla · operación'
+      ?`Jefa de ${chiefAreaLabel().toLowerCase()} · operación`
       :'Administrador · acceso completo'
   };
 }
@@ -17858,6 +17907,7 @@ function applyAppRole(forceView=true){
  if(incidentReporter&&!incidentReporter.value)incidentReporter.value=profile.displayName;
  applyPermissionVisibility();
  document.querySelectorAll('.nav-btn').forEach(btn=>{const allowed=roleCanOpenView(role,btn.dataset.view);btn.style.display=allowed?'flex':'none';btn.setAttribute('aria-hidden',allowed?'false':'true');btn.tabIndex=allowed?0:-1});
+ document.querySelectorAll('.nav-group').forEach(group=>{const buttons=[...group.querySelectorAll('.nav-btn[data-view]')];if(buttons.length)group.style.display=buttons.some(btn=>btn.style.display!=='none')?'':'none'});
  document.querySelectorAll('.role-admin-only').forEach(el=>el.style.display=role==='admin'?'inline-flex':'none');
  document.querySelectorAll('.role-chief-only').forEach(el=>el.style.display=role==='chief'?'inline-flex':'none');
  fillEmployeeSelects();
@@ -20411,6 +20461,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/config.js"></script>
 <script src="src/auth.js"></script>
 <script src="src/app/permissions.js"></script>
+<script src="src/app/areas.js"></script>
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/storage.js"></script>
 

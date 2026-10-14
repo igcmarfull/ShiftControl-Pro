@@ -6,6 +6,7 @@
   const ACTIVE_COMPANY_KEY = 'shiftcontrol_local_state_company_v1';
   let ready = false;
   let activeCompanyId = null;
+  let activeArea = null;
   let pendingSave = false;
   let saveTimer = null;
   let bootstrapPromise = null;
@@ -51,8 +52,29 @@
       : 'shiftcontrol_pro_v2_all_replacement_candidates';
   }
 
+  // Área de la jefa en sesión; null para el administrador.
+  function sessionArea() {
+    return window.ShiftControlAreas?.getSessionArea?.() || null;
+  }
+
+  // Una jefa trabaja sobre la parte del estado de su área. Sus cambios se
+  // combinan luego sobre el estado completo guardado en Supabase.
+  function toLocal(fullState, area = activeArea) {
+    if (!area || !window.ShiftControlAreas) return fullState;
+    return window.ShiftControlAreas.scopeState(fullState, area);
+  }
+
+  function isActiveSession(context) {
+    return Boolean(
+      context?.companyId &&
+      context.companyId === activeCompanyId &&
+      sessionArea() === activeArea
+    );
+  }
+
   function getTenantLocalKey(companyId) {
-    return `${getBaseLocalKey()}:company:${companyId}`;
+    const area = sessionArea();
+    return `${getBaseLocalKey()}:company:${companyId}${area ? `:area:${area}` : ''}`;
   }
 
   function getTenantSyncKey(companyId) {
@@ -365,7 +387,8 @@
     return data[0].updated_at || updatedAt;
   }
 
-  function adoptSyncedState(companyId, syncedState, updatedAt, sentSnapshot) {
+  function adoptSyncedState(companyId, syncedFullState, updatedAt, sentSnapshot) {
+    const syncedState = toLocal(syncedFullState);
     rememberBase(companyId, syncedState, updatedAt);
 
     const liveState = window.ShiftControlState.get();
@@ -389,11 +412,7 @@
   async function pushOnce() {
     const context = window.AuthContext?.get?.() || null;
 
-    if (
-      !ready ||
-      !context?.companyId ||
-      context.companyId !== activeCompanyId
-    ) {
+    if (!ready || !isActiveSession(context)) {
       pendingSave = true;
       return null;
     }
@@ -413,7 +432,8 @@
         const remoteChanged = Boolean(
           row && (row.updated_at || null) !== remoteUpdatedAt
         );
-        const nextState = remoteChanged
+        // Una jefa siempre combina: su estado local es solo una parte.
+        const nextState = row && (remoteChanged || activeArea)
           ? mergeValue(null, baseState || undefined, sentSnapshot, row.data)
           : sentSnapshot;
 
@@ -484,8 +504,7 @@
       pushPromise ||
       saveTimer ||
       document.hidden ||
-      !context?.companyId ||
-      context.companyId !== activeCompanyId
+      !isActiveSession(context)
     ) {
       return false;
     }
@@ -513,21 +532,22 @@
       if (!row?.data || pushPromise || saveTimer || isUserEditing()) {
         return false;
       }
-      if (context.companyId !== activeCompanyId) return false;
+      if (!isActiveSession(context)) return false;
 
+      const remoteState = toLocal(row.data);
       const liveState = window.ShiftControlState.get();
       const nextState = baseState
-        ? mergeValue(null, baseState, liveState, row.data)
-        : clone(row.data);
+        ? mergeValue(null, baseState, liveState, remoteState)
+        : clone(remoteState);
 
-      rememberBase(companyId, row.data, row.updated_at);
+      rememberBase(companyId, remoteState, row.updated_at);
 
       if (!same(nextState, liveState)) {
         applyState(companyId, nextState, row.updated_at);
         log('Se cargaron cambios guardados por otro usuario.');
       }
 
-      if (same(nextState, row.data)) {
+      if (same(nextState, remoteState)) {
         setDirty(companyId, false);
         setSyncStatus('synced');
       } else {
@@ -567,12 +587,13 @@
         return null;
       }
 
-      if (ready && activeCompanyId === context.companyId) {
+      if (ready && isActiveSession(context)) {
         return window.ShiftControlState.get();
       }
 
       ready = false;
       activeCompanyId = context.companyId;
+      activeArea = sessionArea();
       const storedBase = readJson(getTenantBaseKey(context.companyId));
       baseState = storedBase?.data || null;
       remoteUpdatedAt = storedBase?.updatedAt || null;
@@ -591,11 +612,12 @@
           const pendingLocal = isDirty(context.companyId)
             ? readTenantState(context.companyId)
             : null;
+          const remoteState = toLocal(data.data);
           const nextState = pendingLocal
-            ? mergeValue(null, baseState || undefined, pendingLocal, data.data)
-            : data.data;
+            ? mergeValue(null, baseState || undefined, pendingLocal, remoteState)
+            : remoteState;
 
-          rememberBase(context.companyId, data.data, data.updated_at);
+          rememberBase(context.companyId, remoteState, data.updated_at);
 
           const currentState = applyState(
             context.companyId,
@@ -606,7 +628,7 @@
           ready = true;
           startPolling();
 
-          if (pendingLocal && !same(nextState, data.data)) {
+          if (pendingLocal && !same(nextState, remoteState)) {
             log('Se recuperaron cambios locales pendientes de sincronizar.');
             schedulePush();
           } else {
@@ -620,7 +642,7 @@
 
         const tenantState =
           readTenantState(context.companyId) ||
-          legacyStateFor(context.companyId);
+          toLocal(legacyStateFor(context.companyId));
 
         if (!tenantState) {
           throw tenantStateError(context.companyId);
@@ -639,7 +661,7 @@
       } catch (error) {
         const tenantState =
           readTenantState(context.companyId) ||
-          legacyStateFor(context.companyId);
+          toLocal(legacyStateFor(context.companyId));
 
         if (tenantState) {
           const currentState = applyState(
@@ -659,6 +681,7 @@
 
         ready = false;
         activeCompanyId = null;
+        activeArea = null;
         throw error;
       } finally {
         if (ready && pendingSave) {
@@ -681,8 +704,9 @@
     window.save = function () {
       originalSave.apply(this, arguments);
 
-      const companyId = window.AuthContext?.get?.()?.companyId;
-      if (ready && companyId && companyId === activeCompanyId) {
+      const context = window.AuthContext?.get?.() || null;
+      const companyId = context?.companyId;
+      if (ready && isActiveSession(context)) {
         writeTenantState(
           companyId,
           window.ShiftControlState.get()

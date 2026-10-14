@@ -67,7 +67,9 @@ Producción no fue modificada. No se aplicaron migraciones en Supabase.
    limpiarlos si el repositorio es o será público. **Pendiente.**
 9. **Separación estación/tienda inexistente en `main`.** El personal solo
    tiene un campo libre `area`; la tienda existe como módulo de facturas.
-   **Pendiente de decisión.**
+   **Implementada** según la definición del propietario: el gerente
+   administra y ve ambas áreas, la Jefa de Isla ve la isla y la Jefa de
+   Tienda ve la tienda (ver «Separación estación/tienda»).
 
 ### Bajos
 
@@ -106,10 +108,49 @@ Ideas reutilizables más adelante, con revisión: clasificación de personal por
 área y control de concurrencia por revisión. No se recomienda incorporar el
 calendario nuevo.
 
+## Separación estación/tienda
+
+Definición del propietario: el gerente administra la tienda y la isla y
+visualiza ambas; la Jefa de Isla ve la isla y la Jefa de Tienda, la tienda.
+
+Implementación:
+
+- `src/app/areas.js`: área de cada trabajador y recorte del estado por área.
+- `src/storage.js`: cada jefa carga solo su área y sus cambios se combinan
+  sobre el estado completo de Supabase.
+- `src/auth.js` y `src/app/permissions.js`: área de la jefatura y vistas de la
+  Jefa de Tienda.
+- «Equipo de estación»: el gerente asigna o reemplaza cada jefatura.
+- `supabase/migrations/20261014000002_chief_areas.sql` y la Edge Function
+  `assign-chief`: una jefatura activa por área. La migración impide además que
+  un administrador se asigne como jefa.
+
+Verificado en navegador con tres sesiones (gerente, Jefa de Isla y Jefa de
+Tienda): cada jefa ve solo su personal; ediciones simultáneas de las tres
+quedan guardadas; un borrado de una jefa no afecta la otra área; el gerente ve
+todo sin recargar; una trabajadora creada por la Jefa de Tienda queda en
+Tienda; una reclasificación del gerente se refleja en ambas jefas; al cambiar
+de usuario en la misma pestaña cada sesión carga solo su área.
+
+Límite conocido: la separación es de la aplicación. Una jefa con
+conocimientos técnicos podría leer el JSON completo desde Supabase. Aislarlo
+en la base de datos requiere dividir `app_state` por área.
+
+Para activarla en producción, en este orden:
+
+1. Clasificar al personal con área "Isla" o "Tienda" desde «Trabajadores».
+2. Aplicar `20261014000001_fix_memberships_admin_policy.sql` y luego
+   `20261014000002_chief_areas.sql`.
+3. Desplegar la Edge Function `assign-chief`.
+4. Asignar la Jefa de Tienda desde «Equipo de estación».
+
+Sin los pasos 2 y 3, la aplicación sigue funcionando como antes con una sola
+Jefa de Isla.
+
 ## Decisiones pendientes del propietario
 
 1. Aplicar en Supabase la migración `20261014000001` (y revisar si
    `20260804000001` ya está aplicada o corregida a mano).
-2. Definir el alcance de la separación estación/tienda: quién administra la
-   tienda, qué personal pertenece a cada una y qué debe ver cada jefatura.
+2. Confirmar las vistas de la Jefa de Tienda (hoy sin incidencias,
+   checklist ni entrega de turno) y si debe ver «Facturas y compras».
 3. Autorizar la limpieza de datos incrustados en `index.html`.

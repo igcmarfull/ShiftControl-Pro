@@ -126,6 +126,8 @@ Al final del documento se cargan la librería de Supabase, la configuración, la
 - conserva en `localStorage` la última versión acordada con Supabase y, al
   iniciar, combina los cambios locales que hayan quedado sin subir;
 - muestra el estado en `.save-status`: sincronizado, guardando o sin conexión;
+- para una jefa, trabaja sobre la parte del estado de su área (ver
+  «Separación por área») y combina sus cambios sobre el estado completo;
 - reemplaza oficialmente la referencia completa mediante
   `ShiftControlState.replace(data.data)`;
 - conserva operación local si Supabase falla;
@@ -228,6 +230,28 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
 - `AdditionalModule` concentra las inserciones, reemplazos de colección y
   mutaciones residuales de registros `additional`; las reglas, cálculos,
   snapshots, logs y renderizado permanecen en `index.html`.
+
+## Separación por área
+
+`src/app/areas.js` publica `window.ShiftControlAreas` y se carga después de
+`src/app/permissions.js`.
+
+- El administrador ve y administra la isla y la tienda.
+- `company_memberships.area` (`ISLA` o `TIENDA`) identifica el área de cada
+  jefa. Sin la migración `20261014000002_chief_areas.sql`, toda jefa se
+  considera de isla.
+- El área de cada trabajador se toma de `employee.area` ("Isla" o "Tienda",
+  sin distinguir mayúsculas ni tildes).
+- Al cargar, una jefa recibe solo los trabajadores de su área y sus registros
+  de `plans`, `executions`, `absences`, `additional`, `evaluations` y
+  `cashShortages`. Los datos generales se conservan.
+- La Jefa de Isla conserva el criterio anterior: si nadie tiene área "Isla",
+  ve a todo el personal que no sea de tienda.
+- La Jefa de Tienda tiene las vistas de personal y planificación; incidencias,
+  checklist, entrega de turno e inicio operativo quedan para la isla
+  (`src/app/permissions.js`, `CHIEF_TIENDA`).
+- Es una separación de la aplicación, no de la base de datos: `app_state`
+  sigue siendo un JSON por empresa legible por sus miembros.
 
 ## Integraciones presentes pero no activas
 

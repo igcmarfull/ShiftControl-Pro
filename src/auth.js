@@ -229,6 +229,7 @@
       companyId:company.id,
       companyName:company.name,
       role:membership.role,
+      area:membership.role==='CHIEF'?(membership.area||'ISLA'):null,
       legacyRole:legacyRole(membership.role)
     };
 
@@ -251,11 +252,17 @@
       );
     }
 
-    const membershipResult=await supabaseClient
+    const membershipQuery=columns=>supabaseClient
       .from('company_memberships')
-      .select('company_id, user_id, role, active')
+      .select(columns)
       .eq('user_id',user.id)
       .eq('active',true);
+    let membershipResult=await membershipQuery('company_id, user_id, role, area, active');
+
+    // Bases sin la migración de áreas: la jefatura existente es de isla.
+    if(membershipResult.error?.code==='42703'){
+      membershipResult=await membershipQuery('company_id, user_id, role, active');
+    }
 
     if(membershipResult.error)throw membershipResult.error;
 

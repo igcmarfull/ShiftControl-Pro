@@ -35,6 +35,31 @@
         'reports.operational',
         'additional.create'
       ])
+    }),
+    // La Jefa de Tienda administra al personal de tienda. Incidencias,
+    // checklist y entrega de turno corresponden a la operación de la isla.
+    CHIEF_TIENDA:Object.freeze({
+      views:Object.freeze([
+        'today',
+        'actual',
+        'execution',
+        'absences',
+        'planning',
+        'weekly',
+        'employees',
+        'evaluations',
+        'reports',
+        'additional'
+      ]),
+      actions:Object.freeze([
+        'attendance.manage',
+        'planning.manage',
+        'absences.manage',
+        'employees.manage',
+        'evaluations.manage',
+        'reports.operational',
+        'additional.create'
+      ])
     })
   });
 
@@ -53,6 +78,18 @@
     return normalizeRole(getContext()?.role);
   }
 
+  function getArea(){
+    if(getRole()!=='CHIEF')return null;
+    return String(getContext()?.area||'ISLA').toUpperCase()==='TIENDA'
+      ?'TIENDA'
+      :'ISLA';
+  }
+
+  function permissionKey(){
+    const role=getRole();
+    return role==='CHIEF'&&getArea()==='TIENDA'?'CHIEF_TIENDA':role;
+  }
+
   function getLegacyRole(){
     const role=getRole();
     if(role==='ADMIN')return 'admin';
@@ -61,7 +98,7 @@
   }
 
   function hasAccess(collection,value){
-    const permissions=ROLE_PERMISSIONS[getRole()];
+    const permissions=ROLE_PERMISSIONS[permissionKey()];
     if(!permissions)return false;
     if(permissions[collection]==='*')return true;
     return permissions[collection].includes(value);
@@ -86,6 +123,7 @@
 
   window.ShiftControlPermissions=Object.freeze({
     getRole,
+    getArea,
     getLegacyRole,
     canOpenView,
     canUseAction,
