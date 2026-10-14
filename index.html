@@ -6406,7 +6406,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
             <button class="btn soft planning-tool" onclick="duplicatePreviousMonth()" title="Duplicar mes anterior"><span class="planning-tool-icon">▣</span><span class="planning-tool-label">Duplicar</span><span class="planning-tool-desktop">Duplicar mes anterior</span></button>
             <button class="btn planning-tool" onclick="openPatternModal()" title="Aplicar patrón"><span class="planning-tool-icon">⌘</span><span class="planning-tool-label">Patrón</span><span class="planning-tool-desktop">Aplicar patrón</span></button>
             <button class="btn soft planning-tool" onclick="openBulkModal()" title="Asignación masiva"><span class="planning-tool-icon">♙</span><span class="planning-tool-label">Masiva</span><span class="planning-tool-desktop">Asignación masiva</span></button>
-            <button class="btn primary planning-tool" id="closeMonthBtn" onclick="toggleMonthClose()" title="Cerrar mes"><span class="planning-tool-icon">▢</span><span class="planning-tool-label">Cerrar</span><span class="planning-tool-desktop">Cerrar mes</span></button>
+            <button class="btn primary planning-tool" id="closeMonthBtn" data-permission-action="month-closures.manage" onclick="toggleMonthClose()" title="Cerrar mes"><span class="planning-tool-icon">▢</span><span class="planning-tool-label">Cerrar</span><span class="planning-tool-desktop">Cerrar mes</span></button>
           </div>
         </div>
       </div>
