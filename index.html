@@ -13328,7 +13328,7 @@ function renderAbsencePanel(){
         <div class="ab-who"><button class="worker-link" onclick="openWorkerDrawer('${item.employeeId}')">${escapeHtml(worker?.name||'Trabajador eliminado')}</button><small>${escapeHtml(worker?.role||worker?.area||'')}</small></div>
         <span class="ab-type">${escapeHtml(type)}</span>
         <div class="ab-per"><strong>${absenceShortDate(start)} → ${absenceShortDate(end)}</strong>${period}</div>
-        <div class="ab-cov">${coveragePill(item)}</div>
+        <div class="ab-cov" style="--c:var(--${coverage.pending===0?'green':coverage.covered>0?'yellow':'red'})">${coverage.total?`<strong>${coverage.covered}/${coverage.total} cubiertos</strong><div class="cbar"><i style="width:${coverage.percentage}%"></i></div>`:'<small>Sin turnos afectados</small>'}</div>
         <div class="ab-acts">
           ${coverage.total?`<button class="btn small ${urgent?'primary':''}" onclick="openAbsenceReplacementCenter('${item.id}')">${urgent?'Resolver cobertura':'Ver cobertura'}</button>`:''}
           <button class="icon-btn" onclick="deleteAbsence('${item.id}')">Eliminar</button>
