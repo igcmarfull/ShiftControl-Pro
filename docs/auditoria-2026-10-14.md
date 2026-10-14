@@ -173,21 +173,52 @@ en la base de datos requiere dividir `app_state` por área.
   eliminaron: la primera ya estaba resuelta y la segunda era incompatible con
   los valores `ESTACION`/`TIENDA`. La app interpreta `ESTACION` como isla.
 - Existen ya una jefatura activa de isla (`ESTACION`) y una de tienda.
-- Pendiente de aplicar: `20261014120000_evidence_storage.sql`.
+
+### Cambios aplicados en producción el 14-10-2026 (autorizados)
+
+- Evidencia: bucket privado `shiftcontrol-evidence` (fotos y PDF, 5 MB),
+  función `can_access_evidence_path` y policies de lectura y escritura
+  (`20261014013820`, `20261014013846`, `20261014013917`, `20261014013923`).
+  Verificado en producción: el administrador accede a Isla, Tienda y
+  facturas generales; la jefa de isla solo a Isla; la jefa de tienda solo a
+  Tienda; cuentas inactivas y otras empresas a nada.
+- `20261014013623`: se quitó el permiso de ejecución de
+  `handle_new_auth_user` a `anon` y `authenticated`. Verificado: el registro
+  sigue creando el perfil y el inicio de sesión de cada cuenta sigue
+  funcionando. El aviso del linter desapareció.
+- La membresía de la Jefa de Tienda se desactivó (`active = false`) porque la
+  app publicada no separa áreas y le daba lectura y escritura de todo
+  `app_state`. La cuenta, el perfil y los datos se conservan; para
+  reactivarla: `update public.company_memberships set active = true where
+  role = 'CHIEF' and area = 'TIENDA';`.
+- Datos verificados después de los cambios: 4 usuarios, 14 trabajadoras,
+  655 turnos, 29 asistencias y 3 facturas.
+
+### Pendiente antes de publicar
+
+- `app_state` sigue siendo un JSON por empresa que cualquier miembro activo
+  puede leer y escribir en Supabase. La separación por área y la aprobación de
+  facturas se aplican hoy en la app, no en la base de datos. Para que cada jefa
+  acceda solo a sus datos y solo el gerente apruebe facturas a nivel de
+  servidor, hay que dividir el almacenamiento por área y mover las
+  aprobaciones a una operación del servidor. No se inició por indicación del
+  propietario.
+- Activar la protección contra contraseñas filtradas en Supabase
+  (Authentication → Settings).
 
 Para activarla en producción, en este orden:
 
-1. Clasificar al personal con área "Isla" o "Tienda" desde «Trabajadores».
-2. Aplicar `20261014120000_evidence_storage.sql` (bucket privado de fotos
-   del checklist y respaldos de facturas). Las demás migraciones y la Edge
-   Function ya están en producción.
-3. Publicar la rama en Vercel (fusionar en `main`).
+1. Revisar y fusionar el pull request de esta rama en `main` (Vercel publica).
+2. Revisar la clasificación del personal en «Trabajadores» (hoy 13 con área
+   "Isla" y 1 con "TIENDA").
+3. Reactivar la Jefa de Tienda cuando se decida que la separación en la app es
+   suficiente, o después de implementar el aislamiento en la base de datos.
 
-Sin los pasos 2 y 3, la aplicación sigue funcionando como antes con una sola
-Jefa de Isla.
+Todas las migraciones y la Edge Function ya están en producción.
 
 ## Decisiones pendientes del propietario
 
-1. Autorizar la aplicación de `20261014120000_evidence_storage.sql` y la
-   publicación de la rama.
+1. Autorizar la publicación de la rama y decidir si el aislamiento de
+   `app_state` en la base de datos debe hacerse antes de reactivar a la Jefa
+   de Tienda.
 2. Autorizar la limpieza de datos incrustados en `index.html`.
