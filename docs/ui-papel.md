@@ -170,3 +170,14 @@ Verificación: pruebas en navegador con servidor simulado (claro/oscuro, escrito
 El resto es CSS en `src/ui-papel.css`: ítems como filas con el interruptor «Conforme / Con problema» (los mismos botones `setChecklistState`), aviso de incidencia vinculada (`createIncidentFromChecklist`), observaciones a todo el ancho, bloque de revisión y «Conexión inteligente». El bloque de evidencia de Tienda (`checklistDetailBlock`) no se tocó. En celular el historial sigue oculto como antes.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): responder ítems actualiza el anillo y el resumen, el selector cambia el área y vuelve, sin errores de consola. Con el checklist del día ya enviado los botones aparecen deshabilitados, igual que antes del cambio. No se probó el envío ni la revisión con una sesión real.
+
+## Entrega de turno (rediseño)
+
+`src/ui-handoff.js` (cargado tras `ui-checklist.js`) envuelve `window.renderHandoffs()`. El guardado sigue siendo `saveHandoff()` y los datos siguen en `HandoffModule`; no cambian los campos (`#handoffFrom`, `#handoffTo`, `#handoffNotes`, `#handoffDate`, `#handoffShift`).
+
+- **Cabecera:** selector segmentado Isla/Tienda (el `<select>` de área original queda oculto y sigue siendo la fuente de verdad) y selector segmentado de turno que escribe en `#handoffShift` y dispara su `change`. El «Hoy» global se mantiene.
+- **Antes de entregar** (solo lectura, para la fecha elegida): checklist enviado o pendiente (`opsChecklistStore`), incidencias abiertas (`IncidentModule`, no archivadas ni resueltas), asistencias sin confirmar (planificados sin ejecución) y cuadratura de caja registrada o no (`FinanceReconciliationModule`). Cada pieza se omite si su módulo no está disponible. «Agregar a observaciones» añade ese resumen al texto de `#handoffNotes`, sin enviar nada.
+- **Quién recibe:** sugerencias con el personal planificado en el turno siguiente al elegido (Mañana→B, Tarde→C, Noche→A del día siguiente), con el mismo origen que el relevo de Operación del día; un toque rellena «Recibe». «Entrega» se precarga una vez con el nombre de la sesión si está vacío.
+- **Historial:** línea de tiempo con fecha y turno como chips y observaciones recortadas con «Ver más»; mismo filtro por área (`opsRecordInArea`) y mismo orden que antes. Estado vacío con mensaje corto.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): el turno y el área cambian y actualizan sugerencias y pill, el resumen se agrega a las observaciones sin duplicarse, elegir una sugerencia rellena «Recibe» y guardar agrega la entrega al historial; sin errores de consola. No se probó con una sesión real de Jefa de Isla.
