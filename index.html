@@ -13754,12 +13754,6 @@ function adminInboxOpenPrimary(kind,id){
   if(kind==='absence')return adminInboxOpenOperational();
   return adminInboxOpenOperational();
 }
-function adminInboxToggleAll(){
-  const panel=document.getElementById('adminRoomAll');
-  if(!panel)return;
-  panel.hidden=!panel.hidden;
-  if(!panel.hidden)panel.scrollIntoView({behavior:'smooth',block:'start'});
-}
 function chiefHomeOpenToday(){
   showView('today');
   setTimeout(()=>{
@@ -13986,132 +13980,185 @@ function renderOperationalHome(){
     </div>
   `;
 }
+// Bandeja ADMIN: una sola lista, ordenada por urgencia, con lo que necesita una decisión del administrador.
+const adminInboxInv={items:null,fetchedAt:0,loading:false,sig:''};
+let adminInboxFilterKey='all';
+function adminInboxFilter(key){
+  adminInboxFilterKey=key;
+  document.querySelectorAll('#adminInboxRoot .abx-tabs button').forEach(button=>button.classList.toggle('on',button.dataset.cat===key));
+  document.querySelectorAll('#adminInboxRoot .abx-row').forEach(row=>{row.hidden=key!=='all'&&row.dataset.cat!==key});
+}
+function adminInboxLoadInventory(){
+  if(getAppRole()!=='admin'||adminInboxInv.loading||Date.now()-adminInboxInv.fetchedAt<60000)return;
+  const api=window.InventoryApi;
+  if(!api||typeof api.adjustments!=='function'||typeof api.context!=='function')return;
+  let context=null;
+  try{context=api.context()}catch(_){return}
+  if(!context?.companyId)return;
+  adminInboxInv.loading=true;
+  Promise.resolve().then(()=>api.adjustments(context.companyId,'pending'))
+    .then(list=>{adminInboxInv.items=Array.isArray(list)?list:[]})
+    .catch(()=>{adminInboxInv.items=null})
+    .finally(()=>{
+      adminInboxInv.loading=false;
+      adminInboxInv.fetchedAt=Date.now();
+      const sig=JSON.stringify((adminInboxInv.items||[]).map(item=>item.id));
+      if(sig!==adminInboxInv.sig){
+        adminInboxInv.sig=sig;
+        if(document.getElementById('admin-inbox')?.classList.contains('active'))renderAdminInbox();
+      }
+    });
+}
+function adminInboxClosureStatus(today){
+  const overdue=[];
+  const start=new Date(today+'T12:00:00');
+  for(let back=1;back<=14;back++){
+    const day=new Date(start);
+    day.setDate(day.getDate()-back);
+    const iso=`${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+    if(v14TodayRows(iso).length&&!window.DailyClosureModule?.isClosed?.(iso))overdue.push(iso);
+  }
+  return overdue;
+}
 function renderAdminInbox(){
   const root=document.getElementById('adminInboxRoot');
   if(!root)return;
   const snapshot=v14DailySnapshot();
-  const problematicChecklists=Object.values(v14ChecklistStore()).filter(item=>
+  const esc=v14Esc;
+  const jsArg=value=>JSON.stringify(String(value||'')).replace(/"/g,'&quot;');
+  const checklistStore=v14ChecklistStore();
+  const checklistEntries=Object.entries(checklistStore).filter(([,item])=>
     item.completed&&item.reviewStatus!=='reviewed'&&(
       Object.values(item.items||{}).includes('issue')||(item.notes||'').trim()
     )
   );
   const openIncidents=v14Incidents().filter(item=>!item.archived&&item.status!=='resolved');
   const pendingEvaluations=v14Evaluations().filter(item=>item.status==='submitted');
-  const highIncidents=openIncidents.filter(item=>item.priority==='Alta');
-  const critical=[
-    {kind:'checklist',title:'Revisión checklist diario',count:problematicChecklists.length,view:'checklists',detail:'Checklist enviado con observaciones',tone:'review',icon:'clipboard'},
-    {kind:'absence',title:'Ausencias sin reemplazo',count:snapshot.uncovered.length,view:'today',detail:'Cobertura pendiente en operación diaria',tone:'danger',icon:'exchange'},
-    {kind:'incident',title:'Incidencias abiertas',count:openIncidents.length,view:'incidents',detail:'Eventos operativos activos',tone:highIncidents.length?'danger':'warning',icon:'alert'},
-    {kind:'evaluation',title:'Evaluaciones pendientes de aprobación',count:pendingEvaluations.length,view:'evaluations',detail:'Requieren revisión administrativa',tone:'review',icon:'userCheck'}
-  ];
-  const totalPending=critical.reduce((sum,item)=>sum+item.count,0);
-  const requireAction=snapshot.uncovered.length+highIncidents.length;
-  const inReview=problematicChecklists.length+pendingEvaluations.length;
-  const audit=(v14State().audit||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
-  const activeCritical=critical.filter(item=>item.count>0);
-  const primaryCritical=activeCritical[0] || critical[0];
-  const icon={
-    clipboard:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
-    alert:'<svg viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4z"/><path d="M12 9v5M12 18h.01"/></svg>',
-    eye:'<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
-    check:'<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/><circle cx="12" cy="12" r="10"/></svg>',
-    clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
-    arrow:'<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
-    exchange:'<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/><path d="M18 7l-3 3M6 17l3-3"/></svg>',
-    userCheck:'<svg viewBox="0 0 24 24"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="4"/><path d="M16 11l2 2 4-5"/></svg>',
-    shield:'<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-5"/></svg>',
-    list:'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'
-  };
-  const operationalRows=[
-    {label:'Checklists',value:`${Object.values(v14ChecklistStore()).length} recibidos`,tone:'info',icon:'clipboard',view:'checklists'},
-    {label:'Incidencias',value:`${openIncidents.length} abiertas`,tone:openIncidents.length?'warning':'muted',icon:'alert',view:'incidents'},
-    {label:'Evaluaciones',value:`${pendingEvaluations.length} por revisar`,tone:pendingEvaluations.length?'review':'muted',icon:'userCheck',view:'evaluations'},
-    {label:'Reemplazos',value:snapshot.uncovered.length?'Pendiente':'Cubierto',tone:snapshot.uncovered.length?'warning':'success',icon:'exchange',view:'absences'},
-    {label:'Integridad',value:snapshot.pending.length?'En revisión':'Correcta',tone:snapshot.pending.length?'warning':'success',icon:'shield',view:'today'}
-  ];
-  const checklistEntries=Object.entries(v14ChecklistStore()).filter(([,item])=>
-    item.completed&&item.reviewStatus!=='reviewed'&&(
-      Object.values(item.items||{}).includes('issue')||(item.notes||'').trim()
-    )
-  );
   const storeFollowUpsOpen=storeChecklistFollowUps().filter(item=>item.status==='open');
   const invoicesToApprove=(window.InvoiceModule?.getAll?.()||[]).filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion');
-  const pendingItems=[
-    ...invoicesToApprove.map(inv=>({kind:'invoice',id:inv.id,title:`Factura por aprobar · ${inv.proveedor||'Proveedor'}`,detail:`${inv.numeroFactura||'Sin número'} · ${money(inv.montoTotal)} · ${inv.enviadaPor||'Jefa de Tienda'}`,action:'Revisar factura'})),
-    ...storeFollowUpsOpen.map(item=>({kind:'checklist',id:item.key,title:`Incumplimiento Tienda · ${item.title}`,detail:`${item.entry.date||'Sin fecha'} · ${item.detail.responsible||'Sin responsable'} · ${item.detail.note||'Sin observaciones'}`,action:'Revisar checklist'})),
-    ...checklistEntries.map(([key,item])=>({kind:'checklist',id:key,title:`Revisión checklist diario · ${opsAreaLabel(window.ShiftControlAreas?.checklistArea?.(key,item)||'ISLA')}`,detail:`${item.date||'Sin fecha'} · ${item.completedBy||'Jefa de Isla'}`,action:'Revisar checklist'})),
-    ...openIncidents.map(item=>({kind:'incident',id:item.id,title:item.title||'Incidencia abierta',detail:`${opsAreaLabel(window.ShiftControlAreas?.recordArea?.(item)||'ISLA')} · ${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,action:'Ver incidencias'})),
-    ...pendingEvaluations.map(item=>({kind:'evaluation',id:item.id,title:'Evaluaciones pendientes de aprobación',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.period||'Período'} · ${item.evaluator||'Sin evaluador'}`,action:'Revisar evaluaciones'})),
-    ...snapshot.uncovered.map(item=>({kind:'absence',id:item.id||item.employeeId,title:'Ausencia sin cobertura',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.date||snapshot.date} · ${item.status||'Ausencia'}`,action:'Ver operación'})),
-    ...snapshot.pending.map(row=>({kind:'absence',id:row.employee?.id,title:'Trabajador sin revisión',detail:`${row.employee?.name||'Trabajador'} · Turno ${row.plan?.code||'—'}`,action:'Ver operación'}))
-  ];
-  const jsArg=value=>JSON.stringify(String(value||''));
-  const viewOnclick=view=>`showView('${v14Esc(view)}')`;
+  const finance=financeStore();
+  const financePending=[
+    ...(finance.shortages||[]).map(row=>({...row,type:'shortage',label:'Faltante de caja',value:Math.abs(Number(row.amount||0))})),
+    ...(finance.reconciliations||[]).map(row=>({...row,type:'reconciliation',label:'Cuadratura con diferencia',value:Math.abs(Number(row.difference||0))})),
+    ...(finance.expenses||[]).map(row=>({...row,type:'expense',label:'Gasto operativo',value:Math.abs(Number(row.amount||0))}))
+  ].filter(row=>['Pendiente','En revisión'].includes(row.status));
+  const inventoryGroups=Object.values((adminInboxInv.items||[]).reduce((groups,item)=>{
+    const key=item.inventory_id||item.inventory||'inv';
+    (groups[key]=groups[key]||{name:item.inventory||'Inventario',count:0,by:item.requested_by_name||'',at:item.requested_at||''}).count++;
+    return groups;
+  },{}));
+  const overdueDays=adminInboxClosureStatus(isoToday);
+  const highIncidents=openIncidents.filter(item=>item.priority==='Alta');
+  const age=iso=>{
+    const day=String(iso||'').slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return 'Hoy';
+    const diff=Math.round((new Date(isoToday+'T12:00:00')-new Date(day+'T12:00:00'))/86400000);
+    return diff<=0?'Hoy':diff===1?'Hace 1 día':`Hace ${diff} días`;
+  };
+  const rows=[];
+  const add=row=>rows.push(row);
+  snapshot.uncovered.forEach(item=>add({cat:'ops',rank:0,tone:'red',icon:'alert',title:'Ausencia sin cobertura',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${fmt(item.date||snapshot.date)} · ${item.status||'Ausencia'}`,tag:'Urgente',actions:[{label:'Asignar',js:'adminInboxOpenOperational()',primary:true}]}));
+  highIncidents.forEach(item=>add({cat:'ops',rank:0,tone:'red',icon:'alert',title:item.title||'Incidencia abierta',detail:`${opsAreaLabel(window.ShiftControlAreas?.recordArea?.(item)||'ISLA')} · Prioridad alta · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,tag:'Urgente',actions:[{label:'Ver',js:`adminInboxOpenIncident(${jsArg(item.id)})`,primary:true}]}));
+  inventoryGroups.forEach(group=>add({cat:'inventory',rank:1,tone:'orange',icon:'box',title:`Ajustes de inventario por aprobar · ${group.name}`,detail:`${group.count} producto(s) con diferencia${group.by?' · pedido por '+group.by:''}`,tag:age(group.at),actions:[{label:'Revisar',js:"showView('inventory')",primary:true}]}));
+  invoicesToApprove.forEach(inv=>add({cat:'money',rank:1,tone:'orange',icon:'receipt',title:`Factura por aprobar · ${inv.proveedor||'Proveedor'}`,detail:[inv.numeroFactura?`Factura ${inv.numeroFactura}`:'Sin número',money(inv.montoTotal),inv.enviadaPor||'Jefa de Tienda'].join(' · '),tag:age(inv.enviadaAt||inv.createdAt||inv.fechaEmision),actions:[{label:'Ver',js:`showView('invoices');openInvoiceModal(${jsArg(inv.id)})`},{label:'Rechazar',js:`rejectInvoice(${jsArg(inv.id)})`},{label:'Aprobar',js:`approveInvoice(${jsArg(inv.id)})`,primary:true}]}));
+  financePending.forEach(row=>add({cat:'money',rank:1,tone:'orange',icon:'money',title:`${row.label} sin resolver`,detail:`${fmt(row.date)} · Turno ${row.shift||'—'} · ${money(row.value)} · ${row.status}`,tag:age(row.date),actions:[{label:'Revisar',js:`showView('finance');editFinanceEntry(${jsArg(row.type)},${jsArg(row.id)})`,primary:true}]}));
+  storeFollowUpsOpen.forEach(item=>add({cat:'ops',rank:2,tone:'yellow',icon:'list',title:`Incumplimiento Tienda · ${item.title}`,detail:`${fmt(item.entry.date)} · ${item.detail.responsible||'Sin responsable'} · ${item.detail.note||'Sin observaciones'}`,tag:age(item.entry.date),actions:[{label:'Ver checklist',js:`adminInboxOpenChecklist(${jsArg(item.key)})`},{label:'Marcar resuelto',js:`resolveChecklistFollowUp(${jsArg(item.key)},${jsArg(item.id)})`,primary:true}]}));
+  checklistEntries.forEach(([key,item])=>add({cat:'ops',rank:2,tone:'yellow',icon:'list',title:`Revisión checklist diario · ${opsAreaLabel(window.ShiftControlAreas?.checklistArea?.(key,item)||'ISLA')}`,detail:`${fmt(item.date)} · ${item.completedBy||'Jefa de Isla'} · con observaciones`,tag:age(item.date),actions:[{label:'Revisar',js:`adminInboxOpenChecklist(${jsArg(key)})`,primary:true}]}));
+  pendingEvaluations.forEach(item=>add({cat:'people',rank:3,tone:'blue',icon:'userCheck',title:'Evaluación pendiente de aprobación',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.period||'Período'} · ${item.evaluator||'Sin evaluador'}`,tag:age(item.submittedAt||item.updatedAt||item.createdAt),actions:[{label:'Revisar',js:'adminInboxOpenEvaluation()',primary:true}]}));
+  openIncidents.filter(item=>item.priority!=='Alta').forEach(item=>add({cat:'ops',rank:3,tone:'blue',icon:'alert',title:item.title||'Incidencia abierta',detail:`${opsAreaLabel(window.ShiftControlAreas?.recordArea?.(item)||'ISLA')} · ${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,tag:age(item.createdAt),actions:[{label:'Ver',js:`adminInboxOpenIncident(${jsArg(item.id)})`,primary:true}]}));
+  if(snapshot.pending.length)add({cat:'ops',rank:3,tone:'blue',icon:'clock',title:`${snapshot.pending.length} trabajador(es) sin revisión hoy`,detail:`Turnos planificados del ${fmt(snapshot.date)} sin registro de asistencia`,tag:'Hoy',actions:[{label:'Ver operación',js:'adminInboxOpenOperational()',primary:true}]});
+  rows.sort((a,b)=>a.rank-b.rank);
+  const urgent=rows.filter(row=>row.rank===0).length;
+  const invoiceTotal=invoicesToApprove.reduce((sum,inv)=>sum+Number(inv.montoTotal||0),0);
+  const moneyOf=type=>financePending.filter(row=>row.type===type).reduce((sum,row)=>sum+row.value,0);
+  const moneyTotal=invoiceTotal+financePending.reduce((sum,row)=>sum+row.value,0);
+  const cats=[['all','Todo',rows.length],['inventory','Inventarios',rows.filter(r=>r.cat==='inventory').length],['money','Dinero',rows.filter(r=>r.cat==='money').length],['ops','Operación',rows.filter(r=>r.cat==='ops').length],['people','Personas',rows.filter(r=>r.cat==='people').length]];
+  if(!cats.some(([key])=>key===adminInboxFilterKey))adminInboxFilterKey='all';
+  const tomorrowDate=new Date(isoToday+'T12:00:00');
+  tomorrowDate.setDate(tomorrowDate.getDate()+1);
+  const tomorrow=`${tomorrowDate.getFullYear()}-${String(tomorrowDate.getMonth()+1).padStart(2,'0')}-${String(tomorrowDate.getDate()).padStart(2,'0')}`;
+  const plannedTomorrow=v14TodayRows(tomorrow).length;
+  const period=isoToday.slice(0,7);
+  const monthClosed=!!window.MonthClosureModule?.isClosed?.(period);
+  const daysLeft=new Date(Number(period.slice(0,4)),Number(period.slice(5,7)),0).getDate()-Number(isoToday.slice(8,10));
+  const audit=(v14State().audit||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
+  const icon={
+    clipboard:'<path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/>',
+    alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+    box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>',
+    receipt:'<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    money:'<path d="M12 2v20"/><path d="M17 6.5C16 5 14.3 4.5 12 4.5c-2.8 0-4.5 1.2-4.5 3.2 0 4.8 9.5 2.3 9.5 7.1 0 2-1.8 3.4-5 3.4-2.4 0-4.2-.7-5.3-2.3"/>',
+    list:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+    userCheck:'<path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="4"/><path d="M16 11l2 2 4-5"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    inbox:'<path d="M3 13l3-8h12l3 8"/><path d="M3 13v6h18v-6h-5l-1 3H9l-1-3z"/>'
+  };
+  const svg=name=>`<svg viewBox="0 0 24 24" aria-hidden="true">${icon[name]||icon.list}</svg>`;
+  const kpi=(tone,iconName,value,label,note)=>`<article class="abx-kpi" style="--c:var(--${tone})"><span class="abx-ic">${svg(iconName)}</span><div><b>${esc(value)}</b><span>${esc(label)}</span><small>${esc(note)}</small></div></article>`;
+  const shown=rows.slice(0,40);
+  const rowHtml=row=>`<div class="abx-row" data-cat="${row.cat}" style="--c:var(--${row.tone})"${adminInboxFilterKey!=='all'&&row.cat!==adminInboxFilterKey?' hidden':''}><span class="abx-ic">${svg(row.icon)}</span><div class="abx-txt"><strong>${esc(row.title)}</strong><small>${esc(row.detail)}</small></div><span class="abx-tag">${esc(row.tag)}</span><div class="abx-acts">${row.actions.map(action=>`<button type="button" class="${action.primary?'pri':''}" onclick="${action.js}">${esc(action.label)}</button>`).join('')}</div></div>`;
+  const line=(label,value,extra)=>`<div class="abx-line"><span>${esc(label)}</span><div class="abx-val"><b>${esc(value)}</b>${extra||''}</div></div>`;
   root.innerHTML=`
     ${v14PastDateNotice(snapshot.date)}
-    <div class="admin-room">
-      <section class="admin-room-header">
-        <div>
-          <h3>Bandeja ADMIN</h3>
+    <div class="abx">
+      <header class="abx-head">
+        <div><h3>Bandeja ADMIN</h3><p>Lo que necesita una decisión tuya, ordenado por urgencia.</p></div>
+        <div class="abx-chips">
+          <div class="abx-chip">${fmt(snapshot.date)} <small>${esc(v14CurrentShift())}</small></div>
+          <div class="abx-chip ${urgent?'warn':''}"><i></i>${urgent?'Requiere atención':'Todo al día'}</div>
         </div>
-        <div class="admin-room-status">
-          <div><span>${icon.clock}</span><strong>${fmt(snapshot.date)}</strong><small>${v14Esc(v14CurrentShift())}</small></div>
-          <div class="stable"><span>${icon.check}</span><strong>Operación estable</strong><small>Sincronización visual</small></div>
-        </div>
+      </header>
+      <section class="abx-kpis" aria-label="Resumen administrativo">
+        ${kpi('blue','inbox',rows.length,'Por decidir','Elementos en tu bandeja')}
+        ${kpi(urgent?'red':'green','alert',urgent,'Urgentes',urgent?'Atención hoy':'Nada urgente')}
+        ${kpi('orange','money',money(moneyTotal),'Dinero pendiente','Facturas y finanzas')}
+        ${kpi(overdueDays.length?'purple':'green','cal',overdueDays.length,'Cierres atrasados',overdueDays.length?'Días anteriores sin cerrar':'Jornadas al día')}
       </section>
-
-      <section class="admin-room-metrics" aria-label="Resumen administrativo">
-        <article class="info"><span>${icon.clipboard}</span><strong>${totalPending}</strong><div><b>Pendientes</b><small>Elementos por resolver</small></div></article>
-        <article class="${requireAction?'danger':'info'}"><span>${icon.alert}</span><strong>${requireAction}</strong><div><b>Requieren acción</b><small>Atención inmediata</small></div></article>
-        <article class="review"><span>${icon.eye}</span><strong>${inReview}</strong><div><b>En revisión</b><small>Pendientes de revisión</small></div></article>
-      </section>
-
-      <section class="admin-room-main">
-        <article class="admin-room-panel admin-room-critical">
-          <div class="admin-room-panel-head"><h4>Requiere atención</h4><span>${activeCritical.length||0}</span></div>
-          <button type="button" class="admin-room-focus ${primaryCritical.count?'active '+primaryCritical.tone:''}" onclick="${viewOnclick(primaryCritical.view)}">
-            <span class="admin-room-focus-icon">${icon[primaryCritical.icon]||icon.alert}</span>
-            <div>
-              <strong>${v14Esc(primaryCritical.title)}</strong>
-              <p>${v14Esc(primaryCritical.detail)}</p>
-              <small>${primaryCritical.count?primaryCritical.count+' elemento(s) detectado(s)':'Sin acciones críticas abiertas'}</small>
-            </div>
-            <time>${primaryCritical.count?(primaryCritical.kind==='checklist'?'Revisar checklist':primaryCritical.kind==='incident'?'Ver incidencias':primaryCritical.kind==='evaluation'?'Revisar evaluaciones':'Ver operación'):'Al día'}</time>
-          </button>
-          <div class="admin-room-pending-list">
-            ${critical.map(item=>`<button type="button" class="${item.count?'needs-review '+item.tone:''}" onclick="${viewOnclick(item.view)}"><span>${icon[item.icon]||icon.list}</span><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(item.detail)}</small></div><b>${item.count}</b></button>`).join('')}
+      <div class="abx-main">
+        <div class="abx-left">
+        <section class="abx-panel abx-decide">
+          <div class="abx-ph"><h4>Requiere tu decisión</h4><span>${rows.length} pendiente${rows.length===1?'':'s'}</span></div>
+          ${rows.length?`
+          <div class="abx-tabs">${cats.map(([key,label,count])=>`<button type="button" data-cat="${key}" class="${adminInboxFilterKey===key?'on':''}" onclick="adminInboxFilter('${key}')">${label}<em>${count}</em></button>`).join('')}</div>
+          <div class="abx-list">${shown.map(rowHtml).join('')}</div>
+          ${rows.length>shown.length?`<p class="abx-more">Se muestran los ${shown.length} más urgentes de ${rows.length}.</p>`:''}`
+          :`<div class="abx-empty"><span class="abx-ic" style="--c:var(--green)">${svg('userCheck')}</span><strong>Todo al día</strong><small>No hay nada pendiente de tu decisión.</small></div>`}
+        </section>
+        <section class="abx-panel abx-activity">
+          <div class="abx-ph"><h4>Actividad reciente</h4><button type="button" class="abx-link" onclick="showView('audit')">Ver historial</button></div>
+          <div class="abx-feed">
+            ${audit.length?audit.map(item=>`<button type="button" onclick="showView('audit')"><time>${item.date?new Date(item.date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'--:--'}</time><i></i><div><strong>${esc(item.action||'Actividad')}</strong><small>${item.date?new Date(item.date).toLocaleDateString('es-CL'):'Sin fecha'}</small></div></button>`).join(''):'<div class="ops-empty">No hay actividad reciente registrada.</div>'}
           </div>
-          <button type="button" class="admin-room-link" onclick="adminInboxToggleAll()"><span>Ver todos los pendientes (${pendingItems.length})</span>${icon.arrow}</button>
-        </article>
-
-        <article class="admin-room-panel admin-room-operational">
-          <div class="admin-room-panel-head"><h4>Estado operacional</h4><span>${fmt(snapshot.date)}</span></div>
-          <div class="admin-room-ops-list">
-            ${operationalRows.map(item=>`<button type="button" class="${item.tone}" onclick="${viewOnclick(item.view)}"><span>${icon[item.icon]||icon.list}</span><strong>${v14Esc(item.label)}</strong><b>${v14Esc(item.value)}</b></button>`).join('')}
-          </div>
-          <button type="button" class="admin-room-link" onclick="showView('today')"><span>Ir a revisión operacional</span>${icon.arrow}</button>
-        </article>
-      </section>
-
-      <section id="adminRoomAll" class="admin-room-panel admin-room-all" hidden>
-        <div class="admin-room-panel-head"><h4>Pendientes administrativos</h4><span>${pendingItems.length}</span></div>
-        <div class="admin-room-all-list">
-          ${pendingItems.length?pendingItems.map(item=>`<article><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(item.detail)}</small></div><button type="button" onclick="${viewOnclick(item.kind==='checklist'?'checklists':item.kind==='evaluation'?'evaluations':item.kind==='incident'?'incidents':'today')}">${v14Esc(item.action)}</button></article>`).join(''):'<div class="ops-empty">No hay pendientes administrativos.</div>'}
+        </section>
         </div>
-      </section>
-
-      ${invoiceApprovalSection()}
-      ${storeChecklistFollowUpSection()}
-
-      <section class="admin-room-panel admin-room-activity">
-        <div class="admin-room-panel-head"><h4>Actividad reciente</h4><span>${audit.length}</span></div>
-        <div class="admin-room-timeline">
-          ${audit.length?audit.map(item=>`<button type="button" onclick="showView('audit')"><time>${item.date?new Date(item.date).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'--:--'}</time><span></span><div><strong>${v14Esc(item.action||'Actividad')}</strong><small>${item.date?new Date(item.date).toLocaleDateString('es-CL'):'Sin fecha'}</small></div></button>`).join(''):'<div class="ops-empty">No hay actividad reciente registrada.</div>'}
-        </div>
-        <button type="button" class="admin-room-link" onclick="showView('audit')"><span>Ver toda la actividad</span>${icon.arrow}</button>
-      </section>
+        <aside class="abx-side">
+          <section class="abx-panel">
+            <div class="abx-ph"><h4>Dinero pendiente</h4><button type="button" class="abx-link" onclick="showView('finance')">Ver finanzas</button></div>
+            <div class="abx-big">${esc(money(moneyTotal))}<small>por resolver</small></div>
+            ${line('Facturas por aprobar',money(invoiceTotal),`<em>${invoicesToApprove.length}</em>`)}
+            ${line('Faltantes de caja',money(moneyOf('shortage')),`<em>${financePending.filter(r=>r.type==='shortage').length}</em>`)}
+            ${line('Cuadraturas con diferencia',money(moneyOf('reconciliation')),`<em>${financePending.filter(r=>r.type==='reconciliation').length}</em>`)}
+            ${line('Gastos por revisar',money(moneyOf('expense')),`<em>${financePending.filter(r=>r.type==='expense').length}</em>`)}
+          </section>
+          <section class="abx-panel">
+            <div class="abx-ph"><h4>Cierres</h4><span>${esc(period)}</span></div>
+            ${overdueDays.length?overdueDays.slice(0,4).map(day=>`<div class="abx-line"><span>${esc(fmt(day))}<small>Sin cierre de jornada</small></span><b class="warn">Atrasado</b></div>`).join(''):'<div class="abx-line"><span>Jornadas anteriores<small>Todas cerradas</small></span><b class="ok">Al día</b></div>'}
+            ${overdueDays.length>4?`<p class="abx-more">y ${overdueDays.length-4} día(s) más</p>`:''}
+            <div class="abx-line"><span>Hoy ${esc(fmt(isoToday))}<small>${window.DailyClosureModule?.isClosed?.(isoToday)?'Jornada cerrada':'Jornada abierta'}</small></span><b class="${window.DailyClosureModule?.isClosed?.(isoToday)?'ok':''}">${window.DailyClosureModule?.isClosed?.(isoToday)?'Cerrada':'En curso'}</b></div>
+            <div class="abx-line"><span>Cierre de mes<small>${monthClosed?'Mes cerrado':`Faltan ${daysLeft} día(s)`}</small></span><b class="${monthClosed?'ok':''}">${monthClosed?'Cerrado':'Abierto'}</b></div>
+            <button type="button" class="abx-link block" onclick="showView('daily-summary')">Ir al cierre del día</button>
+          </section>
+          <section class="abx-panel">
+            <div class="abx-ph"><h4>Mañana</h4><span>${esc(fmt(tomorrow))}</span></div>
+            ${line('Turnos planificados',String(plannedTomorrow))}
+            <button type="button" class="abx-link block" onclick="showView('planning')">Abrir planificación</button>
+          </section>
+        </aside>
+      </div>
     </div>
   `;
+  adminInboxLoadInventory();
 }
 function renderDailySummary(){
   const root=document.getElementById('dailySummaryRoot');

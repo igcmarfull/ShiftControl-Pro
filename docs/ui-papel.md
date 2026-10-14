@@ -23,3 +23,22 @@ Capturas con Chromium (Playwright) y Supabase simulado en claro/oscuro, escritor
 
 - Los tres perfiles con datos reales de producción (las pruebas usaron datos simulados).
 - Pantallas no capturadas (evaluaciones, reportes, facturas, etc.) heredan los tokens, pero no se revisaron una a una.
+
+## Bandeja ADMIN (rediseño)
+
+`renderAdminInbox()` (en `index.html`) muestra una sola lista «Requiere tu decisión», ordenada por urgencia, con botones de acción por fila y filtros por categoría (Todo, Inventarios, Dinero, Operación, Personas). Estilos `.abx-*` en `src/ui-papel.css`.
+
+Fuentes de datos (todas ya existentes; no se agregó ninguna entidad ni tabla):
+
+- Ausencias sin cobertura de hoy e incidencias de prioridad alta (urgentes), otras incidencias abiertas y trabajadores sin revisión hoy: `v14DailySnapshot()` y módulo de incidencias.
+- Facturas por aprobar: `InvoiceModule` (`aprobacion === 'pendiente_aprobacion'`). Los botones Aprobar/Rechazar usan `approveInvoice` / `rejectInvoice`.
+- Faltantes de caja, cuadraturas y gastos con estado «Pendiente» o «En revisión»: `financeStore()`.
+- Incumplimientos de checklist de Tienda y checklists con observaciones: igual que antes.
+- Evaluaciones enviadas: `EvaluationModule`.
+- Ajustes de inventario pendientes: `InventoryApi.adjustments(companyId,'pending')`, agrupados por inventario. Se consulta de forma asíncrona (máx. una vez por minuto); si el servidor no tiene Inventarios habilitados o falla, simplemente no aparece esa fila.
+- Cierres atrasados: días de los últimos 14 con turnos planificados y sin cierre de jornada (`DailyClosureModule`), más el estado del mes (`MonthClosureModule`).
+
+No se muestran depósitos: el módulo no expone un estado de «sin arquear» verificable.
+La tarjeta de estado superior pasó a ser «Requiere atención» / «Todo al día» según haya urgentes (antes decía siempre «Operación estable»).
+
+Verificación: capturas con datos simulados en claro/oscuro, escritorio y celular, y prueba de filtros y de «Aprobar factura». Sin datos reales de producción: conviene revisar que «Cierres atrasados» tenga sentido con el uso real de los cierres.
