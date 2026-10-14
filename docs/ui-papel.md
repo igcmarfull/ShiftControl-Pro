@@ -162,3 +162,11 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 - Reversión: `drop function public.update_chief_contact(text,text,text); alter table public.company_memberships drop column contact_email, drop column contact_phone;`
 
 Verificación: pruebas en navegador con servidor simulado (claro/oscuro, escritorio y celular): las tarjetas muestran contacto, «Editar contacto» guarda y actualiza los enlaces `mailto:`/`tel:`, y el formulario de asignar guarda correo y teléfono. Se comprobó en Supabase que las columnas existen y que `anon` no puede ejecutar la función (`authenticated` sí). No se probó con una sesión real de administrador.
+
+## Checklist operativo (solo presentación)
+
+`src/ui-checklist.js` (cargado tras `ui-executive.js`) envuelve `window.renderOpsChecklist()` y añade, sin cambiar datos ni funciones: el anillo de avance, el resumen «N de M ítems respondidos · k con problema» y un selector segmentado Isla/Tienda para el administrador. El `<select class="ops-area-select">` original queda oculto pero sigue siendo la fuente de verdad (los botones llaman a `setOpsAdminArea()`). Se oculta el botón «Hoy» global duplicado; el de la propia pantalla (que fija `checklistDate`) se mantiene.
+
+El resto es CSS en `src/ui-papel.css`: ítems como filas con el interruptor «Conforme / Con problema» (los mismos botones `setChecklistState`), aviso de incidencia vinculada (`createIncidentFromChecklist`), observaciones a todo el ancho, bloque de revisión y «Conexión inteligente». El bloque de evidencia de Tienda (`checklistDetailBlock`) no se tocó. En celular el historial sigue oculto como antes.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): responder ítems actualiza el anillo y el resumen, el selector cambia el área y vuelve, sin errores de consola. Con el checklist del día ya enviado los botones aparecen deshabilitados, igual que antes del cambio. No se probó el envío ni la revisión con una sesión real.
