@@ -92,3 +92,14 @@ Verificación: pruebas en navegador con datos simulados (administrador y Jefa de
 - El texto del adjunto ahora dice «Por ahora solo se guarda el nombre del archivo.»
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): pestañas, búsqueda con foco conservado, filtro de prioridad, abrir/cerrar el panel, guardado, cambio de estado. Sin pruebas con datos reales.
+
+## Operación del día (rediseño, escritorio)
+
+`renderToday()` sigue siendo el renderizador. `src/ui-today.js` (IIFE, se carga después de `ui-workcenter.js`) envuelve `window.renderToday` y, después de cada render, dibuja dos bloques extra; no cambia ninguna regla de asistencia. Estilos `.od-*` en `src/ui-papel.css`. El celular (< 768 px) no cambia.
+
+- **Arriba (`#odTop`):** anillo de confirmados (planificados con registro de asistencia), seis cifras (planificados, presentes, atrasos, ausentes, licencias, sin confirmar), franja de alerta (usa el texto de `#todayProblems`) y cobertura por turno A/B/C con color según el estado (verde completo, ámbar parcial, rojo sin cubrir). Las tarjetas y el cuadro «Problemas» originales se ocultan en escritorio pero siguen en el DOM (los ids se conservan).
+- **Tablero de turnos:** mismo contenido y acciones (`quickPresent`, `openTodayExceptions`, `markPendingPresent`); se agregó avatar con iniciales, «Reiniciar día» pasó a un menú «⋯» (`clearTodayExecutions`, que ya pedía confirmación) y se quitó la franja inferior de totales, que ahora está en la cabecera. Se eliminó el cartel de demo de esta pantalla.
+- **Abajo (`#odLow`):** asistencia de los últimos 7 días (presentes sobre planificados por día, hasta la fecha elegida; un día sin turnos planificados se muestra con «—»), excepciones y reemplazos del día (incluye los pendientes) y relevo del siguiente turno (solo si la fecha elegida es hoy; horario desde `settings.A/B/C`).
+- La app no guarda la hora de llegada, por eso no hay línea de tiempo de llegadas.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): confirmar a un trabajador actualiza el resumen, el menú «⋯» ofrece «Reiniciar día» y, al aceptarlo, los registros del día se borran. Sin pruebas con datos reales.

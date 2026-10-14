@@ -6001,7 +6001,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
       </div>
 
-      <div class="demo-banner"><strong>Demo realista · junio 2026:</strong> el mes incluye atrasos, inasistencias, licencias médicas, vacaciones, permisos, reemplazos y jornadas adicionales. Los domingos se muestran únicamente dentro de la asistencia diaria, sin un módulo separado.</div>
+      <div id="odTop" class="od-top"></div>
+
       <div class="cards">
         <div class="card">
           <div class="metric-label">Planificados</div>
@@ -6051,6 +6052,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
       <div id="todayMobileShiftView" class="today-mobile-shifts" aria-live="polite"></div>
       <div id="todayDesktopShiftView" class="today-desktop-shifts" aria-live="polite"></div>
+      <div id="odLow" class="od-low"></div>
 
       <div class="card today-legacy-card">
         <div class="panel-head">
@@ -9702,14 +9704,6 @@ function renderTodayDesktopShiftView(date,rows,execs){
     groups[code].push(row);
   });
 
-  const totals={
-    total:rows.length,
-    present:execs.filter(e=>e.status==='Presente').length,
-    late:execs.filter(e=>e.status==='Atrasado').length,
-    absent:execs.filter(e=>e.status==='Ausente').length,
-    leave:execs.filter(e=>['Licencia','Vacaciones','Permiso'].includes(e.status)).length,
-    replacements:execs.filter(e=>e.replacementId).length
-  };
 
   const cards=shiftOrder.filter(code=>groups[code]?.length).map(code=>{
     const people=groups[code];
@@ -9747,7 +9741,9 @@ function renderTodayDesktopShiftView(date,rows,execs){
             <button class="today-desktop-action exception" onclick="openTodayExceptions('${emp.id}')" title="Registrar excepción" aria-label="Registrar excepción para ${emp.name}">!</button>
           </div>`;
 
+      const initials=String(emp.name||'?').trim().split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase();
       return `<div class="today-desktop-person">
+        <span class="today-desktop-avatar" aria-hidden="true">${initials}</span>
         <div class="today-desktop-person-info">
           <button class="worker-link" onclick="openWorkerDrawer('${emp.id}')">${emp.name}</button>
           <span class="today-desktop-status ${statusClass}">${statusText}</span>
@@ -9776,18 +9772,10 @@ function renderTodayDesktopShiftView(date,rows,execs){
       </div>
       <div class="today-desktop-summary-actions">
         <button class="btn small" onclick="markPendingPresent()">Marcar pendientes presentes</button>
-        <button class="btn small danger" onclick="clearTodayExecutions()">Reiniciar día</button>
+        <details class="today-more"><summary class="btn small" aria-label="Más acciones">⋯</summary><div class="today-more-menu"><button type="button" class="danger" onclick="this.closest('details').removeAttribute('open');clearTodayExecutions()">Reiniciar día</button></div></details>
       </div>
     </section>
-    <div class="today-desktop-shift-grid">${cards||'<div class="notice">No hay trabajadores planificados para esta fecha.</div>'}</div>
-    <section class="today-desktop-totals">
-      <span><b>${totals.total}</b> Total</span>
-      <span class="ok"><b>${totals.present}</b> Presentes</span>
-      <span class="late"><b>${totals.late}</b> Atrasos</span>
-      <span class="bad"><b>${totals.absent}</b> Ausentes</span>
-      <span class="leave"><b>${totals.leave}</b> Licencias / permisos</span>
-      <span class="replacement"><b>${totals.replacements}</b> Reemplazos</span>
-    </section>`;
+    <div class="today-desktop-shift-grid">${cards||'<div class="notice">No hay trabajadores planificados para esta fecha.</div>'}</div>`;
 }
 
 function toggleTodayShiftGroup(detailsEl){
@@ -17955,6 +17943,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/ui-papel.js"></script>
 <script src="src/ui-workcenter.js"></script>
+<script src="src/ui-today.js"></script>
 <script src="src/storage.js"></script>
 
 <script src="src/app/state.js"></script>
