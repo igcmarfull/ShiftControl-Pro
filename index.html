@@ -4769,6 +4769,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 </style>
 
 <link rel="stylesheet" href="src/v20-interface.css?v=20260727-payment-mobile-fix">
+<link rel="stylesheet" href="src/modules/inventory/inventory.css">
 
 
 <style id="v35-reportes-impresion-profesional">
@@ -5880,6 +5881,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
   <div class="nav-group">
     <div class="nav-group-title">Tienda</div>
     <button class="nav-btn role-admin-visible" data-view="invoices"><span>🧾</span>Facturas y compras</button>
+    <button class="nav-btn role-admin-visible role-chief-visible" data-view="inventory"><span>▦</span>Inventarios</button>
   </div>
 </nav>
 
@@ -6460,6 +6462,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
       </div>
     </section>
+
+    <section id="inventory" class="view"><div id="inventoryRoot"></div></section>
 
     <section id="invoices" class="view">
       <div class="topbar">
@@ -17786,6 +17790,8 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/auth.js"></script>
 <script src="src/app/permissions.js"></script>
 <script src="src/app/areas.js"></script>
+<script src="src/modules/inventory/inventory-api.js"></script>
+<script src="src/modules/inventory/inventory.js"></script>
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/storage.js"></script>
 

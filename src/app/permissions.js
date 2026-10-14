@@ -21,7 +21,8 @@
         'employees',
         'evaluations',
         'reports',
-        'additional'
+        'additional',
+        'inventory'
       ]),
       actions:Object.freeze([
         'attendance.manage',
@@ -55,7 +56,8 @@
         'evaluations',
         'reports',
         'additional',
-        'invoices'
+        'invoices',
+        'inventory'
       ]),
       actions:Object.freeze([
         'attendance.manage',
