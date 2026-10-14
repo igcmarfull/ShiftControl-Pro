@@ -37,7 +37,7 @@ Solo se afecta a quien no sea administrador y acceda directo a `app_state`.
 | Script | Dónde | Qué comprueba |
 | --- | --- | --- |
 | `supabase/tests/fase2_local.sql` | Base local desechable, con datos ficticios | Administrador con acceso completo y aislado de otras empresas; jefa de isla sin select, update, insert ni delete directos; sus funciones por área (recorte, guardar sin cambios idéntico, turno propio aceptado, turno de tienda rechazado, factura nunca autoaprobada, versión vieja rechazada con `40001`); jefa de tienda inactiva sin acceso; jefa de tienda reactivada solo con su área; anónimos y otra empresa sin acceso; policies exactas. |
-| `supabase/tests/fase2_produccion.sql` | Producción, con datos reales | Lo mismo sobre los usuarios reales, imprimiendo solo conteos. Todo termina en `ROLLBACK`. Se ejecuta con `'abierto'` antes de la fase 2 y con `'bloqueado'` después. |
+| `supabase/tests/fase2_produccion.sql` | Producción, con datos reales | Lo mismo sobre los usuarios reales, imprimiendo solo conteos. Es un único bloque `DO` que siempre termina en una excepción con el informe (`VERIFICACIÓN OK` o `VERIFICACIÓN FALLÓ`), lo que deshace de forma atómica cualquier escritura de prueba y funciona aunque la herramienta no muestre los `NOTICE`. Se ejecuta con `'abierto'` antes de la fase 2 y con `'bloqueado'` después (variable `v_esperado`). |
 
 Resultado de la preparación (base local con todas las migraciones, PostgreSQL 16):
 
@@ -47,8 +47,14 @@ Resultado de la preparación (base local con todas las migraciones, PostgreSQL 1
 - `fase2_produccion.sql` sobre datos ficticios con la forma de producción:
   pasa con `abierto` en fase 1 y con `bloqueado` en fase 2, y falla con la
   combinación contraria. También pasa con la Jefa de Tienda activa.
-- `fase2_produccion.sql` **no se ejecutó contra producción** (incluye un guardado
-  sin cambios que el `ROLLBACK` deshace, y no hubo autorización para escribir).
+- `fase2_produccion.sql` se ejecutó contra producción con `'abierto'` el
+  14-10-2026, antes de la fase 2, con resultado `VERIFICACIÓN OK` (administrador:
+  14 trabajadores, 673 turnos, 3 facturas; Jefa de Isla: 13 trabajadoras y
+  666 turnos por la función, 0 depósitos y 0 historial; guardar sin cambios deja
+  el estado idéntico). Se comprobó después que `app_state` quedó idéntico al
+  respaldo. Un primer intento falló por un error del propio guion (con
+  `'abierto'` la inserción directa crea una fila extra y la comparación no
+  filtraba por clave), no de la aplicación; está corregido y validado en local.
 
 Para repetir en local, con una base desechable: crear un esquema mínimo
 compatible con Supabase (`auth.users`, `auth.uid()`, roles `anon` y

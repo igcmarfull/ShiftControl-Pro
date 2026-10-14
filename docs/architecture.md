@@ -210,8 +210,8 @@ El valor publicable de Supabase está en código cliente. Debe tratarse según e
   así que la base no se puede reconstruir desde cero solo con este directorio.
 - `supabase/functions/assign-chief/`: Edge Function desplegada.
 - `supabase/tests/`: scripts SQL manuales para la fase 2 (`fase2_local.sql` sobre
-  una base local desechable y `fase2_produccion.sql` de solo verificación con
-  `ROLLBACK`). No son una suite automatizada ni se ejecutan en CI.
+  una base local desechable y `fase2_produccion.sql` de solo verificación, que
+  deshace todo lo que escribe). No son una suite automatizada ni se ejecutan en CI.
 - `supabase/rollback/`: reversión manual de la fase 2. No es una migración y no
   debe colocarse en `supabase/migrations/`.
 

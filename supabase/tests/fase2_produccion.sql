@@ -1,177 +1,176 @@
 -- Verificación de la fase 2 sobre los datos REALES, sin dejar cambios.
 --
--- Todo ocurre en una transacción que termina en ROLLBACK. Solo imprime
--- conteos y resultados (PASS/FAIL), nunca nombres, correos ni contenido.
--- La única escritura es un guardado sin cambios de la Jefa de Isla (y de la
--- Jefa de Tienda si está activa), que el ROLLBACK deshace.
+-- Es UN SOLO bloque DO que termina siempre en una excepción con el informe
+-- completo: PostgreSQL deshace de forma atómica todo lo que el bloque haya
+-- escrito, así que no puede quedar ningún cambio ni una transacción abierta.
+-- Funciona igual desde psql y desde herramientas que no muestran los NOTICE.
+-- Solo informa conteos y resultados; nunca nombres, correos ni contenido.
 --
--- Cuándo ejecutarlo:
---   1. ANTES de aplicar la fase 2, con 'abierto' (estado actual): confirma que
---      la app sigue funcionando por las funciones por área y muestra el
---      acceso directo que la fase 2 cerrará.
---   2. DESPUÉS de aplicarla, con 'bloqueado': exige que las jefaturas no lean
---      ni escriban app_state directo y que sus funciones sigan funcionando.
+-- La única escritura es un guardado sin cambios (y una actualización vacía) de
+-- cada jefa activa, que la excepción final deshace.
 --
--- Cambiar el valor de la línea siguiente según el caso.
-begin;
-select set_config('sc.esperado', 'bloqueado', true);   -- 'abierto' | 'bloqueado'
+-- Resultado: el mensaje de error empieza con
+--   'VERIFICACIÓN OK'     -> todas las comprobaciones pasaron;
+--   'VERIFICACIÓN FALLÓ'  -> la primera comprobación que falló, con su detalle.
+--
+-- Cuándo ejecutarlo (cambiar v_esperado en la línea indicada):
+--   1. ANTES de la fase 2, con 'abierto' (estado actual).
+--   2. DESPUÉS de aplicarla, con 'bloqueado'.
+--
+-- Nota: con 'abierto' la prueba de inserción directa SÍ crea una fila extra
+-- dentro del bloque (la excepción final la deshace); por eso las lecturas del
+-- estado filtran siempre por clave.
 
-create temp table ctx as
-select m.company_id,
-       (select s.key from public.app_state s where s.company_id = m.company_id order by s.key limit 1) as state_key,
-       (select count(*) from public.app_state s where s.company_id = m.company_id) as state_rows,
-       (select user_id from public.company_memberships a
-         where a.company_id = m.company_id and a.role = 'ADMIN' and a.active order by a.user_id limit 1) as admin_id,
-       (select user_id from public.company_memberships c
-         where c.company_id = m.company_id and c.role = 'CHIEF' and c.area = 'ESTACION' and c.active limit 1) as isla_id,
-       (select user_id from public.company_memberships c
-         where c.company_id = m.company_id and c.role = 'CHIEF' and c.area = 'TIENDA' limit 1) as tienda_id,
-       (select active from public.company_memberships c
-         where c.company_id = m.company_id and c.role = 'CHIEF' and c.area = 'TIENDA' limit 1) as tienda_activa
-from (select company_id from public.company_memberships where role = 'ADMIN' and active limit 1) m;
-grant select on ctx to authenticated;
-
-create function pg_temp.as_user(p_user uuid) returns void language plpgsql as $$
+do $verificacion$
+declare
+  v_esperado text := 'bloqueado';   -- <<< 'abierto' | 'bloqueado'
+  v_log text := '';
+  c record;
+  v_policies text;
+  v_n int; v_rc int; v_denied boolean; v_blocked boolean;
+  v_trabajadores int; v_turnos int; v_facturas int; v_total int;
+  r jsonb; v timestamptz; v_antes jsonb; v_despues jsonb;
+  who text; uid uuid; area_esperada text;
 begin
-  perform set_config('request.jwt.claim.sub', p_user::text, true);
-  set local role authenticated;
-end $$;
+  select m.company_id,
+         (select s.key from public.app_state s where s.company_id = m.company_id order by s.key limit 1) as state_key,
+         (select count(*) from public.app_state s where s.company_id = m.company_id) as state_rows,
+         (select user_id from public.company_memberships a
+           where a.company_id = m.company_id and a.role = 'ADMIN' and a.active order by a.user_id limit 1) as admin_id,
+         (select user_id from public.company_memberships x
+           where x.company_id = m.company_id and x.role = 'CHIEF' and x.area = 'ESTACION' and x.active limit 1) as isla_id,
+         (select user_id from public.company_memberships x
+           where x.company_id = m.company_id and x.role = 'CHIEF' and x.area = 'TIENDA' limit 1) as tienda_id,
+         (select active from public.company_memberships x
+           where x.company_id = m.company_id and x.role = 'CHIEF' and x.area = 'TIENDA' limit 1) as tienda_activa
+    into c
+  from (select company_id from public.company_memberships where role = 'ADMIN' and active limit 1) m;
 
--- 0. Contexto (solo conteos).
-do $$
-declare c record; policies text;
-begin
-  select * into c from pg_temp.ctx;
-  if c.company_id is null or c.admin_id is null then raise exception 'FAIL no se encontró empresa o administrador activo'; end if;
-  if c.state_rows <> 1 then raise exception 'FAIL se esperaba 1 fila en app_state para la empresa y hay %', c.state_rows; end if;
-  select string_agg(policyname, ', ' order by policyname) into policies
+  -- 0. Contexto.
+  if c.company_id is null or c.admin_id is null then
+    raise exception 'VERIFICACIÓN FALLÓ: no se encontró empresa o administrador activo';
+  end if;
+  if c.state_rows <> 1 then
+    raise exception 'VERIFICACIÓN FALLÓ: se esperaba 1 fila en app_state y hay %', c.state_rows;
+  end if;
+  select string_agg(policyname, ', ' order by policyname) into v_policies
   from pg_policies where schemaname = 'public' and tablename = 'app_state';
-  raise notice 'INFO esperado=% | policies: %', current_setting('sc.esperado'), policies;
-  raise notice 'INFO jefa de isla activa: % | jefa de tienda existe: % (activa: %)',
-    c.isla_id is not null, c.tienda_id is not null, coalesce(c.tienda_activa::text, 'n/a');
-  if current_setting('sc.esperado') = 'bloqueado' and policies is distinct from
+  v_log := v_log || format(E'INFO esperado=%s | policies: %s\n', v_esperado, v_policies);
+  v_log := v_log || format(E'INFO jefa de isla activa: %s | jefa de tienda existe: %s (activa: %s)\n',
+    c.isla_id is not null, c.tienda_id is not null, coalesce(c.tienda_activa::text, 'n/a'));
+  if v_esperado = 'bloqueado' and v_policies is distinct from
      'app_state_insert_for_admins, app_state_select_for_admins, app_state_update_for_admins' then
-    raise exception 'FAIL se esperaba la fase 2 aplicada y las policies son otras';
+    raise exception 'VERIFICACIÓN FALLÓ: se esperaba la fase 2 aplicada y las policies son: %', v_policies;
   end if;
-  if current_setting('sc.esperado') = 'abierto' and policies is distinct from
+  if v_esperado = 'abierto' and v_policies is distinct from
      'app_state_insert_for_active_members, app_state_select_for_active_members, app_state_update_for_active_members' then
-    raise exception 'FAIL se esperaba el estado previo a la fase 2 y las policies son otras';
+    raise exception 'VERIFICACIÓN FALLÓ: se esperaba el estado previo a la fase 2 y las policies son: %', v_policies;
   end if;
-end $$;
 
--- 1. Administrador: lectura directa completa.
-do $$
-declare c record; n int; trabajadores int; turnos int; facturas int;
-begin
-  select * into c from pg_temp.ctx;
-  perform pg_temp.as_user(c.admin_id);
+  -- 1. Administrador: lectura directa completa.
+  perform set_config('request.jwt.claim.sub', c.admin_id::text, true);
+  set local role authenticated;
   select count(*), max(jsonb_array_length(data->'employees')), max(jsonb_array_length(data->'plans')),
          max(jsonb_array_length(data->'invoices'))
-    into n, trabajadores, turnos, facturas
+    into v_n, v_trabajadores, v_turnos, v_facturas
   from public.app_state where company_id = c.company_id;
   reset role;
-  if n <> 1 then raise exception 'FAIL el administrador no lee su fila (% filas)', n; end if;
-  raise notice 'PASS administrador lee app_state: % trabajadores, % turnos, % facturas', trabajadores, turnos, facturas;
-end $$;
+  if v_n <> 1 then
+    raise exception 'VERIFICACIÓN FALLÓ: el administrador no lee su fila (% filas)', v_n;
+  end if;
+  v_total := v_trabajadores;
+  v_log := v_log || format(E'PASS administrador lee app_state: %s trabajadores, %s turnos, %s facturas\n',
+    v_trabajadores, v_turnos, v_facturas);
 
--- 2. Cada jefa activa: acceso directo según lo esperado y funciones intactas.
-do $$
-declare c record; who text; uid uuid; area_esperada text; n int; rc int; r jsonb; v timestamptz;
-        saved jsonb; antes jsonb; despues jsonb; denied boolean; trabajadores_total int;
-begin
-  select * into c from pg_temp.ctx;
-  select jsonb_array_length(data->'employees') into trabajadores_total
-  from public.app_state where company_id = c.company_id;
-
+  -- 2. Cada jefa activa: acceso directo según lo esperado y funciones intactas.
   for who, uid, area_esperada in
     select 'isla', c.isla_id, 'ISLA' where c.isla_id is not null
     union all
     select 'tienda', c.tienda_id, 'TIENDA' where c.tienda_id is not null and c.tienda_activa
   loop
-    -- Acceso directo a app_state.
-    perform pg_temp.as_user(uid);
-    select count(*) into n from public.app_state;
+    perform set_config('request.jwt.claim.sub', uid::text, true);
+    set local role authenticated;
+    select count(*) into v_n from public.app_state;
     update public.app_state set updated_at = updated_at where company_id = c.company_id;
-    get diagnostics rc = row_count;
-    denied := false;
+    get diagnostics v_rc = row_count;
+    v_denied := false;
     begin
       insert into public.app_state (company_id, key, data) values (c.company_id, 'verificacion-' || who, '{}');
-    exception when insufficient_privilege then denied := true;
+    exception when insufficient_privilege then v_denied := true;
     end;
     reset role;
-    if current_setting('sc.esperado') = 'bloqueado' then
-      if n <> 0 or rc <> 0 or not denied then
-        raise exception 'FAIL jefa de %: acceso directo abierto (lee % filas, actualiza %, inserta %)', who, n, rc, not denied;
+    if v_esperado = 'bloqueado' then
+      if v_n <> 0 or v_rc <> 0 or not v_denied then
+        raise exception 'VERIFICACIÓN FALLÓ: jefa de %: acceso directo abierto (lee % filas, actualiza %, inserta %)',
+          who, v_n, v_rc, not v_denied;
       end if;
-      raise notice 'PASS jefa de %: lectura, actualización e inserción directas bloqueadas', who;
+      v_log := v_log || format(E'PASS jefa de %s: lectura, actualización e inserción directas bloqueadas\n', who);
     else
-      raise notice 'INFO jefa de %: acceso directo abierto (lee % filas, actualiza %, inserta %)', who, n, rc, not denied;
+      v_log := v_log || format(E'INFO jefa de %s: acceso directo abierto (lee %s filas, actualiza %s, inserta %s)\n',
+        who, v_n, v_rc, not v_denied);
     end if;
 
-    -- Funciones por área: lo que usa la app publicada.
-    perform pg_temp.as_user(uid);
+    perform set_config('request.jwt.claim.sub', uid::text, true);
+    set local role authenticated;
     r := public.get_area_app_state(c.company_id, c.state_key);
     v := public.get_app_state_version(c.company_id, c.state_key);
     reset role;
     if r is null or r->>'area' <> area_esperada then
-      raise exception 'FAIL jefa de %: área devuelta % (esperada %)', who, r->>'area', area_esperada;
+      raise exception 'VERIFICACIÓN FALLÓ: jefa de %: área devuelta % (esperada %)', who, r->>'area', area_esperada;
     end if;
     if jsonb_array_length(coalesce(r->'data'->'deposits', '[]')) <> 0
        or jsonb_array_length(coalesce(r->'data'->'audit', '[]')) <> 0
-       or jsonb_array_length(coalesce(r->'data'->'employees', '[]')) >= trabajadores_total and area_esperada = 'TIENDA' then
-      raise exception 'FAIL jefa de %: recibió datos fuera de su área', who;
+       or (area_esperada = 'TIENDA' and jsonb_array_length(coalesce(r->'data'->'employees', '[]')) >= v_total) then
+      raise exception 'VERIFICACIÓN FALLÓ: jefa de %: recibió datos fuera de su área', who;
     end if;
-    raise notice 'PASS jefa de %: función por área devuelve % de % trabajadores, % turnos, 0 depósitos, 0 historial',
-      who, jsonb_array_length(r->'data'->'employees'), trabajadores_total, jsonb_array_length(coalesce(r->'data'->'plans', '[]'));
+    v_log := v_log || format(E'PASS jefa de %s: función por área devuelve %s de %s trabajadores, %s turnos, 0 depósitos, 0 historial\n',
+      who, jsonb_array_length(r->'data'->'employees'), v_total, jsonb_array_length(coalesce(r->'data'->'plans', '[]')));
 
-    -- Guardar sin cambios deja el estado idéntico (deshecho por el ROLLBACK).
-    select data into antes from public.app_state where company_id = c.company_id;
-    perform pg_temp.as_user(uid);
-    saved := public.save_area_app_state(c.company_id, c.state_key, v, r->'data');
+    select data into v_antes from public.app_state where company_id = c.company_id and key = c.state_key;
+    perform set_config('request.jwt.claim.sub', uid::text, true);
+    set local role authenticated;
+    perform public.save_area_app_state(c.company_id, c.state_key, v, r->'data');
     reset role;
-    select data into despues from public.app_state where company_id = c.company_id;
-    if antes is distinct from despues then
-      raise exception 'FAIL jefa de %: guardar sin cambios alteró el estado', who;
+    select data into v_despues from public.app_state where company_id = c.company_id and key = c.state_key;
+    if v_antes is distinct from v_despues then
+      raise exception 'VERIFICACIÓN FALLÓ: jefa de %: guardar sin cambios alteró el estado', who;
     end if;
-    raise notice 'PASS jefa de %: guardar sin cambios deja el estado idéntico', who;
+    v_log := v_log || format(E'PASS jefa de %s: guardar sin cambios deja el estado idéntico\n', who);
   end loop;
-end $$;
 
--- 3. Jefa de tienda inactiva: sin acceso por ninguna vía.
-do $$
-declare c record; n int; blocked boolean := false;
-begin
-  select * into c from pg_temp.ctx;
-  if c.tienda_id is null or c.tienda_activa then
-    raise notice 'INFO jefa de tienda inactiva: no aplica (existe=%, activa=%)', c.tienda_id is not null, coalesce(c.tienda_activa::text, 'n/a');
-    return;
+  -- 3. Jefa de tienda inactiva: sin acceso por ninguna vía.
+  if c.tienda_id is not null and not c.tienda_activa then
+    v_blocked := false;
+    perform set_config('request.jwt.claim.sub', c.tienda_id::text, true);
+    set local role authenticated;
+    select count(*) into v_n from public.app_state;
+    begin
+      perform public.get_area_app_state(c.company_id, c.state_key);
+    exception when insufficient_privilege then v_blocked := true;
+    end;
+    reset role;
+    if v_n <> 0 or not v_blocked then
+      raise exception 'VERIFICACIÓN FALLÓ: jefa de tienda inactiva tiene acceso (filas=%, función bloqueada=%)', v_n, v_blocked;
+    end if;
+    v_log := v_log || E'PASS jefa de tienda inactiva: sin acceso directo ni por función\n';
+  else
+    v_log := v_log || E'INFO jefa de tienda inactiva: no aplica\n';
   end if;
-  perform pg_temp.as_user(c.tienda_id);
-  select count(*) into n from public.app_state;
-  begin
-    perform public.get_area_app_state(c.company_id, c.state_key);
-  exception when insufficient_privilege then blocked := true;
-  end;
-  reset role;
-  if n <> 0 or not blocked then raise exception 'FAIL jefa de tienda inactiva tiene acceso (filas=%, función bloqueada=%)', n, blocked; end if;
-  raise notice 'PASS jefa de tienda inactiva: sin acceso directo ni por función';
-end $$;
 
--- 4. Sin sesión: nada.
-do $$
-declare n int;
-begin
+  -- 4. Sin sesión: nada.
   perform set_config('request.jwt.claim.sub', '', true);
   set local role anon;
   begin
-    select count(*) into n from public.app_state;
-  exception when insufficient_privilege then n := 0;
+    select count(*) into v_n from public.app_state;
+  exception when insufficient_privilege then v_n := 0;
   end;
   reset role;
-  if n <> 0 then raise exception 'FAIL un usuario sin sesión lee app_state'; end if;
-  raise notice 'PASS usuario sin sesión: sin acceso';
-end $$;
+  if v_n <> 0 then
+    raise exception 'VERIFICACIÓN FALLÓ: un usuario sin sesión lee app_state';
+  end if;
+  v_log := v_log || E'PASS usuario sin sesión: sin acceso\n';
 
-do $$ begin raise notice 'VERIFICACIÓN COMPLETA (se deshace con ROLLBACK)'; end $$;
-
-rollback;
+  -- Siempre termina en excepción: deshace las escrituras de prueba.
+  raise exception E'VERIFICACIÓN OK (todo se deshizo)\n%', v_log;
+end
+$verificacion$;
