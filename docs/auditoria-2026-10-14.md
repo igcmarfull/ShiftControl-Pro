@@ -194,15 +194,47 @@ en la base de datos requiere dividir `app_state` por área.
 - Datos verificados después de los cambios: 4 usuarios, 14 trabajadoras,
   655 turnos, 29 asistencias y 3 facturas.
 
-### Pendiente antes de publicar
+### Aislamiento de app_state en la base de datos (preparado, no aplicado)
 
-- `app_state` sigue siendo un JSON por empresa que cualquier miembro activo
-  puede leer y escribir en Supabase. La separación por área y la aprobación de
-  facturas se aplican hoy en la app, no en la base de datos. Para que cada jefa
-  acceda solo a sus datos y solo el gerente apruebe facturas a nivel de
-  servidor, hay que dividir el almacenamiento por área y mover las
-  aprobaciones a una operación del servidor. No se inició por indicación del
-  propietario.
+- `20261014200000_area_app_state_rpc.sql` (fase 1, solo agrega funciones):
+  `get_area_app_state`, `get_app_state_version` y `save_area_app_state`.
+- `20261014200100_lock_app_state_to_admin.sql` (fase 2): `app_state` queda
+  solo para el administrador.
+- Verificado en PostgreSQL local con todas las migraciones del repositorio y
+  datos con la forma de producción (14 trabajadoras, 655 turnos, 29
+  asistencias, 3 facturas):
+  - lectura: la isla recibe 13 trabajadoras y 609 turnos; la tienda, 1 y 46;
+    ninguna recibe finanzas, depósitos, faltantes ni historial;
+  - guardar sin cambios deja el estado idéntico (incluido el orden);
+  - ataques de la jefa de tienda bloqueados: turnos o edición de personal de
+    isla, cambio de área, autoaprobación de facturas y evaluaciones, pagos de
+    jornadas, edición o borrado de registros aprobados, resolución de
+    seguimientos, configuración, finanzas, cierres e historial;
+  - un envío mal formado no borra datos; no quedan ids duplicados;
+  - fase 2: la jefa no lee, actualiza ni inserta en `app_state`; el gerente
+    mantiene acceso completo; jefas inactivas y anónimos no acceden;
+  - tiempo de guardado: 51 ms con el volumen actual y 254 ms con ocho veces
+    más turnos.
+- Verificado en navegador con un emulador de Supabase sobre ese PostgreSQL
+  (RLS y funciones reales): las pruebas de sincronización, áreas,
+  incidencias, checklist con fotos, facturas, trabajo sin conexión y cambio
+  de usuario pasan; desde la consola, la jefa no puede leer ni modificar
+  `app_state` y una factura autoaprobada queda pendiente. Una prueba de áreas
+  falló una vez de seis sin poder reproducirse.
+- Compatibilidad comprobada: la app actual (`main`) sigue funcionando con la
+  fase 1; la app nueva funciona sin fases, con la fase 1 y con ambas; la app
+  actual deja de guardar para las jefas con la fase 2.
+
+### Orden de publicación propuesto
+
+1. Aplicar la fase 1 (no cambia el funcionamiento actual).
+2. Fusionar el pull request y publicar en Vercel.
+3. Verificar con el gerente y la Jefa de Isla en producción.
+4. Aplicar la fase 2.
+5. Reactivar la Jefa de Tienda.
+
+### Otros pendientes
+
 - Activar la protección contra contraseñas filtradas en Supabase
   (Authentication → Settings).
 

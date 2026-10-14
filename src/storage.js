@@ -7,6 +7,10 @@
   let ready = false;
   let activeCompanyId = null;
   let activeArea = null;
+  // Las jefaturas leen y guardan su área mediante funciones del servidor
+  // (get_area_app_state / save_area_app_state). Si aún no existen en la base,
+  // se usa el acceso directo anterior.
+  let areaRpcAvailable = true;
   let pendingSave = false;
   let saveTimer = null;
   let bootstrapPromise = null;
@@ -354,7 +358,32 @@
     return context;
   }
 
-  function stateQuery(client, companyId) {
+  function isMissingFunction(error) {
+    return error?.code === 'PGRST202' || error?.code === '42883';
+  }
+
+  function usesAreaRpc() {
+    return Boolean(activeArea && areaRpcAvailable);
+  }
+
+  async function stateQuery(client, companyId) {
+    if (usesAreaRpc()) {
+      const { data, error } = await client.rpc('get_area_app_state', {
+        p_company_id: companyId,
+        p_key: config.stateKey
+      });
+
+      if (!isMissingFunction(error)) {
+        return {
+          data: data ? { data: data.data, updated_at: data.updated_at } : null,
+          error
+        };
+      }
+
+      areaRpcAvailable = false;
+      warn('El servidor no tiene las funciones por área; se usa el acceso anterior.');
+    }
+
     return client
       .from('app_state')
       .select('data, updated_at')
@@ -363,8 +392,47 @@
       .maybeSingle();
   }
 
+  async function versionQuery(client, companyId) {
+    if (usesAreaRpc()) {
+      const { data, error } = await client.rpc('get_app_state_version', {
+        p_company_id: companyId,
+        p_key: config.stateKey
+      });
+
+      if (!isMissingFunction(error)) {
+        return { data: data ? { updated_at: data } : null, error };
+      }
+
+      areaRpcAvailable = false;
+    }
+
+    return client
+      .from('app_state')
+      .select('updated_at')
+      .eq('company_id', companyId)
+      .eq('key', config.stateKey)
+      .maybeSingle();
+  }
+
+  // Devuelve { updatedAt, data } con el estado que quedó guardado, o null si
+  // otro usuario guardó antes (hay que volver a leer y combinar).
   async function writeRemote(client, companyId, row, nextState) {
     const updatedAt = new Date().toISOString();
+
+    if (row && usesAreaRpc()) {
+      // El servidor valida y combina la parte de la jefa sobre el estado
+      // completo, y devuelve su parte tal como quedó.
+      const { data, error } = await client.rpc('save_area_app_state', {
+        p_company_id: companyId,
+        p_key: config.stateKey,
+        p_expected_updated_at: row.updated_at,
+        p_data: nextState
+      });
+
+      if (error?.code === '40001') return null;
+      if (error) throw error;
+      return { updatedAt: data.updated_at, data: data.data };
+    }
 
     if (!row) {
       const { data, error } = await client
@@ -379,7 +447,7 @@
 
       if (error?.code === '23505') return null;
       if (error) throw error;
-      return data?.[0]?.updated_at || updatedAt;
+      return { updatedAt: data?.[0]?.updated_at || updatedAt, data: nextState };
     }
 
     // Escritura condicional: solo se aplica si nadie guardó desde la
@@ -398,7 +466,7 @@
 
     if (error) throw error;
     if (!data || !data.length) return null;
-    return data[0].updated_at || updatedAt;
+    return { updatedAt: data[0].updated_at || updatedAt, data: nextState };
   }
 
   function adoptSyncedState(companyId, syncedFullState, updatedAt, sentSnapshot) {
@@ -455,13 +523,13 @@
           log('Se combinaron cambios guardados por otro usuario.');
         }
 
-        const writtenAt = await writeRemote(client, companyId, row, nextState);
-        if (!writtenAt) continue;
+        const written = await writeRemote(client, companyId, row, nextState);
+        if (!written) continue;
 
         const liveChanged = adoptSyncedState(
           companyId,
-          nextState,
-          writtenAt,
+          written.data,
+          written.updatedAt,
           sentSnapshot
         );
 
@@ -527,12 +595,7 @@
 
     try {
       const client = getClient();
-      const { data: meta, error: metaError } = await client
-        .from('app_state')
-        .select('updated_at')
-        .eq('company_id', companyId)
-        .eq('key', config.stateKey)
-        .maybeSingle();
+      const { data: meta, error: metaError } = await versionQuery(client, companyId);
 
       if (metaError) throw metaError;
       if (!meta || (meta.updated_at || null) === remoteUpdatedAt) {
@@ -608,6 +671,7 @@
       ready = false;
       activeCompanyId = context.companyId;
       activeArea = sessionArea();
+      areaRpcAvailable = true;
       const storedBase = readJson(getTenantBaseKey(context.companyId));
       baseState = storedBase?.data || null;
       remoteUpdatedAt = storedBase?.updatedAt || null;

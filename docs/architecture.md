@@ -279,8 +279,20 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   `HandoffModule` (`src/modules/handoffs/handoffs.js`). Antes quedaban solo en
   `localStorage`; `migrateLegacyHandoffs()` las incorpora una vez como entregas
   de isla.
-- Es una separación de la aplicación, no de la base de datos: `app_state`
-  sigue siendo un JSON por empresa legible por sus miembros.
+- Aislamiento en la base de datos (migraciones `20261014200000` y
+  `20261014200100`): el administrador lee y escribe `app_state` completo; las
+  jefaturas no tienen acceso directo y usan `get_area_app_state`,
+  `get_app_state_version` y `save_area_app_state`. El servidor recorta el
+  estado por área (mismas reglas que `src/app/areas.js`), entrega vacíos
+  finanzas, depósitos, faltantes de caja e historial, y al guardar solo
+  acepta registros del área: no aprueba facturas ni evaluaciones, no registra
+  pagos, no cambia el área de una trabajadora ni modifica registros
+  aprobados, pagados, resueltos o checklists enviados. Configuración,
+  feriados y cierres solo los cambia el administrador. Una colección ausente
+  o mal formada en lo enviado no se modifica. La escritura es condicional
+  sobre `updated_at` (error `40001` si otro usuario guardó antes).
+- `src/storage.js` usa esas funciones cuando la sesión es de una jefa; si aún
+  no existen en la base, vuelve al acceso directo anterior.
 
 ## Integraciones presentes pero no activas
 
