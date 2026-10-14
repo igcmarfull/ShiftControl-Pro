@@ -116,7 +116,7 @@
       const label=index===6?(item.day===todayIso()?'Hoy':`${weekdays[d.getDay()]} ${d.getDate()}`):`${weekdays[d.getDay()]} ${d.getDate()}`;
       const pct=item.pct??0;
       const tip=item.pct===null?`${label}: sin turnos planificados`:`${label}: ${item.present}/${item.total} presentes`;
-      return `<div class="ic-bar ${index===6?'now':''}" title="${esc(tip)}"><b style="--top:${Math.round(88*(1-pct/100))}px">${item.pct===null?'—':item.pct+'%'}</b><i style="height:${item.pct===null?4:Math.max(4,Math.round(88*pct/100))}px"></i><span>${esc(label)}</span></div>`;
+      return `<div class="ic-bar ${index===6?'now':''}" title="${esc(tip)}"><b style="--top:${Math.round(128*(1-pct/100))}px">${item.pct===null?'—':item.pct+'%'}</b><i style="height:${item.pct===null?4:Math.max(4,Math.round(128*pct/100))}px"></i><span>${esc(label)}</span></div>`;
     }).join('');
 
     // Excepciones y reemplazos del día
