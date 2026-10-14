@@ -1,11 +1,12 @@
--- Evidencia fotográfica de checklists.
+-- Evidencia y respaldos: fotos de checklists y respaldos de facturas.
 --
--- Las fotos se guardan en Supabase Storage (bucket privado
--- "checklist-evidence"), no dentro de app_state, para que el estado
--- sincronizado no crezca con cada imagen. La app guarda en el checklist solo
--- la ruta del archivo.
+-- Los archivos se guardan en Supabase Storage (bucket privado
+-- "shiftcontrol-evidence"), no dentro de app_state, para que el estado
+-- sincronizado no crezca con cada archivo. La app guarda solo la ruta.
 --
--- Ruta de cada archivo: <company_id>/checklists/<área>/<fecha>/<archivo>.
+-- Rutas:
+--   <company_id>/checklists/<área>/<fecha>/<archivo>
+--   <company_id>/invoices/<área>/<mes>/<archivo>
 -- Solo los miembros activos de esa empresa pueden subir y ver sus archivos.
 -- No se permite modificar ni borrar evidencia desde la app.
 
@@ -13,11 +14,11 @@ begin;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'checklist-evidence',
-  'checklist-evidence',
+  'shiftcontrol-evidence',
+  'shiftcontrol-evidence',
   false,
   5242880,
-  array['image/jpeg', 'image/png', 'image/webp']
+  array['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 )
 on conflict (id) do update
 set public = false,
@@ -44,23 +45,23 @@ $$;
 revoke all on function public.is_active_company_member_folder(text) from public, anon;
 grant execute on function public.is_active_company_member_folder(text) to authenticated;
 
-drop policy if exists "checklist_evidence_insert_for_members" on storage.objects;
-create policy "checklist_evidence_insert_for_members"
+drop policy if exists "shiftcontrol_evidence_insert_for_members" on storage.objects;
+create policy "shiftcontrol_evidence_insert_for_members"
 on storage.objects
 for insert
 to authenticated
 with check (
-  bucket_id = 'checklist-evidence'
+  bucket_id = 'shiftcontrol-evidence'
   and public.is_active_company_member_folder((storage.foldername(name))[1])
 );
 
-drop policy if exists "checklist_evidence_select_for_members" on storage.objects;
-create policy "checklist_evidence_select_for_members"
+drop policy if exists "shiftcontrol_evidence_select_for_members" on storage.objects;
+create policy "shiftcontrol_evidence_select_for_members"
 on storage.objects
 for select
 to authenticated
 using (
-  bucket_id = 'checklist-evidence'
+  bucket_id = 'shiftcontrol-evidence'
   and public.is_active_company_member_folder((storage.foldername(name))[1])
 );
 

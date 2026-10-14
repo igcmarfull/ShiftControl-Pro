@@ -8792,6 +8792,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
           <button type="button" class="invoices-tab" data-tab="pendiente" onclick="switchInvoiceTab('pendiente')">Pendientes</button>
           <button type="button" class="invoices-tab" data-tab="pagada" onclick="switchInvoiceTab('pagada')">Pagadas</button>
           <button type="button" class="invoices-tab" data-tab="vencida" onclick="switchInvoiceTab('vencida')">Vencidas</button>
+          <button type="button" class="invoices-tab" data-tab="aprobacion" onclick="switchInvoiceTab('aprobacion')">Por aprobar</button>
         </div>
         <div class="invoices-filters">
           <span class="additional-search-wrap invoices-search-wrap"><span class="additional-filter-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input class="field" id="invoiceSearch" placeholder="Buscar factura, proveedor o RUT..." oninput="renderInvoices()"></span>
@@ -9118,6 +9119,14 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       .ops-check-follow{font-size:12px;padding:8px 10px;border-radius:10px;border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
       .ops-check-follow.resolved{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
       .store-followup small{display:block}
+      .invoice-area-tag,.invoice-reject-note{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+      .invoice-reject-note{color:var(--red,#ef4444)}
+      .invoice-attachment{margin-top:6px}
+      .invoice-approval-actions{display:flex;gap:8px;margin-top:8px}
+      .invoice-approval-info{font-size:12.5px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--soft)}
+      .invoice-approval-info.pendiente_aprobacion{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+      .invoice-approval-info.rechazada{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+      .invoice-approval-info.aprobada{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
       .store-followup.resolved{opacity:.7}
       .store-followup-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
       @media(max-width:680px){.ops-check-detail{grid-template-columns:1fr}}
@@ -10821,9 +10830,11 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <div class="form-group"><label>Fecha vencimiento</label><input class="field" type="date" id="invoiceFechaVencimiento"></div>
 <div class="form-group"><label>Monto total</label><input class="field" type="number" min="0" id="invoiceMonto"></div>
 <div class="form-group full"><label>Nota</label><input class="field" id="invoiceNota" placeholder="Observaciones (opcional)"></div>
+<div class="form-group full"><label>Respaldo (foto o PDF)</label><input class="field" type="file" id="invoiceAdjunto" accept="image/*,application/pdf"><div id="invoiceAdjuntoActual" class="invoice-attachment"></div></div>
+<div class="form-group full" id="invoiceApprovalInfo" hidden></div>
 <div class="full actions" style="justify-content:space-between">
 <button type="button" class="btn danger" id="invoiceDeleteBtn" style="display:none" onclick="deleteInvoiceFromModal()">Eliminar factura</button>
-<div style="display:flex;gap:8px"><button type="button" class="btn" onclick="closeModal('invoiceModal')">Cancelar</button><button class="btn primary">Guardar</button></div>
+<div style="display:flex;gap:8px"><button type="button" class="btn" onclick="closeModal('invoiceModal')">Cancelar</button><button class="btn primary" id="invoiceSaveBtn">Guardar</button></div>
 </div>
 </form></div></div>
 
@@ -15073,7 +15084,56 @@ function invoiceTodayMidnight(){
   return d;
 }
 
+// Facturas registradas por la Jefa de Tienda: quedan por aprobar hasta que el
+// administrador las aprueba o rechaza. Las anteriores las cargó el
+// administrador y se consideran aprobadas.
+function invoiceApproval(inv){
+  return inv?.aprobacion||'aprobada';
+}
+function invoiceIsApproved(inv){
+  return invoiceApproval(inv)==='aprobada';
+}
+function invoiceChiefCanEdit(inv){
+  return !inv||!invoiceIsApproved(inv);
+}
+function invoiceAreaLabel(inv){
+  const area=window.ShiftControlAreas?.normalizeArea?.(inv?.area);
+  return area?(window.ShiftControlAreas.info(area)?.label||area):'';
+}
+function invoiceApprovalButtons(inv){
+  if(getAppRole()!=='admin'||invoiceApproval(inv)!=='pendiente_aprobacion')return '';
+  return `<button type="button" class="invoices-icon-btn invoice-approve-btn" title="Aprobar factura" onclick="approveInvoice('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></button><button type="button" class="invoices-icon-btn invoice-reject-btn" title="Rechazar factura" onclick="rejectInvoice('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+}
+function approveInvoice(id){
+  if(getAppRole()!=='admin')return;
+  const inv=InvoiceModule.findById(id);
+  if(!inv||invoiceApproval(inv)!=='pendiente_aprobacion')return;
+  snapshot();
+  InvoiceModule.patch(id,{aprobacion:'aprobada',aprobadaPor:authenticatedDisplayName(),aprobadaAt:new Date().toISOString(),motivoRechazo:''},{save:false});
+  log(`Factura aprobada: ${inv.proveedor} (${inv.numeroFactura})`);
+  save();
+  renderInvoices(true);
+  if(typeof renderAdminInbox==='function')renderAdminInbox();
+  toast('Factura aprobada');
+}
+function rejectInvoice(id){
+  if(getAppRole()!=='admin')return;
+  const inv=InvoiceModule.findById(id);
+  if(!inv||invoiceApproval(inv)!=='pendiente_aprobacion')return;
+  const reason=prompt(`Motivo del rechazo de la factura ${inv.numeroFactura||''} de ${inv.proveedor||''}:`,'');
+  if(reason===null)return;
+  if(!reason.trim())return alert('Indica el motivo del rechazo.');
+  snapshot();
+  InvoiceModule.patch(id,{aprobacion:'rechazada',rechazadaPor:authenticatedDisplayName(),rechazadaAt:new Date().toISOString(),motivoRechazo:reason.trim()},{save:false});
+  log(`Factura rechazada: ${inv.proveedor} (${inv.numeroFactura})`);
+  save();
+  renderInvoices(true);
+  if(typeof renderAdminInbox==='function')renderAdminInbox();
+  toast('Factura rechazada');
+}
 function invoiceDisplayStatus(inv){
+  if(invoiceApproval(inv)==='pendiente_aprobacion')return 'por-aprobar';
+  if(invoiceApproval(inv)==='rechazada')return 'rechazada';
   if(inv.estado==='pagada')return 'pagada';
   const due=inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`):null;
   if(!due||isNaN(due))return 'pendiente';
@@ -15088,7 +15148,9 @@ function invoiceStatusMeta(status){
     pagada:{label:'Pagada',cls:'st-pagada'},
     pendiente:{label:'Pendiente',cls:'st-pendiente'},
     'vence-pronto':{label:'Vence pronto',cls:'st-vencepronto'},
-    vencida:{label:'Vencida',cls:'st-vencida'}
+    vencida:{label:'Vencida',cls:'st-vencida'},
+    'por-aprobar':{label:'Por aprobar',cls:'st-vencepronto'},
+    rechazada:{label:'Rechazada',cls:'st-vencida'}
   }[status]||{label:status,cls:'st-pendiente'};
 }
 
@@ -15264,8 +15326,9 @@ function renderInvoices(keepPage){
       if(!text.includes(search))return false;
     }
     if(invoiceActiveTab==='vencida')return invoiceDisplayStatus(inv)==='vencida';
-    if(invoiceActiveTab==='pendiente')return inv.estado==='pendiente';
-    if(invoiceActiveTab==='pagada')return inv.estado==='pagada';
+    if(invoiceActiveTab==='aprobacion')return !invoiceIsApproved(inv);
+    if(invoiceActiveTab==='pendiente')return inv.estado==='pendiente'&&invoiceIsApproved(inv);
+    if(invoiceActiveTab==='pagada')return inv.estado==='pagada'&&invoiceIsApproved(inv);
     return true;
   });
 
@@ -15295,7 +15358,7 @@ function renderInvoices(keepPage){
     const meta=invoiceStatusMeta(status);
     return `<tr>
       <td data-label="Proveedor"><div class="invoices-provider-cell">${invoiceAvatar(inv.proveedor)}<div><strong>${escapeHtml(inv.proveedor||'—')}</strong>${inv.rutProveedor?`<small>${escapeHtml(inv.rutProveedor)}</small>`:''}</div></div></td>
-      <td data-label="Factura">${escapeHtml(inv.numeroFactura||'—')}</td>
+      <td data-label="Factura">${escapeHtml(inv.numeroFactura||'—')}${invoiceAreaLabel(inv)?`<small class="invoice-area-tag">${escapeHtml(invoiceAreaLabel(inv))}${inv.enviadaPor?` · ${escapeHtml(inv.enviadaPor)}`:''}</small>`:''}${invoiceApproval(inv)==='rechazada'&&inv.motivoRechazo?`<small class="invoice-reject-note">Rechazo: ${escapeHtml(inv.motivoRechazo)}</small>`:''}</td>
       <td data-label="Fecha emisión">${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</td>
       <td data-label="Vencimiento">${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</td>
       <td data-label="Categoría">${invoiceCategoryBadge(inv.categoria)}</td>
@@ -15304,7 +15367,7 @@ function renderInvoices(keepPage){
       <td data-label="Acciones"><div class="invoices-row-actions">
         <button type="button" class="invoices-icon-btn" title="Ver factura" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button type="button" class="invoices-icon-btn" title="Editar" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
-        <button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>
+        ${getAppRole()==='admin'&&invoiceIsApproved(inv)?`<button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>`:''}${invoiceApprovalButtons(inv)}
       </div></td>
     </tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty">Aún no hay facturas registradas. Usa "Nueva factura" para comenzar.</div></td></tr>`;
@@ -15317,8 +15380,11 @@ function renderInvoices(keepPage){
   }
 
   renderInvoicePagination(totalRows,totalPages,startIdx,pageRows.length);
-  renderInvoiceKpis(all);
-  renderInvoiceSidebar(all);
+  // Los totales consideran solo facturas aprobadas.
+  renderInvoiceKpis(all.filter(invoiceIsApproved));
+  renderInvoiceSidebar(all.filter(invoiceIsApproved));
+  const approvalTab=document.querySelector('#invoicesTabs [data-tab="aprobacion"]');
+  if(approvalTab){const waiting=all.filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion').length;approvalTab.textContent=waiting?`Por aprobar (${waiting})`:'Por aprobar';}
   initInvoiceKpiDots();
 }
 
@@ -15336,7 +15402,8 @@ function invoiceMobileCardHTML(inv){
         <span class="invoices-status ${meta.cls}">${meta.label}</span>
       </div>
     </div>
-    <div class="invoices-mcard-invoice-no">Factura #${escapeHtml(inv.numeroFactura||'—')}</div>
+    <div class="invoices-mcard-invoice-no">Factura #${escapeHtml(inv.numeroFactura||'—')}${invoiceAreaLabel(inv)?` · ${escapeHtml(invoiceAreaLabel(inv))}`:''}</div>
+    ${invoiceApproval(inv)==='rechazada'&&inv.motivoRechazo?`<div class="invoice-reject-note">Rechazo: ${escapeHtml(inv.motivoRechazo)}</div>`:''}
     <div class="invoices-mcard-dates">
       <span>Emisión: ${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</span>
       <span>Vence: ${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</span>
@@ -15346,7 +15413,7 @@ function invoiceMobileCardHTML(inv){
       <div class="invoices-row-actions">
         <button type="button" class="invoices-icon-btn" title="Ver factura" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button type="button" class="invoices-icon-btn" title="Editar" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
-        <button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>
+        ${getAppRole()==='admin'&&invoiceIsApproved(inv)?`<button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>`:''}${invoiceApprovalButtons(inv)}
       </div>
     </div>
   </div>`;
@@ -15487,10 +15554,32 @@ function openInvoiceModal(id){
   fillInvoiceProviderSuggestions();
   const deleteBtn=document.getElementById('invoiceDeleteBtn');
   if(deleteBtn)deleteBtn.style.display=id?'inline-flex':'none';
+  const isChief=getAppRole()==='chief';
+  const inv=id?InvoiceModule.findById(id):null;
+  if(id&&!inv)return toast('No se encontró la factura');
+  // La jefa no edita ni elimina facturas ya aprobadas.
+  const readOnly=isChief&&!invoiceChiefCanEdit(inv);
+  document.querySelectorAll('#invoiceForm input:not([type=hidden]),#invoiceForm select').forEach(field=>{field.disabled=readOnly});
+  const saveBtn=document.getElementById('invoiceSaveBtn');
+  if(saveBtn){saveBtn.style.display=readOnly?'none':'';saveBtn.textContent=isChief?'Enviar a aprobación':'Guardar';}
+  if(deleteBtn&&readOnly)deleteBtn.style.display='none';
+  const attachment=document.getElementById('invoiceAdjuntoActual');
+  if(attachment)attachment.innerHTML=inv?.adjunto?.path?`<button type="button" class="btn small" onclick="openEvidenceFile(${JSON.stringify(inv.adjunto.path).replace(/"/g,'&quot;')})">Ver respaldo: ${escapeHtml(inv.adjunto.name||'archivo')}</button>`:'';
+  const info=document.getElementById('invoiceApprovalInfo');
+  if(info){
+    const approval=invoiceApproval(inv);
+    const lines=!inv?(isChief?'Al enviarla, la factura quedará por aprobar por el administrador.':'')
+      :approval==='pendiente_aprobacion'?`Por aprobar · enviada por ${escapeHtml(inv.enviadaPor||'la jefa')}`
+      :approval==='rechazada'?`Rechazada por ${escapeHtml(inv.rechazadaPor||'el administrador')}: ${escapeHtml(inv.motivoRechazo||'')}${isChief?' · Corrige y vuelve a enviarla.':''}`
+      :inv.aprobadaPor?`Aprobada por ${escapeHtml(inv.aprobadaPor)}`:'';
+    const adminActions=!isChief&&inv&&approval==='pendiente_aprobacion'
+      ?`<div class="invoice-approval-actions"><button type="button" class="btn small" onclick="closeModal('invoiceModal');approveInvoice('${inv.id}')">Aprobar</button><button type="button" class="btn small danger" onclick="closeModal('invoiceModal');rejectInvoice('${inv.id}')">Rechazar</button></div>`
+      :'';
+    info.innerHTML=lines?`<div class="invoice-approval-info ${inv?approval:'pendiente_aprobacion'}">${lines}${adminActions}</div>`:'';
+    info.hidden=!lines;
+  }
 
   if(id){
-    const inv=InvoiceModule.findById(id);
-    if(!inv)return toast('No se encontró la factura');
     document.getElementById('invoiceId').value=inv.id;
     document.getElementById('invoiceEstado').value=inv.estado||'pendiente';
     document.getElementById('invoiceProveedor').value=inv.proveedor||'';
@@ -15501,16 +15590,20 @@ function openInvoiceModal(id){
     document.getElementById('invoiceFechaVencimiento').value=inv.fechaVencimiento||'';
     document.getElementById('invoiceMonto').value=Number(inv.montoTotal||0);
     document.getElementById('invoiceNota').value=inv.nota||'';
-    document.getElementById('invoiceTitle').textContent='Editar factura';
+    document.getElementById('invoiceTitle').textContent=readOnly?'Factura aprobada':'Editar factura';
   }
 
   openModal('invoiceModal');
 }
 
-document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
+document.getElementById('invoiceForm')?.addEventListener('submit',async event=>{
   event.preventDefault();
 
+  const isChief=getAppRole()==='chief';
+  if(isChief&&!requireAppPermission('invoices.submit','No tienes permiso para registrar facturas.'))return;
   const id=document.getElementById('invoiceId').value;
+  const existingInvoice=id?InvoiceModule.findById(id):null;
+  if(isChief&&!invoiceChiefCanEdit(existingInvoice))return alert('La factura ya fue aprobada y no se puede modificar.');
   const proveedor=document.getElementById('invoiceProveedor').value.trim();
   const rutProveedor=document.getElementById('invoiceRut').value.trim();
   const numeroFactura=document.getElementById('invoiceNumero').value.trim();
@@ -15527,18 +15620,45 @@ document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
   if(!fechaVencimiento)return alert('Selecciona la fecha de vencimiento.');
   if(montoTotal<=0)return alert('El monto debe ser mayor a 0.');
 
+  const area=isChief?(window.ShiftControlAreas?.getSessionArea?.()||'TIENDA'):(existingInvoice?.area||'');
+  const fileInput=document.getElementById('invoiceAdjunto');
+  const file=fileInput?.files?.[0]||null;
+  const saveBtn=document.getElementById('invoiceSaveBtn');
+  let adjunto=existingInvoice?.adjunto||null;
+  if(file){
+    if(saveBtn)saveBtn.disabled=true;
+    try{
+      adjunto=await uploadEvidenceFile(file,`invoices/${area||'GENERAL'}/${fechaEmision.slice(0,7)}`);
+    }catch(error){
+      return alert(`No fue posible subir el respaldo: ${error?.message||error}`);
+    }finally{
+      if(saveBtn)saveBtn.disabled=false;
+    }
+  }
+
+  // Lo que envía una jefa queda por aprobar; si estaba rechazada, se reenvía.
+  const approvalFields=isChief?{
+    aprobacion:'pendiente_aprobacion',
+    area,
+    enviadaPor:authenticatedDisplayName(),
+    enviadaAt:new Date().toISOString(),
+    motivoRechazo:''
+  }:{};
+
   snapshot();
 
   if(id){
     InvoiceModule.patch(id,{
-      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,...approvalFields
     },{save:false});
     log(`Factura actualizada: ${proveedor} (${numeroFactura})`);
   }else{
     InvoiceModule.create({
       id:safeRandomUUID(),
-      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,
-      estado:'pendiente'
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,
+      estado:'pendiente',
+      aprobacion:'aprobada',
+      ...approvalFields
     },{prepend:true,save:false});
     log(`Factura registrada: ${proveedor} (${numeroFactura})`);
   }
@@ -15546,12 +15666,14 @@ document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
   save();
   closeModal('invoiceModal');
   renderInvoices();
-  toast('Factura guardada');
+  toast(isChief?'Factura enviada a aprobación':'Factura guardada');
 });
 
 function toggleInvoicePaid(id){
   const inv=InvoiceModule.findById(id);
   if(!inv)return;
+  if(getAppRole()!=='admin')return alert('Solo el administrador registra pagos.');
+  if(!invoiceIsApproved(inv))return alert('Aprueba la factura antes de registrar el pago.');
 
   snapshot();
   const nextEstado=inv.estado==='pagada'?'pendiente':'pagada';
@@ -15565,6 +15687,7 @@ function toggleInvoicePaid(id){
 function deleteInvoice(id){
   const inv=InvoiceModule.findById(id);
   if(!inv)return false;
+  if(getAppRole()!=='admin'&&!invoiceChiefCanEdit(inv)){alert('La factura ya fue aprobada y no se puede eliminar.');return false}
   if(!confirm(`¿Eliminar la factura ${inv.numeroFactura||''} de ${inv.proveedor||'este proveedor'}?`))return false;
 
   snapshot();
@@ -17046,7 +17169,9 @@ function renderAdminInbox(){
     )
   );
   const storeFollowUpsOpen=storeChecklistFollowUps().filter(item=>item.status==='open');
+  const invoicesToApprove=(window.InvoiceModule?.getAll?.()||[]).filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion');
   const pendingItems=[
+    ...invoicesToApprove.map(inv=>({kind:'invoice',id:inv.id,title:`Factura por aprobar · ${inv.proveedor||'Proveedor'}`,detail:`${inv.numeroFactura||'Sin número'} · ${money(inv.montoTotal)} · ${inv.enviadaPor||'Jefa de Tienda'}`,action:'Revisar factura'})),
     ...storeFollowUpsOpen.map(item=>({kind:'checklist',id:item.key,title:`Incumplimiento Tienda · ${item.title}`,detail:`${item.entry.date||'Sin fecha'} · ${item.detail.responsible||'Sin responsable'} · ${item.detail.note||'Sin observaciones'}`,action:'Revisar checklist'})),
     ...checklistEntries.map(([key,item])=>({kind:'checklist',id:key,title:`Revisión checklist diario · ${opsAreaLabel(window.ShiftControlAreas?.checklistArea?.(key,item)||'ISLA')}`,detail:`${item.date||'Sin fecha'} · ${item.completedBy||'Jefa de Isla'}`,action:'Revisar checklist'})),
     ...openIncidents.map(item=>({kind:'incident',id:item.id,title:item.title||'Incidencia abierta',detail:`${opsAreaLabel(window.ShiftControlAreas?.recordArea?.(item)||'ISLA')} · ${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,action:'Ver incidencias'})),
@@ -17109,6 +17234,7 @@ function renderAdminInbox(){
         </div>
       </section>
 
+      ${invoiceApprovalSection()}
       ${storeChecklistFollowUpSection()}
 
       <section class="admin-room-panel admin-room-activity">
@@ -18476,7 +18602,7 @@ function selectChecklistDateForReview(){
   if(target)el.value=target.date;
 }
 // ===== Checklist de tienda: responsable, fecha, observaciones y evidencia =====
-const CHECKLIST_EVIDENCE_BUCKET='checklist-evidence';
+const CHECKLIST_EVIDENCE_BUCKET='shiftcontrol-evidence';
 const CHECKLIST_EVIDENCE_MAX=4;
 const checklistEvidenceUrls=new Map();
 function checklistLocalDateTime(date=new Date()){
@@ -18527,6 +18653,32 @@ async function compressChecklistPhoto(file){
     if(blob)return blob;
   }catch(_error){}
   return file;
+}
+// Sube una foto (reducida) o un PDF al bucket privado de evidencia y
+// devuelve la referencia que se guarda en el estado.
+async function uploadEvidenceFile(file,folder){
+  const companyId=window.AuthContext?.get?.()?.companyId;
+  if(!companyId)throw new Error('Tu sesión no es válida. Vuelve a iniciar sesión.');
+  const isPdf=file.type==='application/pdf';
+  if(!isPdf&&!/^image\//.test(file.type))throw new Error('El archivo debe ser una imagen o un PDF.');
+  const blob=isPdf?file:await compressChecklistPhoto(file);
+  if(blob.size>5*1024*1024)throw new Error('El archivo supera 5 MB.');
+  const extension=isPdf?'pdf':'jpg';
+  const path=`${companyId}/${folder}/${safeRandomUUID()}.${extension}`;
+  const {error}=await window.ShiftControlAuth.getClient().storage
+    .from(CHECKLIST_EVIDENCE_BUCKET)
+    .upload(path,blob,{contentType:isPdf?'application/pdf':(blob.type||'image/jpeg'),upsert:false});
+  if(error)throw error;
+  return {path,name:file.name||`archivo.${extension}`,type:isPdf?'application/pdf':'image/jpeg',uploadedAt:new Date().toISOString(),uploadedBy:authenticatedDisplayName()};
+}
+async function openEvidenceFile(path){
+  try{
+    const {data,error}=await window.ShiftControlAuth.getClient().storage.from(CHECKLIST_EVIDENCE_BUCKET).createSignedUrl(path,3600);
+    if(error||!data?.signedUrl)throw error||new Error('Enlace no disponible');
+    window.open(data.signedUrl,'_blank','noopener');
+  }catch(error){
+    alert(`No fue posible abrir el archivo: ${error?.message||error}`);
+  }
 }
 async function uploadChecklistEvidence(id,input){
   const file=input?.files?.[0];
@@ -18614,6 +18766,17 @@ function resolveChecklistFollowUp(key,id){
   renderAdminInbox();
   renderOpsChecklist();
   showToast('Incumplimiento resuelto');
+}
+function invoiceApprovalSection(){
+  const items=(window.InvoiceModule?.getAll?.()||[]).filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion');
+  if(!items.length)return '';
+  const jsArg=value=>JSON.stringify(String(value||'')).replace(/"/g,'&quot;');
+  return `<section class="admin-room-panel admin-room-invoice-approvals">
+    <div class="admin-room-panel-head"><h4>Facturas por aprobar</h4><span>${items.length}</span></div>
+    <div class="admin-room-all-list">
+      ${items.map(inv=>`<article class="store-followup open"><div><strong>${v14Esc(inv.proveedor||'Proveedor')} · ${v14Esc(money(inv.montoTotal))}</strong><small>${v14Esc([inv.numeroFactura?`Factura ${inv.numeroFactura}`:'Sin número',inv.fechaEmision?fmt(inv.fechaEmision):'',invoiceAreaLabel(inv),inv.enviadaPor||''].filter(Boolean).join(' · '))}</small>${inv.nota?`<small>${v14Esc(inv.nota)}</small>`:''}</div><div class="store-followup-actions">${inv.adjunto?.path?`<button type="button" onclick="openEvidenceFile(${jsArg(inv.adjunto.path)})">Ver respaldo</button>`:''}<button type="button" onclick="showView('invoices');openInvoiceModal(${jsArg(inv.id)})">Ver</button><button type="button" onclick="approveInvoice(${jsArg(inv.id)})">Aprobar</button><button type="button" onclick="rejectInvoice(${jsArg(inv.id)})">Rechazar</button></div></article>`).join('')}
+    </div>
+  </section>`;
 }
 function storeChecklistFollowUpSection(){
   const items=storeChecklistFollowUps();

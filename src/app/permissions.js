@@ -38,6 +38,7 @@
     }),
     // La Jefa de Tienda tiene las mismas funciones que la Jefa de Isla, sobre
     // el personal, las incidencias, el checklist y las entregas de la tienda.
+    // Además registra facturas de tienda, que el administrador aprueba.
     CHIEF_TIENDA:Object.freeze({
       views:Object.freeze([
         'operational-home',
@@ -53,12 +54,14 @@
         'employees',
         'evaluations',
         'reports',
-        'additional'
+        'additional',
+        'invoices'
       ]),
       actions:Object.freeze([
         'attendance.manage',
         'planning.manage',
         'absences.manage',
+        'invoices.submit',
         'incidents.manage',
         'checklists.manage',
         'handoff.manage',

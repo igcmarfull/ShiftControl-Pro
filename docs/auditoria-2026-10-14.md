@@ -146,6 +146,13 @@ foto reducida y subida, miniatura visible para la jefa y el gerente, bloqueo
 de envío sin observaciones, resolución con comentario visible para la jefa, y
 mensaje claro si el bucket aún no existe.
 
+La Jefa de Tienda registra facturas de tienda con respaldo (foto o PDF); el
+gerente las aprueba o rechaza con motivo desde «Facturas y compras» o la
+Bandeja ADMIN, y solo las aprobadas cuentan en los totales. Verificado en
+navegador: envío con foto y con PDF, aprobación y rechazo, corrección y
+reenvío, totales sin facturas pendientes, bloqueo de pagos y de edición de
+aprobadas para la jefa.
+
 Límite conocido: la separación es de la aplicación. Una jefa con
 conocimientos técnicos podría leer el JSON completo desde Supabase. Aislarlo
 en la base de datos requiere dividir `app_state` por área.
@@ -155,8 +162,8 @@ Para activarla en producción, en este orden:
 1. Clasificar al personal con área "Isla" o "Tienda" desde «Trabajadores».
 2. Aplicar `20261014000001_fix_memberships_admin_policy.sql`,
    `20261014000002_chief_areas.sql` y
-   `20261014000003_checklist_evidence_storage.sql` (bucket privado de fotos
-   del checklist).
+   `20261014000003_evidence_storage.sql` (bucket privado de fotos del
+   checklist y respaldos de facturas).
 3. Desplegar la Edge Function `assign-chief`.
 4. Asignar la Jefa de Tienda desde «Equipo de estación».
 
@@ -167,5 +174,4 @@ Jefa de Isla.
 
 1. Aplicar en Supabase la migración `20261014000001` (y revisar si
    `20260804000001` ya está aplicada o corregida a mano).
-2. Definir si la Jefa de Tienda debe ver «Facturas y compras».
-3. Autorizar la limpieza de datos incrustados en `index.html`.
+2. Autorizar la limpieza de datos incrustados en `index.html`.

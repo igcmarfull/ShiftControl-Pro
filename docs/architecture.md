@@ -260,9 +260,18 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   `followUp.status = 'open'` y aparece en la Bandeja ADMIN hasta que el
   gerente lo marca resuelto con un comentario. El checklist de isla no cambia.
 - Las fotos se reducen en el navegador (JPEG, lado mayor 1600 px) y se suben
-  al bucket privado `checklist-evidence` de Supabase Storage con la ruta
+  al bucket privado `shiftcontrol-evidence` de Supabase Storage con la ruta
   `<empresa>/checklists/<área>/<fecha>/<archivo>`. El checklist guarda solo la
   ruta; las imágenes se muestran con enlaces firmados de una hora.
+- Facturas: la Jefa de Tienda registra facturas de tienda (`area: 'TIENDA'`)
+  con un respaldo opcional (foto o PDF en
+  `<empresa>/invoices/<área>/<mes>/<archivo>`). Quedan con
+  `aprobacion: 'pendiente_aprobacion'` hasta que el administrador las aprueba
+  o rechaza con motivo; una rechazada se corrige y se reenvía. Las facturas sin
+  `aprobacion` (anteriores) se consideran aprobadas. Los indicadores, el pago y
+  los vencimientos usan solo facturas aprobadas. La jefa ve solo las facturas
+  de su área y no registra pagos ni modifica facturas aprobadas. Las facturas
+  por aprobar aparecen en la Bandeja ADMIN.
 - En incidencias, checklist y entrega de turno el administrador elige el área
   que revisa con un selector Isla/Tienda.
 - Las entregas de turno se guardan en `state.handoffs` mediante

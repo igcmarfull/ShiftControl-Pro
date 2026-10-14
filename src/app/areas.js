@@ -98,6 +98,11 @@
       if(!Array.isArray(fullState[key]))return;
       scoped[key]=fullState[key].filter(item=>recordArea(item)===area);
     });
+    // Las facturas sin área son del administrador: una jefa solo ve las que
+    // se registraron para su área.
+    if(Array.isArray(fullState.invoices)){
+      scoped.invoices=fullState.invoices.filter(item=>normalizeArea(item?.area)===area);
+    }
     const checklists=fullState.checklists;
     if(checklists&&typeof checklists==='object'&&!Array.isArray(checklists)){
       scoped.checklists=Object.fromEntries(
