@@ -1,7 +1,7 @@
 # Fase 2 del aislamiento de `app_state`: procedimiento y reversión
 
 Estado: **aplicada en producción el 14-10-2026** (autorizada por el propietario).
-La Jefa de Tienda sigue desactivada. Este documento no autoriza nada nuevo: cada
+La Jefa de Tienda se reactivó ese mismo día (paso 6, autorizada). Este documento no autoriza nada nuevo: cada
 paso que escribe en Supabase requiere autorización expresa.
 
 ## Registro de la aplicación (14-10-2026)
@@ -25,9 +25,11 @@ paso que escribe en Supabase requiere autorización expresa.
   misma que produce la base local con la fase 2). Datos idénticos al respaldo
   (14 trabajadores, 673 turnos, 31 asistencias, 3 facturas). El linter de
   seguridad no muestra advertencias nuevas.
-- Pendiente tras la fase 2: que el propietario confirme en la app el panel de
-  gerente y el de la Jefa de Isla, y la reactivación de la Jefa de Tienda
-  (paso 6, con autorización).
+- El propietario confirmó en la app el panel de gerente. La Jefa de Tienda se
+  reactivó y la verificación con `'bloqueado'` pasó con ella activa: sin acceso
+  directo a `app_state` y con la función por área limitada a Tienda (1 de 14
+  trabajadores, 0 depósitos, 0 historial). Pendiente: que la Jefa de Isla y la
+  Jefa de Tienda confirmen sus paneles en la app.
 
 ## Qué hace y qué no hace
 
