@@ -199,7 +199,23 @@ Undo, redo, importación de respaldo y recuperación remota usan esta operación
 - última versión acordada con Supabase: `<clave de empresa>:base`;
 - marca de cambios sin subir: `<clave de empresa>:pending`.
 
-El valor publicable de Supabase está en código cliente. Debe tratarse según el modelo de seguridad de claves publicables y políticas de la base; este repositorio no contiene las políticas RLS ni migraciones SQL para verificarlas.
+El valor publicable de Supabase está en código cliente. Debe tratarse según el modelo de seguridad de claves publicables y políticas de la base. Las políticas RLS, funciones y migraciones están en `supabase/` (ver «Supabase en el repositorio»).
+
+### Supabase en el repositorio
+
+- `supabase/migrations/`: migraciones tal como están aplicadas en producción,
+  con sus versiones exactas. La excepción es `20261014200100_lock_app_state_to_admin.sql`
+  (fase 2), que **no está aplicada**. La tabla original `public.app_state` no
+  la crea ninguna migración: existía antes y las migraciones solo la modifican,
+  así que la base no se puede reconstruir desde cero solo con este directorio.
+- `supabase/functions/assign-chief/`: Edge Function desplegada.
+- `supabase/tests/`: scripts SQL manuales para la fase 2 (`fase2_local.sql` sobre
+  una base local desechable y `fase2_produccion.sql` de solo verificación con
+  `ROLLBACK`). No son una suite automatizada ni se ejecutan en CI.
+- `supabase/rollback/`: reversión manual de la fase 2. No es una migración y no
+  debe colocarse en `supabase/migrations/`.
+
+El procedimiento completo de la fase 2 está en `docs/fase2-aislamiento-app-state.md`.
 
 ### Almacenes paralelos observados
 
@@ -279,10 +295,14 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   `HandoffModule` (`src/modules/handoffs/handoffs.js`). Antes quedaban solo en
   `localStorage`; `migrateLegacyHandoffs()` las incorpora una vez como entregas
   de isla.
-- Aislamiento en la base de datos (migraciones `20261014021748`,
-  `20261014021940` y `20261014200100`): el administrador lee y escribe `app_state` completo; las
-  jefaturas no tienen acceso directo y usan `get_area_app_state`,
-  `get_app_state_version` y `save_area_app_state`. El servidor recorta el
+- Aislamiento en la base de datos. **Activo en producción (fase 1)**:
+  migraciones `20261014021748` y `20261014021940`. **Pendiente (fase 2)**:
+  `20261014200100`, que retira a las jefaturas el acceso directo a `app_state`;
+  hoy las policies siguen permitiendo a cualquier miembro activo leer y escribir
+  `app_state` completo. Con la fase 2 aplicada, el administrador lee y escribe
+  `app_state` completo y las jefaturas usan `get_area_app_state`,
+  `get_app_state_version` y `save_area_app_state` (disponibles desde la fase 1
+  y usadas ya por la app publicada). El servidor recorta el
   estado por área (mismas reglas que `src/app/areas.js`), entrega vacíos
   finanzas, depósitos, faltantes de caja e historial, y al guardar solo
   acepta registros del área: no aprueba facturas ni evaluaciones, no registra
@@ -319,5 +339,6 @@ Además:
   `employees`, `plans` y la marca de datos demo.
 - Las redefiniciones tardías pueden reemplazar implementaciones anteriores.
 - No toda persistencia se sincroniza remotamente.
-- No hay pruebas automatizadas que protejan la migración.
+- No hay pruebas automatizadas de la aplicación que protejan la migración. Las
+  únicas pruebas del repositorio son los scripts SQL manuales de `supabase/tests/`.
 - Los respaldos y documentos históricos no son parte del runtime.

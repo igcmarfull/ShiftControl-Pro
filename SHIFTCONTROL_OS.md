@@ -2,11 +2,11 @@
 
 ## Propósito
 
-Este archivo es la entrada principal a la documentación técnica de ShiftControl Pro. Describe el sistema que existe en el repositorio al 26 de julio de 2026; no define funcionalidades nuevas ni reemplaza al código como fuente de verdad.
+Este archivo es la entrada principal a la documentación técnica de ShiftControl Pro. Describe el sistema que existe en el repositorio al 26 de julio de 2026, con las secciones de áreas, autenticación y Supabase actualizadas al 14 de octubre de 2026; no define funcionalidades nuevas ni reemplaza al código como fuente de verdad.
 
 ## Estado actual
 
-ShiftControl Pro es una aplicación web de una sola página que se abre directamente desde `index.html`. No hay en el repositorio un gestor de paquetes, un proceso de compilación, un framework de interfaz, una suite de pruebas ni configuración de CI.
+ShiftControl Pro es una aplicación web de una sola página que se abre directamente desde `index.html`. No hay en el repositorio un gestor de paquetes, un proceso de compilación, un framework de interfaz, una suite de pruebas de la aplicación ni configuración de CI. La carpeta `supabase/` contiene migraciones, una Edge Function y scripts SQL manuales de verificación (`supabase/tests/`) y reversión (`supabase/rollback/`).
 
 La aplicación está en una transición gradual desde un documento HTML monolítico hacia archivos y módulos separados:
 
@@ -29,6 +29,8 @@ La aplicación está en una transición gradual desde un documento HTML monolít
 - [docs/roadmap.md](docs/roadmap.md): estado de la modularización, sin agregar alcance funcional.
 - [docs/decisions.md](docs/decisions.md): decisiones arquitectónicas observadas.
 - [docs/git-workflow.md](docs/git-workflow.md): flujo Git basado en el uso actual del repositorio.
+- [docs/auditoria-2026-10-14.md](docs/auditoria-2026-10-14.md): auditoría funcional y de seguridad, con el estado de Supabase y los pendientes.
+- [docs/fase2-aislamiento-app-state.md](docs/fase2-aislamiento-app-state.md): procedimiento, pruebas y reversión de la fase 2 del aislamiento de `app_state` (preparada, no aplicada).
 
 Los archivos históricos en `docs/` con nombres en mayúsculas y los registros `CAMBIOS_V*.md` sirven como antecedentes. Esta base documental en minúsculas describe el estado comprobado del código actual.
 

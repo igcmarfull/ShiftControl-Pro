@@ -4,7 +4,7 @@
 
 ShiftControl Pro es una SPA de navegador en español, sin build ni dependencias instaladas localmente. Se inicia abriendo `index.html`. El repositorio está en una modularización incremental, pero el monolito sigue siendo el núcleo del sistema.
 
-Fecha de este levantamiento: 26 de julio de 2026.
+Fecha de este levantamiento: 26 de julio de 2026. Las áreas, la autenticación y Supabase se actualizaron el 14 de octubre de 2026 (ver `docs/architecture.md` y `docs/auditoria-2026-10-14.md`); la lista de scripts de más abajo es la de julio, y la fuente de verdad es el orden de las etiquetas `<script>` de `index.html`.
 
 ## Leer primero
 
@@ -23,7 +23,8 @@ Fecha de este levantamiento: 26 de julio de 2026.
   `window.ShiftControlState` y los módulos de trabajadores, planificación,
   asistencia, jornadas adicionales, ausencias, feriados, auditoría,
   configuración y cierres.
-- No hay `package.json`, bundler, imports ESM, servidor de aplicación, tests, linter ni CI visibles.
+- No hay `package.json`, bundler, imports ESM, servidor de aplicación, pruebas de la aplicación, linter ni CI. `supabase/` contiene migraciones, la Edge Function `assign-chief` y scripts SQL manuales (`supabase/tests/`, `supabase/rollback/`).
+- Supabase aplica RLS por empresa y área. La fase 1 del aislamiento de `app_state` está aplicada; la fase 2 (`20261014200100`) está preparada pero **no aplicada** (`docs/fase2-aislamiento-app-state.md`). No aplicar migraciones ni tocar producción sin autorización expresa.
 
 ## Estado y persistencia
 
