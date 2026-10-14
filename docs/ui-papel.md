@@ -111,3 +111,5 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 - **Celular (< 768 px):** el mismo resumen (anillo, cuatro cifras, alerta y cobertura A/B/C) reemplaza las tarjetas y recuadros anteriores; los turnos plegables conservan sus acciones. Los bloques de 7 días, excepciones y relevo van en un panel plegable (`#odFold`), y el administrador tiene «Marcar pendientes presentes» y el menú «⋯» con «Reiniciar día» (antes no estaban disponibles en celular).
 
 Verificación: pruebas en navegador con datos simulados (Todas = Isla + Tienda, «Marcar pendientes presentes» con Isla elegida solo marcó a Isla; la Jefa de Isla no ve el selector y solo ve su área). Sin pruebas con datos reales.
+
+Alineación (Operación del día, escritorio): la franja superior centra verticalmente las cifras junto al anillo, las tarjetas de cobertura A/B/C centran su contenido y las barras de los 7 días se alinean al pie de su tarjeta.

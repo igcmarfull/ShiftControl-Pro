@@ -679,3 +679,15 @@ body:not(.light) .person .avatar,body:not(.light) .cal-name .avatar{background:#
   body[data-role="admin"] #today .topbar .actions .od-seg{margin-bottom:2px}
   body[data-role="admin"] #today .topbar .actions .od-seg button{min-height:38px;padding:8px 10px}
 }
+
+/* Operación del día · alineación */
+.od-hero{align-items:stretch}
+.od-hero>div{display:flex;flex-direction:column;justify-content:center}
+.od-hero>div:first-child{flex-direction:row;align-items:center}
+.od-stats{width:100%}
+.od-cc{justify-content:center;text-align:left}
+.od-cc>div:last-child{min-width:0}
+@media (min-width:768px){
+  .od-low .ic-cp{justify-content:flex-start}
+  .od-low .ic-bars{margin-top:auto;margin-bottom:6px}
+}
