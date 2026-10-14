@@ -6406,7 +6406,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
             <button class="btn soft planning-tool" onclick="duplicatePreviousMonth()" title="Duplicar mes anterior"><span class="planning-tool-icon">▣</span><span class="planning-tool-label">Duplicar</span><span class="planning-tool-desktop">Duplicar mes anterior</span></button>
             <button class="btn planning-tool" onclick="openPatternModal()" title="Aplicar patrón"><span class="planning-tool-icon">⌘</span><span class="planning-tool-label">Patrón</span><span class="planning-tool-desktop">Aplicar patrón</span></button>
             <button class="btn soft planning-tool" onclick="openBulkModal()" title="Asignación masiva"><span class="planning-tool-icon">♙</span><span class="planning-tool-label">Masiva</span><span class="planning-tool-desktop">Asignación masiva</span></button>
-            <button class="btn primary planning-tool" id="closeMonthBtn" onclick="toggleMonthClose()" title="Cerrar mes"><span class="planning-tool-icon">▢</span><span class="planning-tool-label">Cerrar</span><span class="planning-tool-desktop">Cerrar mes</span></button>
+            <button class="btn primary planning-tool" id="closeMonthBtn" data-permission-action="month-closures.manage" onclick="toggleMonthClose()" title="Cerrar mes"><span class="planning-tool-icon">▢</span><span class="planning-tool-label">Cerrar</span><span class="planning-tool-desktop">Cerrar mes</span></button>
           </div>
         </div>
       </div>
@@ -8792,6 +8792,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
           <button type="button" class="invoices-tab" data-tab="pendiente" onclick="switchInvoiceTab('pendiente')">Pendientes</button>
           <button type="button" class="invoices-tab" data-tab="pagada" onclick="switchInvoiceTab('pagada')">Pagadas</button>
           <button type="button" class="invoices-tab" data-tab="vencida" onclick="switchInvoiceTab('vencida')">Vencidas</button>
+          <button type="button" class="invoices-tab" data-tab="aprobacion" onclick="switchInvoiceTab('aprobacion')">Por aprobar</button>
         </div>
         <div class="invoices-filters">
           <span class="additional-search-wrap invoices-search-wrap"><span class="additional-filter-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input class="field" id="invoiceSearch" placeholder="Buscar factura, proveedor o RUT..." oninput="renderInvoices()"></span>
@@ -9100,11 +9101,42 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       .team-history-row small{color:var(--muted);font-size:11.5px;white-space:nowrap}
     </style>
 
+    <style>
+      #checklists .ops-check-item{flex-wrap:wrap}
+      .ops-check-detail-wrap{flex:1 0 100%;width:100%;min-width:0;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+      .ops-check-detail-wrap>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--muted)}
+      .ops-check-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px;cursor:default;width:100%;min-width:0;box-sizing:border-box}
+      .ops-check-detail .field{width:100%;min-width:0;box-sizing:border-box}
+      .ops-check-detail label{display:block;margin:0}
+      .ops-check-detail label>span,.ops-check-evidence>span{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin:0 0 4px}
+      .ops-check-detail .full{grid-column:1/-1}
+      .ops-check-detail textarea.field{width:100%;resize:vertical;min-height:54px}
+      .ops-evidence-list{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+      .ops-evidence-thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;border:1px solid var(--line);display:block;background:var(--soft)}
+      .ops-evidence-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .ops-evidence-add{cursor:pointer}
+      .ops-evidence-empty{color:var(--muted);font-size:12px}
+      .ops-check-follow{font-size:12px;padding:8px 10px;border-radius:10px;border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+      .ops-check-follow.resolved{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+      .store-followup small{display:block}
+      .invoice-area-tag,.invoice-reject-note{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+      .invoice-reject-note{color:var(--red,#ef4444)}
+      .invoice-attachment{margin-top:6px}
+      .invoice-approval-actions{display:flex;gap:8px;margin-top:8px}
+      .invoice-approval-info{font-size:12.5px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--soft)}
+      .invoice-approval-info.pendiente_aprobacion{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+      .invoice-approval-info.rechazada{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+      .invoice-approval-info.aprobada{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+      .store-followup.resolved{opacity:.7}
+      .store-followup-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+      @media(max-width:680px){.ops-check-detail{grid-template-columns:1fr}}
+    </style>
+
     <section id="team" class="view">
       <div class="topbar">
         <div>
           <h2>Equipo de estación</h2>
-          <p>Administra quién tiene el rol de Jefa de Isla.</p>
+          <p>Administra quién es la Jefa de Isla y la Jefa de Tienda.</p>
         </div>
       </div>
       <div id="teamRoot">
@@ -9116,6 +9148,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <div class="modal-card">
         <div class="modal-head"><h3 id="assignChiefTitle">Asignar Jefa de Isla</h3><button class="close" onclick="closeModal('assignChiefModal')">×</button></div>
         <form id="assignChiefForm" class="form-grid">
+          <input type="hidden" id="assignChiefArea" value="ISLA">
           <div class="form-group full"><label>Nombre</label><input class="field" id="assignChiefName" placeholder="Nombre completo" required></div>
           <div class="form-group full"><label>Correo</label><input class="field" type="email" id="assignChiefEmail" placeholder="nombre@empresa.cl" required></div>
           <div id="assignChiefError" class="login-error" role="alert"></div>
@@ -10382,6 +10415,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <p>Registra problemas del turno, asigna prioridad y deja trazabilidad hasta su resolución.</p>
     </div>
     <div class="actions incidents-actions">
+      <select class="select ops-area-select role-admin-only" aria-label="Área" onchange="setOpsAdminArea(this.value)"><option value="ISLA">Isla</option><option value="TIENDA">Tienda</option></select>
       <button class="btn incidents-desktop-all" onclick="filterOpsIncidents('all')">Ver todas</button>
       <button class="btn incidents-mobile-today" type="button" onclick="incidentSetToday()">◎ Hoy</button>
       <button class="btn primary" type="button" onclick="focusIncidentForm()">＋ Nueva incidencia</button>
@@ -10426,7 +10460,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <div>
       <h2>Checklist operativo</h2>
     </div>
-    <div class="actions"><button type="button" class="btn" onclick="checklistDate.value=isoToday;renderOpsChecklist()">⊖ Hoy</button><input class="field" type="date" id="checklistDate" onchange="renderOpsChecklist()"></div>
+    <div class="actions"><select class="select ops-area-select role-admin-only" aria-label="Área" onchange="setOpsAdminArea(this.value)"><option value="ISLA">Isla</option><option value="TIENDA">Tienda</option></select><button type="button" class="btn" onclick="checklistDate.value=isoToday;renderOpsChecklist()">⊖ Hoy</button><input class="field" type="date" id="checklistDate" onchange="renderOpsChecklist()"></div>
   </div>
 
   <div class="ops-checklist-layout">
@@ -10454,9 +10488,9 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
 
 <section id="handoff" class="view ops-module-view">
-  <div class="topbar"><div><div class="eyebrow"><span class="live-dot"></span> Continuidad operativa</div><h2>Entrega y recepción de turno</h2><p>Deja pendientes claros y registra quién entrega y quién recibe.</p></div><div class="actions"><input class="field" type="date" id="handoffDate"><select class="select" id="handoffShift"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div></div>
+  <div class="topbar"><div><div class="eyebrow"><span class="live-dot"></span> Continuidad operativa</div><h2>Entrega y recepción de turno</h2><p>Deja pendientes claros y registra quién entrega y quién recibe.</p></div><div class="actions"><select class="select ops-area-select role-admin-only" aria-label="Área" onchange="setOpsAdminArea(this.value)"><option value="ISLA">Isla</option><option value="TIENDA">Tienda</option></select><input class="field" type="date" id="handoffDate"><select class="select" id="handoffShift"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div></div>
   <div class="ops-two-column">
-    <article class="ops-panel"><div class="ops-panel-head"><div><h3>Entregar turno</h3><p>Registra únicamente información útil para el siguiente responsable.</p></div><span class="ops-pill">Jefa de isla</span></div>
+    <article class="ops-panel"><div class="ops-panel-head"><div><h3>Entregar turno</h3><p>Registra únicamente información útil para el siguiente responsable.</p></div><span class="ops-pill" id="handoffAreaPill">Jefa de isla</span></div>
       <div class="ops-form"><div class="form-group full"><label>Entrega</label><input class="field" id="handoffFrom" placeholder="Nombre de quien entrega"></div><div class="form-group full"><label>Recibe</label><input class="field" id="handoffTo" placeholder="Nombre de quien recibe"></div><div class="form-group full"><label>Pendientes y observaciones</label><textarea id="handoffNotes" rows="7" placeholder="Incidencias abiertas, tareas pendientes o instrucciones relevantes"></textarea></div><div class="full actions" style="justify-content:flex-end"><button class="btn primary" onclick="saveHandoff()">Entregar turno</button></div></div>
     </article>
     <article class="ops-panel"><div class="ops-panel-head"><div><h3>Historial de entregas</h3><p>Registro de continuidad entre turnos.</p></div></div><div id="handoffHistory" class="ops-list"></div></article>
@@ -10743,7 +10777,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </div>
 
 <div class="modal" id="employeeModal"><div class="modal-card"><div class="modal-head"><h3 id="employeeTitle">Agregar trabajador</h3><button class="close" onclick="closeModal(&#39;employeeModal&#39;)">×</button></div><form id="employeeForm" class="form-grid">
-<input type="hidden" id="employeeId"><div class="form-group full"><label>Nombre completo</label><input class="field" id="employeeName" required=""></div><div class="form-group"><label>RUT</label><input class="field" id="employeeRut"></div><div class="form-group"><label>Cargo</label><input class="field" id="employeeRole"></div><div class="form-group"><label>Área</label><input class="field" id="employeeArea"></div><div class="form-group"><label>Turno habitual</label><select class="select" id="employeeShift"><option>A</option><option>B</option><option>C</option></select></div><div class="form-group"><label>Fecha de ingreso</label><input class="field" type="date" id="employeeStart"></div><div class="form-group"><label>Estado</label><select class="select" id="employeeActive"><option value="true">Activo</option><option value="false">Inactivo</option></select></div><div class="form-group"><label>Teléfono</label><input class="field" type="tel" id="employeePhone" placeholder="+56 9 1234 5678"></div><div class="form-group"><label>Correo</label><input class="field" type="email" id="employeeEmail" placeholder="nombre@empresa.cl"></div><div class="form-group full"><label>Dirección</label><input class="field" id="employeeAddress"></div><div class="form-group"><label>Contacto de emergencia</label><input class="field" id="employeeEmergency" placeholder="Nombre y teléfono"></div><div class="form-group"><label>AFP</label><input class="field" id="employeeAfp"></div><div class="form-group"><label>Sistema de salud</label><input class="field" id="employeeHealthSystem" placeholder="Fonasa / Isapre"></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeModal(&#39;employeeModal&#39;)">Cancelar</button><button class="btn primary">Guardar</button></div></form></div></div>
+<input type="hidden" id="employeeId"><div class="form-group full"><label>Nombre completo</label><input class="field" id="employeeName" required=""></div><div class="form-group"><label>RUT</label><input class="field" id="employeeRut"></div><div class="form-group"><label>Cargo</label><input class="field" id="employeeRole"></div><div class="form-group"><label>Área</label><input class="field" id="employeeArea" list="employeeAreaOptions"><datalist id="employeeAreaOptions"><option value="Isla"></option><option value="Tienda"></option></datalist></div><div class="form-group"><label>Turno habitual</label><select class="select" id="employeeShift"><option>A</option><option>B</option><option>C</option></select></div><div class="form-group"><label>Fecha de ingreso</label><input class="field" type="date" id="employeeStart"></div><div class="form-group"><label>Estado</label><select class="select" id="employeeActive"><option value="true">Activo</option><option value="false">Inactivo</option></select></div><div class="form-group"><label>Teléfono</label><input class="field" type="tel" id="employeePhone" placeholder="+56 9 1234 5678"></div><div class="form-group"><label>Correo</label><input class="field" type="email" id="employeeEmail" placeholder="nombre@empresa.cl"></div><div class="form-group full"><label>Dirección</label><input class="field" id="employeeAddress"></div><div class="form-group"><label>Contacto de emergencia</label><input class="field" id="employeeEmergency" placeholder="Nombre y teléfono"></div><div class="form-group"><label>AFP</label><input class="field" id="employeeAfp"></div><div class="form-group"><label>Sistema de salud</label><input class="field" id="employeeHealthSystem" placeholder="Fonasa / Isapre"></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeModal(&#39;employeeModal&#39;)">Cancelar</button><button class="btn primary">Guardar</button></div></form></div></div>
 
 <div class="modal" id="cellModal"><div class="modal-card"><div class="modal-head"><h3 id="cellTitle">Editar día</h3><button class="close" onclick="closeModal(&#39;cellModal&#39;)">×</button></div><input type="hidden" id="cellEmployee"><input type="hidden" id="cellDate"><div class="quick-grid">
 <button class="quick-btn" onclick="savePlanCell(&#39;A&#39;)">Turno A</button><button class="quick-btn" onclick="savePlanCell(&#39;B&#39;)">Turno B</button><button class="quick-btn" onclick="savePlanCell(&#39;C&#39;)">Turno C</button><button class="quick-btn" onclick="savePlanCell(&#39;D&#39;)">Descanso</button><button class="quick-btn" onclick="savePlanCell(&#39;L&#39;)">Licencia</button><button class="quick-btn" onclick="savePlanCell(&#39;V&#39;)">Vacaciones</button><button class="quick-btn" onclick="savePlanCell(&#39;P&#39;)">Permiso</button><button class="quick-btn" onclick="savePlanCell(&#39;X&#39;)">Ausencia</button><button class="quick-btn" onclick="savePlanCell(&#39;Eliminar&#39;)">Eliminar</button>
@@ -10796,9 +10830,11 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <div class="form-group"><label>Fecha vencimiento</label><input class="field" type="date" id="invoiceFechaVencimiento"></div>
 <div class="form-group"><label>Monto total</label><input class="field" type="number" min="0" id="invoiceMonto"></div>
 <div class="form-group full"><label>Nota</label><input class="field" id="invoiceNota" placeholder="Observaciones (opcional)"></div>
+<div class="form-group full"><label>Respaldo (foto o PDF)</label><input class="field" type="file" id="invoiceAdjunto" accept="image/*,application/pdf"><div id="invoiceAdjuntoActual" class="invoice-attachment"></div></div>
+<div class="form-group full" id="invoiceApprovalInfo" hidden></div>
 <div class="full actions" style="justify-content:space-between">
 <button type="button" class="btn danger" id="invoiceDeleteBtn" style="display:none" onclick="deleteInvoiceFromModal()">Eliminar factura</button>
-<div style="display:flex;gap:8px"><button type="button" class="btn" onclick="closeModal('invoiceModal')">Cancelar</button><button class="btn primary">Guardar</button></div>
+<div style="display:flex;gap:8px"><button type="button" class="btn" onclick="closeModal('invoiceModal')">Cancelar</button><button class="btn primary" id="invoiceSaveBtn">Guardar</button></div>
 </div>
 </form></div></div>
 
@@ -10979,6 +11015,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <script src="src/modules/finance-expenses/finance-expenses.js"></script>
 <script src="src/modules/deposits/deposits.js"></script>
 <script src="src/modules/incidents/incidents.js"></script>
+<script src="src/modules/handoffs/handoffs.js"></script>
 <script src="src/modules/evaluations/evaluations.js?v=20260727-eval-remove"></script>
 <script src="src/modules/checklists/checklists.js?v=20260728-checklist-remove"></script>
 <script src="src/modules/invoices/invoices.js?v=20260729-invoices-add"></script>
@@ -11377,6 +11414,25 @@ function fillPeriods(){
   ['planMonth','reportMonth'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){e.innerHTML=monthNames.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');e.value=cm}});
   ['planYear','reportYear'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){for(let y=today.getFullYear()+1;y>=today.getFullYear()-5;y--)e.innerHTML+=`<option value="${y}">${y}</option>`;e.value=cy}});
 }
+// Cada jefa ve solo el personal de su área (Isla o Tienda). En bases antiguas
+// sin área "Isla", la Jefa de Isla ve a todo el personal que no es de tienda.
+function chiefAreaEmployees(list){
+  const areas=window.ShiftControlAreas;
+  if(!areas)return list;
+  return areas.employeesForArea(list,areas.getSessionArea()||'ISLA');
+}
+// Área para una trabajadora creada por una jefa. En bases antiguas sin
+// personal clasificado como "Isla" se deja vacía, para no ocultar al resto.
+function chiefNewEmployeeArea(){
+  const areas=window.ShiftControlAreas;
+  const area=areas?.getSessionArea()||'ISLA';
+  if(area==='ISLA'&&!window.EmployeeModule.getAll().some(e=>areas?.employeeArea(e)==='ISLA'))return '';
+  return areas?.info(area)?.label||'Isla';
+}
+function chiefAreaLabel(){
+  const areas=window.ShiftControlAreas;
+  return areas?.info(areas.getSessionArea()||'ISLA')?.label||'Isla';
+}
 function fillEmployeeSelects(){
   if(!window.EmployeeModule){
     console.warn('[ShiftControl] fillEmployeeSelects esperando EmployeeModule');
@@ -11393,8 +11449,9 @@ function fillEmployeeSelects(){
     const el=document.getElementById(id);
     if(!el)return;
     if(chiefMode){
-      el.innerHTML='<option value="Isla">Isla</option>';
-      el.value='Isla';
+      const label=chiefAreaLabel();
+      el.innerHTML=`<option value="${label}">${label}</option>`;
+      el.value=label;
       el.disabled=true;
     }else{
       const current=el.value;
@@ -11403,7 +11460,7 @@ function fillEmployeeSelects(){
       el.disabled=false;
     }
   });
-  const visibleEmployees=chiefMode?active.filter(e=>e.area==='Isla'):active;
+  const visibleEmployees=chiefMode?chiefAreaEmployees(active):active;
   ['planEmployeeFilter','weekEmployeeFilter','actualEmployeeFilter'].forEach(id=>{const el=document.getElementById(id);if(el){const current=el.value;el.innerHTML='<option value="">Todos los trabajadores</option>'+visibleEmployees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');el.value=visibleEmployees.some(e=>e.id===current)?current:''}});
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
@@ -11604,11 +11661,11 @@ function renderPlanning(){updateSelectionBar();
   head+='<div class="sticky-summary">Resumen</div></div>';
   let body='';
   const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
-  const areaFilter=isChief?'Isla':(document.getElementById('planAreaFilter')?.value||'');
+  const areaFilter=isChief?'':(document.getElementById('planAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('planEmployeeFilter')?.value||'';
   const normalizeArea=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   const activeEmployees=window.EmployeeModule.getAll().filter(e=>e.active&&(!employeeFilter||e.id===employeeFilter));
-  let visibleEmployees=activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
+  let visibleEmployees=isChief?chiefAreaEmployees(activeEmployees):activeEmployees.filter(e=>!areaFilter||normalizeArea(e.area)===normalizeArea(areaFilter));
   // En algunas bases antiguas el área de las atendedoras quedó vacía o con otra etiqueta.
   // La Jefa de Isla nunca debe recibir una grilla vacía por ese dato heredado.
   if(isChief&&!visibleEmployees.length) visibleEmployees=activeEmployees;
@@ -12084,13 +12141,16 @@ function renderActualCalendar(){
   const prefix=actualPeriodPrefix();
   const [year,month]=prefix.split('-').map(Number);
   const days=new Date(year,month,0).getDate();
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('actualAreaFilter')?.value||'');
+  const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
+  const area=isChief?'':(document.getElementById('actualAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('actualEmployeeFilter')?.value||'';
 
-  const employees=window.EmployeeModule.getAll().filter(item=>
+  const areaEmployees=window.EmployeeModule.getAll().filter(item=>
     item.active&&
-    (!area||item.area===area)&&
-    (!employeeFilter||item.id===employeeFilter)
+    (!area||item.area===area)
+  );
+  const employees=(isChief?chiefAreaEmployees(areaEmployees):areaEmployees).filter(item=>
+    !employeeFilter||item.id===employeeFilter
   );
 
   let head='<div class="cal-head"><div class="sticky-name">Trabajador</div>';
@@ -12191,9 +12251,11 @@ function renderWeekly(){
   const start=new Date(weekStart.value+'T12:00:00');
   const days=[];
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d.toISOString().slice(0,10))}
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('weekAreaFilter')?.value||'');
+  const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
+  const area=isChief?'':(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
-  const list=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
+  const areaList=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area));
+  const list=(isChief?chiefAreaEmployees(areaList):areaList).filter(e=>!empFilter||e.id===empFilter);
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
   list.forEach(e=>{
     const weeklyDetail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(e.shift||'—'):(e.area||'');
@@ -12364,7 +12426,8 @@ function todayPlannedRows(date){
 function loadTodayBaseSchedule(){
   const date=todayUI.date.value||isoToday;
   const role=typeof getAppRole==='function'?getAppRole():(document.body.dataset.role||'admin');
-  const active=window.EmployeeModule.getAll().filter(e=>e.active).filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla');
+  const activeAll=window.EmployeeModule.getAll().filter(e=>e.active);
+  const active=role==='chief'?chiefAreaEmployees(activeAll):activeAll;
   if(!active.length)return alert('No hay trabajadores activos.');
   snapshot();
   let created=0;
@@ -14084,8 +14147,15 @@ function renderEmployees(){
     total.innerHTML=`<span>♙</span> ${list.length} mostrado${list.length===1?'':'s'} · ${active} activos`;
   }
 }
-function openEmployeeModal(){employeeForm.reset();employeeId.value='';employeeStart.value=isoToday;employeeActive.value='true';employeeTitle.textContent='Agregar trabajador';openModal('employeeModal')}
-function editEmployee(id){const e=employee(id);employeeId.value=e.id;employeeName.value=e.name;employeeRut.value=e.rut||'';employeeRole.value=e.role||'';employeeArea.value=e.area||'';employeeShift.value=e.shift;employeeStart.value=e.start||'';employeeActive.value=String(e.active);employeePhone.value=e.phone||'';employeeEmail.value=e.email||'';employeeAddress.value=e.address||'';employeeEmergency.value=e.emergency||'';employeeAfp.value=e.afp||'';employeeHealthSystem.value=e.healthSystem||'';employeeTitle.textContent='Editar trabajador';openModal('employeeModal')}
+function openEmployeeModal(){employeeForm.reset();employeeId.value='';employeeStart.value=isoToday;employeeActive.value='true';employeeTitle.textContent='Agregar trabajador';lockEmployeeAreaForChief(chiefNewEmployeeArea());openModal('employeeModal')}
+function editEmployee(id){const e=employee(id);employeeId.value=e.id;employeeName.value=e.name;employeeRut.value=e.rut||'';employeeRole.value=e.role||'';employeeArea.value=e.area||'';employeeShift.value=e.shift;employeeStart.value=e.start||'';employeeActive.value=String(e.active);employeePhone.value=e.phone||'';employeeEmail.value=e.email||'';employeeAddress.value=e.address||'';employeeEmergency.value=e.emergency||'';employeeAfp.value=e.afp||'';employeeHealthSystem.value=e.healthSystem||'';employeeTitle.textContent='Editar trabajador';lockEmployeeAreaForChief(e.area||'');openModal('employeeModal')}
+function lockEmployeeAreaForChief(value){
+  const field=document.getElementById('employeeArea');
+  if(!field)return;
+  const chief=typeof getAppRole==='function'&&getAppRole()==='chief';
+  field.readOnly=chief;
+  if(chief)field.value=value;
+}
 employeeForm.addEventListener('submit',e=>{
   e.preventDefault();
 
@@ -14109,7 +14179,8 @@ employeeForm.addEventListener('submit',e=>{
     name,
     rut,
     role:document.getElementById('employeeRole').value.trim(),
-    area:document.getElementById('employeeArea').value.trim(),
+    // La jefa no cambia el área: conserva la existente o usa la suya al crear.
+    area:getAppRole()==='chief'?(id?(previous.area||''):chiefNewEmployeeArea()):document.getElementById('employeeArea').value.trim(),
     shift:document.getElementById('employeeShift').value||'A',
     start:document.getElementById('employeeStart').value||isoToday,
     active:document.getElementById('employeeActive').value!=='false',
@@ -15013,7 +15084,56 @@ function invoiceTodayMidnight(){
   return d;
 }
 
+// Facturas registradas por la Jefa de Tienda: quedan por aprobar hasta que el
+// administrador las aprueba o rechaza. Las anteriores las cargó el
+// administrador y se consideran aprobadas.
+function invoiceApproval(inv){
+  return inv?.aprobacion||'aprobada';
+}
+function invoiceIsApproved(inv){
+  return invoiceApproval(inv)==='aprobada';
+}
+function invoiceChiefCanEdit(inv){
+  return !inv||!invoiceIsApproved(inv);
+}
+function invoiceAreaLabel(inv){
+  const area=window.ShiftControlAreas?.normalizeArea?.(inv?.area);
+  return area?(window.ShiftControlAreas.info(area)?.label||area):'';
+}
+function invoiceApprovalButtons(inv){
+  if(getAppRole()!=='admin'||invoiceApproval(inv)!=='pendiente_aprobacion')return '';
+  return `<button type="button" class="invoices-icon-btn invoice-approve-btn" title="Aprobar factura" onclick="approveInvoice('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></button><button type="button" class="invoices-icon-btn invoice-reject-btn" title="Rechazar factura" onclick="rejectInvoice('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+}
+function approveInvoice(id){
+  if(getAppRole()!=='admin')return;
+  const inv=InvoiceModule.findById(id);
+  if(!inv||invoiceApproval(inv)!=='pendiente_aprobacion')return;
+  snapshot();
+  InvoiceModule.patch(id,{aprobacion:'aprobada',aprobadaPor:authenticatedDisplayName(),aprobadaAt:new Date().toISOString(),motivoRechazo:''},{save:false});
+  log(`Factura aprobada: ${inv.proveedor} (${inv.numeroFactura})`);
+  save();
+  renderInvoices(true);
+  if(typeof renderAdminInbox==='function')renderAdminInbox();
+  toast('Factura aprobada');
+}
+function rejectInvoice(id){
+  if(getAppRole()!=='admin')return;
+  const inv=InvoiceModule.findById(id);
+  if(!inv||invoiceApproval(inv)!=='pendiente_aprobacion')return;
+  const reason=prompt(`Motivo del rechazo de la factura ${inv.numeroFactura||''} de ${inv.proveedor||''}:`,'');
+  if(reason===null)return;
+  if(!reason.trim())return alert('Indica el motivo del rechazo.');
+  snapshot();
+  InvoiceModule.patch(id,{aprobacion:'rechazada',rechazadaPor:authenticatedDisplayName(),rechazadaAt:new Date().toISOString(),motivoRechazo:reason.trim()},{save:false});
+  log(`Factura rechazada: ${inv.proveedor} (${inv.numeroFactura})`);
+  save();
+  renderInvoices(true);
+  if(typeof renderAdminInbox==='function')renderAdminInbox();
+  toast('Factura rechazada');
+}
 function invoiceDisplayStatus(inv){
+  if(invoiceApproval(inv)==='pendiente_aprobacion')return 'por-aprobar';
+  if(invoiceApproval(inv)==='rechazada')return 'rechazada';
   if(inv.estado==='pagada')return 'pagada';
   const due=inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`):null;
   if(!due||isNaN(due))return 'pendiente';
@@ -15028,7 +15148,9 @@ function invoiceStatusMeta(status){
     pagada:{label:'Pagada',cls:'st-pagada'},
     pendiente:{label:'Pendiente',cls:'st-pendiente'},
     'vence-pronto':{label:'Vence pronto',cls:'st-vencepronto'},
-    vencida:{label:'Vencida',cls:'st-vencida'}
+    vencida:{label:'Vencida',cls:'st-vencida'},
+    'por-aprobar':{label:'Por aprobar',cls:'st-vencepronto'},
+    rechazada:{label:'Rechazada',cls:'st-vencida'}
   }[status]||{label:status,cls:'st-pendiente'};
 }
 
@@ -15204,8 +15326,9 @@ function renderInvoices(keepPage){
       if(!text.includes(search))return false;
     }
     if(invoiceActiveTab==='vencida')return invoiceDisplayStatus(inv)==='vencida';
-    if(invoiceActiveTab==='pendiente')return inv.estado==='pendiente';
-    if(invoiceActiveTab==='pagada')return inv.estado==='pagada';
+    if(invoiceActiveTab==='aprobacion')return !invoiceIsApproved(inv);
+    if(invoiceActiveTab==='pendiente')return inv.estado==='pendiente'&&invoiceIsApproved(inv);
+    if(invoiceActiveTab==='pagada')return inv.estado==='pagada'&&invoiceIsApproved(inv);
     return true;
   });
 
@@ -15235,7 +15358,7 @@ function renderInvoices(keepPage){
     const meta=invoiceStatusMeta(status);
     return `<tr>
       <td data-label="Proveedor"><div class="invoices-provider-cell">${invoiceAvatar(inv.proveedor)}<div><strong>${escapeHtml(inv.proveedor||'—')}</strong>${inv.rutProveedor?`<small>${escapeHtml(inv.rutProveedor)}</small>`:''}</div></div></td>
-      <td data-label="Factura">${escapeHtml(inv.numeroFactura||'—')}</td>
+      <td data-label="Factura">${escapeHtml(inv.numeroFactura||'—')}${invoiceAreaLabel(inv)?`<small class="invoice-area-tag">${escapeHtml(invoiceAreaLabel(inv))}${inv.enviadaPor?` · ${escapeHtml(inv.enviadaPor)}`:''}</small>`:''}${invoiceApproval(inv)==='rechazada'&&inv.motivoRechazo?`<small class="invoice-reject-note">Rechazo: ${escapeHtml(inv.motivoRechazo)}</small>`:''}</td>
       <td data-label="Fecha emisión">${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</td>
       <td data-label="Vencimiento">${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</td>
       <td data-label="Categoría">${invoiceCategoryBadge(inv.categoria)}</td>
@@ -15244,7 +15367,7 @@ function renderInvoices(keepPage){
       <td data-label="Acciones"><div class="invoices-row-actions">
         <button type="button" class="invoices-icon-btn" title="Ver factura" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button type="button" class="invoices-icon-btn" title="Editar" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
-        <button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>
+        ${getAppRole()==='admin'&&invoiceIsApproved(inv)?`<button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>`:''}${invoiceApprovalButtons(inv)}
       </div></td>
     </tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty">Aún no hay facturas registradas. Usa "Nueva factura" para comenzar.</div></td></tr>`;
@@ -15257,8 +15380,11 @@ function renderInvoices(keepPage){
   }
 
   renderInvoicePagination(totalRows,totalPages,startIdx,pageRows.length);
-  renderInvoiceKpis(all);
-  renderInvoiceSidebar(all);
+  // Los totales consideran solo facturas aprobadas.
+  renderInvoiceKpis(all.filter(invoiceIsApproved));
+  renderInvoiceSidebar(all.filter(invoiceIsApproved));
+  const approvalTab=document.querySelector('#invoicesTabs [data-tab="aprobacion"]');
+  if(approvalTab){const waiting=all.filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion').length;approvalTab.textContent=waiting?`Por aprobar (${waiting})`:'Por aprobar';}
   initInvoiceKpiDots();
 }
 
@@ -15276,7 +15402,8 @@ function invoiceMobileCardHTML(inv){
         <span class="invoices-status ${meta.cls}">${meta.label}</span>
       </div>
     </div>
-    <div class="invoices-mcard-invoice-no">Factura #${escapeHtml(inv.numeroFactura||'—')}</div>
+    <div class="invoices-mcard-invoice-no">Factura #${escapeHtml(inv.numeroFactura||'—')}${invoiceAreaLabel(inv)?` · ${escapeHtml(invoiceAreaLabel(inv))}`:''}</div>
+    ${invoiceApproval(inv)==='rechazada'&&inv.motivoRechazo?`<div class="invoice-reject-note">Rechazo: ${escapeHtml(inv.motivoRechazo)}</div>`:''}
     <div class="invoices-mcard-dates">
       <span>Emisión: ${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</span>
       <span>Vence: ${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</span>
@@ -15286,7 +15413,7 @@ function invoiceMobileCardHTML(inv){
       <div class="invoices-row-actions">
         <button type="button" class="invoices-icon-btn" title="Ver factura" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button type="button" class="invoices-icon-btn" title="Editar" onclick="openInvoiceModal('${inv.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
-        <button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>
+        ${getAppRole()==='admin'&&invoiceIsApproved(inv)?`<button type="button" class="invoices-icon-btn${inv.estado==='pagada'?' is-active':''}" title="${inv.estado==='pendiente'?'Registrar pago':'Volver a pendiente'}" onclick="toggleInvoicePaid('${inv.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></button>`:''}${invoiceApprovalButtons(inv)}
       </div>
     </div>
   </div>`;
@@ -15427,10 +15554,32 @@ function openInvoiceModal(id){
   fillInvoiceProviderSuggestions();
   const deleteBtn=document.getElementById('invoiceDeleteBtn');
   if(deleteBtn)deleteBtn.style.display=id?'inline-flex':'none';
+  const isChief=getAppRole()==='chief';
+  const inv=id?InvoiceModule.findById(id):null;
+  if(id&&!inv)return toast('No se encontró la factura');
+  // La jefa no edita ni elimina facturas ya aprobadas.
+  const readOnly=isChief&&!invoiceChiefCanEdit(inv);
+  document.querySelectorAll('#invoiceForm input:not([type=hidden]),#invoiceForm select').forEach(field=>{field.disabled=readOnly});
+  const saveBtn=document.getElementById('invoiceSaveBtn');
+  if(saveBtn){saveBtn.style.display=readOnly?'none':'';saveBtn.textContent=isChief?'Enviar a aprobación':'Guardar';}
+  if(deleteBtn&&readOnly)deleteBtn.style.display='none';
+  const attachment=document.getElementById('invoiceAdjuntoActual');
+  if(attachment)attachment.innerHTML=inv?.adjunto?.path?`<button type="button" class="btn small" onclick="openEvidenceFile(${JSON.stringify(inv.adjunto.path).replace(/"/g,'&quot;')})">Ver respaldo: ${escapeHtml(inv.adjunto.name||'archivo')}</button>`:'';
+  const info=document.getElementById('invoiceApprovalInfo');
+  if(info){
+    const approval=invoiceApproval(inv);
+    const lines=!inv?(isChief?'Al enviarla, la factura quedará por aprobar por el administrador.':'')
+      :approval==='pendiente_aprobacion'?`Por aprobar · enviada por ${escapeHtml(inv.enviadaPor||'la jefa')}`
+      :approval==='rechazada'?`Rechazada por ${escapeHtml(inv.rechazadaPor||'el administrador')}: ${escapeHtml(inv.motivoRechazo||'')}${isChief?' · Corrige y vuelve a enviarla.':''}`
+      :inv.aprobadaPor?`Aprobada por ${escapeHtml(inv.aprobadaPor)}`:'';
+    const adminActions=!isChief&&inv&&approval==='pendiente_aprobacion'
+      ?`<div class="invoice-approval-actions"><button type="button" class="btn small" onclick="closeModal('invoiceModal');approveInvoice('${inv.id}')">Aprobar</button><button type="button" class="btn small danger" onclick="closeModal('invoiceModal');rejectInvoice('${inv.id}')">Rechazar</button></div>`
+      :'';
+    info.innerHTML=lines?`<div class="invoice-approval-info ${inv?approval:'pendiente_aprobacion'}">${lines}${adminActions}</div>`:'';
+    info.hidden=!lines;
+  }
 
   if(id){
-    const inv=InvoiceModule.findById(id);
-    if(!inv)return toast('No se encontró la factura');
     document.getElementById('invoiceId').value=inv.id;
     document.getElementById('invoiceEstado').value=inv.estado||'pendiente';
     document.getElementById('invoiceProveedor').value=inv.proveedor||'';
@@ -15441,16 +15590,20 @@ function openInvoiceModal(id){
     document.getElementById('invoiceFechaVencimiento').value=inv.fechaVencimiento||'';
     document.getElementById('invoiceMonto').value=Number(inv.montoTotal||0);
     document.getElementById('invoiceNota').value=inv.nota||'';
-    document.getElementById('invoiceTitle').textContent='Editar factura';
+    document.getElementById('invoiceTitle').textContent=readOnly?'Factura aprobada':'Editar factura';
   }
 
   openModal('invoiceModal');
 }
 
-document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
+document.getElementById('invoiceForm')?.addEventListener('submit',async event=>{
   event.preventDefault();
 
+  const isChief=getAppRole()==='chief';
+  if(isChief&&!requireAppPermission('invoices.submit','No tienes permiso para registrar facturas.'))return;
   const id=document.getElementById('invoiceId').value;
+  const existingInvoice=id?InvoiceModule.findById(id):null;
+  if(isChief&&!invoiceChiefCanEdit(existingInvoice))return alert('La factura ya fue aprobada y no se puede modificar.');
   const proveedor=document.getElementById('invoiceProveedor').value.trim();
   const rutProveedor=document.getElementById('invoiceRut').value.trim();
   const numeroFactura=document.getElementById('invoiceNumero').value.trim();
@@ -15467,18 +15620,45 @@ document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
   if(!fechaVencimiento)return alert('Selecciona la fecha de vencimiento.');
   if(montoTotal<=0)return alert('El monto debe ser mayor a 0.');
 
+  const area=isChief?(window.ShiftControlAreas?.getSessionArea?.()||'TIENDA'):(existingInvoice?.area||'');
+  const fileInput=document.getElementById('invoiceAdjunto');
+  const file=fileInput?.files?.[0]||null;
+  const saveBtn=document.getElementById('invoiceSaveBtn');
+  let adjunto=existingInvoice?.adjunto||null;
+  if(file){
+    if(saveBtn)saveBtn.disabled=true;
+    try{
+      adjunto=await uploadEvidenceFile(file,`invoices/${area||'GENERAL'}/${fechaEmision.slice(0,7)}`);
+    }catch(error){
+      return alert(`No fue posible subir el respaldo: ${error?.message||error}`);
+    }finally{
+      if(saveBtn)saveBtn.disabled=false;
+    }
+  }
+
+  // Lo que envía una jefa queda por aprobar; si estaba rechazada, se reenvía.
+  const approvalFields=isChief?{
+    aprobacion:'pendiente_aprobacion',
+    area,
+    enviadaPor:authenticatedDisplayName(),
+    enviadaAt:new Date().toISOString(),
+    motivoRechazo:''
+  }:{};
+
   snapshot();
 
   if(id){
     InvoiceModule.patch(id,{
-      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,...approvalFields
     },{save:false});
     log(`Factura actualizada: ${proveedor} (${numeroFactura})`);
   }else{
     InvoiceModule.create({
       id:safeRandomUUID(),
-      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,
-      estado:'pendiente'
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,
+      estado:'pendiente',
+      aprobacion:'aprobada',
+      ...approvalFields
     },{prepend:true,save:false});
     log(`Factura registrada: ${proveedor} (${numeroFactura})`);
   }
@@ -15486,12 +15666,14 @@ document.getElementById('invoiceForm')?.addEventListener('submit',event=>{
   save();
   closeModal('invoiceModal');
   renderInvoices();
-  toast('Factura guardada');
+  toast(isChief?'Factura enviada a aprobación':'Factura guardada');
 });
 
 function toggleInvoicePaid(id){
   const inv=InvoiceModule.findById(id);
   if(!inv)return;
+  if(getAppRole()!=='admin')return alert('Solo el administrador registra pagos.');
+  if(!invoiceIsApproved(inv))return alert('Aprueba la factura antes de registrar el pago.');
 
   snapshot();
   const nextEstado=inv.estado==='pagada'?'pendiente':'pagada';
@@ -15505,6 +15687,7 @@ function toggleInvoicePaid(id){
 function deleteInvoice(id){
   const inv=InvoiceModule.findById(id);
   if(!inv)return false;
+  if(getAppRole()!=='admin'&&!invoiceChiefCanEdit(inv)){alert('La factura ya fue aprobada y no se puede eliminar.');return false}
   if(!confirm(`¿Eliminar la factura ${inv.numeroFactura||''} de ${inv.proveedor||'este proveedor'}?`))return false;
 
   snapshot();
@@ -16662,10 +16845,18 @@ function v14WorkerList(title,items,emptyText){
       :`<div class="ops-empty">${v14Esc(emptyText)}</div>`
   }</div></article>`;
 }
-function adminInboxOpenChecklist(){
+function adminInboxOpenChecklist(key){
+  const entry=key?opsChecklistStore()[key]:null;
+  if(entry){
+    setOpsAdminArea(window.ShiftControlAreas?.checklistArea?.(key,entry)||'ISLA');
+    const dateField=document.getElementById('checklistDate');
+    if(dateField&&entry.date)dateField.value=entry.date;
+  }
   showView('checklists');
 }
 function adminInboxOpenIncident(id){
+  const incident=id?opsIncidents().find(item=>item.id===id):null;
+  if(incident)setOpsAdminArea(window.ShiftControlAreas?.recordArea?.(incident)||'ISLA');
   showView('incidents');
   setTimeout(()=>{
     if(typeof filterOpsIncidents==='function')filterOpsIncidents('all');
@@ -16977,9 +17168,13 @@ function renderAdminInbox(){
       Object.values(item.items||{}).includes('issue')||(item.notes||'').trim()
     )
   );
+  const storeFollowUpsOpen=storeChecklistFollowUps().filter(item=>item.status==='open');
+  const invoicesToApprove=(window.InvoiceModule?.getAll?.()||[]).filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion');
   const pendingItems=[
-    ...checklistEntries.map(([key,item])=>({kind:'checklist',id:key,title:'Revisión checklist diario',detail:`${item.date||'Sin fecha'} · ${item.completedBy||'Jefa de Isla'}`,action:'Revisar checklist'})),
-    ...openIncidents.map(item=>({kind:'incident',id:item.id,title:item.title||'Incidencia abierta',detail:`${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,action:'Ver incidencias'})),
+    ...invoicesToApprove.map(inv=>({kind:'invoice',id:inv.id,title:`Factura por aprobar · ${inv.proveedor||'Proveedor'}`,detail:`${inv.numeroFactura||'Sin número'} · ${money(inv.montoTotal)} · ${inv.enviadaPor||'Jefa de Tienda'}`,action:'Revisar factura'})),
+    ...storeFollowUpsOpen.map(item=>({kind:'checklist',id:item.key,title:`Incumplimiento Tienda · ${item.title}`,detail:`${item.entry.date||'Sin fecha'} · ${item.detail.responsible||'Sin responsable'} · ${item.detail.note||'Sin observaciones'}`,action:'Revisar checklist'})),
+    ...checklistEntries.map(([key,item])=>({kind:'checklist',id:key,title:`Revisión checklist diario · ${opsAreaLabel(window.ShiftControlAreas?.checklistArea?.(key,item)||'ISLA')}`,detail:`${item.date||'Sin fecha'} · ${item.completedBy||'Jefa de Isla'}`,action:'Revisar checklist'})),
+    ...openIncidents.map(item=>({kind:'incident',id:item.id,title:item.title||'Incidencia abierta',detail:`${opsAreaLabel(window.ShiftControlAreas?.recordArea?.(item)||'ISLA')} · ${item.priority||'Media'} · ${item.shift||'Turno'} · ${item.owner||'Sin asignar'}`,action:'Ver incidencias'})),
     ...pendingEvaluations.map(item=>({kind:'evaluation',id:item.id,title:'Evaluaciones pendientes de aprobación',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.period||'Período'} · ${item.evaluator||'Sin evaluador'}`,action:'Revisar evaluaciones'})),
     ...snapshot.uncovered.map(item=>({kind:'absence',id:item.id||item.employeeId,title:'Ausencia sin cobertura',detail:`${employee(item.employeeId)?.name||'Trabajador'} · ${item.date||snapshot.date} · ${item.status||'Ausencia'}`,action:'Ver operación'})),
     ...snapshot.pending.map(row=>({kind:'absence',id:row.employee?.id,title:'Trabajador sin revisión',detail:`${row.employee?.name||'Trabajador'} · Turno ${row.plan?.code||'—'}`,action:'Ver operación'}))
@@ -17038,6 +17233,9 @@ function renderAdminInbox(){
           ${pendingItems.length?pendingItems.map(item=>`<article><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(item.detail)}</small></div><button type="button" onclick="${viewOnclick(item.kind==='checklist'?'checklists':item.kind==='evaluation'?'evaluations':item.kind==='incident'?'incidents':'today')}">${v14Esc(item.action)}</button></article>`).join(''):'<div class="ops-empty">No hay pendientes administrativos.</div>'}
         </div>
       </section>
+
+      ${invoiceApprovalSection()}
+      ${storeChecklistFollowUpSection()}
 
       <section class="admin-room-panel admin-room-activity">
         <div class="admin-room-panel-head"><h4>Actividad reciente</h4><span>${audit.length}</span></div>
@@ -17163,10 +17361,15 @@ async function renderTeam(){
       return;
     }
 
-    const {data:memberships,error:membershipsError}=await client
+    const membershipQuery=columns=>client
       .from('company_memberships')
-      .select('user_id, role, active, created_at')
+      .select(columns)
       .eq('company_id',context.companyId);
+    let {data:memberships,error:membershipsError}=await membershipQuery('user_id, role, area, active, created_at');
+    // Bases sin la migración de áreas: la jefatura existente es de isla.
+    if(membershipsError?.code==='42703'){
+      ({data:memberships,error:membershipsError}=await membershipQuery('user_id, role, active, created_at'));
+    }
 
     if(membershipsError){
       root.innerHTML=`<div class="ops-empty">No se pudo cargar el equipo.<br><small>${v14Esc(membershipsError.message)}</small></div>`;
@@ -17184,28 +17387,49 @@ async function renderTeam(){
     }
     const nameFor=id=>v14Esc(namesById[id]||'Cuenta sin nombre');
 
-    const currentChief=(memberships||[]).find(item=>item.role==='CHIEF'&&item.active);
+    const areaSupported=(memberships||[]).every(item=>'area' in item);
+    const chiefTitle=area=>window.ShiftControlAreas?.info(area)?.chiefTitle||(area==='TIENDA'?'Jefa de Tienda':'Jefa de Isla');
+    // En Supabase la jefatura de isla se registra como "ESTACION".
+    const membershipArea=item=>window.ShiftControlAreas?.normalizeArea?.(item?.area)||'ISLA';
+    const chiefFor=area=>(memberships||[]).find(item=>
+      item.role==='CHIEF'&&item.active&&membershipArea(item)===area
+    );
+    // El historial guarda el área en la columna area o en el rol (CHIEF_TIENDA).
+    const eventArea=ev=>window.ShiftControlAreas?.normalizeArea?.(ev.area||String(ev.role||'').replace(/^CHIEF_/,''))||'ISLA';
 
-    const {data:events}=await client
+    const eventQuery=columns=>client
       .from('team_role_events')
-      .select('id, action, actor_user_id, target_user_id, previous_user_id, created_at')
+      .select(columns)
       .eq('company_id',context.companyId)
       .order('created_at',{ascending:false})
       .limit(20);
+    let {data:events,error:eventsError}=await eventQuery('id, role, action, area, actor_user_id, target_user_id, previous_user_id, created_at');
+    if(eventsError?.code==='42703'){
+      ({data:events}=await eventQuery('id, role, action, actor_user_id, target_user_id, previous_user_id, created_at'));
+    }
+
+    // Sin la migración de áreas solo existe la jefatura de isla.
+    const areas=areaSupported?['ISLA','TIENDA']:['ISLA'];
+    const chiefCard=area=>{
+      const chief=chiefFor(area);
+      const title=chiefTitle(area);
+      return `
+      <div class="team-current-card">
+        <div class="team-current-head"><span>${title} actual</span></div>
+        ${chief
+          ?`<strong>${nameFor(chief.user_id)}</strong><small>Desde ${fmt(String(chief.created_at||'').slice(0,10))}</small>`
+          :`<div class="ops-empty">Todavía no hay una ${title} asignada.</div>`}
+        <button type="button" class="btn primary" onclick="openAssignChiefModal('${area}')">${chief?'Reemplazar':'Asignar'} ${title}</button>
+      </div>`;
+    };
 
     root.innerHTML=`
-      <div class="team-current-card">
-        <div class="team-current-head"><span>Jefa de Isla actual</span></div>
-        ${currentChief
-          ?`<strong>${nameFor(currentChief.user_id)}</strong><small>Desde ${fmt(String(currentChief.created_at||'').slice(0,10))}</small>`
-          :'<div class="ops-empty">Todavía no hay una Jefa de Isla asignada.</div>'}
-        <button type="button" class="btn primary" onclick="openAssignChiefModal()">${currentChief?'Reemplazar Jefa de Isla':'Asignar Jefa de Isla'}</button>
-      </div>
+      ${areas.map(chiefCard).join('')}
       <div class="team-history">
         <h4>Historial</h4>
         ${(events&&events.length)?events.map(ev=>`
           <div class="team-history-row">
-            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de Jefa de Isla</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
+            <div><strong>${ev.action==='replaced'?'Reemplazo':'Asignación'} de ${chiefTitle(eventArea(ev))}</strong><span>${nameFor(ev.target_user_id)}${ev.previous_user_id?` reemplazó a ${nameFor(ev.previous_user_id)}`:''}</span></div>
             <small>${new Date(ev.created_at).toLocaleString('es-CL')} · por ${nameFor(ev.actor_user_id)}</small>
           </div>
         `).join(''):'<div class="ops-empty">Sin movimientos registrados.</div>'}
@@ -17216,9 +17440,14 @@ async function renderTeam(){
   }
 }
 
-function openAssignChiefModal(){
-  if(!requireAppPermission('team.manage','Solo el administrador puede asignar la Jefa de Isla.'))return;
+function openAssignChiefModal(area='ISLA'){
+  if(!requireAppPermission('team.manage','Solo el administrador puede asignar jefaturas.'))return;
   document.getElementById('assignChiefForm')?.reset();
+  const areaKey=area==='TIENDA'?'TIENDA':'ISLA';
+  const areaInput=document.getElementById('assignChiefArea');
+  if(areaInput)areaInput.value=areaKey;
+  const title=document.getElementById('assignChiefTitle');
+  if(title)title.textContent=`Asignar ${areaKey==='TIENDA'?'Jefa de Tienda':'Jefa de Isla'}`;
   const errorEl=document.getElementById('assignChiefError');
   if(errorEl)errorEl.textContent='';
   openModal('assignChiefModal');
@@ -17229,6 +17458,7 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
 
   const email=document.getElementById('assignChiefEmail').value.trim().toLowerCase();
   const displayName=document.getElementById('assignChiefName').value.trim();
+  const area=document.getElementById('assignChiefArea')?.value==='TIENDA'?'TIENDA':'ISLA';
   const errorEl=document.getElementById('assignChiefError');
   const submitBtn=document.getElementById('assignChiefSubmit');
 
@@ -17245,7 +17475,7 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
 
   try{
     const client=window.ShiftControlAuth.getClient();
-    const {data,error}=await client.functions.invoke('assign-chief',{body:{email,displayName}});
+    const {data,error}=await client.functions.invoke('assign-chief',{body:{email,displayName,area}});
 
     if(error){
       let message=error.message||'No se pudo completar la acción.';
@@ -17260,7 +17490,7 @@ document.getElementById('assignChiefForm')?.addEventListener('submit',async even
     if(data?.error)throw new Error(data.error);
 
     closeModal('assignChiefModal');
-    showToast('Jefa de Isla actualizada');
+    showToast(area==='TIENDA'?'Jefa de Tienda actualizada':'Jefa de Isla actualizada');
     renderTeam();
   }catch(error){
     if(errorEl)errorEl.textContent=error.message||'Ocurrió un error inesperado.';
@@ -17770,9 +18000,8 @@ function roleCanOpenView(_role,viewId){
   return window.ShiftControlPermissions?.canOpenView?.(viewId)===true;
 }
 function roleHomeView(){
-  return window.ShiftControlPermissions?.getRole?.()==='ADMIN'
-    ?'admin-inbox'
-    :'operational-home';
+  if(window.ShiftControlPermissions?.getRole?.()==='ADMIN')return 'admin-inbox';
+  return roleCanOpenView(null,'operational-home')?'operational-home':'today';
 }
 function requireAppPermission(action,message){
   return window.ShiftControlPermissions?.requireAction?.(action,message)===true;
@@ -17808,9 +18037,9 @@ function authenticatedDisplayProfile(){
 
   return {
     displayName,
-    initials:initials||(role==='chief'?'JI':'AD'),
+    initials:initials||(role==='chief'?(chiefAreaLabel()==='Tienda'?'JT':'JI'):'AD'),
     title:role==='chief'
-      ?'Jefa de isla · operación'
+      ?`Jefa de ${chiefAreaLabel().toLowerCase()} · operación`
       :'Administrador · acceso completo'
   };
 }
@@ -17845,6 +18074,7 @@ function applyAppRole(forceView=true){
  if(incidentReporter&&!incidentReporter.value)incidentReporter.value=profile.displayName;
  applyPermissionVisibility();
  document.querySelectorAll('.nav-btn').forEach(btn=>{const allowed=roleCanOpenView(role,btn.dataset.view);btn.style.display=allowed?'flex':'none';btn.setAttribute('aria-hidden',allowed?'false':'true');btn.tabIndex=allowed?0:-1});
+ document.querySelectorAll('.nav-group').forEach(group=>{const buttons=[...group.querySelectorAll('.nav-btn[data-view]')];if(buttons.length)group.style.display=buttons.some(btn=>btn.style.display!=='none')?'':'none'});
  document.querySelectorAll('.role-admin-only').forEach(el=>el.style.display=role==='admin'?'inline-flex':'none');
  document.querySelectorAll('.role-chief-only').forEach(el=>el.style.display=role==='chief'?'inline-flex':'none');
  fillEmployeeSelects();
@@ -17929,6 +18159,42 @@ const CHECKLISTS_LEGACY_COMPANY_ID=
   ||localStorage.getItem('shiftcontrol_local_state_company_v1')
   ||'';
 const OPS_CHECKLIST_ITEMS=[['personal','Personal completo','Dotación y reemplazos confirmados'],['uniformes','Presentación y uniforme','Equipo preparado para iniciar el turno'],['surtidores','Surtidores operativos','Sin equipos bloqueados o con fallas visibles'],['banos','Baños revisados','Limpieza e insumos básicos disponibles'],['patio','Patio e islas limpios','Área operativa ordenada'],['instalaciones','Instalaciones revisadas','Iluminación, señalética y accesos en condiciones'],['entrega','Novedades y entrega de turno','Pendientes informados al siguiente responsable']];
+// Área de incidencias, checklist y entrega de turno: la de la jefa en sesión,
+// o la que elige el administrador en esas vistas.
+let opsAdminArea='ISLA';
+function opsArea(){
+  const session=window.ShiftControlAreas?.getSessionArea?.();
+  return session||opsAdminArea;
+}
+function opsRecordInArea(item){
+  return (window.ShiftControlAreas?.recordArea?.(item)||'ISLA')===opsArea();
+}
+function opsChecklistInArea(key,entry){
+  return (window.ShiftControlAreas?.checklistArea?.(key,entry)||'ISLA')===opsArea();
+}
+function opsAreaLabel(area=opsArea()){
+  return window.ShiftControlAreas?.info?.(area)?.label||(area==='TIENDA'?'Tienda':'Isla');
+}
+function setOpsAdminArea(value){
+  opsAdminArea=value==='TIENDA'?'TIENDA':'ISLA';
+  document.querySelectorAll('.ops-area-select').forEach(select=>{select.value=opsAdminArea});
+  if(typeof renderOpsIncidents==='function')renderOpsIncidents();
+  if(typeof renderOpsChecklist==='function')renderOpsChecklist();
+  if(typeof renderOpsChecklistHistory==='function')renderOpsChecklistHistory();
+  if(typeof renderHandoffs==='function')renderHandoffs();
+}
+// Controles propios de la operación de tienda.
+const OPS_STORE_CHECKLIST_ITEMS=[['temperaturas','Temperaturas de frío','Control de cámaras, refrigeradores y congeladores'],['vencimientos','Vencimientos y rotación FEFO','Revisión de vencimientos y rotación de productos'],['sanitizacion','Limpieza Fast Food y Bakery','Limpieza y sanitización de equipos'],['reposicion','Reposición de mercadería','Reposición y detección de quiebres de stock'],['caja','Control de caja','Diferencias y procedimientos de cierre'],['equipos_tienda','Equipos de tienda','Verificación de funcionamiento'],['mermas','Control de mermas','Control y registro de mermas'],['bodega','Bodega 6S','Orden, limpieza y organización']];
+// La tienda usa los ítems generales (sin surtidores ni patio, que son de la
+// isla) y sus controles propios.
+function opsChecklistItems(){
+  return opsArea()==='TIENDA'
+    ?OPS_CHECKLIST_ITEMS.filter(([id])=>!['surtidores','patio'].includes(id)).concat(OPS_STORE_CHECKLIST_ITEMS)
+    :OPS_CHECKLIST_ITEMS;
+}
+function opsChecklistItemTitle(id){
+  return OPS_CHECKLIST_ITEMS.concat(OPS_STORE_CHECKLIST_ITEMS).find(([itemId])=>itemId===id)?.[1]||id;
+}
 const EVAL_CRITERIA={Asistencia:['Puntualidad','Asistencia','Cumplimiento de turnos'],Trabajo:['Desempeño general','Atención al cliente','Protocolo de atención','Trabajo en equipo','Responsabilidad','Iniciativa'],Actitud:['Disposición','Respeto','Comunicación']};
 let opsIncidentFilter='all', currentEvaluation={scores:{}};
 function opsRead(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}} function opsWrite(k,v){localStorage.setItem(k,JSON.stringify(v))} function opsEsc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -18076,8 +18342,12 @@ function persistOpsIncidents(){
 }
 function mergeLegacyIncidents(current,legacy){
   const knownIds=new Set(current.map(item=>item.id));
+  const sessionArea=window.ShiftControlAreas?.getSessionArea?.();
   return current.concat(
-    legacy.filter(item=>!knownIds.has(item.id))
+    legacy.filter(item=>
+      !knownIds.has(item.id)&&
+      (!sessionArea||window.ShiftControlAreas.recordArea(item)===sessionArea)
+    )
   );
 }
 async function migrateLegacyIncidents(){
@@ -18161,12 +18431,12 @@ async function migrateLegacyIncidents(){
 }
 window.migrateLegacyIncidents=migrateLegacyIncidents;
 function ensureIncidentPermission(){return true}
-function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],displayName=authenticatedDisplayName();IncidentModule.add({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||displayName,owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,createdAt:new Date().toISOString(),createdBy:displayName,updates:[]},{prepend:true,save:false});persistOpsIncidents();event.target.reset();incidentReporter.value=displayName;incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
+function saveOpsIncident(event){event.preventDefault();if(!ensureIncidentPermission())return;const title=incidentTitle.value.trim(),description=incidentDescription.value.trim();if(!title||!description)return;const file=incidentFile.files?.[0],displayName=authenticatedDisplayName();IncidentModule.add({id:safeRandomUUID(),title,type:incidentType.value,priority:incidentPriority.value,shift:incidentShift.value,reporter:incidentReporter.value.trim()||displayName,owner:incidentOwner.value.trim()||'Sin asignar',dueDate:incidentDueDate.value||'',description,file:file?.name||'',status:'open',archived:false,area:opsArea(),createdAt:new Date().toISOString(),createdBy:displayName,updates:[]},{prepend:true,save:false});persistOpsIncidents();event.target.reset();incidentReporter.value=displayName;incidentPriority.value='Media';renderOpsIncidents();showToast('Incidencia registrada')}
 function showToast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
 function filterOpsIncidents(f,b){opsIncidentFilter=f;document.querySelectorAll('[data-incident-filter]').forEach(x=>x.classList.toggle('active',x.dataset.incidentFilter===f));renderOpsIncidents()}
 function updateOpsIncidentStatus(id,status){if(!ensureIncidentPermission())return;const x=IncidentModule.findById(id);if(!x)return;const role=getAppRole(),chiefReview=role==='chief'&&x.status==='open'&&status==='review';if(role!=='admin'&&!chiefReview)return alert('Solo el administrador puede resolver o reabrir incidencias.');const changes={status,updates:[...(x.updates||[]),{at:new Date().toISOString(),text:`Estado cambiado a ${status}`}]};if(status==='resolved')changes.resolvedAt=new Date().toISOString();IncidentModule.patch(id,changes,{save:false});persistOpsIncidents();renderOpsIncidents()}
 function archiveOpsIncident(id){if(!ensureIncidentPermission())return;if(getAppRole()!=='admin')return alert('Solo el administrador puede archivar incidencias.');if(!confirm('¿Archivar esta incidencia? El registro se conservará.'))return;const x=IncidentModule.patch(id,{archived:true},{save:false});if(x)persistOpsIncidents();renderOpsIncidents()}
-function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'},isAdmin=getAppRole()==='admin';root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
+function renderOpsIncidents(){const list=opsIncidents().filter(x=>!x.archived&&opsRecordInArea(x)),counts={open:list.filter(x=>x.status==='open').length,review:list.filter(x=>x.status==='review').length,resolved:list.filter(x=>x.status==='resolved').length};if(window.incidentOpenCount)incidentOpenCount.textContent=counts.open;if(window.incidentReviewCount)incidentReviewCount.textContent=counts.review;if(window.incidentResolvedCount)incidentResolvedCount.textContent=counts.resolved;const root=document.getElementById('incidentList');if(!root)return;const filtered=opsIncidentFilter==='all'?list:list.filter(x=>x.status===opsIncidentFilter),labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'},isAdmin=getAppRole()==='admin';root.innerHTML=filtered.length?filtered.sort((a,b)=>(a.priority==='Alta'?-3:a.priority==='Media'?-2:-1)-(b.priority==='Alta'?-3:b.priority==='Media'?-2:-1)).map(x=>`<article class="ops-incident"><div class="ops-incident-top"><div><h4>${opsEsc(x.title)}</h4><div class="muted">${opsEsc(x.description)}</div></div><span class="ops-tag ops-priority-${opsEsc(x.priority)}">${opsEsc(x.priority)}</span></div><div class="ops-meta"><span class="ops-tag">${opsEsc(x.type)}</span><span class="ops-tag">${opsEsc(x.shift)}</span><span class="ops-tag">${labels[x.status]}</span><span class="ops-tag">Reportó: ${opsEsc(x.reporter||x.createdBy)}</span><span class="ops-tag">Asignada: ${opsEsc(x.owner)}</span>${x.dueDate?`<span class="ops-tag">Compromiso: ${opsEsc(x.dueDate)}</span>`:''}</div><div class="ops-incident-actions">${x.status==='open'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button class="ops-mini-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button class="ops-mini-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></article>`).join(''):'<div class="ops-empty">No hay incidencias en este estado.</div>'}
 function readLegacyChecklists(){
   try{
     const parsed=JSON.parse(localStorage.getItem(window.OPS_CHECKLISTS_KEY)||'null');
@@ -18176,7 +18446,11 @@ function readLegacyChecklists(){
   }
 }
 function mergeLegacyChecklists(current,legacy){
-  return Object.assign({},legacy,current);
+  const sessionArea=window.ShiftControlAreas?.getSessionArea?.();
+  const allowed=sessionArea
+    ?Object.fromEntries(Object.entries(legacy).filter(([key,entry])=>window.ShiftControlAreas.checklistArea(key,entry)===sessionArea))
+    :legacy;
+  return Object.assign({},allowed,current);
 }
 function checklistStoreChanged(current,next){
   const currentKeys=Object.keys(current);
@@ -18295,6 +18569,8 @@ function migrateChecklistsToDaily(){
   sortedKeys.forEach(key=>{
     const record=store[key];
     if(!record)return;
+    // Los checklists de tienda ya usan el formato diario.
+    if(window.ShiftControlAreas?.checklistArea?.(key,record)==='TIENDA'){byDate[key]=record;return;}
     const date=key.includes('|')?key.split('|')[0]:(record.date||key);
     if(!byDate[date]){
       byDate[date]={...record,date};
@@ -18320,19 +18596,218 @@ function migrateChecklistsToDaily(){
   opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());
   save();
 }
-function opsChecklistKey(){return checklistDate?.value||isoToday} function opsChecklistStore(){migrateChecklistsToDaily();const currentState=window.ShiftControlState?.get?.();return currentState?.checklists&&!Array.isArray(currentState.checklists)&&typeof currentState.checklists==='object'?ChecklistModule.getAll():(readLegacyChecklists()||{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:k,items:{},notes:'',completed:false}} function saveOpsChecklist(d){const k=opsChecklistKey();ChecklistModule.set(k,d,{save:false});opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());save()}
+function opsChecklistKey(){const date=checklistDate?.value||isoToday;return window.ShiftControlAreas?.checklistKey?.(date,opsArea())||date} function opsChecklistStore(){migrateChecklistsToDaily();const currentState=window.ShiftControlState?.get?.();return currentState?.checklists&&!Array.isArray(currentState.checklists)&&typeof currentState.checklists==='object'?ChecklistModule.getAll():(readLegacyChecklists()||{})} function getOpsChecklist(){const s=opsChecklistStore(),k=opsChecklistKey();return s[k]||{date:checklistDate?.value||isoToday,area:opsArea(),items:{},notes:'',completed:false}} function saveOpsChecklist(d){const k=opsChecklistKey();d.area=opsArea();ChecklistModule.set(k,d,{save:false});opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());save()}
 function selectChecklistDateForReview(){
   if(typeof getAppRole!=='function'||getAppRole()!=='admin')return;
   const el=document.getElementById('checklistDate');
   if(!el)return;
-  const entries=Object.values(opsChecklistStore()).filter(x=>x.completed).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
+  const entries=Object.entries(opsChecklistStore()).filter(([key,x])=>x.completed&&opsChecklistInArea(key,x)).map(([,x])=>x).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
   const target=entries.find(x=>x.reviewStatus!=='reviewed')||entries[0];
   if(target)el.value=target.date;
 }
-function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
+// ===== Checklist de tienda: responsable, fecha, observaciones y evidencia =====
+const CHECKLIST_EVIDENCE_BUCKET='shiftcontrol-evidence';
+const CHECKLIST_EVIDENCE_MAX=4;
+const checklistEvidenceUrls=new Map();
+function checklistLocalDateTime(date=new Date()){
+  const pad=value=>String(value).padStart(2,'0');
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+function checklistDetailBlock(id,st,d){
+  if(opsArea()!=='TIENDA'||!st)return '';
+  const detail=d.details?.[id]||{};
+  const evidence=Array.isArray(detail.evidence)?detail.evidence:[];
+  const follow=detail.followUp;
+  const followText=follow?.status==='resolved'
+    ?`Resuelto por ${opsEsc(follow.resolvedBy||'el gerente')}${follow.resolution?`: ${opsEsc(follow.resolution)}`:''}`
+    :'Incumplimiento en seguimiento del gerente';
+  // Los puntos conformes sin observaciones ni fotos se muestran plegados.
+  const open=st==='issue'||evidence.length||detail.note||follow;
+  return `<details class="ops-check-detail-wrap"${open?' open':''}><summary>Responsable, fecha y evidencia${detail.responsible?` · ${opsEsc(detail.responsible)}`:''}</summary><div class="ops-check-detail">
+    <label><span>Responsable</span><input class="field" value="${opsEsc(detail.responsible||'')}" onchange="updateChecklistDetail('${id}','responsible',this.value)"></label>
+    <label><span>Fecha y hora</span><input class="field" type="datetime-local" value="${opsEsc(detail.checkedAt||'')}" onchange="updateChecklistDetail('${id}','checkedAt',this.value)"></label>
+    <label class="full"><span>Observaciones${st==='issue'?' (obligatorias)':''}</span><textarea class="field" rows="2" onchange="updateChecklistDetail('${id}','note',this.value)">${opsEsc(detail.note||'')}</textarea></label>
+    <div class="full ops-check-evidence"><span>Evidencia fotográfica</span><div class="ops-evidence-list">
+      ${evidence.map(item=>`<a class="ops-evidence-thumb" data-evidence-path="${opsEsc(item.path)}" target="_blank" rel="noopener" title="${opsEsc(item.name||'Foto')}"><img alt="Evidencia ${opsEsc(opsChecklistItemTitle(id))}"></a>`).join('')}
+      <label class="btn small ops-evidence-add">＋ Foto<input type="file" accept="image/*" capture="environment" hidden onchange="uploadChecklistEvidence('${id}',this)"></label>
+      ${evidence.length?'':'<small class="ops-evidence-empty">Sin fotos</small>'}
+    </div></div>
+    ${follow?`<div class="full ops-check-follow ${follow.status==='resolved'?'resolved':'open'}">${followText}</div>`:''}
+  </div></details>`;
+}
+function updateChecklistDetail(id,field,value){
+  if(getAppRole()==='admin')return;
+  const d=getOpsChecklist();
+  if(d.completed)return;
+  d.details={...(d.details||{})};
+  d.details[id]={...(d.details[id]||{}),[field]:String(value||'').trim()};
+  d.updatedAt=new Date().toISOString();
+  saveOpsChecklist(d);
+}
+// Reduce la foto antes de subirla (lado mayor 1600 px, JPEG).
+async function compressChecklistPhoto(file){
+  try{
+    const bitmap=await createImageBitmap(file);
+    const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.round(bitmap.width*scale);
+    canvas.height=Math.round(bitmap.height*scale);
+    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.75));
+    if(blob)return blob;
+  }catch(_error){}
+  return file;
+}
+// Sube una foto (reducida) o un PDF al bucket privado de evidencia y
+// devuelve la referencia que se guarda en el estado.
+async function uploadEvidenceFile(file,folder){
+  const companyId=window.AuthContext?.get?.()?.companyId;
+  if(!companyId)throw new Error('Tu sesión no es válida. Vuelve a iniciar sesión.');
+  const isPdf=file.type==='application/pdf';
+  if(!isPdf&&!/^image\//.test(file.type))throw new Error('El archivo debe ser una imagen o un PDF.');
+  const blob=isPdf?file:await compressChecklistPhoto(file);
+  if(blob.size>5*1024*1024)throw new Error('El archivo supera 5 MB.');
+  const extension=isPdf?'pdf':'jpg';
+  const path=`${companyId}/${folder}/${safeRandomUUID()}.${extension}`;
+  const {error}=await window.ShiftControlAuth.getClient().storage
+    .from(CHECKLIST_EVIDENCE_BUCKET)
+    .upload(path,blob,{contentType:isPdf?'application/pdf':(blob.type||'image/jpeg'),upsert:false});
+  if(error)throw error;
+  return {path,name:file.name||`archivo.${extension}`,type:isPdf?'application/pdf':'image/jpeg',uploadedAt:new Date().toISOString(),uploadedBy:authenticatedDisplayName()};
+}
+async function openEvidenceFile(path){
+  try{
+    const {data,error}=await window.ShiftControlAuth.getClient().storage.from(CHECKLIST_EVIDENCE_BUCKET).createSignedUrl(path,3600);
+    if(error||!data?.signedUrl)throw error||new Error('Enlace no disponible');
+    window.open(data.signedUrl,'_blank','noopener');
+  }catch(error){
+    alert(`No fue posible abrir el archivo: ${error?.message||error}`);
+  }
+}
+async function uploadChecklistEvidence(id,input){
+  const file=input?.files?.[0];
+  if(input)input.value='';
+  if(!file||getAppRole()==='admin')return;
+  if(!/^image\//.test(file.type))return alert('Selecciona una imagen.');
+  const key=opsChecklistKey();
+  const d=getOpsChecklist();
+  if(d.completed)return alert('El checklist ya fue enviado.');
+  if((d.details?.[id]?.evidence||[]).length>=CHECKLIST_EVIDENCE_MAX)return alert(`Puedes adjuntar hasta ${CHECKLIST_EVIDENCE_MAX} fotos por punto.`);
+  const companyId=window.AuthContext?.get?.()?.companyId;
+  if(!companyId)return alert('Tu sesión no es válida. Vuelve a iniciar sesión.');
+  const date=d.date||checklistDate?.value||isoToday;
+  const path=`${companyId}/checklists/${opsArea()}/${date}/${id}-${safeRandomUUID()}.jpg`;
+  showToast('Subiendo foto…');
+  try{
+    const blob=await compressChecklistPhoto(file);
+    if(blob.size>5*1024*1024)return alert('La foto supera 5 MB incluso después de reducirla.');
+    const {error}=await window.ShiftControlAuth.getClient().storage
+      .from(CHECKLIST_EVIDENCE_BUCKET)
+      .upload(path,blob,{contentType:blob.type||'image/jpeg',upsert:false});
+    if(error)throw error;
+    // Se vuelve a leer el checklist: pudo cambiar mientras se subía la foto.
+    const entry=ChecklistModule.get(key)||d;
+    const details={...(entry.details||{})};
+    const current=details[id]||{};
+    details[id]={...current,evidence:[...(current.evidence||[]),{path,name:file.name||'foto.jpg',uploadedAt:new Date().toISOString(),uploadedBy:authenticatedDisplayName()}]};
+    entry.details=details;
+    entry.area=opsArea();
+    entry.updatedAt=new Date().toISOString();
+    ChecklistModule.set(key,entry,{save:false});
+    opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());
+    save();
+    renderOpsChecklist();
+    showToast('Foto agregada');
+  }catch(error){
+    alert(`No fue posible subir la foto: ${error?.message||error}`);
+  }
+}
+// Las fotos son privadas: se muestran con enlaces firmados temporales.
+async function hydrateChecklistEvidence(root=document){
+  const links=[...root.querySelectorAll('[data-evidence-path]')];
+  if(!links.length)return;
+  let client=null;
+  try{client=window.ShiftControlAuth.getClient()}catch(_error){return}
+  for(const link of links){
+    const path=link.dataset.evidencePath;
+    let url=checklistEvidenceUrls.get(path);
+    if(!url){
+      try{
+        const {data,error}=await client.storage.from(CHECKLIST_EVIDENCE_BUCKET).createSignedUrl(path,3600);
+        if(error||!data?.signedUrl)continue;
+        url=data.signedUrl;
+        checklistEvidenceUrls.set(path,url);
+        setTimeout(()=>checklistEvidenceUrls.delete(path),50*60*1000);
+      }catch(_error){continue}
+    }
+    link.href=url;
+    const image=link.querySelector('img');
+    if(image&&image.getAttribute('src')!==url)image.src=url;
+  }
+}
+// Incumplimientos de checklists de tienda enviados, para el seguimiento del gerente.
+function storeChecklistFollowUps(){
+  return Object.entries(opsChecklistStore()).flatMap(([key,entry])=>{
+    if(window.ShiftControlAreas?.checklistArea?.(key,entry)!=='TIENDA'||!entry?.completed)return [];
+    return Object.entries(entry.details||{})
+      .filter(([,detail])=>detail?.followUp)
+      .map(([id,detail])=>({key,entry,id,detail,title:opsChecklistItemTitle(id),status:detail.followUp.status==='resolved'?'resolved':'open'}));
+  }).sort((a,b)=>String(b.entry.date||'').localeCompare(String(a.entry.date||'')));
+}
+function resolveChecklistFollowUp(key,id){
+  if(getAppRole()!=='admin')return;
+  const entry=ChecklistModule.get(key);
+  const detail=entry?.details?.[id];
+  if(!detail?.followUp)return alert('No se encontró el incumplimiento.');
+  const resolution=prompt(`¿Cómo se resolvió "${opsChecklistItemTitle(id)}"?`,'');
+  if(resolution===null)return;
+  if(!resolution.trim())return alert('Indica cómo se resolvió.');
+  entry.details={...entry.details,[id]:{...detail,followUp:{...detail.followUp,status:'resolved',resolvedAt:new Date().toISOString(),resolvedBy:authenticatedDisplayName(),resolution:resolution.trim()}}};
+  ChecklistModule.set(key,entry,{save:false});
+  opsWrite(window.OPS_CHECKLISTS_KEY,ChecklistModule.getAll());
+  save();
+  if(typeof v12Activity==='function')v12Activity('Incumplimiento de checklist resuelto',`Tienda · ${entry.date} · ${opsChecklistItemTitle(id)}`);
+  renderAdminInbox();
+  renderOpsChecklist();
+  showToast('Incumplimiento resuelto');
+}
+function invoiceApprovalSection(){
+  const items=(window.InvoiceModule?.getAll?.()||[]).filter(inv=>invoiceApproval(inv)==='pendiente_aprobacion');
+  if(!items.length)return '';
+  const jsArg=value=>JSON.stringify(String(value||'')).replace(/"/g,'&quot;');
+  return `<section class="admin-room-panel admin-room-invoice-approvals">
+    <div class="admin-room-panel-head"><h4>Facturas por aprobar</h4><span>${items.length}</span></div>
+    <div class="admin-room-all-list">
+      ${items.map(inv=>`<article class="store-followup open"><div><strong>${v14Esc(inv.proveedor||'Proveedor')} · ${v14Esc(money(inv.montoTotal))}</strong><small>${v14Esc([inv.numeroFactura?`Factura ${inv.numeroFactura}`:'Sin número',inv.fechaEmision?fmt(inv.fechaEmision):'',invoiceAreaLabel(inv),inv.enviadaPor||''].filter(Boolean).join(' · '))}</small>${inv.nota?`<small>${v14Esc(inv.nota)}</small>`:''}</div><div class="store-followup-actions">${inv.adjunto?.path?`<button type="button" onclick="openEvidenceFile(${jsArg(inv.adjunto.path)})">Ver respaldo</button>`:''}<button type="button" onclick="showView('invoices');openInvoiceModal(${jsArg(inv.id)})">Ver</button><button type="button" onclick="approveInvoice(${jsArg(inv.id)})">Aprobar</button><button type="button" onclick="rejectInvoice(${jsArg(inv.id)})">Rechazar</button></div></article>`).join('')}
+    </div>
+  </section>`;
+}
+function storeChecklistFollowUpSection(){
+  const items=storeChecklistFollowUps();
+  if(!items.length)return '';
+  const open=items.filter(item=>item.status==='open');
+  const resolved=items.filter(item=>item.status==='resolved').slice(0,5);
+  const jsArg=value=>JSON.stringify(String(value||'')).replace(/"/g,'&quot;');
+  const row=item=>{
+    const photos=(item.detail.evidence||[]).length;
+    const meta=[fmt(item.entry.date),item.detail.responsible||item.entry.completedBy||'Sin responsable',photos?`${photos} foto(s)`:'Sin fotos'].join(' · ');
+    const note=item.status==='resolved'
+      ?`Resuelto por ${item.detail.followUp.resolvedBy||'—'}: ${item.detail.followUp.resolution||''}`
+      :(item.detail.note||'Sin observaciones');
+    return `<article class="store-followup ${item.status}"><div><strong>${v14Esc(item.title)}</strong><small>${v14Esc(meta)}</small><small>${v14Esc(note)}</small></div><div class="store-followup-actions"><button type="button" onclick="adminInboxOpenChecklist(${jsArg(item.key)})">Ver checklist</button>${item.status==='open'?`<button type="button" onclick="resolveChecklistFollowUp(${jsArg(item.key)},${jsArg(item.id)})">Marcar resuelto</button>`:''}</div></article>`;
+  };
+  return `<section class="admin-room-panel admin-room-store-followups">
+    <div class="admin-room-panel-head"><h4>Incumplimientos checklist Tienda</h4><span>${open.length} abierto(s)</span></div>
+    <div class="admin-room-all-list">
+      ${open.length?open.map(row).join(''):'<div class="ops-empty">Sin incumplimientos abiertos.</div>'}
+      ${resolved.map(row).join('')}
+    </div>
+  </section>`;
+}
+function setChecklistState(id,state){const d=getOpsChecklist();d.items[id]=state;if(opsArea()==='TIENDA'){d.details={...(d.details||{})};const current=d.details[id]||{};d.details[id]={...current,responsible:current.responsible||authenticatedDisplayName(),checkedAt:current.checkedAt||checklistLocalDateTime()}}d.completed=false;d.updatedAt=new Date().toISOString();saveOpsChecklist(d);renderOpsChecklist()}
 function saveOpsChecklistNotes(){const d=getOpsChecklist();d.notes=checklistNotes.value;saveOpsChecklist(d)}
 function createIncidentFromChecklist(id,title){if(!ensureIncidentPermission())return;showView('incidents');setTimeout(()=>{incidentTitle.value=`Checklist: ${title}`;incidentDescription.value=`Problema detectado en ${title}, durante el turno ${v14CurrentShift()}.`;incidentShift.value=v14CurrentShift();incidentType.value=id==='surtidores'?'Equipo':'Instalaciones';incidentTitle.focus()},80)}
-function completeOpsChecklist(){const d=getOpsChecklist(),unanswered=OPS_CHECKLIST_ITEMS.filter(([id])=>!d.items[id]);if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Confirmar igualmente?`))return;d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();saveOpsChecklist(d);renderOpsChecklist();showToast('Checklist confirmado')}
+function completeOpsChecklist(){const d=getOpsChecklist(),unanswered=opsChecklistItems().filter(([id])=>!d.items[id]);if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Confirmar igualmente?`))return;d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();saveOpsChecklist(d);renderOpsChecklist();showToast('Checklist confirmado')}
 const CHECKLIST_ICONS={
   personal:'<svg viewBox="0 0 24 24"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',
   uniformes:'<svg viewBox="0 0 24 24"><path d="M8 4l4 2 4-2 4 3-2 3-2-1v11H8V9l-2 1-2-3z"/></svg>',
@@ -18340,15 +18815,23 @@ const CHECKLIST_ICONS={
   banos:'<svg viewBox="0 0 24 24"><path d="M7 3c0 2-2 2-2 4s2 2 2 4"/><path d="M4 13h16l-1 4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/></svg>',
   patio:'<svg viewBox="0 0 24 24"><path d="M4 21l5-5"/><path d="M9 16l8-8 3 3-8 8z"/><path d="M17 8l2-5 2 2-5 2z"/></svg>',
   instalaciones:'<svg viewBox="0 0 24 24"><path d="M9 21V9l3-6 3 6v12"/><path d="M5 21V13l4-2"/><path d="M19 21V13l-4-2"/></svg>',
-  entrega:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>'
+  entrega:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
+  temperaturas:'<svg viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></svg>',
+  vencimientos:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>',
+  sanitizacion:'<svg viewBox="0 0 24 24"><path d="M12 3l1.6 3.4L17 8l-3.4 1.6L12 13l-1.6-3.4L7 8l3.4-1.6z"/><path d="M18 14l.8 1.7 1.7.8-1.7.8L18 19l-.8-1.7-1.7-.8 1.7-.8zM6 15l.8 1.7 1.7.8-1.7.8L6 20l-.8-1.7-1.7-.8 1.7-.8z"/></svg>',
+  reposicion:'<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg>',
+  caja:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.2"/></svg>',
+  equipos_tienda:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+  mermas:'<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>',
+  bodega:'<svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M7 21v-8h10v8M7 17h10"/></svg>'
 };
 function renderOpsChecklist(){
   const root=document.getElementById('checklistItems');
   if(!root)return;
   const d=getOpsChecklist();
-  const answered=OPS_CHECKLIST_ITEMS.filter(([id])=>d.items[id]).length;
-  const pct=Math.round(answered/OPS_CHECKLIST_ITEMS.length*100);
-  root.innerHTML=OPS_CHECKLIST_ITEMS.map(([id,title,sub])=>{
+  const answered=opsChecklistItems().filter(([id])=>d.items[id]).length;
+  const pct=Math.round(answered/opsChecklistItems().length*100);
+  root.innerHTML=opsChecklistItems().map(([id,title,sub])=>{
     const st=d.items[id]||'';
     const stateLabel=st==='good'?'Conforme':st==='issue'?'Con problema':'Pendiente';
     return `<div class="ops-check-item ${st==='issue'?'issue':st==='good'?'done':''}" data-check-id="${id}">
@@ -18361,21 +18844,49 @@ function renderOpsChecklist(){
         </div>
         ${st==='issue'?`<div class="check-issue-action"><span>Este problema puede convertirse en una incidencia trazable.</span><button class="btn small check-incident-btn" onclick="createIncidentFromChecklist('${id}','${opsEsc(title)}')">Crear incidencia vinculada</button></div>`:''}
       </div>
+      ${checklistDetailBlock(id,st,d)}
     </div>`
   }).join('');
   checklistProgressLabel.textContent=`${pct}%`;
   checklistProgressBar.style.width=`${pct}%`;
   checklistContext.textContent=d.date?new Date(`${d.date}T12:00:00`).toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'}):'Estado actual';
   checklistNotes.value=d.notes||'';
-  checklistStatusText.textContent=d.completed?'Checklist confirmado':answered?`${answered} de ${OPS_CHECKLIST_ITEMS.length} respondidos`:'Checklist pendiente';
+  checklistStatusText.textContent=d.completed?'Checklist confirmado':answered?`${answered} de ${opsChecklistItems().length} respondidos`:'Checklist pendiente';
   checklistSignedBy.textContent=d.completed?`${d.completedBy} · ${new Date(d.completedAt).toLocaleString('es-CL')}`:'Aún no confirmado';
   renderOpsChecklistHistory();
 }
 function absenceMobileGo(target,btn){document.querySelectorAll('.absence-mobile-tabs button').forEach(x=>x.classList.toggle('active',x===btn));const el=target==='detail'?document.getElementById('absenceControlCard'):document.getElementById('absenceStatsGrid');el?.scrollIntoView({behavior:'smooth',block:'start'})}
 function absenceMobilePending(){const f=document.getElementById('absenceCoverageFilter');if(f){f.value='pending';renderAbsencePanel()}absenceMobileGo('detail')}
-function renderOpsChecklistHistory(){const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.values(opsChecklistStore()).filter(x=>x.completed).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt)).slice(0,8);root.innerHTML=rows.length?rows.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)}</strong><span>${opsEsc(x.completedBy)} · ${new Date(x.completedAt).toLocaleString('es-CL')}</span></div>`).join(''):'<div class="ops-empty">Todavía no hay checklists confirmados.</div>'}
-function saveHandoff(){const from=handoffFrom.value.trim(),to=handoffTo.value.trim();if(!from||!to)return alert('Indica quién entrega y quién recibe.');const list=opsRead(window.HANDOFF_KEY,[]);list.unshift({id:safeRandomUUID(),date:handoffDate.value||isoToday,shift:handoffShift.value,from,to,notes:handoffNotes.value.trim(),createdAt:new Date().toISOString(),received:true});opsWrite(window.HANDOFF_KEY,list);handoffNotes.value='';renderHandoffs();showToast('Turno entregado y recibido')}
-function renderHandoffs(){const root=document.getElementById('handoffHistory');if(!root)return;const list=opsRead(window.HANDOFF_KEY,[]);root.innerHTML=list.length?list.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)} · ${opsEsc(x.shift)}</strong><span>${opsEsc(x.from)} → ${opsEsc(x.to)}</span><small>${opsEsc(x.notes||'Sin observaciones')}</small></div>`).join(''):'<div class="ops-empty">Todavía no hay entregas registradas.</div>'}
+function renderOpsChecklistHistory(){const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([key,x])=>x.completed&&opsChecklistInArea(key,x)).map(([,x])=>x).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt)).slice(0,8);root.innerHTML=rows.length?rows.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)}</strong><span>${opsEsc(x.completedBy)} · ${new Date(x.completedAt).toLocaleString('es-CL')}</span></div>`).join(''):'<div class="ops-empty">Todavía no hay checklists confirmados.</div>'}
+function saveHandoff(){const from=handoffFrom.value.trim(),to=handoffTo.value.trim();if(!from||!to)return alert('Indica quién entrega y quién recibe.');HandoffModule.add({id:safeRandomUUID(),date:handoffDate.value||isoToday,shift:handoffShift.value,from,to,notes:handoffNotes.value.trim(),area:opsArea(),createdAt:new Date().toISOString(),received:true},{prepend:true,save:false});save();handoffNotes.value='';renderHandoffs();showToast('Turno entregado y recibido')}
+// Las entregas registradas antes quedaban solo en este navegador. Se
+// incorporan una vez al estado sincronizado como entregas de isla.
+async function migrateLegacyHandoffs(){
+  try{
+    const context=window.AuthContext?.get?.();
+    if(!context?.companyId||!window.ShiftControlState?.get?.())return false;
+    const migrationKey=`shiftcontrol_handoffs_migrated_v1:${context.companyId}`;
+    if(localStorage.getItem(migrationKey)==='1')return true;
+    const sessionArea=window.ShiftControlAreas?.getSessionArea?.();
+    const legacy=(opsRead(window.HANDOFF_KEY,[])||[]).filter(item=>item&&item.id);
+    if(!sessionArea||sessionArea==='ISLA'){
+      const knownIds=new Set(HandoffModule.getAll().map(item=>item.id));
+      const missing=legacy.filter(item=>!knownIds.has(item.id)).map(item=>({...item,area:item.area||'ISLA'}));
+      if(missing.length){
+        HandoffModule.replaceAll(HandoffModule.getAll().concat(missing).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))),{save:false});
+        save();
+      }
+    }
+    localStorage.setItem(migrationKey,'1');
+    renderHandoffs();
+    return true;
+  }catch(error){
+    console.warn('[ShiftControl] No fue posible migrar las entregas de turno.',error);
+    return false;
+  }
+}
+window.migrateLegacyHandoffs=migrateLegacyHandoffs;
+function renderHandoffs(){const pill=document.getElementById('handoffAreaPill');if(pill)pill.textContent=`Jefa de ${opsAreaLabel().toLowerCase()}`;const root=document.getElementById('handoffHistory');if(!root)return;const list=HandoffModule.getAll().filter(opsRecordInArea);root.innerHTML=list.length?list.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)} · ${opsEsc(x.shift)}</strong><span>${opsEsc(x.from)} → ${opsEsc(x.to)}</span><small>${opsEsc(x.notes||'Sin observaciones')}</small></div>`).join(''):'<div class="ops-empty">Todavía no hay entregas registradas.</div>'}
 function employeesForEval(){return (state?.employees||[]).filter(x=>x.active!==false)}
 function initEvaluationUI(){const m=document.getElementById('evaluationMonth'),p=document.getElementById('evaluationPeriod');if(!m)return;const now=new Date(),opts=[];for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1),v=d.toISOString().slice(0,7),label=d.toLocaleDateString('es-CL',{month:'long',year:'numeric'});opts.push(`<option value="${v}">${label}</option>`)}m.innerHTML=opts.join('');p.value=m.value;renderEvaluationEmployeeOptions();renderEvaluationCriteria();renderEvaluations()}
 function renderEvaluationEmployeeOptions(){const el=document.getElementById('evaluationEmployee');if(el)el.innerHTML=employeesForEval().map(x=>`<option value="${x.id}">${opsEsc(x.name)}</option>`).join('')}
@@ -18587,7 +19098,17 @@ function payExtraV12(id){if(!requireAppPermission('payments.manage'))return;cons
 
 // Todo checklist enviado queda pendiente de revisión del administrador, sin excepciones.
 completeOpsChecklist=function(){
- const d=getOpsChecklist(),unanswered=OPS_CHECKLIST_ITEMS.filter(([id])=>!d.items[id]);
+ const d=getOpsChecklist(),unanswered=opsChecklistItems().filter(([id])=>!d.items[id]);
+ if(opsArea()==='TIENDA'){
+  const issues=opsChecklistItems().filter(([id])=>d.items[id]==='issue');
+  const withoutNote=issues.filter(([id])=>!String(d.details?.[id]?.note||'').trim());
+  if(withoutNote.length)return alert(`Agrega observaciones a los puntos con problema: ${withoutNote.map(([,title])=>title).join(', ')}.`);
+  const withoutResponsible=issues.filter(([id])=>!String(d.details?.[id]?.responsible||'').trim());
+  if(withoutResponsible.length)return alert(`Indica el responsable de: ${withoutResponsible.map(([,title])=>title).join(', ')}.`);
+  // Cada incumplimiento queda abierto para el seguimiento del gerente.
+  d.details={...(d.details||{})};
+  issues.forEach(([id])=>{if(!d.details[id].followUp)d.details[id]={...d.details[id],followUp:{status:'open',openedAt:new Date().toISOString()}}});
+ }
  if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Enviar igualmente?`))return;
  d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();
  const hasIssue=Object.values(d.items||{}).includes('issue')||(d.notes||'').trim();
@@ -18610,7 +19131,7 @@ function deleteChecklistEntry(key,evt){
 }
 const _renderOpsChecklistHistoryV11=renderOpsChecklistHistory;
 renderOpsChecklistHistory=function(){
- const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([,x])=>x.completed).sort((a,b)=>new Date(b[1].completedAt)-new Date(a[1].completedAt)).slice(0,10);
+ const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([key,x])=>x.completed&&opsChecklistInArea(key,x)).sort((a,b)=>new Date(b[1].completedAt)-new Date(a[1].completedAt)).slice(0,10);
  const isAdmin=getAppRole()==='admin';
  root.innerHTML=rows.length?rows.map(([key,x])=>{const issue=Object.values(x.items||{}).includes('issue')||(x.notes||'').trim();const status=x.reviewStatus==='reviewed'?'Revisado':x.reviewStatus==='auto_archived'?'Recibido sin observaciones':'Pendiente de revisión';return `<div class="ops-history-row"><div><strong>${opsEsc(x.date)}</strong><span>${opsEsc(x.completedBy)} · ${new Date(x.completedAt).toLocaleString('es-CL')}</span><small>${status}</small></div><div class="row-actions">${isAdmin&&x.reviewStatus!=='reviewed'?`<button class="btn small" onclick="reviewChecklistV12('${key}')">Marcar revisado</button>`:''}${isAdmin?`<button class="btn small danger" onclick="deleteChecklistEntry('${key}',event)">Eliminar</button>`:''}</div></div>`}).join(''):'<div class="ops-empty">Todavía no hay checklists enviados.</div>';
 }
@@ -18676,6 +19197,9 @@ renderOpsChecklist=function(){
     btn.setAttribute('aria-disabled',locked?'true':'false');
   });
   if(notes){notes.disabled=locked;notes.readOnly=locked;}
+  root?.querySelectorAll('.ops-check-detail input,.ops-check-detail textarea').forEach(field=>{field.disabled=locked});
+  root?.querySelectorAll('.ops-evidence-add').forEach(label=>{label.style.display=locked?'none':''});
+  hydrateChecklistEvidence(root||document);
   if(button){
     if(role==='admin'){
       button.style.display='none';
@@ -18840,6 +19364,8 @@ function applyAuthenticatedIdentity(user){
     screen.setAttribute('aria-hidden','true');
   }
   applyAppRole(true);
+  // initApp solo migra si la sesión ya existía al cargar la página.
+  window.migrateLegacyHandoffs?.();
 }
 function showLoginScreen(message=''){
   document.body.dataset.authenticated='false';
@@ -20398,6 +20924,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/config.js"></script>
 <script src="src/auth.js"></script>
 <script src="src/app/permissions.js"></script>
+<script src="src/app/areas.js"></script>
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/storage.js"></script>
 

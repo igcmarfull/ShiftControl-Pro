@@ -35,6 +35,41 @@
         'reports.operational',
         'additional.create'
       ])
+    }),
+    // La Jefa de Tienda tiene las mismas funciones que la Jefa de Isla, sobre
+    // el personal, las incidencias, el checklist y las entregas de la tienda.
+    // Además registra facturas de tienda, que el administrador aprueba.
+    CHIEF_TIENDA:Object.freeze({
+      views:Object.freeze([
+        'operational-home',
+        'today',
+        'actual',
+        'execution',
+        'absences',
+        'incidents',
+        'checklists',
+        'handoff',
+        'planning',
+        'weekly',
+        'employees',
+        'evaluations',
+        'reports',
+        'additional',
+        'invoices'
+      ]),
+      actions:Object.freeze([
+        'attendance.manage',
+        'planning.manage',
+        'absences.manage',
+        'invoices.submit',
+        'incidents.manage',
+        'checklists.manage',
+        'handoff.manage',
+        'employees.manage',
+        'evaluations.manage',
+        'reports.operational',
+        'additional.create'
+      ])
     })
   });
 
@@ -53,6 +88,19 @@
     return normalizeRole(getContext()?.role);
   }
 
+  function getArea(){
+    if(getRole()!=='CHIEF')return null;
+    // Cualquier área distinta de tienda (ISLA, ESTACION o vacía) es la isla.
+    return String(getContext()?.area||'').trim().toUpperCase()==='TIENDA'
+      ?'TIENDA'
+      :'ISLA';
+  }
+
+  function permissionKey(){
+    const role=getRole();
+    return role==='CHIEF'&&getArea()==='TIENDA'?'CHIEF_TIENDA':role;
+  }
+
   function getLegacyRole(){
     const role=getRole();
     if(role==='ADMIN')return 'admin';
@@ -61,7 +109,7 @@
   }
 
   function hasAccess(collection,value){
-    const permissions=ROLE_PERMISSIONS[getRole()];
+    const permissions=ROLE_PERMISSIONS[permissionKey()];
     if(!permissions)return false;
     if(permissions[collection]==='*')return true;
     return permissions[collection].includes(value);
@@ -86,6 +134,7 @@
 
   window.ShiftControlPermissions=Object.freeze({
     getRole,
+    getArea,
     getLegacyRole,
     canOpenView,
     canUseAction,

@@ -111,9 +111,23 @@ Al final del documento se cargan la librería de Supabase, la configuración, la
 `src/storage.js`:
 
 - captura la función `window.save` ya definida;
-- la reemplaza con un wrapper que primero conserva el guardado original;
+- la reemplaza con un wrapper que primero conserva el guardado original y
+  marca la empresa con cambios pendientes;
 - programa la escritura remota con un debounce de 500 ms;
-- consulta o actualiza la fila configurada de `app_state`;
+- antes de escribir, lee la fila de `app_state`; si otro usuario guardó desde
+  la última sincronización, combina ambos estados a tres bandas (registros por
+  `id`, y `plans`/`executions` por trabajador y fecha; ante un conflicto sobre
+  el mismo dato prevalece el cambio local);
+- escribe de forma condicional sobre `updated_at`, de modo que una escritura
+  concurrente obliga a releer y combinar en lugar de sobrescribir;
+- consulta `updated_at` cada 15 segundos y al volver a la pestaña, y aplica los
+  cambios de otros usuarios sin recargar, salvo que haya un modal abierto o un
+  campo con foco;
+- conserva en `localStorage` la última versión acordada con Supabase y, al
+  iniciar, combina los cambios locales que hayan quedado sin subir;
+- muestra el estado en `.save-status`: sincronizado, guardando o sin conexión;
+- para una jefa, trabaja sobre la parte del estado de su área (ver
+  «Separación por área») y combina sus cambios sobre el estado completo;
 - reemplaza oficialmente la referencia completa mediante
   `ShiftControlState.replace(data.data)`;
 - conserva operación local si Supabase falla;
@@ -178,10 +192,12 @@ Undo, redo, importación de respaldo y recuperación remota usan esta operación
 ### Estado principal
 
 - local: clave `shiftcontrol_pro_v2_all_replacement_candidates`;
-- remoto: tabla `app_state`;
+- remoto: tabla `app_state`, escrita con control de concurrencia por `updated_at`;
 - identidad remota: valor `stateKey` de `src/config.js`;
 - contenido remoto: objeto JSON en `data`;
-- seguimiento local de sincronización: `shiftcontrol_supabase_last_sync`.
+- seguimiento local de sincronización: `shiftcontrol_supabase_last_sync`;
+- última versión acordada con Supabase: `<clave de empresa>:base`;
+- marca de cambios sin subir: `<clave de empresa>:pending`.
 
 El valor publicable de Supabase está en código cliente. Debe tratarse según el modelo de seguridad de claves publicables y políticas de la base; este repositorio no contiene las políticas RLS ni migraciones SQL para verificarlas.
 
@@ -214,6 +230,69 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
 - `AdditionalModule` concentra las inserciones, reemplazos de colección y
   mutaciones residuales de registros `additional`; las reglas, cálculos,
   snapshots, logs y renderizado permanecen en `index.html`.
+
+## Separación por área
+
+`src/app/areas.js` publica `window.ShiftControlAreas` y se carga después de
+`src/app/permissions.js`.
+
+- El administrador ve y administra la isla y la tienda.
+- `company_memberships.area` (`ESTACION` o `TIENDA` en Supabase) identifica
+  el área de cada jefa; la app trata `ESTACION` como isla. Una jefa sin área
+  se considera de isla. La asignación usa `assign_chief_area` mediante la Edge
+  Function `assign-chief`.
+- El área de cada trabajador se toma de `employee.area` ("Isla" o "Tienda",
+  sin distinguir mayúsculas ni tildes).
+- Al cargar, una jefa recibe solo los trabajadores de su área y sus registros
+  de `plans`, `executions`, `absences`, `additional`, `evaluations` y
+  `cashShortages`. Los datos generales se conservan.
+- La Jefa de Isla conserva el criterio anterior: si nadie tiene área "Isla",
+  ve a todo el personal que no sea de tienda.
+- La Jefa de Tienda tiene las mismas vistas que la Jefa de Isla
+  (`src/app/permissions.js`, `CHIEF_TIENDA`), sobre los datos de la tienda.
+- Incidencias (`incidents`) y entregas de turno (`handoffs`) guardan `area`;
+  los registros sin área son de isla. Los checklists de tienda usan la clave
+  `TIENDA:<fecha>` y los de isla, `<fecha>`.
+- El checklist de tienda tiene 13 puntos: los cinco generales (sin surtidores
+  ni patio) y ocho controles propios (`OPS_STORE_CHECKLIST_ITEMS`). Cada punto
+  respondido guarda en `details[<punto>]` responsable, fecha y hora,
+  observaciones y evidencia fotográfica. Un punto con problema exige
+  observaciones y responsable; al enviar el checklist queda con
+  `followUp.status = 'open'` y aparece en la Bandeja ADMIN hasta que el
+  gerente lo marca resuelto con un comentario. El checklist de isla no cambia.
+- Las fotos se reducen en el navegador (JPEG, lado mayor 1600 px) y se suben
+  al bucket privado `shiftcontrol-evidence` de Supabase Storage con la ruta
+  `<empresa>/checklists/<área>/<fecha>/<archivo>`. El checklist guarda solo la
+  ruta; las imágenes se muestran con enlaces firmados de una hora.
+- Facturas: la Jefa de Tienda registra facturas de tienda (`area: 'TIENDA'`)
+  con un respaldo opcional (foto o PDF en
+  `<empresa>/invoices/<área>/<mes>/<archivo>`). Quedan con
+  `aprobacion: 'pendiente_aprobacion'` hasta que el administrador las aprueba
+  o rechaza con motivo; una rechazada se corrige y se reenvía. Las facturas sin
+  `aprobacion` (anteriores) se consideran aprobadas. Los indicadores, el pago y
+  los vencimientos usan solo facturas aprobadas. La jefa ve solo las facturas
+  de su área y no registra pagos ni modifica facturas aprobadas. Las facturas
+  por aprobar aparecen en la Bandeja ADMIN.
+- En incidencias, checklist y entrega de turno el administrador elige el área
+  que revisa con un selector Isla/Tienda.
+- Las entregas de turno se guardan en `state.handoffs` mediante
+  `HandoffModule` (`src/modules/handoffs/handoffs.js`). Antes quedaban solo en
+  `localStorage`; `migrateLegacyHandoffs()` las incorpora una vez como entregas
+  de isla.
+- Aislamiento en la base de datos (migraciones `20261014021748`,
+  `20261014021940` y `20261014200100`): el administrador lee y escribe `app_state` completo; las
+  jefaturas no tienen acceso directo y usan `get_area_app_state`,
+  `get_app_state_version` y `save_area_app_state`. El servidor recorta el
+  estado por área (mismas reglas que `src/app/areas.js`), entrega vacíos
+  finanzas, depósitos, faltantes de caja e historial, y al guardar solo
+  acepta registros del área: no aprueba facturas ni evaluaciones, no registra
+  pagos, no cambia el área de una trabajadora ni modifica registros
+  aprobados, pagados, resueltos o checklists enviados. Configuración,
+  feriados y cierres solo los cambia el administrador. Una colección ausente
+  o mal formada en lo enviado no se modifica. La escritura es condicional
+  sobre `updated_at` (error `40001` si otro usuario guardó antes).
+- `src/storage.js` usa esas funciones cuando la sesión es de una jefa; si aún
+  no existen en la base, vuelve al acceso directo anterior.
 
 ## Integraciones presentes pero no activas
 
