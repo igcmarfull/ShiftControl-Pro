@@ -1,8 +1,10 @@
 -- Aislamiento de app_state por área (fase 2: cierra el acceso directo).
 --
--- APLICAR SOLO JUNTO CON LA PUBLICACIÓN del cliente que usa
--- get_area_app_state / save_area_app_state (20261014200000). Con el cliente
--- anterior, las jefaturas dejarían de cargar y guardar datos.
+-- APLICAR SOLO CON LA PUBLICACIÓN del cliente que usa
+-- get_area_app_state / save_area_app_state (funciones de
+-- 20261014021748_area_app_state_rpc.sql). Con un cliente anterior, las
+-- jefaturas dejarían de cargar y guardar datos.
+-- Procedimiento, pruebas y reversión: docs/fase2-aislamiento-app-state.md
 --
 -- Después de esta migración:
 -- - El administrador activo lee y escribe app_state completo, como antes.
