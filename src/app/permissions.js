@@ -36,14 +36,18 @@
         'additional.create'
       ])
     }),
-    // La Jefa de Tienda administra al personal de tienda. Incidencias,
-    // checklist y entrega de turno corresponden a la operación de la isla.
+    // La Jefa de Tienda tiene las mismas funciones que la Jefa de Isla, sobre
+    // el personal, las incidencias, el checklist y las entregas de la tienda.
     CHIEF_TIENDA:Object.freeze({
       views:Object.freeze([
+        'operational-home',
         'today',
         'actual',
         'execution',
         'absences',
+        'incidents',
+        'checklists',
+        'handoff',
         'planning',
         'weekly',
         'employees',
@@ -55,6 +59,9 @@
         'attendance.manage',
         'planning.manage',
         'absences.manage',
+        'incidents.manage',
+        'checklists.manage',
+        'handoff.manage',
         'employees.manage',
         'evaluations.manage',
         'reports.operational',

@@ -247,9 +247,18 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   `cashShortages`. Los datos generales se conservan.
 - La Jefa de Isla conserva el criterio anterior: si nadie tiene área "Isla",
   ve a todo el personal que no sea de tienda.
-- La Jefa de Tienda tiene las vistas de personal y planificación; incidencias,
-  checklist, entrega de turno e inicio operativo quedan para la isla
-  (`src/app/permissions.js`, `CHIEF_TIENDA`).
+- La Jefa de Tienda tiene las mismas vistas que la Jefa de Isla
+  (`src/app/permissions.js`, `CHIEF_TIENDA`), sobre los datos de la tienda.
+- Incidencias (`incidents`) y entregas de turno (`handoffs`) guardan `area`;
+  los registros sin área son de isla. Los checklists de tienda usan la clave
+  `TIENDA:<fecha>` y los de isla, `<fecha>`. La tienda usa los ítems generales
+  del checklist, sin surtidores ni patio.
+- En incidencias, checklist y entrega de turno el administrador elige el área
+  que revisa con un selector Isla/Tienda.
+- Las entregas de turno se guardan en `state.handoffs` mediante
+  `HandoffModule` (`src/modules/handoffs/handoffs.js`). Antes quedaban solo en
+  `localStorage`; `migrateLegacyHandoffs()` las incorpora una vez como entregas
+  de isla.
 - Es una separación de la aplicación, no de la base de datos: `app_state`
   sigue siendo un JSON por empresa legible por sus miembros.
 

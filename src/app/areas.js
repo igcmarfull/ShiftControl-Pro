@@ -19,10 +19,15 @@
     'cashShortages'
   ]);
 
+  // Registros operativos con área propia. Los anteriores a la separación no
+  // tienen área y pertenecen a la isla.
+  const AREA_RECORD_COLLECTIONS=Object.freeze(['incidents','handoffs']);
+  const CHECKLIST_PREFIX='TIENDA:';
+
   function normalizeText(value){
     return String(value||'')
       .normalize('NFD')
-      .replace(/[̀-ͯ]/g,'')
+      .replace(/[\u0300-\u036f]/g,'')
       .trim()
       .toLowerCase();
   }
@@ -36,6 +41,21 @@
 
   function employeeArea(employee){
     return normalizeArea(employee?.area);
+  }
+
+  function recordArea(item){
+    return normalizeArea(item?.area)||'ISLA';
+  }
+
+  // Los checklists se guardan por fecha. Los de tienda usan el prefijo
+  // "TIENDA:" para no mezclarse con los de isla del mismo día.
+  function checklistKey(date,area){
+    return area==='TIENDA'?`${CHECKLIST_PREFIX}${date}`:date;
+  }
+
+  function checklistArea(key,entry){
+    return normalizeArea(entry?.area)||
+      (String(key||'').startsWith(CHECKLIST_PREFIX)?'TIENDA':'ISLA');
   }
 
   // Área de la sesión actual: null para el administrador. Las jefaturas sin
@@ -74,6 +94,16 @@
         !item||!item.employeeId||ids.has(item.employeeId)
       );
     });
+    AREA_RECORD_COLLECTIONS.forEach(key=>{
+      if(!Array.isArray(fullState[key]))return;
+      scoped[key]=fullState[key].filter(item=>recordArea(item)===area);
+    });
+    const checklists=fullState.checklists;
+    if(checklists&&typeof checklists==='object'&&!Array.isArray(checklists)){
+      scoped.checklists=Object.fromEntries(
+        Object.entries(checklists).filter(([key,entry])=>checklistArea(key,entry)===area)
+      );
+    }
     return scoped;
   }
 
@@ -85,6 +115,9 @@
     AREAS,
     normalizeArea,
     employeeArea,
+    recordArea,
+    checklistKey,
+    checklistArea,
     getSessionArea,
     employeesForArea,
     scopeState,

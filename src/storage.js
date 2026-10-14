@@ -321,6 +321,20 @@
       renderAll();
     }
 
+    // Incidencias, checklist y entregas de turno no forman parte de renderAll.
+    [
+      'renderOpsIncidents',
+      'renderOpsChecklist',
+      'renderOpsChecklistHistory',
+      'renderHandoffs'
+    ].forEach(name => {
+      try {
+        if (typeof window[name] === 'function') window[name]();
+      } catch (error) {
+        warn(`No fue posible actualizar ${name}.`, error);
+      }
+    });
+
     return currentState;
   }
 

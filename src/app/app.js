@@ -28,6 +28,10 @@ async function initApp(){
     await window.migrateLegacyChecklists();
   }
 
+  if(window.migrateLegacyHandoffs){
+    await window.migrateLegacyHandoffs();
+  }
+
   if(window.migrateLegacyFinanceReconciliations){
     await window.migrateLegacyFinanceReconciliations();
   }

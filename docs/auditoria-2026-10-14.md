@@ -132,6 +132,11 @@ todo sin recargar; una trabajadora creada por la Jefa de Tienda queda en
 Tienda; una reclasificación del gerente se refleja en ambas jefas; al cambiar
 de usuario en la misma pestaña cada sesión carga solo su área.
 
+Incidencias, checklist y entrega de turno también se separan por área: cada
+jefa registra y ve las de su área y el gerente alterna entre Isla y Tienda.
+Las entregas de turno, que antes quedaban solo en el navegador de quien las
+registraba, ahora se sincronizan con Supabase (hallazgo adicional corregido).
+
 Límite conocido: la separación es de la aplicación. Una jefa con
 conocimientos técnicos podría leer el JSON completo desde Supabase. Aislarlo
 en la base de datos requiere dividir `app_state` por área.
@@ -151,6 +156,7 @@ Jefa de Isla.
 
 1. Aplicar en Supabase la migración `20261014000001` (y revisar si
    `20260804000001` ya está aplicada o corregida a mano).
-2. Confirmar las vistas de la Jefa de Tienda (hoy sin incidencias,
-   checklist ni entrega de turno) y si debe ver «Facturas y compras».
+2. Definir si el checklist de tienda necesita ítems propios (hoy usa los
+   generales: personal, presentación, baños, instalaciones y entrega) y si la
+   Jefa de Tienda debe ver «Facturas y compras».
 3. Autorizar la limpieza de datos incrustados en `index.html`.
