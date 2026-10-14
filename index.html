@@ -5993,7 +5993,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <div>
           <h2>Operación del día</h2>
         </div>
-        <div class="actions"><button type="button" class="btn global-period-btn" title="Volver al período actual">◎ Hoy</button>
+        <div class="actions"><div class="od-seg role-admin-only" id="todayAreaSeg" role="tablist" aria-label="Área"><button type="button" role="tab" data-area="" class="on" onclick="setTodayArea('')">Todas</button><button type="button" role="tab" data-area="ISLA" onclick="setTodayArea('ISLA')">Isla</button><button type="button" role="tab" data-area="TIENDA" onclick="setTodayArea('TIENDA')">Tienda</button></div><button type="button" class="btn global-period-btn" title="Volver al período actual">◎ Hoy</button>
           <input class="field" type="date" id="todayDate" onchange="renderToday()" data-period-bound="true">
           <button class="btn" onclick="loadTodayBaseSchedule()">Cargar planificación base</button>
           <button class="btn" onclick="openTodayExceptions()">Registrar excepción</button>
@@ -6001,7 +6001,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
       </div>
 
-      <div class="demo-banner"><strong>Demo realista · junio 2026:</strong> el mes incluye atrasos, inasistencias, licencias médicas, vacaciones, permisos, reemplazos y jornadas adicionales. Los domingos se muestran únicamente dentro de la asistencia diaria, sin un módulo separado.</div>
+      <div id="odTop" class="od-top"></div>
+
       <div class="cards">
         <div class="card">
           <div class="metric-label">Planificados</div>
@@ -6051,6 +6052,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
       <div id="todayMobileShiftView" class="today-mobile-shifts" aria-live="polite"></div>
       <div id="todayDesktopShiftView" class="today-desktop-shifts" aria-live="polite"></div>
+      <div id="odLow" class="od-low"></div>
 
       <div class="card today-legacy-card">
         <div class="panel-head">
@@ -9226,6 +9228,28 @@ const todayUI={
   replacementPaid:document.getElementById('todayReplacementPaid'),
   exceptionNote:document.getElementById('todayExceptionNote')
 };
+// Filtro de área de Operación del día (solo administrador; las jefas ya ven solo su área).
+let todayAreaFilter='';
+function todayEmployeeArea(emp){return window.ShiftControlAreas?.employeeArea?.(emp)||null}
+function todayAreaActive(){return !!todayAreaFilter&&getAppRole()==='admin'}
+function setTodayArea(value){
+  todayAreaFilter=value==='ISLA'||value==='TIENDA'?value:'';
+  document.querySelectorAll('#todayAreaSeg button').forEach(button=>button.classList.toggle('on',button.dataset.area===todayAreaFilter));
+  renderToday();
+}
+function todayVisibleRows(date){
+  const rows=todayPlannedRows(date);
+  return todayAreaActive()?rows.filter(row=>todayEmployeeArea(row.employee)===todayAreaFilter):rows;
+}
+function todayVisibleExecs(date){
+  const execs=state.executions.filter(e=>e.date===date);
+  return todayAreaActive()?execs.filter(e=>todayEmployeeArea(employee(e.employeeId))===todayAreaFilter):execs;
+}
+function todayAreaTag(emp){
+  if(getAppRole()!=='admin'||todayAreaActive())return '';
+  const area=todayEmployeeArea(emp);
+  return area?`<span class="od-tag">${area==='TIENDA'?'Tienda':'Isla'}</span>`:'';
+}
 function todayPlannedRows(date){
   const role=typeof getAppRole==='function'
     ? getAppRole()
@@ -9627,8 +9651,8 @@ function renderToday(){
   if(!todayUI.date||!todayUI.table)return;
   const date=todayUI.date.value||isoToday;
   todayUI.date.value=date;
-  const rows=todayPlannedRows(date);
-  const execs=state.executions.filter(e=>e.date===date);
+  const rows=todayVisibleRows(date);
+  const execs=todayVisibleExecs(date);
 
   const confirmed=execs.filter(e=>['Presente','Atrasado'].includes(e.status)).length;
   const exceptions=execs.filter(e=>!['Presente','Atrasado'].includes(e.status)).length;
@@ -9702,14 +9726,6 @@ function renderTodayDesktopShiftView(date,rows,execs){
     groups[code].push(row);
   });
 
-  const totals={
-    total:rows.length,
-    present:execs.filter(e=>e.status==='Presente').length,
-    late:execs.filter(e=>e.status==='Atrasado').length,
-    absent:execs.filter(e=>e.status==='Ausente').length,
-    leave:execs.filter(e=>['Licencia','Vacaciones','Permiso'].includes(e.status)).length,
-    replacements:execs.filter(e=>e.replacementId).length
-  };
 
   const cards=shiftOrder.filter(code=>groups[code]?.length).map(code=>{
     const people=groups[code];
@@ -9747,11 +9763,13 @@ function renderTodayDesktopShiftView(date,rows,execs){
             <button class="today-desktop-action exception" onclick="openTodayExceptions('${emp.id}')" title="Registrar excepción" aria-label="Registrar excepción para ${emp.name}">!</button>
           </div>`;
 
+      const initials=String(emp.name||'?').trim().split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase();
       return `<div class="today-desktop-person">
+        <span class="today-desktop-avatar" aria-hidden="true">${initials}</span>
         <div class="today-desktop-person-info">
           <button class="worker-link" onclick="openWorkerDrawer('${emp.id}')">${emp.name}</button>
           <span class="today-desktop-status ${statusClass}">${statusText}</span>
-          ${replacement}
+          ${replacement}${todayAreaTag(emp)}
         </div>
         ${actions}
       </div>`;
@@ -9776,18 +9794,10 @@ function renderTodayDesktopShiftView(date,rows,execs){
       </div>
       <div class="today-desktop-summary-actions">
         <button class="btn small" onclick="markPendingPresent()">Marcar pendientes presentes</button>
-        <button class="btn small danger" onclick="clearTodayExecutions()">Reiniciar día</button>
+        <details class="today-more"><summary class="btn small" aria-label="Más acciones">⋯</summary><div class="today-more-menu"><button type="button" class="danger" onclick="this.closest('details').removeAttribute('open');clearTodayExecutions()">Reiniciar día</button></div></details>
       </div>
     </section>
-    <div class="today-desktop-shift-grid">${cards||'<div class="notice">No hay trabajadores planificados para esta fecha.</div>'}</div>
-    <section class="today-desktop-totals">
-      <span><b>${totals.total}</b> Total</span>
-      <span class="ok"><b>${totals.present}</b> Presentes</span>
-      <span class="late"><b>${totals.late}</b> Atrasos</span>
-      <span class="bad"><b>${totals.absent}</b> Ausentes</span>
-      <span class="leave"><b>${totals.leave}</b> Licencias / permisos</span>
-      <span class="replacement"><b>${totals.replacements}</b> Reemplazos</span>
-    </section>`;
+    <div class="today-desktop-shift-grid">${cards||'<div class="notice">No hay trabajadores planificados para esta fecha.</div>'}</div>`;
 }
 
 function toggleTodayShiftGroup(detailsEl){
@@ -9864,7 +9874,7 @@ function renderTodayMobileShiftView(date,rows,execs){
         <div class="today-mobile-avatar">${emp.name.split(' ').map(v=>v[0]).slice(0,2).join('')}</div>
         <div class="today-mobile-person-main">
           <strong>${emp.name}</strong>
-          <span class="today-mobile-status ${statusClass}">${statusText}</span>
+          <span class="today-mobile-status ${statusClass}">${statusText}</span>${todayAreaTag(emp)}
           ${replacementLine}
         </div>
         ${actionHtml}
@@ -9907,7 +9917,9 @@ function renderTodayMobileShiftView(date,rows,execs){
       <span class="${closed?'closed':'open'}">${closed?'Jornada cerrada':'Jornada abierta'}</span>
     </section>
 
-    ${groupHtml || '<div class="notice">No hay trabajadores de Isla planificados para esta fecha.</div>'}
+    ${groupHtml || '<div class="notice">No hay trabajadores planificados para esta fecha.</div>'}
+    <div id="odFold"></div>
+    ${getAppRole()==='admin'?`<div class="today-mobile-admin"><button type="button" class="btn" onclick="markPendingPresent()">Marcar pendientes presentes</button><details class="today-more"><summary class="btn" aria-label="Más acciones">⋯</summary><div class="today-more-menu"><button type="button" class="danger" onclick="this.closest('details').removeAttribute('open');clearTodayExecutions()">Reiniciar día</button></div></details></div>`:''}
   `;
 }
 
@@ -9934,7 +9946,7 @@ function markPendingPresent(){
   if(DailyClosureModule.isClosed(lockedDate))return toast('La jornada está cerrada. Debes reabrirla para editar');
   const date=todayUI.date.value||isoToday;
   if(DailyClosureModule.isClosed(date))return toast('La jornada ya está cerrada');
-  const rows=todayPlannedRows(date);
+  const rows=todayVisibleRows(date);
   const pending=rows.filter(r=>!state.executions.some(x=>x.employeeId===r.employee.id&&x.date===date));
   if(!pending.length)return toast('No hay pendientes');
   snapshot();
@@ -15030,7 +15042,7 @@ window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>applyAppRole(false
 function focusIncidentForm(){
   openIncidentDrawer();
   const field=document.getElementById('incidentTitle');
-  if(field){field.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>field.focus(),280)}
+  if(field)setTimeout(()=>field.focus({preventScroll:true}),280);
 }
 function incidentSetToday(){
   filterOpsIncidents('all');
@@ -15437,7 +15449,22 @@ function renderOpsIncidents(){
     &&(!query||[x.title,x.description,x.reporter,x.createdBy,x.owner,x.type].some(v=>String(v||'').toLowerCase().includes(query))));
   const labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'};
   const isAdmin=getAppRole()==='admin';
-  const row=x=>`<div class="ic-row ${x.status==='resolved'?'done':''}" style="--c:var(--${x.priority==='Alta'?'red':x.priority==='Media'?'orange':'blue'})"><span class="ic-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${INCIDENT_ICONS[x.type]||INCIDENT_ICONS.Otro}</svg></span><div class="ic-txt"><strong>${opsEsc(x.title)}</strong><small>${opsEsc(x.description)}</small></div><div class="ic-chips"><span class="ic-chip">${opsEsc(x.priority)}</span><span class="ic-chip n">${opsEsc(x.type)}</span><span class="ic-chip n">${opsEsc(x.shift)}</span></div><div class="ic-who"><small>Reportó: ${opsEsc(x.reporter||x.createdBy)}</small><small>Asignada: ${opsEsc(x.owner)}${x.dueDate?` · Compromiso ${opsEsc(x.dueDate)}`:''}</small></div><div class="ic-acts">${x.status==='open'?`<button type="button" class="ic-btn pri" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button type="button" class="ic-btn ${x.status==='review'?'pri':''}" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button type="button" class="ic-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button type="button" class="ic-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></div>`;
+  const actionsFor=x=>{
+    const list=[];
+    if(x.status==='open')list.push(['Tomar en revisión',`updateOpsIncidentStatus('${x.id}','review')`]);
+    if(isAdmin){
+      if(x.status!=='resolved')list.push(['Marcar resuelta',`updateOpsIncidentStatus('${x.id}','resolved')`]);
+      else list.push(['Reabrir',`updateOpsIncidentStatus('${x.id}','open')`]);
+      list.push(['Archivar',`archiveOpsIncident('${x.id}')`]);
+    }
+    return list;
+  };
+  const row=x=>{
+    const acts=actionsFor(x);
+    const button=([label,js],primary)=>`<button type="button" class="ic-btn ${primary?'pri':''}" onclick="${js}">${label}</button>`;
+    const rest=acts.slice(1);
+    return `<div class="ic-row ${x.status==='resolved'?'done':''}" style="--c:var(--${x.priority==='Alta'?'red':x.priority==='Media'?'orange':'blue'})"><span class="ic-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${INCIDENT_ICONS[x.type]||INCIDENT_ICONS.Otro}</svg></span><div class="ic-txt"><strong>${opsEsc(x.title)}</strong><small>${opsEsc(x.description)}</small></div><div class="ic-chips"><span class="ic-chip">${opsEsc(x.priority)}</span><span class="ic-chip n">${opsEsc(x.type)}</span><span class="ic-chip n">${opsEsc(x.shift)}</span></div><div class="ic-who"><small>Reportó: ${opsEsc(x.reporter||x.createdBy)}</small><small>Asignada: ${opsEsc(x.owner)}${x.dueDate?` · Compromiso ${opsEsc(x.dueDate)}`:''}</small></div><div class="ic-acts">${acts.length?button(acts[0],x.status!=='resolved'):''}${rest.length?`<details class="ic-more"><summary aria-label="Más acciones">⋯</summary><div class="ic-menu">${rest.map(a=>button(a,false)).join('')}</div></details>`:''}</div></div>`;
+  };
   const sorted=group=>matches.filter(x=>x.status===group).sort((a,b)=>(rank[a.priority]??3)-(rank[b.priority]??3)||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const groups=[['open','Abiertas'],['review','En revisión'],['resolved','Resueltas']].filter(([key])=>opsIncidentFilter==='all'||opsIncidentFilter===key);
   root.className='ic-list';
@@ -17940,6 +17967,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/ui-papel.js"></script>
 <script src="src/ui-workcenter.js"></script>
+<script src="src/ui-today.js"></script>
 <script src="src/storage.js"></script>
 
 <script src="src/app/state.js"></script>

@@ -88,7 +88,26 @@ Verificación: pruebas en navegador con datos simulados (administrador y Jefa de
 
 - **Lista:** pestañas Todas / Abiertas / En revisión / Resueltas con contador, filtro de prioridad y buscador (título, descripción, reportante, responsable y tipo). Agrupada en Abiertas, En revisión y Resueltas; las resueltas quedan atenuadas. Cada fila lleva ícono por tipo, prioridad, tipo, turno, responsable y las mismas acciones de antes (tomar en revisión, marcar resuelta, reabrir, archivar según el rol).
 - **Gráficos** (`renderIncidentCharts`): incidencias por semana (8 semanas, por `createdAt`) y por tipo (máx. 5), de las incidencias no archivadas del área. Un solo color; cada barra tiene `title` con el detalle.
-- **Escritorio (≥ 821 px):** el formulario «Registrar incidencia» pasa a un panel lateral que abre «Nueva incidencia» (`focusIncidentForm` → `openIncidentDrawer`), se cierra con ✕, el fondo o Esc, y también al guardar. En celular el formulario sigue en la página, después de la lista, y el gráfico «Por tipo» se oculta.
+- **Escritorio (≥ 821 px):** el formulario «Registrar incidencia» pasa a un panel lateral que abre «Nueva incidencia» (`focusIncidentForm` → `openIncidentDrawer`), se cierra con ✕, el fondo o Esc, y también al guardar. En celular (≤ 820 px) el formulario es una hoja que sube desde abajo (se cierra con ✕ o tocando fuera), la lista va antes que el gráfico, queda un solo botón «Hoy», el gráfico «Por tipo» se oculta y cada tarjeta muestra solo su acción principal más un menú «⋯» con el resto (`<details class="ic-more">`); la línea «Reportó / Asignada» no se muestra en celular.
 - El texto del adjunto ahora dice «Por ahora solo se guarda el nombre del archivo.»
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): pestañas, búsqueda con foco conservado, filtro de prioridad, abrir/cerrar el panel, guardado, cambio de estado. Sin pruebas con datos reales.
+
+## Operación del día (rediseño, escritorio)
+
+`renderToday()` sigue siendo el renderizador. `src/ui-today.js` (IIFE, se carga después de `ui-workcenter.js`) envuelve `window.renderToday` y, después de cada render, dibuja dos bloques extra; no cambia ninguna regla de asistencia. Estilos `.od-*` en `src/ui-papel.css`. El celular (< 768 px) no cambia.
+
+- **Arriba (`#odTop`):** anillo de confirmados (planificados con registro de asistencia), seis cifras (planificados, presentes, atrasos, ausentes, licencias, sin confirmar), franja de alerta (usa el texto de `#todayProblems`) y cobertura por turno A/B/C con color según el estado (verde completo, ámbar parcial, rojo sin cubrir). Las tarjetas y el cuadro «Problemas» originales se ocultan en escritorio pero siguen en el DOM (los ids se conservan).
+- **Tablero de turnos:** mismo contenido y acciones (`quickPresent`, `openTodayExceptions`, `markPendingPresent`); se agregó avatar con iniciales, «Reiniciar día» pasó a un menú «⋯» (`clearTodayExecutions`, que ya pedía confirmación) y se quitó la franja inferior de totales, que ahora está en la cabecera. Se eliminó el cartel de demo de esta pantalla.
+- **Abajo (`#odLow`):** asistencia de los últimos 7 días (presentes sobre planificados por día, hasta la fecha elegida; un día sin turnos planificados se muestra con «—»), excepciones y reemplazos del día (incluye los pendientes) y relevo del siguiente turno (solo si la fecha elegida es hoy; horario desde `settings.A/B/C`).
+- La app no guarda la hora de llegada, por eso no hay línea de tiempo de llegadas.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): confirmar a un trabajador actualiza el resumen, el menú «⋯» ofrece «Reiniciar día» y, al aceptarlo, los registros del día se borran. Sin pruebas con datos reales.
+
+## Operación del día · filtro de área y celular
+
+- **Selector «Todas · Isla · Tienda»** (`#todayAreaSeg`, solo administrador; las jefas ya ven solo su área). El estado vive en `todayAreaFilter`; `setTodayArea()` vuelve a dibujar. `todayVisibleRows(date)` y `todayVisibleExecs(date)` aplican el filtro (área = `ShiftControlAreas.employeeArea`) y las usan `renderToday`, `markPendingPresent` y `src/ui-today.js`. `confirmToday` (cierra la jornada completa) sigue usando todo el personal, sin filtro.
+- En «Todas» cada trabajador muestra una etiqueta de área y el resumen indica «Isla x/y · Tienda x/y». Quien no tiene área asignada solo aparece en «Todas».
+- **Celular (< 768 px):** el mismo resumen (anillo, cuatro cifras, alerta y cobertura A/B/C) reemplaza las tarjetas y recuadros anteriores; los turnos plegables conservan sus acciones. Los bloques de 7 días, excepciones y relevo van en un panel plegable (`#odFold`), y el administrador tiene «Marcar pendientes presentes» y el menú «⋯» con «Reiniciar día» (antes no estaban disponibles en celular).
+
+Verificación: pruebas en navegador con datos simulados (Todas = Isla + Tienda, «Marcar pendientes presentes» con Isla elegida solo marcó a Isla; la Jefa de Isla no ve el selector y solo ve su área). Sin pruebas con datos reales.
