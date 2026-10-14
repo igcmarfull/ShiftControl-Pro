@@ -7332,7 +7332,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 </section>
 
 <section id="evaluations" class="view ops-module-view">
-  <div class="topbar"><div><h2>Evaluación mensual del personal</h2></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn primary" onclick="newEvaluation()">＋ Nueva evaluación</button></div></div>
+  <div class="topbar ev-top"><div><h2>Evaluación mensual del personal</h2><p class="ev-sub">Cada persona mantiene su propia ficha. Evalúa a quienes faltan este mes.</p></div><div class="actions"><select class="select" id="evaluationMonth" onchange="renderEvaluations()"></select><button class="btn" onclick="newEvaluation()">Nuevo personal</button><button class="btn primary" id="evNextBtn" onclick="evaluateNext()">Evaluar siguiente</button></div></div>
+  <section class="ev-hero" id="evHero"></section>
   <div class="eval-summary-grid">
     <article class="eval-summary-card tone-green"><span class="eval-summary-icon">✓</span><div><span>Completadas</span><strong id="evalCompletedCount">0</strong><small>Evaluaciones cerradas</small></div></article>
     <article class="eval-summary-card tone-orange"><span class="eval-summary-icon">⏳</span><div><span>Borradores</span><strong id="evalDraftCount">0</strong><small>Pendientes de revisión</small></div></article>
@@ -7449,6 +7450,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     </article>
     <article class="ops-panel evaluation-list-panel">
       <div class="ops-panel-head"><div><h3>Evaluaciones del mes</h3><p>Cada persona mantiene su propia ficha; puedes tener varias abiertas simultáneamente.</p></div></div>
+      <div class="ev-tabs" id="evTabs" role="tablist"></div>
       <div class="eval-toolbar">
         <div class="eval-search"><span>⌕</span><input type="text" id="evalSearchInput" placeholder="Buscar trabajador..." oninput="onEvalFilterChange()"></div>
         <select class="eval-filter" id="evalStatusFilter" onchange="onEvalFilterChange()">
@@ -18020,6 +18022,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/ui-papel.js"></script>
 <script src="src/ui-workcenter.js"></script>
 <script src="src/ui-today.js"></script>
+<script src="src/ui-evaluaciones.js"></script>
 <script src="src/storage.js"></script>
 
 <script src="src/app/state.js"></script>

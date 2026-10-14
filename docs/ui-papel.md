@@ -126,3 +126,14 @@ Alineación (Operación del día, escritorio): la franja superior centra vertica
 - No se incluyen los pasos «depósito» y «entrega de turno» del Centro de trabajo: no hay un dato confiable para el depósito y la entrega ya se refleja en el cierre de la jornada.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): con pendientes, «Cerrar jornada» muestra primero el aviso nuevo y después los de `confirmToday`; la jornada queda cerrada, el botón cambia a «Reabrir jornada» y al reabrir vuelve a abierta. Sin pruebas con datos reales.
+
+## Evaluación mensual (rediseño)
+
+`src/ui-evaluaciones.js` (cargado tras `ui-today.js`) envuelve `window.renderEvaluations()`: ejecuta la función original de `index.html` (contadores, filtro de jefatura) y después dibuja la vista nueva. No cambia el modelo de `EvaluationModule` ni el editor (`openEvaluation`, `newEvaluationFor`, `saveEvaluation`, `deleteEvaluationFromList`).
+
+- **Resumen:** anillo «X de N evaluadas» (aprobadas + en revisión), Completadas / Borradores (incluye en revisión) / Sin evaluar y promedio del mes. El promedio sale de `scores` (valores 1–5) de las evaluaciones enviadas o aprobadas; la comparación con el mes anterior solo aparece si ese mes tiene datos. Se oculta mientras el editor está abierto.
+- **Lista:** pestañas por estado (la de «En revisión» solo si hay), selector Todas/Isla/Tienda (sin área definida cuenta como Isla, igual que `recordArea`), buscador existente (`#evalSearchInput`) y filas agrupadas Borradores · En revisión · Sin evaluar · Completadas.
+- **Botones:** «Evaluar siguiente» (primer borrador, si no, primer pendiente) y «Nuevo personal» (`newEvaluation()`).
+- Se retiró la vista en grilla/lista y las tarjetas antiguas; los filtros viejos siguen en el DOM (ocultos) porque `onEvalFilterChange()` los lee.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): pestañas, área, búsqueda, «Evaluar siguiente» y abrir una evaluación aprobada funcionan; sin errores de consola. Limitación: no se probó con datos reales de producción.
