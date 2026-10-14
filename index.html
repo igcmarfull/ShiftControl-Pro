@@ -9258,9 +9258,11 @@ function todayPlannedRows(date){
     ? getAppRole()
     : (document.body.dataset.role||'admin');
 
-  return window.EmployeeModule.getAll()
-    .filter(e=>e.active!==false)
-    .filter(e=>role!=='chief'||String(e.area||'').trim().toLowerCase()==='isla')
+  const active=window.EmployeeModule.getAll().filter(e=>e.active!==false);
+
+  // Una jefa ve solo el personal de su área (Isla o Tienda), con el mismo
+  // criterio que el resto de sus vistas.
+  return (role==='chief'?chiefAreaEmployees(active):active)
     .map(emp=>{
 
       const explicit=state.plans.find(

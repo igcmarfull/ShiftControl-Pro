@@ -285,6 +285,23 @@ en la base de datos requiere dividir `app_state` por área.
   `index.html`) también los conserva; quitarlos exigiría reescribir la historia.
   Ver «Decisiones pendientes».
 
+### Hallazgo tras la reactivación de la Jefa de Tienda (14-10-2026)
+
+- **«Operación del día» no listaba a su personal** (`todayPlannedRows` en
+  `index.html`): para cualquier jefa filtraba por área exactamente `isla`, un
+  resto anterior a la Jefa de Tienda. Ella veía 0 planificados y ningún botón
+  para marcar asistencia aunque sus turnos existían y los datos se guardaban
+  (el servidor ya tenía sus turnos y 2 asistencias de ese día). Con el estado
+  de una sesión que además trajera personal de Isla, la vista mostraba a ese
+  personal en lugar del suyo.
+- **Corregido** con el helper de área que usan las demás vistas
+  (`chiefAreaEmployees`). Verificado en Chromium con Supabase simulado: Jefa de
+  Tienda, solo sus 2 trabajadoras y 2 asistencias nuevas al marcar pendientes;
+  Jefa de Isla y gerente, sin cambios. Es el único filtro fijo por `isla` del
+  código. Las vistas Registro real, Ejecución diaria, Semanal, Planificación y
+  Trabajadores muestran a su personal. **Llega a producción al fusionar el
+  PR #6**: hasta entonces la Jefa de Tienda sigue sin poder usar esa vista.
+
 ### Otros pendientes
 
 - Activar la protección contra contraseñas filtradas en Supabase
