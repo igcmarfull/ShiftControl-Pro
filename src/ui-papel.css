@@ -1,0 +1,108 @@
+/* Estilo «Papel» para toda la app: claro y oscuro con los mismos tokens, barra lateral con íconos y celular.
+   Se carga después de v20-interface.css. Los temas siguen siendo body.light / body:not(.light) (applyTheme). */
+/* base común a los tres mockups: barra lateral que no se corta y números alineados */
+@media (min-width:821px){.sidebar{display:flex!important;flex-direction:column!important;overflow:hidden!important}}
+.sidebar .nav{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;scrollbar-width:thin;padding-bottom:8px}
+.sidebar-foot{position:static!important;margin-top:8px;flex:0 0 auto}
+.nav-btn .mk-ico{flex:0 0 auto;display:grid;place-items:center}
+.nav-btn .mk-ico svg{width:17px;height:17px}
+.metric-value,.v16-station-metric strong,.exec-mini-kpis strong{font-variant-numeric:tabular-nums}
+
+.nav-group-title{display:flex!important;align-items:center;gap:8px;cursor:pointer}
+.nav-group-title .mk-n{margin-left:auto;font-size:10px;opacity:.7;font-weight:700}
+.nav-group-title .mk-chev{width:14px;height:14px;opacity:.7;transition:transform .15s}
+.nav-group.mk-collapsed .nav-btn{display:none!important}
+.nav-group.mk-collapsed .mk-chev{transform:rotate(-90deg)}
+
+.sidebar .nav-btn{min-height:37px!important}
+.sidebar .nav-btn .mk-ico{width:28px!important;height:28px!important}
+.sidebar .nav-group{margin-top:0!important;padding-top:0!important}
+.sidebar .nav-group-title{padding:10px 10px 4px!important}
+.sidebar .role-card{margin-bottom:2px!important}
+.sidebar .brand{padding-bottom:10px!important}
+
+body.light{
+  --bg:#f5f6fa;--panel:#ffffff;--panel2:#f6f7fb;--panel3:#eceff5;--line:#e3e6ee;--text:#151a26;--muted:#687083;
+  --blue:#3b6cf6;--green:#1f9d63;--yellow:#c77d08;--red:#d9455b;--orange:#e0701b;--purple:#7357e0;--cyan:#0f9d8a;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 8px 20px -12px rgba(16,24,40,.14);
+  --act-bg:#eef2ff;--act-fg:#1b2b6b;--soft-bg:#eef2ff;--soft-fg:#2b49b8;--soft-bd:#d9e2ff;--dan-bg:#fff1f3;--dan-fg:#c0314a;--dan-bd:#ffd3da;--ok-bg:#e7f6ef;--ok-fg:#157a4c;--ok-bd:#bfe6d2;--pri-bg:#151a26;--pri-fg:#fff;--ico-bg:#eceff5;--ico-fg:#5a6478;
+}
+body:not(.light){
+  --bg:#0c0f15;--panel:#141922;--panel2:#1a202b;--panel3:#232a38;--line:#262d3b;--text:#eef1f7;--muted:#8f98ad;
+  --blue:#6b94ff;--green:#34c98a;--yellow:#f0b43a;--red:#f26b7f;--orange:#f58a3d;--purple:#a08cf5;--cyan:#3cd0be;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 30px -18px rgba(0,0,0,.8);
+  --act-bg:rgba(107,148,255,.14);--act-fg:#dfe7ff;--soft-bg:rgba(107,148,255,.14);--soft-fg:#c5d4ff;--soft-bd:rgba(107,148,255,.3);--dan-bg:rgba(242,107,127,.12);--dan-fg:#ffb0bb;--dan-bd:rgba(242,107,127,.32);--ok-bg:rgba(52,201,138,.14);--ok-fg:#7be8b6;--ok-bd:rgba(52,201,138,.35);--pri-bg:#eef1f7;--pri-fg:#10131a;--ico-bg:#232a38;--ico-fg:#9aa4bb;
+}
+body,html{background:var(--bg)!important;color:var(--text)!important}
+.sidebar{background:var(--panel)!important;border-right:1px solid var(--line)!important;padding:18px 14px 14px!important}
+.brand{padding:2px 4px 10px!important}
+.brand-mark{background:linear-gradient(135deg,#1c2333,#3a4560)!important;color:#fff!important;border-radius:12px!important;width:40px!important;height:40px!important}
+body:not(.light) .brand-mark{background:linear-gradient(135deg,#6b94ff,#8b6cf0)!important}
+.brand h1{font-size:16px!important;font-weight:700!important;letter-spacing:-.02em;color:var(--text)}
+.role-card{background:var(--panel2)!important;border:1px solid var(--line)!important;border-radius:14px!important;box-shadow:none!important}
+.role-copy strong{color:var(--text)!important}
+.role-avatar{background:linear-gradient(135deg,#3b6cf6,#7357e0)!important;color:#fff!important;border-radius:11px!important}
+.nav-group-title{font-size:10.5px!important;letter-spacing:.14em!important;color:var(--muted)!important;font-weight:700!important}
+.nav-btn{border-radius:11px!important;padding:6px 8px!important;gap:11px!important;font-size:13.5px!important;color:var(--muted)!important;font-weight:500;min-height:37px}
+.nav-btn .mk-ico{width:28px;height:28px;border-radius:9px;background:var(--ico-bg);color:var(--ico-fg)}
+.nav-btn:hover{background:var(--panel2)!important;color:var(--text)!important}
+.nav-btn.active{background:var(--act-bg)!important;color:var(--act-fg)!important;font-weight:650;box-shadow:inset 3px 0 0 var(--blue)}
+.nav-btn.active .mk-ico{background:var(--blue);color:#fff}
+.v52-nav-badge{background:var(--blue)!important;color:#fff!important;border-radius:99px!important}
+.logout-button{background:var(--panel)!important;border:1px solid var(--line)!important;color:var(--text)!important;border-radius:11px!important}
+.main{padding:28px 32px!important}
+.topbar h2,.dashboard-heading h2{font-size:27px!important;font-weight:700!important;letter-spacing:-.035em!important;color:var(--text)!important}
+.topbar p,.dashboard-heading p{color:var(--muted)!important}
+.section-kicker{color:var(--blue)!important;letter-spacing:.12em!important;font-weight:700!important}
+.btn,.topbar .actions .field{background:var(--panel)!important;color:var(--text)!important;border:1px solid var(--line)!important;border-radius:10px!important;box-shadow:0 1px 1px rgba(16,24,40,.06)!important;font-weight:550!important}
+.btn:hover{background:var(--panel2)!important}
+.btn.primary{background:var(--pri-bg)!important;color:var(--pri-fg)!important;border-color:var(--pri-bg)!important}
+.btn.soft{background:var(--soft-bg)!important;color:var(--soft-fg)!important;border-color:var(--soft-bd)!important}
+.btn.danger{background:var(--dan-bg)!important;color:var(--dan-fg)!important;border-color:var(--dan-bd)!important}
+.card,.panel,.ops-panel,.dashboard-panel,.v16-station-panel,.v16-summary-panel,.today-box,.planning-insight-card,.exec-economic-panel,.alerts-panel,.activity-panel,.calendar-shell{
+  background:var(--panel)!important;border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:var(--shadow)!important}
+.notice{background:var(--panel2)!important;border:1px solid var(--line)!important;border-radius:12px!important;box-shadow:none!important;color:var(--text)}
+.metric-value{font-size:32px!important;font-weight:650!important;letter-spacing:-.045em!important;color:var(--text)!important}
+.metric-label,.v16-station-metric span,.exec-mini-kpis span{color:var(--muted)!important}
+.v16-station-metric,.exec-mini-kpis>*,.exec-economic-card,.planning-insight-card{background:var(--panel2)!important;border:1px solid var(--line)!important;border-radius:14px!important;box-shadow:none!important}
+.v16-station-metric strong,.exec-mini-kpis strong{color:var(--text)!important}
+.v16-health{background:var(--ok-bg)!important;color:var(--ok-fg)!important;border:1px solid var(--ok-bd)!important}
+.coverage-track,.exec-coverage-track{background:var(--panel3)!important;border-radius:99px!important;height:8px!important}
+.coverage-track i,.coverage-track>div{border-radius:99px!important}
+.today-desktop-shift-grid>*{background:var(--panel)!important;border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:var(--shadow)!important;overflow:hidden}
+.cal-head,.cal-head .sticky-name,.cal-head .sticky-summary{background:var(--panel2)!important;color:var(--muted)!important}
+.cal-name,.cal-summary{background:var(--panel)!important}
+.cal-cell{border-color:var(--line)!important}
+.avatar{background:var(--act-bg)!important;color:var(--act-fg)!important}
+.field,.select,select,input{background:var(--panel)!important;color:var(--text)!important;border-color:var(--line)!important;border-radius:10px!important}
+/* ---------- celular ---------- */
+@media (max-width:820px){
+  .main{padding:16px 14px 110px!important}
+  .topbar h2,.dashboard-heading h2{font-size:25px!important}
+  .card,.panel,.ops-panel,.dashboard-panel,.v16-station-panel,.v16-summary-panel,.today-box,.exec-economic-panel,.alerts-panel,.activity-panel{border-radius:16px!important}
+  .dashboard-layout>*,.exec-economic-panel,.dashboard-panel{width:auto!important;max-width:100%!important;margin-left:0!important;margin-right:0!important}
+  .cards{gap:10px!important}
+  .metric-value{font-size:28px!important}
+  .mobile-nav-center{background:var(--panel)!important;border:1px solid var(--line)!important;border-radius:20px!important;box-shadow:0 14px 30px -12px rgba(0,0,0,.45)!important;color:var(--text)!important}
+  .dashboard-view{grid-template-columns:minmax(0,1fr)!important}
+  .dashboard-view>*{grid-column:1/-1!important}
+  .exec-economic-panel,.dashboard-view>.dashboard-panel{justify-self:stretch!important;width:100%!important;margin:0!important;grid-column:1/-1!important;min-width:0!important}
+}
+
+/* ---------- ajustes de celular ---------- */
+@media (max-width:820px){
+  #dashboard .exec-economic-panel,#dashboard .dashboard-view>.dashboard-panel{grid-column:1/-1!important;width:100%!important;justify-self:stretch!important;padding:18px!important}
+  #dashboard .exec-economic-panel .dashboard-panel-head h3{font-size:17px!important}
+  #dashboard .exec-economic-panel .dashboard-panel-head{margin-bottom:12px!important}
+}
+@media (max-width:820px){
+  body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(92px + env(safe-area-inset-bottom));pointer-events:none;z-index:1100;
+    background:linear-gradient(to bottom,transparent,var(--bg) 72%)}
+  body.v51-center-open::after{display:none}
+  .main{padding-bottom:calc(120px + env(safe-area-inset-bottom))!important}
+  .v50-center-item span:first-child{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--panel);border:1px solid var(--line)}
+  .v50-center-item.v50-wide span:first-child{margin:0}
+  .v19-command-center::before{content:"";display:block;width:38px;height:4px;border-radius:4px;background:var(--line);margin:9px auto 0}
+}
+body.light .person .avatar,body.light .cal-name .avatar{background:#e6ebf5!important;color:#1b2540!important;border:1px solid var(--line)!important}
+body:not(.light) .person .avatar,body:not(.light) .cal-name .avatar{background:#222a3a!important;color:#eef1f7!important;border:1px solid var(--line)!important}
