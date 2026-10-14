@@ -6209,17 +6209,36 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         </div>
       </div>
 
-      <div class="v52-work-overview">
-        <article><span>Pendientes</span><strong id="v52PendingTotal">0</strong><small>requieren atención</small></article>
-        <article><span>Prioridad alta</span><strong id="v52HighTotal">0</strong><small>resolver primero</small></article>
-        <article><span>Flujos activos</span><strong id="v52FlowTotal">0</strong><small>en curso</small></article>
-        <article><span>Estado</span><strong id="v52WorkStatus">Al día</strong><small>operación actual</small></article>
-      </div>
+      <section id="wcHero" class="wc-hero" aria-label="Avance del turno">
+        <div class="wc-hero-ring">
+          <div class="wc-donut"><svg viewBox="0 0 128 128" aria-hidden="true"><circle class="bg" cx="64" cy="64" r="54"/><circle class="fg" id="wcDonutFg" cx="64" cy="64" r="54" stroke-dasharray="339.29" stroke-dashoffset="339.29"/></svg><div class="c"><b id="wcDonutPct">0%</b><small>del turno</small></div></div>
+          <div><h4>Avance del turno</h4><p id="wcHeroSub">0 de 7 controles listos</p><p class="wc-state"><span id="v52WorkStatus">Al día</span></p></div>
+        </div>
+        <div class="wc-hero-tl">
+          <h4 id="wcTlTitle">Línea de tiempo</h4><p id="wcTlRange"></p>
+          <div class="wc-tl" id="wcTimeline"></div>
+        </div>
+        <div class="wc-hero-stats">
+          <div class="wc-mini">
+            <div><span>Pendientes</span><b id="v52PendingTotal">0</b></div>
+            <div><span>Prioridad alta</span><b id="v52HighTotal">0</b></div>
+            <div><span>Flujos activos</span><b id="v52FlowTotal">0</b></div>
+            <div><span>Integridad</span><b id="wcIntegrity" class="wc-integrity">—</b></div>
+          </div>
+        </div>
+      </section>
 
-      <div class="v52-work-layout">
-        <div id="v52PriorityMount" class="v52-work-main"></div>
-        <div id="v52WorkflowMount" class="v52-work-side"></div>
+      <div class="wc-grid">
+        <div class="wc-left">
+          <div id="v52PriorityMount" class="v52-work-main wc-o1"></div>
+          <div id="wcTasksMount" class="wc-o1"></div>
+          <section id="wcAttendance" class="abx-panel wc-o3"></section>
+          <section id="wcPayments" class="abx-panel wc-o4" hidden></section>
+        </div>
+        <div id="v52WorkflowMount" class="v52-work-side wc-o2"></div>
       </div>
+      <div id="wcIntegrityMount" class="wc-integrity-mount"></div>
+      <div id="wcFlowsMount" hidden></div>
       <div id="v52SmartMount" class="v52-smart-mount"></div>
     </section>
 
@@ -17847,6 +17866,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/modules/inventory/inventory.js"></script>
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/ui-papel.js"></script>
+<script src="src/ui-workcenter.js"></script>
 <script src="src/storage.js"></script>
 
 <script src="src/app/state.js"></script>
@@ -17881,12 +17901,21 @@ window.addEventListener("DOMContentLoaded",()=>{
     const priority=document.querySelector('#dashboard .exec-priorities-panel')||document.querySelector('.exec-priorities-panel');
     const workflow=document.querySelector('#dashboard .v16-workflow-panel')||document.querySelector('.v16-workflow-panel');
     const pMount=document.getElementById('v52PriorityMount');
-    const wMount=document.getElementById('v52WorkflowMount');
+    const fMount=document.getElementById('wcFlowsMount');
     if(priority&&pMount&&priority.parentElement!==pMount)pMount.appendChild(priority);
-    if(workflow&&wMount&&workflow.parentElement!==wMount)wMount.appendChild(workflow);
+    // Los porcentajes de los flujos los lee la línea de tiempo; el panel original queda oculto.
+    if(workflow&&fMount&&workflow.parentElement!==fMount)fMount.appendChild(workflow);
     const smart=document.getElementById('v17SmartGrid');
     const sMount=document.getElementById('v52SmartMount');
     if(smart&&sMount&&smart.parentElement!==sMount)sMount.appendChild(smart);
+    const place=(id,mountId)=>{
+      const panel=document.getElementById(id)?.closest('.v17-panel');
+      const mount=document.getElementById(mountId);
+      if(panel&&mount&&panel.parentElement!==mount)mount.appendChild(panel);
+    };
+    place('v17TaskList','wcTasksMount');
+    place('v17CloseFlow','v52WorkflowMount');
+    place('v17IntegrityList','wcIntegrityMount');
     updateWorkSummary();
   }
   function updateWorkSummary(){
