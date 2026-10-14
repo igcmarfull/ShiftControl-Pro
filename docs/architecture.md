@@ -279,8 +279,8 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   `HandoffModule` (`src/modules/handoffs/handoffs.js`). Antes quedaban solo en
   `localStorage`; `migrateLegacyHandoffs()` las incorpora una vez como entregas
   de isla.
-- Aislamiento en la base de datos (migraciones `20261014200000` y
-  `20261014200100`): el administrador lee y escribe `app_state` completo; las
+- Aislamiento en la base de datos (migraciones `20261014021748`,
+  `20261014021940` y `20261014200100`): el administrador lee y escribe `app_state` completo; las
   jefaturas no tienen acceso directo y usan `get_area_app_state`,
   `get_app_state_version` y `save_area_app_state`. El servidor recorta el
   estado por área (mismas reglas que `src/app/areas.js`), entrega vacíos

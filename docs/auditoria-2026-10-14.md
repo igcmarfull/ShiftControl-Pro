@@ -194,12 +194,21 @@ en la base de datos requiere dividir `app_state` por área.
 - Datos verificados después de los cambios: 4 usuarios, 14 trabajadoras,
   655 turnos, 29 asistencias y 3 facturas.
 
-### Aislamiento de app_state en la base de datos (preparado, no aplicado)
+### Aislamiento de app_state en la base de datos
 
-- `20261014200000_area_app_state_rpc.sql` (fase 1, solo agrega funciones):
-  `get_area_app_state`, `get_app_state_version` y `save_area_app_state`.
-- `20261014200100_lock_app_state_to_admin.sql` (fase 2): `app_state` queda
-  solo para el administrador.
+- Fase 1, **aplicada en producción el 14-10-2026** (autorizada):
+  `20261014021748_area_app_state_rpc.sql` con `get_area_app_state`,
+  `get_app_state_version` y `save_area_app_state`, y la corrección
+  `20261014021940_checklist_merge_unchanged.sql`. No cambia permisos: la app
+  publicada sigue funcionando igual. Verificado en producción con los datos
+  reales, en transacciones revertidas: la Jefa de Isla recibe 13
+  trabajadoras y 648 turnos, sin facturas, finanzas ni historial; guardar sin
+  cambios deja el estado idéntico (655 turnos, 29 asistencias, 3 facturas);
+  una versión vieja se rechaza; la Jefa de Tienda desactivada no accede. Esa
+  verificación detectó que un checklist de isla sin enviar recibía el campo
+  `area` aunque nada cambiara; se corrigió con la segunda migración.
+- Fase 2, **pendiente**: `20261014200100_lock_app_state_to_admin.sql`
+  (`app_state` solo para el administrador).
 - Verificado en PostgreSQL local con todas las migraciones del repositorio y
   datos con la forma de producción (14 trabajadoras, 655 turnos, 29
   asistencias, 3 facturas):
@@ -227,7 +236,7 @@ en la base de datos requiere dividir `app_state` por área.
 
 ### Orden de publicación propuesto
 
-1. Aplicar la fase 1 (no cambia el funcionamiento actual).
+1. ~~Aplicar la fase 1~~ (hecho).
 2. Fusionar el pull request y publicar en Vercel.
 3. Verificar con el gerente y la Jefa de Isla en producción.
 4. Aplicar la fase 2.
