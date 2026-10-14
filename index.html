@@ -7207,16 +7207,18 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
       <div class="ab-grid">
         <section class="abx-panel ab-main" id="absenceControlCard">
           <div class="abx-ph"><h4>Control de ausencias</h4><span id="absenceCount"></span></div>
-          <div class="ab-tabs" id="absenceTabs" role="tablist" aria-label="Estado de las ausencias"></div>
-          <div class="ab-filters">
-            <select class="select" id="absenceTypeFilter" onchange="renderAbsencePanel()" aria-label="Tipo de ausencia">
-              <option value="">Todos los tipos</option>
-              <option value="Licencia">Licencias</option>
-              <option value="Vacaciones">Vacaciones</option>
-              <option value="Permiso">Permisos</option>
-              <option value="Ausente">Ausencias</option>
-            </select>
-            <input class="field" id="absenceSearch" type="search" placeholder="Buscar trabajador..." oninput="renderAbsencePanel()">
+          <div class="ab-toolbar">
+            <div class="ab-tabs" id="absenceTabs" role="tablist" aria-label="Estado de las ausencias"></div>
+            <div class="ab-filters">
+              <select class="select" id="absenceTypeFilter" onchange="renderAbsencePanel()" aria-label="Tipo de ausencia">
+                <option value="">Todos los tipos</option>
+                <option value="Licencia">Licencias</option>
+                <option value="Vacaciones">Vacaciones</option>
+                <option value="Permiso">Permisos</option>
+                <option value="Ausente">Ausencias</option>
+              </select>
+              <input class="field" id="absenceSearch" type="search" placeholder="Buscar trabajador..." oninput="renderAbsencePanel()">
+            </div>
           </div>
           <div id="absenceList" class="ab-list"></div>
         </section>

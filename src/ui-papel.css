@@ -379,3 +379,14 @@ body:not(.light) .person .avatar,body:not(.light) .cal-name .avatar{background:#
 
 .ab-cov strong:before{content:"";display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;background:var(--c,var(--muted))}
 .ab-cov{--c:var(--muted)}
+.ab-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin-bottom:6px}
+.ab-toolbar .ab-tabs,.ab-toolbar .ab-filters{margin:0}
+.ab-toolbar .ab-filters{flex-wrap:nowrap;margin-left:auto}
+.ab-toolbar .ab-filters .select{min-width:150px}
+.ab-toolbar .ab-filters .field{min-width:190px}
+@media (max-width:820px){
+  .ab-toolbar{display:block}
+  .ab-toolbar .ab-tabs{margin-bottom:10px}
+  .ab-toolbar .ab-filters{flex-wrap:wrap}
+}
+@media (max-width:820px){.ab-toolbar .ab-filters .select,.ab-toolbar .ab-filters .field{min-width:0;flex:1 1 0}}
