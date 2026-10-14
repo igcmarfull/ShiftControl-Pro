@@ -137,3 +137,16 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 - Se retiró la vista en grilla/lista y las tarjetas antiguas; los filtros viejos siguen en el DOM (ocultos) porque `onEvalFilterChange()` los lee.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): pestañas, área, búsqueda, «Evaluar siguiente» y abrir una evaluación aprobada funcionan; sin errores de consola. Limitación: no se probó con datos reales de producción.
+
+## Centro ejecutivo (rediseño)
+
+`src/ui-executive.js` (cargado tras `ui-evaluaciones.js`) envuelve `window.renderDashboard()`. La función original de `index.html` sigue calculando prioridades (`#decisionCenter`), alertas (`#alerts`) y el estado de la estación (`#v16Health`); esos contenedores y los bloques antiguos (Centro de operaciones, Avance del turno, Prioridades/Estado operativo, Compromisos, Alertas/Actividad) quedan en el DOM pero ocultos por CSS. El módulo nuevo lee esos resultados y dibuja `#exRoot` bajo la cabecera.
+
+- **Franja principal:** anillo de cobertura y seis cifras (Personal, Ausencias activas, Reemplazos, Turnos extra, Excepciones, Por revisar). «Por revisar» cuenta las prioridades de `#decisionCenter`, las mismas que lista «Lo que conviene revisar» (antes la cifra venía de otro cálculo y no coincidía con el panel de alertas).
+- **Cobertura por turno:** anillos A/B/C (presentes / planificados).
+- **Más detalle del día** (plegable solo en celular): asistencia de 7 días (presentes / planificados por día, promedio de los días con turnos), ausencias activas (`state.absences`), próximos 3 días (personal planificado por turno; en rojo un turno sin nadie), finanzas de hoy (`FinanceReconciliationModule` y `ShortageModule`; «Sin registro» si no hay cuadratura), incidencias abiertas (`IncidentModule`, no archivadas ni resueltas) y evaluaciones del mes.
+- **Compromisos pendientes:** total sin pagar, aprobado frente a por aprobar y cuántos son reemplazos (subconjunto del total, no se suman).
+- **Últimos movimientos:** máximo 5; las «Jornada cerrada para …» del mismo día se agrupan en una línea.
+- Chip de estado junto a los botones de la cabecera, copiado de `#v16Health`.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular), sin errores de consola; el panel plegable conserva su estado al volver a dibujar. Limitaciones: no se probó con datos reales ni con una sesión real de Jefa de Isla (el servidor simulado no distingue áreas).
