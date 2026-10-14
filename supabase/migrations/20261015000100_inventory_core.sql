@@ -1,9 +1,8 @@
 -- Inventarios (Tienda, Cigarrillos y Lubricantes): estructura de datos.
 --
--- ESTADO: preparada en el repositorio, NO aplicada en producción. Aplicarla
--- requiere autorización expresa del propietario. Al aplicarla no se crea ni
--- modifica ningún dato: los inventarios se activan después, de forma explícita,
--- con inv_setup() (20261015000200_inventory_api.sql).
+-- ESTADO: aplicada en producción con autorización expresa del propietario.
+-- No crea ni modifica ningún dato: los inventarios se activan de forma
+-- explícita con inv_setup() (20261015000200_inventory_api.sql).
 --
 -- Principios:
 -- - Tablas normalizadas y propias: nada de esto vive en app_state.
