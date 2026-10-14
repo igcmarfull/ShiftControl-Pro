@@ -204,8 +204,8 @@ El valor publicable de Supabase está en código cliente. Debe tratarse según e
 ### Supabase en el repositorio
 
 - `supabase/migrations/`: migraciones tal como están aplicadas en producción,
-  con sus versiones exactas. La excepción es `20261014200100_lock_app_state_to_admin.sql`
-  (fase 2), que **no está aplicada**. La tabla original `public.app_state` no
+  con sus versiones exactas. La fase 2
+  (`20261014200100_lock_app_state_to_admin.sql`) está aplicada. La tabla original `public.app_state` no
   la crea ninguna migración: existía antes y las migraciones solo la modifican,
   así que la base no se puede reconstruir desde cero solo con este directorio.
 - `supabase/functions/assign-chief/`: Edge Function desplegada.
@@ -295,12 +295,11 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
   `HandoffModule` (`src/modules/handoffs/handoffs.js`). Antes quedaban solo en
   `localStorage`; `migrateLegacyHandoffs()` las incorpora una vez como entregas
   de isla.
-- Aislamiento en la base de datos. **Activo en producción (fase 1)**:
-  migraciones `20261014021748` y `20261014021940`. **Pendiente (fase 2)**:
-  `20261014200100`, que retira a las jefaturas el acceso directo a `app_state`;
-  hoy las policies siguen permitiendo a cualquier miembro activo leer y escribir
-  `app_state` completo. Con la fase 2 aplicada, el administrador lee y escribe
-  `app_state` completo y las jefaturas usan `get_area_app_state`,
+- Aislamiento en la base de datos. **Activo en producción**: fase 1
+  (migraciones `20261014021748` y `20261014021940`) y fase 2
+  (`20261014200100`, aplicada el 14-10-2026), que retira a las jefaturas el
+  acceso directo a `app_state`. El administrador lee y escribe `app_state`
+  completo y las jefaturas usan `get_area_app_state`,
   `get_app_state_version` y `save_area_app_state` (disponibles desde la fase 1
   y usadas ya por la app publicada). El servidor recorta el
   estado por área (mismas reglas que `src/app/areas.js`), entrega vacíos

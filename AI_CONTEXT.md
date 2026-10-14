@@ -24,7 +24,7 @@ Fecha de este levantamiento: 26 de julio de 2026. Las áreas, la autenticación 
   asistencia, jornadas adicionales, ausencias, feriados, auditoría,
   configuración y cierres.
 - No hay `package.json`, bundler, imports ESM, servidor de aplicación, pruebas de la aplicación, linter ni CI. `supabase/` contiene migraciones, la Edge Function `assign-chief` y scripts SQL manuales (`supabase/tests/`, `supabase/rollback/`).
-- Supabase aplica RLS por empresa y área. La fase 1 del aislamiento de `app_state` está aplicada; la fase 2 (`20261014200100`) está preparada pero **no aplicada** (`docs/fase2-aislamiento-app-state.md`). No aplicar migraciones ni tocar producción sin autorización expresa.
+- Supabase aplica RLS por empresa y área. Las fases 1 y 2 del aislamiento de `app_state` están aplicadas (la fase 2, `20261014200100`, el 14-10-2026: `app_state` solo para el administrador; ver `docs/fase2-aislamiento-app-state.md`). No aplicar migraciones ni tocar producción sin autorización expresa.
 
 ## Estado y persistencia
 

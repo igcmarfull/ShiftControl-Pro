@@ -1,7 +1,33 @@
 # Fase 2 del aislamiento de `app_state`: procedimiento y reversión
 
-Estado: **preparada, no aplicada en producción**. Este documento no autoriza
-nada: cada paso que escribe en Supabase requiere autorización expresa.
+Estado: **aplicada en producción el 14-10-2026** (autorizada por el propietario).
+La Jefa de Tienda sigue desactivada. Este documento no autoriza nada nuevo: cada
+paso que escribe en Supabase requiere autorización expresa.
+
+## Registro de la aplicación (14-10-2026)
+
+- Respaldo previo: `shiftcontrol_backup.app_state_before_fase2` (1 fila, sin acceso
+  para `anon` ni `authenticated`). Verificación previa con `'abierto'`: OK.
+- La herramienta de migraciones de Supabase no ejecuta ninguna sentencia `DROP`
+  sin confirmación del propietario y esa confirmación no llegó (se comprobó con
+  un `DROP` de un objeto inexistente). La migración se aplicó entonces desde el
+  *SQL Editor* del panel de Supabase, en una transacción, con el contenido de
+  `20261014200100_lock_app_state_to_admin.sql`. Como el editor no registra el
+  historial, la versión `20261014200100` se insertó a mano en
+  `supabase_migrations.schema_migrations`, con el mismo número que el archivo.
+- Verificación posterior con `'bloqueado'`: `VERIFICACIÓN OK`. Administrador:
+  lee, actualiza e inserta (14 trabajadores, 673 turnos, 3 facturas). Jefa de
+  Isla: lectura, actualización e inserción directas bloqueadas; la función por
+  área devuelve 13 trabajadoras y 666 turnos, 0 depósitos y 0 historial; guardar
+  sin cambios deja el estado idéntico. Jefa de Tienda inactiva y usuario sin
+  sesión: sin acceso.
+- Huella de las policies tras aplicar: `7e9f95ed8b01e0d9cd1638018f2150b2` (la
+  misma que produce la base local con la fase 2). Datos idénticos al respaldo
+  (14 trabajadores, 673 turnos, 31 asistencias, 3 facturas). El linter de
+  seguridad no muestra advertencias nuevas.
+- Pendiente tras la fase 2: que el propietario confirme en la app el panel de
+  gerente y el de la Jefa de Isla, y la reactivación de la Jefa de Tienda
+  (paso 6, con autorización).
 
 ## Qué hace y qué no hace
 

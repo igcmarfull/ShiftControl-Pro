@@ -30,7 +30,7 @@ La aplicación está en una transición gradual desde un documento HTML monolít
 - [docs/decisions.md](docs/decisions.md): decisiones arquitectónicas observadas.
 - [docs/git-workflow.md](docs/git-workflow.md): flujo Git basado en el uso actual del repositorio.
 - [docs/auditoria-2026-10-14.md](docs/auditoria-2026-10-14.md): auditoría funcional y de seguridad, con el estado de Supabase y los pendientes.
-- [docs/fase2-aislamiento-app-state.md](docs/fase2-aislamiento-app-state.md): procedimiento, pruebas y reversión de la fase 2 del aislamiento de `app_state` (preparada, no aplicada).
+- [docs/fase2-aislamiento-app-state.md](docs/fase2-aislamiento-app-state.md): procedimiento, pruebas y reversión de la fase 2 del aislamiento de `app_state` (aplicada el 14-10-2026).
 
 Los archivos históricos en `docs/` con nombres en mayúsculas y los registros `CAMBIOS_V*.md` sirven como antecedentes. Esta base documental en minúsculas describe el estado comprobado del código actual.
 

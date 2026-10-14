@@ -1,9 +1,9 @@
 # Auditoría funcional — 14 de octubre de 2026
 
 Estado al cierre de la sesión de continuación: el pull request #5 está
-fusionado en `main` (commit `eee9b71`) y publicado en Vercel; la fase 1 del
-aislamiento está aplicada en Supabase y la fase 2 sigue pendiente (ver
-`docs/fase2-aislamiento-app-state.md`). El texto de más abajo conserva el
+fusionado en `main` (commit `eee9b71`) y publicado en Vercel; las fases 1 y 2 del
+aislamiento están aplicadas en Supabase (la fase 2 el 14-10-2026; ver
+`docs/fase2-aislamiento-app-state.md`). La Jefa de Tienda sigue desactivada. El texto de más abajo conserva el
 registro de la auditoría original, hecha sobre `main` en `f238a05`; las
 secciones «Cambios aplicados en producción» y «Aislamiento de app_state»
 indican qué se aplicó y cuándo. En la sesión de continuación no se modificó
@@ -248,9 +248,10 @@ en la base de datos requiere dividir `app_state` por área.
 2. ~~Fusionar el pull request y publicar en Vercel~~ (hecho: #5, `eee9b71`).
 3. ~~Verificar con el gerente y la Jefa de Isla en producción~~ (hecho por el
    propietario: paneles, sincronización entre sesiones y desde un teléfono con 4G).
-4. Aplicar la fase 2. Procedimiento, pruebas y reversión preparados en
-   `docs/fase2-aislamiento-app-state.md`. **Pendiente de autorización.**
-5. Reactivar la Jefa de Tienda (después de verificar la fase 2).
+4. ~~Aplicar la fase 2~~ (hecho el 14-10-2026; procedimiento y registro en
+   `docs/fase2-aislamiento-app-state.md`).
+5. Reactivar la Jefa de Tienda, tras confirmar en la app los paneles de gerente
+   y de Jefa de Isla. **Pendiente de autorización.**
 
 ### Limpieza de datos embebidos (sesión de continuación)
 
@@ -285,9 +286,8 @@ en la base de datos requiere dividir `app_state` por área.
   (Authentication → Settings). El linter de seguridad la sigue marcando.
 - Revisar la clasificación del personal en «Trabajadores» (hoy 13 con área
   "Isla" y 1 con "TIENDA").
-- Reactivar la Jefa de Tienda después de aplicar y verificar la fase 2
-  (`docs/fase2-aislamiento-app-state.md`, paso 6). Hasta entonces permanece
-  desactivada.
+- Reactivar la Jefa de Tienda (`docs/fase2-aislamiento-app-state.md`, paso 6),
+  con autorización. Hasta entonces permanece desactivada.
 - `app_state` conserva un `UNIQUE (key)` heredado además de la clave primaria
   `(company_id, key)`: una segunda empresa no podría reutilizar la clave de
   estado. No afecta con una sola empresa. Propuesta, sin urgencia: retirarlo con
@@ -299,13 +299,12 @@ en la base de datos requiere dividir `app_state` por área.
   siguen como propuesta, por decisión del propietario, para después de cerrar la
   seguridad.
 
-Todas las migraciones aplicables y la Edge Function ya están en producción; la
-excepción es la fase 2.
+Todas las migraciones y la Edge Function ya están en producción.
 
 ## Decisiones pendientes del propietario
 
-1. Autorizar la aplicación de la fase 2 y la reactivación de la Jefa de Tienda
-   (procedimiento y reversión en `docs/fase2-aislamiento-app-state.md`).
+1. Autorizar la reactivación de la Jefa de Tienda, una vez confirmados en la app
+   los paneles de gerente y de Jefa de Isla (la fase 2 ya está aplicada).
 2. Decidir qué hacer con los 13 nombres que permanecen en
    `docs/ShiftControl_Pro_V19_Respaldo.html` (anonimizar el respaldo o dejarlo
    así) y en el historial de git (reescribir la historia solo si el repositorio
