@@ -7509,16 +7509,17 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
           </div>
           <div class="appearance-options" role="group" aria-label="Tema de la aplicación">
             <button type="button" id="themeOptionLight" class="appearance-option" onclick="setTheme('light')">
-              <span class="appearance-option-icon">☀</span>
+              <span class="appearance-option-icon cf-prev light" aria-hidden="true"><b></b><b></b></span>
               <span><strong>Claro</strong><small>Mayor luminosidad</small></span>
               <i>✓</i>
             </button>
             <button type="button" id="themeOptionDark" class="appearance-option" onclick="setTheme('dark')">
-              <span class="appearance-option-icon">☾</span>
+              <span class="appearance-option-icon cf-prev dark" aria-hidden="true"><b></b><b></b></span>
               <span><strong>Oscuro</strong><small>Menor brillo y contraste nocturno</small></span>
               <i>✓</i>
             </button>
           </div>
+          <p class="cf-note">El cambio se aplica al instante y solo afecta a este dispositivo.</p>
         </div>
 
         <div class="card">
@@ -7594,20 +7595,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
                 <input type="file" accept=".json,application/json" onchange="importBackup(event)" hidden="">
               </label>
             </div>
-
-            <div class="task-item">
-              <div class="task-icon">!</div>
-              <div class="task-copy">
-                <strong>Reiniciar sistema</strong>
-                <span>Elimina permanentemente la información local.</span>
-              </div>
-              <button class="btn small danger" onclick="resetSystem()">Reiniciar</button>
-            </div>
           </div>
         </div>
-      </div>
-
-      <div class="ops-grid">
         <div class="card">
           <div class="card-head">
             <div>
@@ -7623,8 +7612,21 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
             </table>
           </div>
         </div>
-
       </div>
+
+      <div class="card settings-danger">
+        <div class="task-list">
+            <div class="task-item">
+              <div class="task-icon">!</div>
+              <div class="task-copy">
+                <strong>Reiniciar sistema</strong>
+                <span>Elimina permanentemente la información local.</span>
+              </div>
+              <button class="btn small danger" onclick="resetSystem()">Reiniciar</button>
+            </div>
+        </div>
+      </div>
+
     </section>
 
   </main>

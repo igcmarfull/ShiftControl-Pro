@@ -181,3 +181,9 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 - **Historial:** línea de tiempo con fecha y turno como chips y observaciones recortadas con «Ver más»; mismo filtro por área (`opsRecordInArea`) y mismo orden que antes. Estado vacío con mensaje corto.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): el turno y el área cambian y actualizan sugerencias y pill, el resumen se agrega a las observaciones sin duplicarse, elegir una sugerencia rellena «Recibe» y guardar agrega la entrega al historial; sin errores de consola. No se probó con una sesión real de Jefa de Isla.
+
+## Configuración (rediseño)
+
+Solo presentación, sin JavaScript nuevo. En `index.html` se reordenó el marcado: «Feriados» pasó al grid principal (junto a Respaldo y datos), «Reiniciar sistema» salió a su propia tarjeta `.settings-danger` («Zona de riesgo») y las opciones de tema llevan una mini vista previa decorativa. Los ids y funciones se mantienen (`setTheme`, `#settingsForm`, `#companyName`, `#shiftA/B/C`, `#defaultExtraPayment`, `exportBackup`, `importBackup`, `resetSystem`, `openHolidayModal`, `#holidayTable`). El resto es CSS en `src/ui-papel.css`: tarjetas Claro/Oscuro con marca en la elegida, formulario en tres columnas para los turnos, tabla de feriados como lista con la fecha en un chip y el tipo como etiqueta, y «Reiniciar sistema» con borde rojo.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): cambiar de tema actualiza la tarjeta activa, guardar la configuración conserva el valor editado, los feriados se muestran con tipo y «Eliminar», y «Reiniciar» sigue pidiendo confirmación (se canceló en la prueba). No se probó la importación de un respaldo.
