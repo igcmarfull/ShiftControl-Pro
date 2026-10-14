@@ -1,6 +1,6 @@
 -- Inventarios: funciones del servidor (escritura).
 --
--- ESTADO: preparada en el repositorio, NO aplicada en producción.
+-- ESTADO: aplicada en producción con autorización expresa del propietario.
 --
 -- Los clientes no escriben en las tablas inv_*: llaman a estas funciones, que
 -- - verifican empresa, rol y área en cada llamada (administrador, o jefatura

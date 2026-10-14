@@ -1,6 +1,6 @@
 # Módulo Inventarios
 
-Estado: **implementado en la rama, sin aplicar en producción**. Las tres migraciones, la interfaz y las pruebas locales existen; el servidor de producción todavía no tiene las tablas ni las funciones. Mientras no se apliquen, la sección muestra «Aún no está habilitado» y el resto de ShiftControl funciona igual.
+Estado: las tres migraciones están **aplicadas en producción** (sin datos: los inventarios aún no se activaron). La interfaz llega con la publicación de esta rama. En cualquier entorno sin las migraciones, la sección muestra «Aún no está habilitado» y el resto de ShiftControl funciona igual.
 
 ## Qué hace
 
@@ -53,9 +53,9 @@ Interfaz (cargada desde `index.html` después de `src/app/areas.js`):
 
 Integración mínima con lo existente: botón de navegación «Inventarios» (grupo Tienda), `<section id="inventory">`, la vista `inventory` añadida a `CHIEF` y `CHIEF_TIENDA` en `src/app/permissions.js` y un acceso rápido en el Centro de acciones móvil (`src/v20-interface.js`). No se modificó ningún panel ni flujo existente.
 
-## Activación (requiere autorización, no hecha)
+## Activación
 
-1. Aplicar las tres migraciones en orden.
+1. Migraciones: aplicadas en producción (registradas como `20261015000100/200/300`).
 2. Como administrador, abrir Inventarios y pulsar **Activar Inventarios** (ejecuta `inv_setup`; crea los tres inventarios con ubicaciones básicas).
 3. Cargar productos y saldo inicial; ajustar el área y el umbral de autoaprobación si se desea.
 
@@ -73,8 +73,9 @@ No hay suite automatizada en el repositorio; estas pruebas se ejecutaron en un P
 
 No verificado: ejecución contra el Supabase de producción, lector de códigos de barras en un dispositivo real, impresión.
 
-## Pendiente de decisión
+## Decisiones tomadas
 
-- Confirmar la distribución de áreas antes de activar.
-- Confirmar si el conteo debe ser ciego (hoy lo es) y el umbral de autoaprobación (hoy 0).
+- Áreas: Tienda y Cigarrillos → Jefa de Tienda; Lubricantes → Jefa de Isla.
+- Conteo ciego en los tres inventarios.
+- Umbral de autoaprobación 0: todo ajuste lo aprueba el administrador.
 - Integración con ventas y fotos de producto: fuera de alcance.

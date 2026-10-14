@@ -1,6 +1,6 @@
 -- Inventarios: funciones de lectura y reportes.
 --
--- ESTADO: preparada en el repositorio, NO aplicada en producción.
+-- ESTADO: aplicada en producción con autorización expresa del propietario.
 --
 -- Son funciones SECURITY INVOKER: se ejecutan con los permisos de quien llama,
 -- así que las policies de RLS (empresa + área del inventario) se aplican a cada

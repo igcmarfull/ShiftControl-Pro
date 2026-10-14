@@ -40,7 +40,7 @@ No asumir que `window.AppState` es canónico: hoy solo se declara y se marca com
 
 ## Inventarios
 
-El módulo `src/modules/inventory/` (vista `inventory`) tiene almacenamiento propio en tablas `inv_*` de Supabase y no pasa por `state` ni `save()`. En producción solo funciona si se aplicaron las migraciones `202610150001/2/3`; hasta entonces muestra un aviso. No escribir inventario en `app_state`. Ver `docs/inventarios.md`.
+El módulo `src/modules/inventory/` (vista `inventory`) tiene almacenamiento propio en tablas `inv_*` de Supabase y no pasa por `state` ni `save()`. Las migraciones `20261015000100/200/300` están aplicadas en producción; sin ellas la vista muestra un aviso. No escribir inventario en `app_state`. Ver `docs/inventarios.md`.
 
 ## Orden de carga relevante
 
