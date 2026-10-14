@@ -313,6 +313,10 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
 - `src/storage.js` usa esas funciones cuando la sesión es de una jefa; si aún
   no existen en la base, vuelve al acceso directo anterior.
 
+## Inventarios (módulo con almacenamiento propio)
+
+`src/modules/inventory/` se carga después de `src/app/areas.js` y no usa `state` ni `save()`: persiste en tablas `inv_*` de Supabase mediante funciones RPC, con RLS y validación de empresa y área en el servidor. Requiere las migraciones `20261015000100`, `…0200` y `…0300`; sin ellas la vista informa que no está habilitada. Ver `docs/inventarios.md`.
+
 ## Integraciones presentes pero no activas
 
 Los siguientes archivos existen, pero `index.html` no los carga:

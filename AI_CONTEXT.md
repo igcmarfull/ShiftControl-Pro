@@ -38,6 +38,10 @@ Fecha de este levantamiento: 26 de julio de 2026. Las áreas, la autenticación 
 
 No asumir que `window.AppState` es canónico: hoy solo se declara y se marca como inicializado.
 
+## Inventarios
+
+El módulo `src/modules/inventory/` (vista `inventory`) tiene almacenamiento propio en tablas `inv_*` de Supabase y no pasa por `state` ni `save()`. Las migraciones `20261015000100/200/300` están aplicadas en producción; sin ellas la vista muestra un aviso. No escribir inventario en `app_state`. Ver `docs/inventarios.md`.
+
 ## Orden de carga relevante
 
 Antes del bloque monolítico se cargan:
