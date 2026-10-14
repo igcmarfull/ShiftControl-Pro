@@ -7202,91 +7202,33 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <button type="button" onclick="absenceMobileGo('detail',this)">Detalle</button>
       </div>
 
-      <div class="cards" id="absenceStatsGrid">
-      <div class="card">
-        <div class="metric-label">Ausencias activas</div>
-        <div class="metric-value">1</div>
-        <div class="muted">Casos vigentes</div>
-      </div>
-      <div class="card">
-        <div class="metric-label">Licencias activas</div>
-        <div class="metric-value">1</div>
-        <div class="muted">Licencias médicas</div>
-      </div>
-      <div class="card">
-        <div class="metric-label">Vacaciones activas</div>
-        <div class="metric-value">0</div>
-        <div class="muted">Trabajadores fuera</div>
-      </div>
-      <div class="card">
-        <div class="metric-label">Turnos pendientes</div>
-        <div class="metric-value">18</div>
-        <div class="muted">5 caso(s) incompletos</div>
-      </div>
-    </div>
+      <div class="ab-kpis" id="absenceStatsGrid"></div>
 
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h3>Control de ausencias</h3>
-            <p>Visualiza cada caso y resuelve los turnos pendientes.</p>
-          </div>
-          <div class="absence-toolbar">
-            <select class="select" id="absenceTypeFilter" onchange="renderAbsencePanel()">
-              <option value="">Todos los tipos</option>
-              <option value="Licencia">Licencias</option>
-              <option value="Vacaciones">Vacaciones</option>
-              <option value="Permiso">Permisos</option>
-              <option value="Ausente">Ausencias</option>
-            </select>
-            <select class="select" id="absenceCoverageFilter" onchange="renderAbsencePanel()">
-              <option value="">Toda cobertura</option>
-              <option value="pending">Con turnos pendientes</option>
-              <option value="complete">Cobertura completa</option>
-            </select>
-            <input class="field" id="absenceSearch" type="search" placeholder="Buscar trabajador..." oninput="renderAbsencePanel()">
-          </div>
-        </div>
-
-        <div class="table-wrap" style="box-shadow:none">
-          <table>
-            <thead>
-              <tr>
-                <th>Trabajador</th>
-                <th>Tipo</th>
-                <th>Período</th>
-                <th>Turnos</th>
-                <th>Cobertura</th>
-                <th>Estado</th>
-                <th style="text-align:right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="absencePanelTable"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="ops-grid" style="margin-top:16px">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h3>Turnos sin cobertura</h3>
-              <p>Prioridad operativa para los próximos días.</p>
+      <div class="ab-grid">
+        <section class="abx-panel ab-main" id="absenceControlCard">
+          <div class="abx-ph"><h4>Control de ausencias</h4><span id="absenceCount"></span></div>
+          <div class="ab-toolbar">
+            <div class="ab-tabs" id="absenceTabs" role="tablist" aria-label="Estado de las ausencias"></div>
+            <div class="ab-filters">
+              <select class="select" id="absenceTypeFilter" onchange="renderAbsencePanel()" aria-label="Tipo de ausencia">
+                <option value="">Todos los tipos</option>
+                <option value="Licencia">Licencias</option>
+                <option value="Vacaciones">Vacaciones</option>
+                <option value="Permiso">Permisos</option>
+                <option value="Ausente">Ausencias</option>
+              </select>
+              <input class="field" id="absenceSearch" type="search" placeholder="Buscar trabajador..." oninput="renderAbsencePanel()">
             </div>
           </div>
-          <div id="uncoveredShiftsList" class="task-list"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h3>Próximos retornos</h3>
-              <p>Trabajadores que terminan su ausencia próximamente.</p>
-            </div>
-          </div>
-          <div id="upcomingReturnsList" class="task-list"></div>
-        </div>
+          <div id="absenceList" class="ab-list"></div>
+        </section>
+        <aside class="ab-side">
+          <section class="abx-panel"><div class="abx-ph"><h4>Próximos retornos</h4><span id="absenceReturnsCount"></span></div><div id="upcomingReturnsList"></div></section>
+          <section class="abx-panel"><div class="abx-ph"><h4>Turnos sin cobertura</h4><span id="absenceUncoveredCount"></span></div><div id="uncoveredShiftsList"></div></section>
+        </aside>
       </div>
+
+      <section class="abx-panel ab-strip-panel"><div class="abx-ph"><h4>Cobertura de los próximos 14 días</h4><span id="absenceStripRange"></span></div><div id="absenceStrip" class="ab-strip"></div></section>
     </section>
 
 
@@ -13284,137 +13226,181 @@ function filteredAbsencePanelRows(){
     });
 }
 
+let absenceTab='all';
+function absenceSetTab(tab){
+  absenceTab=tab;
+  renderAbsencePanel();
+}
+function absenceDayDiff(from,to){
+  return Math.round((new Date(to+'T12:00:00')-new Date(from+'T12:00:00'))/86400000);
+}
+function absenceShortDate(iso){
+  const text=fmt(iso);
+  return String(iso||'').slice(0,4)===String(appPeriod.date||isoToday).slice(0,4)?text.slice(0,5):text;
+}
+function absenceAddDays(iso,days){
+  const date=new Date(iso+'T12:00:00');
+  date.setDate(date.getDate()+days);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
 function renderAbsencePanel(){
   const stats=document.getElementById('absenceStatsGrid');
-  const table=document.getElementById('absencePanelTable');
+  const list=document.getElementById('absenceList');
   const uncovered=document.getElementById('uncoveredShiftsList');
   const returns=document.getElementById('upcomingReturnsList');
+  if(!stats&&!list&&!uncovered&&!returns)return;
 
-  if(!stats&&!table&&!uncovered&&!returns)return;
-
+  const reference=appPeriod.date||isoToday;
   const all=state.absences||[];
-  const active=all.filter(item=>absenceCurrentStatus(item).key==='active');
-  const activeLicenses=active.filter(item=>normalizedAbsenceStatus(item.type)==='Licencia');
-  const activeVacations=active.filter(item=>normalizedAbsenceStatus(item.type)==='Vacaciones');
-  const pendingCases=all
-    .map(item=>({item,coverage:absenceCoverage(item)}))
-    .filter(entry=>entry.coverage.pending>0);
+  const entries=all.map(item=>({item,coverage:absenceCoverage(item),status:absenceCurrentStatus(item),worker:employee(item.employeeId),type:normalizedAbsenceStatus(item.type)}));
+  const live=entries.filter(entry=>entry.status.key!=='finished');
+  const active=entries.filter(entry=>entry.status.key==='active');
+  const countType=type=>active.filter(entry=>entry.type===type).length;
+  const knownTypes=['Licencia','Vacaciones','Permiso'];
+  const otherActive=active.filter(entry=>!knownTypes.includes(entry.type)).length;
 
-  const pendingShifts=pendingCases.reduce((total,entry)=>total+entry.coverage.pending,0);
+  // Turnos sin cubrir: los de hoy en adelante se pueden resolver; los anteriores quedan como historial.
+  const pendingRows=[];
+  entries.forEach(entry=>entry.coverage.rows.filter(row=>!row.execution?.replacementId).forEach(row=>pendingRows.push({entry,row})));
+  const toCover=pendingRows.filter(({row})=>row.date>=reference);
+  const pastUncovered=pendingRows.filter(({row})=>row.date<reference);
+  const liveShifts=live.reduce((sum,entry)=>sum+entry.coverage.total,0);
+  const liveCovered=live.reduce((sum,entry)=>sum+entry.coverage.covered,0);
+  const coveragePct=liveShifts?Math.round(liveCovered/liveShifts*100):100;
+  const returnDate=entry=>absenceAddDays(absenceEnd(entry.item),1);
+  const comingBack=live.slice().sort((a,b)=>returnDate(a).localeCompare(returnDate(b)));
+  const returningThisWeek=comingBack.filter(entry=>absenceDayDiff(reference,returnDate(entry))<=7).length;
+  const initials=name=>String(name||'?').trim().split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase();
+  const plural=(n,one,many)=>`${n} ${n===1?one:many}`;
 
   if(stats){
     stats.innerHTML=`
-      <div class="card">
-        <div class="metric-label">Ausencias activas</div>
-        <div class="metric-value">${active.length}</div>
-        <div class="muted">Casos vigentes</div>
-      </div>
-      <div class="card">
-        <div class="metric-label">Licencias activas</div>
-        <div class="metric-value">${activeLicenses.length}</div>
-        <div class="muted">Licencias médicas</div>
-      </div>
-      <div class="card">
-        <div class="metric-label">Vacaciones activas</div>
-        <div class="metric-value">${activeVacations.length}</div>
-        <div class="muted">Trabajadores fuera</div>
-      </div>
-      <div class="card">
-        <div class="metric-label">Turnos pendientes</div>
-        <div class="metric-value">${pendingShifts}</div>
-        <div class="muted">${pendingCases.length} caso(s) incompletos</div>
-      </div>
-    `;
+      <article class="ab-k wide"><span>Ausencias activas</span>
+        <div class="split"><b>${active.length}</b>
+          <div class="types">
+            <div><i style="--c:var(--blue)"></i><em>${countType('Licencia')}</em>Licencias</div>
+            <div><i style="--c:var(--green)"></i><em>${countType('Vacaciones')}</em>Vacaciones</div>
+            <div><i style="--c:var(--orange)"></i><em>${countType('Permiso')}</em>Permisos</div>
+            <div><i style="--c:var(--muted)"></i><em>${otherActive}</em>Otras</div>
+          </div>
+        </div>
+        <small>${active.length?escapeHtml(active.slice(0,2).map(entry=>`${entry.worker?.name||'Trabajador'} · hasta ${fmt(absenceEnd(entry.item))}`).join(' · ')):'Nadie ausente hoy'}</small>
+      </article>
+      <article class="ab-k"><span>Turnos por cubrir</span><b class="${toCover.length?'warn':'ok'}">${toCover.length}</b><small>${pastUncovered.length?`Desde hoy · ${plural(pastUncovered.length,'turno pasado','turnos pasados')} sin cubrir`:'Desde hoy en adelante'}</small></article>
+      <article class="ab-k"><span>Vuelven esta semana</span><b>${returningThisWeek}</b><small>${comingBack.length?`Próximo retorno: ${fmt(returnDate(comingBack[0]))}`:'Sin retornos próximos'}</small></article>
+      <article class="ab-k"><span>Cobertura del período</span><b>${liveShifts?coveragePct+'%':'—'}</b><div class="bar"><i style="width:${liveShifts?coveragePct:0}%"></i></div><small>${liveShifts?`${liveCovered} de ${liveShifts} turnos cubiertos`:'Sin turnos afectados'}</small></article>`;
   }
 
-  if(table){
-    const rows=filteredAbsencePanelRows();
+  const tabs=document.getElementById('absenceTabs');
+  const rowsAll=filteredAbsencePanelRows().map(item=>entries.find(entry=>entry.item===item)).filter(Boolean);
+  const tabDefs=[
+    ['all','Todas',rowsAll.length],
+    ['active','Activas',rowsAll.filter(entry=>entry.status.key==='active').length],
+    ['pending','Por cubrir',rowsAll.filter(entry=>entry.status.key!=='finished'&&entry.coverage.pending>0).length],
+    ['finished','Finalizadas',rowsAll.filter(entry=>entry.status.key==='finished').length]
+  ];
+  if(!tabDefs.some(([key])=>key===absenceTab))absenceTab='all';
+  if(tabs)tabs.innerHTML=tabDefs.map(([key,label,count])=>`<button type="button" role="tab" aria-selected="${absenceTab===key}" class="${absenceTab===key?'on':''}" onclick="absenceSetTab('${key}')">${label}<em>${count}</em></button>`).join('');
+  const countEl=document.getElementById('absenceCount');
+  if(countEl)countEl.textContent=plural(rowsAll.length,'caso','casos');
 
-    table.innerHTML=rows.length
-      ?rows.map(item=>{
-        const worker=employee(item.employeeId);
-        const coverage=absenceCoverage(item);
-        const status=absenceCurrentStatus(item);
-
-        return `<tr>
-          <td>
-            <button class="worker-link" onclick="openWorkerDrawer('${item.employeeId}')">
-              ${escapeHtml(worker?.name||'Trabajador eliminado')}
-            </button>
-            <div class="muted">${escapeHtml(worker?.role||worker?.area||'')}</div>
-          </td>
-          <td><strong>${escapeHtml(normalizedAbsenceStatus(item.type))}</strong></td>
-          <td>${fmt(absenceStart(item))}<div class="muted">hasta ${fmt(absenceEnd(item))}</div></td>
-          <td><strong>${coverage.total}</strong> <span class="muted">afectado(s)</span></td>
-          <td>${coveragePill(item)}</td>
-          <td><span class="absence-state ${status.key}">${status.label}</span></td>
-          <td>
-            <div class="absence-actions">
-              ${coverage.total?`
-                <button class="btn small ${coverage.pending?'primary':''}"
-                  onclick="openAbsenceReplacementCenter('${item.id}')">
-                  ${coverage.pending?'Resolver cobertura':'Ver cobertura'}
-                </button>`:''}
-              <button class="icon-btn" onclick="deleteAbsence('${item.id}')">Eliminar</button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('')
-      :'<tr><td colspan="7"><div class="empty">No hay casos que coincidan con los filtros.</div></td></tr>';
+  if(list){
+    const visible=rowsAll.filter(entry=>{
+      if(absenceTab==='active')return entry.status.key==='active';
+      if(absenceTab==='pending')return entry.status.key!=='finished'&&entry.coverage.pending>0;
+      if(absenceTab==='finished')return entry.status.key==='finished';
+      return true;
+    });
+    const rowHtml=entry=>{
+      const {item,coverage,status,worker,type}=entry;
+      const start=absenceStart(item),end=absenceEnd(item);
+      const total=Math.max(1,absenceDayDiff(start,end)+1);
+      let period='';
+      if(status.key==='active'){
+        const day=Math.min(total,Math.max(1,absenceDayDiff(start,reference)+1));
+        period=`<small>Día ${day} de ${total}</small><div class="tl"><i style="width:${Math.round(day/total*100)}%"></i></div>`;
+      }else if(status.key==='upcoming'){
+        period=`<small>Comienza en ${plural(absenceDayDiff(reference,start),'día','días')}</small>`;
+      }else{
+        period=`<small>${plural(coverage.total,'turno','turnos')} afectado${coverage.total===1?'':'s'}</small>`;
+      }
+      const urgent=coverage.pending>0&&status.key!=='finished';
+      return `<div class="ab-row ${status.key==='finished'?'old':''}">
+        <span class="ab-av">${escapeHtml(initials(worker?.name))}</span>
+        <div class="ab-who"><button class="worker-link" onclick="openWorkerDrawer('${item.employeeId}')">${escapeHtml(worker?.name||'Trabajador eliminado')}</button><small>${escapeHtml(worker?.role||worker?.area||'')}</small></div>
+        <span class="ab-type">${escapeHtml(type)}</span>
+        <div class="ab-per"><strong>${absenceShortDate(start)} → ${absenceShortDate(end)}</strong>${period}</div>
+        <div class="ab-cov" style="--c:var(--${coverage.pending===0?'green':coverage.covered>0?'yellow':'red'})">${coverage.total?`<strong>${coverage.covered}/${coverage.total} cubiertos</strong><div class="cbar"><i style="width:${coverage.percentage}%"></i></div>`:'<small>Sin turnos afectados</small>'}</div>
+        <div class="ab-acts">
+          ${coverage.total?`<button class="btn small ${urgent?'primary':''}" onclick="openAbsenceReplacementCenter('${item.id}')">${urgent?'Resolver cobertura':'Ver cobertura'}</button>`:''}
+          <button class="icon-btn" onclick="deleteAbsence('${item.id}')">Eliminar</button>
+        </div>
+      </div>`;
+    };
+    if(!visible.length){
+      list.innerHTML='<div class="empty">No hay casos que coincidan con los filtros.</div>';
+    }else if(absenceTab!=='all'){
+      list.innerHTML=visible.map(rowHtml).join('');
+    }else{
+      const groups=[['active','Activas'],['upcoming','Próximas'],['finished','Finalizadas']];
+      list.innerHTML=groups.map(([key,label])=>{
+        const group=visible.filter(entry=>entry.status.key===key);
+        return group.length?`<div class="ab-gh">${label}</div>${group.map(rowHtml).join('')}`:'';
+      }).join('');
+    }
   }
 
   if(uncovered){
-    const pendingRows=[];
-
-    pendingCases.forEach(({item,coverage})=>{
-      coverage.rows
-        .filter(row=>!row.execution?.replacementId)
-        .forEach(row=>pendingRows.push({
-          item,
-          row,
-          worker:employee(item.employeeId)
-        }));
-    });
-
-    pendingRows.sort((a,b)=>a.row.date.localeCompare(b.row.date));
-
-    uncovered.innerHTML=pendingRows.length
-      ?pendingRows.slice(0,10).map(({item,row,worker})=>`
-        <div class="task-item">
-          <div class="task-icon">!</div>
-          <div class="task-copy">
-            <strong>${escapeHtml(worker?.name||'Trabajador')}</strong>
-            <span>${fmt(row.date)} · Turno ${row.shift} · ${escapeHtml(normalizedAbsenceStatus(item.type))}</span>
-          </div>
-          <button class="btn small primary" onclick="openAbsenceReplacementCenter('${item.id}')">
-            Cubrir
-          </button>
-        </div>
-      `).join('')
-      :'<div class="empty">Todos los turnos afectados están cubiertos.</div>';
+    const groupBy=rows=>Object.values(rows.reduce((acc,{entry,row})=>{
+      const key=entry.item.id;
+      (acc[key]=acc[key]||{entry,dates:[]}).dates.push(row.date);
+      return acc;
+    },{})).map(group=>({...group,dates:group.dates.sort()})).sort((a,b)=>a.dates[0].localeCompare(b.dates[0]));
+    const range=dates=>dates.length>1?`${absenceShortDate(dates[0])} al ${absenceShortDate(dates[dates.length-1])}`:absenceShortDate(dates[0]);
+    const block=(groups,primary)=>groups.map(({entry,dates})=>`<div class="ab-hist ${primary?'now':''}"><div><strong>${escapeHtml(entry.worker?.name||'Trabajador')}</strong><small>${range(dates)} · ${plural(dates.length,'turno','turnos')}</small></div><button class="btn small ${primary?'primary':''}" onclick="openAbsenceReplacementCenter('${entry.item.id}')">${primary?'Cubrir':'Ver detalle'}</button></div>`).join('');
+    const nowGroups=groupBy(toCover);
+    const pastGroups=groupBy(pastUncovered);
+    const countBadge=document.getElementById('absenceUncoveredCount');
+    if(countBadge)countBadge.textContent=toCover.length?plural(toCover.length,'por cubrir','por cubrir'):'';
+    uncovered.innerHTML=
+      (nowGroups.length?block(nowGroups,true):'<div class="empty">Todos los turnos desde hoy están cubiertos.</div>')+
+      (pastGroups.length?`<div class="ab-gh">Fechas pasadas · ${plural(pastUncovered.length,'turno','turnos')}</div>${block(pastGroups.slice(0,4),false)}${pastGroups.length>4?`<p class="ab-note">y ${plural(pastGroups.length-4,'caso más','casos más')}</p>`:''}<p class="ab-note">Son fechas anteriores a hoy: quedan como historial.</p>`:'');
   }
 
   if(returns){
-    const future=[...all]
-      .filter(item=>absenceEnd(item)>=isoToday)
-      .sort((a,b)=>absenceEnd(a).localeCompare(absenceEnd(b)))
-      .slice(0,10);
-
-    returns.innerHTML=future.length
-      ?future.map(item=>{
-        const worker=employee(item.employeeId);
-        const status=absenceCurrentStatus(item);
-
-        return `<div class="task-item">
-          <div class="task-icon">↩</div>
-          <div class="task-copy">
-            <strong>${escapeHtml(worker?.name||'Trabajador')}</strong>
-            <span>${escapeHtml(normalizedAbsenceStatus(item.type))} · termina ${fmt(absenceEnd(item))}</span>
-          </div>
-          <span class="absence-state ${status.key}">${status.label}</span>
-        </div>`;
+    const months=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+    const upcoming=comingBack.slice(0,6);
+    const badge=document.getElementById('absenceReturnsCount');
+    if(badge)badge.textContent=comingBack.length?String(comingBack.length):'';
+    returns.innerHTML=upcoming.length
+      ?upcoming.map(entry=>{
+        const back=returnDate(entry);
+        const days=absenceDayDiff(reference,back);
+        return `<div class="ab-ret"><div class="d">${months[Number(back.slice(5,7))-1]}<b>${Number(back.slice(8,10))}</b></div><div><strong>${escapeHtml(entry.worker?.name||'Trabajador')}</strong><small>${escapeHtml(entry.type)} · vuelve ${days<=0?'hoy':days===1?'mañana':`en ${days} días`}</small></div><span class="absence-state ${entry.status.key}">${entry.status.label}</span></div>`;
       }).join('')
       :'<div class="empty">No hay retornos próximos registrados.</div>';
+  }
+
+  const strip=document.getElementById('absenceStrip');
+  if(strip){
+    const days=Array.from({length:14},(_,index)=>absenceAddDays(reference,index));
+    const byDate={};
+    live.forEach(entry=>entry.coverage.rows.forEach(row=>{
+      if(row.date<days[0]||row.date>days[13])return;
+      const slot=byDate[row.date]=byDate[row.date]||{total:0,pending:0};
+      slot.total++;
+      if(!row.execution?.replacementId)slot.pending++;
+    }));
+    const weekdays=['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+    const rangeEl=document.getElementById('absenceStripRange');
+    if(rangeEl)rangeEl.textContent=`${fmt(days[0])} → ${fmt(days[13])}`;
+    strip.innerHTML=days.map((day,index)=>{
+      const slot=byDate[day];
+      const date=new Date(day+'T12:00:00');
+      const state=!slot?'':slot.pending?'miss':'has';
+      const label=!slot?'':slot.pending?`falta ${slot.pending}`:'cubierto';
+      return `<div class="ab-day ${state} ${index===0?'today':''}">${weekdays[date.getDay()]}<b>${date.getDate()}</b>${label?`<small>${label}</small>`:''}</div>`;
+    }).join('');
   }
 }
 
@@ -15793,7 +15779,7 @@ function renderOpsChecklist(){
   renderOpsChecklistHistory();
 }
 function absenceMobileGo(target,btn){document.querySelectorAll('.absence-mobile-tabs button').forEach(x=>x.classList.toggle('active',x===btn));const el=target==='detail'?document.getElementById('absenceControlCard'):document.getElementById('absenceStatsGrid');el?.scrollIntoView({behavior:'smooth',block:'start'})}
-function absenceMobilePending(){const f=document.getElementById('absenceCoverageFilter');if(f){f.value='pending';renderAbsencePanel()}absenceMobileGo('detail')}
+function absenceMobilePending(){absenceSetTab('pending');absenceMobileGo('detail')}
 function renderOpsChecklistHistory(){const root=document.getElementById('checklistHistory');if(!root)return;const rows=Object.entries(opsChecklistStore()).filter(([key,x])=>x.completed&&opsChecklistInArea(key,x)).map(([,x])=>x).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt)).slice(0,8);root.innerHTML=rows.length?rows.map(x=>`<div class="ops-history-row"><strong>${opsEsc(x.date)}</strong><span>${opsEsc(x.completedBy)} · ${new Date(x.completedAt).toLocaleString('es-CL')}</span></div>`).join(''):'<div class="ops-empty">Todavía no hay checklists confirmados.</div>'}
 function saveHandoff(){const from=handoffFrom.value.trim(),to=handoffTo.value.trim();if(!from||!to)return alert('Indica quién entrega y quién recibe.');HandoffModule.add({id:safeRandomUUID(),date:handoffDate.value||isoToday,shift:handoffShift.value,from,to,notes:handoffNotes.value.trim(),area:opsArea(),createdAt:new Date().toISOString(),received:true},{prepend:true,save:false});save();handoffNotes.value='';renderHandoffs();showToast('Turno entregado y recibido')}
 // Las entregas registradas antes quedaban solo en este navegador. Se
