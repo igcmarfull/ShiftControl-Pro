@@ -68,3 +68,16 @@ Verificación: capturas con datos simulados (claro/oscuro, escritorio y celular)
 - No cambia ninguna regla de cobertura: usa `absenceCoverage()` y `absenceCurrentStatus()` tal como estaban.
 
 Verificación: capturas con datos simulados (claro/oscuro, escritorio y celular) sin errores de consola. Sin datos reales de producción.
+
+## Menú «Centro» del celular (pestaña Acciones)
+
+`src/v20-interface.js` (`buildMenu`, `applyMenuFilter`) reemplaza la lista anterior de la pestaña **Acciones**:
+
+- Buscador de módulos (filtra por nombre sin tildes) y accesos de inicio (Bandeja ADMIN o Inicio operativo, según el rol).
+- Grupos plegables con los mismos módulos y orden que la barra lateral: Operación, Planificación, Administración y Tienda. Operación arranca abierto; al buscar se abren los grupos con coincidencias.
+- Íconos de `ShiftControlPapel.icon(view)` (`src/ui-papel.js`) y resaltado del módulo activo; el contador de Centro de trabajo se lee de `#workcenterNavBadge`.
+- Cada módulo se muestra solo si `ShiftControlPermissions.canOpenView(view)` lo permite; un grupo sin módulos permitidos no aparece.
+- `render()` se ejecuta cada 1,5 s: el estado de grupos y búsqueda se guarda en `menuState` y el panel solo se reescribe cuando cambia su contenido, para no perder el foco ni los grupos abiertos.
+- Se quitaron las descripciones de cada módulo. Las pestañas **Avisos** y **Navegar** no cambian.
+
+Verificación: pruebas en navegador con datos simulados (administrador y Jefa de Isla; claro/oscuro): plegar grupos, búsqueda con foco conservado, mensaje sin resultados y navegación. Sin pruebas con datos reales.
