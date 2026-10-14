@@ -111,9 +111,21 @@ Al final del documento se cargan la librería de Supabase, la configuración, la
 `src/storage.js`:
 
 - captura la función `window.save` ya definida;
-- la reemplaza con un wrapper que primero conserva el guardado original;
+- la reemplaza con un wrapper que primero conserva el guardado original y
+  marca la empresa con cambios pendientes;
 - programa la escritura remota con un debounce de 500 ms;
-- consulta o actualiza la fila configurada de `app_state`;
+- antes de escribir, lee la fila de `app_state`; si otro usuario guardó desde
+  la última sincronización, combina ambos estados a tres bandas (registros por
+  `id`, y `plans`/`executions` por trabajador y fecha; ante un conflicto sobre
+  el mismo dato prevalece el cambio local);
+- escribe de forma condicional sobre `updated_at`, de modo que una escritura
+  concurrente obliga a releer y combinar en lugar de sobrescribir;
+- consulta `updated_at` cada 15 segundos y al volver a la pestaña, y aplica los
+  cambios de otros usuarios sin recargar, salvo que haya un modal abierto o un
+  campo con foco;
+- conserva en `localStorage` la última versión acordada con Supabase y, al
+  iniciar, combina los cambios locales que hayan quedado sin subir;
+- muestra el estado en `.save-status`: sincronizado, guardando o sin conexión;
 - reemplaza oficialmente la referencia completa mediante
   `ShiftControlState.replace(data.data)`;
 - conserva operación local si Supabase falla;
@@ -178,10 +190,12 @@ Undo, redo, importación de respaldo y recuperación remota usan esta operación
 ### Estado principal
 
 - local: clave `shiftcontrol_pro_v2_all_replacement_candidates`;
-- remoto: tabla `app_state`;
+- remoto: tabla `app_state`, escrita con control de concurrencia por `updated_at`;
 - identidad remota: valor `stateKey` de `src/config.js`;
 - contenido remoto: objeto JSON en `data`;
-- seguimiento local de sincronización: `shiftcontrol_supabase_last_sync`.
+- seguimiento local de sincronización: `shiftcontrol_supabase_last_sync`;
+- última versión acordada con Supabase: `<clave de empresa>:base`;
+- marca de cambios sin subir: `<clave de empresa>:pending`.
 
 El valor publicable de Supabase está en código cliente. Debe tratarse según el modelo de seguridad de claves publicables y políticas de la base; este repositorio no contiene las políticas RLS ni migraciones SQL para verificarlas.
 

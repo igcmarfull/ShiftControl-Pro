@@ -11377,6 +11377,14 @@ function fillPeriods(){
   ['planMonth','reportMonth'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){e.innerHTML=monthNames.map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');e.value=cm}});
   ['planYear','reportYear'].forEach(id=>{const e=document.getElementById(id);if(!e.options.length){for(let y=today.getFullYear()+1;y>=today.getFullYear()-5;y--)e.innerHTML+=`<option value="${y}">${y}</option>`;e.value=cy}});
 }
+// La Jefa de Isla ve al personal con área "Isla". En bases antiguas el área
+// quedó vacía o con otra etiqueta; entonces se muestra todo el personal activo,
+// igual que en la planificación mensual.
+function chiefIslandEmployees(list){
+  const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const island=list.filter(e=>normalize(e.area)==='isla');
+  return island.length?island:list;
+}
 function fillEmployeeSelects(){
   if(!window.EmployeeModule){
     console.warn('[ShiftControl] fillEmployeeSelects esperando EmployeeModule');
@@ -11403,7 +11411,7 @@ function fillEmployeeSelects(){
       el.disabled=false;
     }
   });
-  const visibleEmployees=chiefMode?active.filter(e=>e.area==='Isla'):active;
+  const visibleEmployees=chiefMode?chiefIslandEmployees(active):active;
   ['planEmployeeFilter','weekEmployeeFilter','actualEmployeeFilter'].forEach(id=>{const el=document.getElementById(id);if(el){const current=el.value;el.innerHTML='<option value="">Todos los trabajadores</option>'+visibleEmployees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');el.value=visibleEmployees.some(e=>e.id===current)?current:''}});
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
@@ -12084,13 +12092,16 @@ function renderActualCalendar(){
   const prefix=actualPeriodPrefix();
   const [year,month]=prefix.split('-').map(Number);
   const days=new Date(year,month,0).getDate();
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('actualAreaFilter')?.value||'');
+  const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
+  const area=isChief?'':(document.getElementById('actualAreaFilter')?.value||'');
   const employeeFilter=document.getElementById('actualEmployeeFilter')?.value||'';
 
-  const employees=window.EmployeeModule.getAll().filter(item=>
+  const areaEmployees=window.EmployeeModule.getAll().filter(item=>
     item.active&&
-    (!area||item.area===area)&&
-    (!employeeFilter||item.id===employeeFilter)
+    (!area||item.area===area)
+  );
+  const employees=(isChief?chiefIslandEmployees(areaEmployees):areaEmployees).filter(item=>
+    !employeeFilter||item.id===employeeFilter
   );
 
   let head='<div class="cal-head"><div class="sticky-name">Trabajador</div>';
@@ -12191,9 +12202,11 @@ function renderWeekly(){
   const start=new Date(weekStart.value+'T12:00:00');
   const days=[];
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);days.push(d.toISOString().slice(0,10))}
-  const area=(typeof getAppRole==='function'&&getAppRole()==='chief')?'Isla':(document.getElementById('weekAreaFilter')?.value||'');
+  const isChief=typeof getAppRole==='function'&&getAppRole()==='chief';
+  const area=isChief?'':(document.getElementById('weekAreaFilter')?.value||'');
   const empFilter=document.getElementById('weekEmployeeFilter')?.value||'';
-  const list=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area)&&(!empFilter||e.id===empFilter));
+  const areaList=window.EmployeeModule.getAll().filter(e=>e.active&&(!area||e.area===area));
+  const list=(isChief?chiefIslandEmployees(areaList):areaList).filter(e=>!empFilter||e.id===empFilter);
   let out=`<div class="week-title">Trabajador</div>${days.map(d=>`<div class="week-title">${new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>`).join('')}`;
   list.forEach(e=>{
     const weeklyDetail=typeof getAppRole==='function'&&getAppRole()==='chief'?'Turno habitual '+(e.shift||'—'):(e.area||'');
