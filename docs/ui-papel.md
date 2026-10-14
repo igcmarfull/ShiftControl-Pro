@@ -113,3 +113,16 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 Verificación: pruebas en navegador con datos simulados (Todas = Isla + Tienda, «Marcar pendientes presentes» con Isla elegida solo marcó a Isla; la Jefa de Isla no ve el selector y solo ve su área). Sin pruebas con datos reales.
 
 Alineación (Operación del día, escritorio): la franja superior centra verticalmente las cifras junto al anillo, las tarjetas de cobertura A/B/C centran su contenido y las barras de los 7 días se alinean al pie de su tarjeta.
+
+## Cierre del día (rediseño)
+
+`renderDailySummaryContent()` (en `index.html`) sigue siendo el renderizador; conserva el mismo cálculo de estado (asistencia, cobertura, incidencias de hoy, checklist, cuadratura y avisos financieros). Estilos `.cd-*` en `src/ui-papel.css`.
+
+- **Cabecera:** chip «Jornada abierta/cerrada» y botón «Cerrar jornada» (o «Reabrir jornada» si ya está cerrada).
+- **Cerrar:** `dailySummaryClose()` avisa de lo que `confirmToday()` no revisa (checklist sin enviar, incidencias abiertas de hoy, cuadratura de caja sin registrar) y luego llama a `confirmToday()`, que mantiene sus propios avisos y su lógica de cierre. No bloquea el cierre: pide confirmación, como antes. **Reabrir** usa `reopenToday()`.
+- **Lista de cierre (5 pasos):** asistencia, cobertura, checklist, incidencias de hoy y caja; cada paso muestra ✓ o un botón para resolverlo. La franja superior enumera lo que falta (explica el antiguo «Urgente», que salía de incidencias abiertas creadas hoy, además de ausencias sin cobertura o checklist sin enviar).
+- **Resumen del día:** presentes, atrasos, licencias/permisos/vacaciones y sin confirmar; finanzas (diferencia de cuadratura, faltantes de caja de hoy, turnos extra por pagar y los avisos de gastos y facturas).
+- **Últimas jornadas:** 7 días con Cerrada / Sin cerrar (solo si ese día tenía turnos planificados) / Sin turnos / Abierta.
+- No se incluyen los pasos «depósito» y «entrega de turno» del Centro de trabajo: no hay un dato confiable para el depósito y la entrega ya se refleja en el cierre de la jornada.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): con pendientes, «Cerrar jornada» muestra primero el aviso nuevo y después los de `confirmToday`; la jornada queda cerrada, el botón cambia a «Reabrir jornada» y al reabrir vuelve a abierta. Sin pruebas con datos reales.
