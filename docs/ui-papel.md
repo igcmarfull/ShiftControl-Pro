@@ -103,3 +103,11 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 - La app no guarda la hora de llegada, por eso no hay línea de tiempo de llegadas.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): confirmar a un trabajador actualiza el resumen, el menú «⋯» ofrece «Reiniciar día» y, al aceptarlo, los registros del día se borran. Sin pruebas con datos reales.
+
+## Operación del día · filtro de área y celular
+
+- **Selector «Todas · Isla · Tienda»** (`#todayAreaSeg`, solo administrador; las jefas ya ven solo su área). El estado vive en `todayAreaFilter`; `setTodayArea()` vuelve a dibujar. `todayVisibleRows(date)` y `todayVisibleExecs(date)` aplican el filtro (área = `ShiftControlAreas.employeeArea`) y las usan `renderToday`, `markPendingPresent` y `src/ui-today.js`. `confirmToday` (cierra la jornada completa) sigue usando todo el personal, sin filtro.
+- En «Todas» cada trabajador muestra una etiqueta de área y el resumen indica «Isla x/y · Tienda x/y». Quien no tiene área asignada solo aparece en «Todas».
+- **Celular (< 768 px):** el mismo resumen (anillo, cuatro cifras, alerta y cobertura A/B/C) reemplaza las tarjetas y recuadros anteriores; los turnos plegables conservan sus acciones. Los bloques de 7 días, excepciones y relevo van en un panel plegable (`#odFold`), y el administrador tiene «Marcar pendientes presentes» y el menú «⋯» con «Reiniciar día» (antes no estaban disponibles en celular).
+
+Verificación: pruebas en navegador con datos simulados (Todas = Isla + Tienda, «Marcar pendientes presentes» con Isla elegida solo marcó a Isla; la Jefa de Isla no ve el selector y solo ve su área). Sin pruebas con datos reales.

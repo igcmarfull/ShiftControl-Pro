@@ -628,3 +628,54 @@ body:not(.light) .person .avatar,body:not(.light) .cal-name .avatar{background:#
   .today-more-menu button:hover{background:var(--panel2)}
 }
 @media (max-width:767px){.today-desktop-avatar{display:none}.today-more>summary{display:none}.today-more-menu{display:block}}
+
+/* ---------- Operación del día · área y celular ---------- */
+.od-seg{display:inline-flex;padding:3px;border:1px solid var(--line);border-radius:11px;background:var(--panel2)}
+.od-seg button{padding:6px 14px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+.od-seg button.on{background:var(--pri-bg);color:var(--pri-fg)}
+.od-tag{display:inline-block;padding:2px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font-size:10.5px;font-weight:700;white-space:nowrap}
+.od-split{margin:6px 0 0!important;font-size:12.5px;color:var(--muted)}
+.od-split b{color:var(--text)}
+.today-desktop-person-info .od-tag,.today-mobile-person-main .od-tag{margin-left:6px;justify-self:start}
+.od-fold-body{display:grid;gap:14px;margin-top:12px}
+#today .od-fold>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border:1px dashed var(--line);border-radius:14px;background:var(--panel);color:var(--muted);font-size:13px;cursor:pointer}
+#today .od-fold>summary::-webkit-details-marker{display:none}
+#today .od-fold>summary:after{content:"▾"}
+#today .od-fold[open]>summary:after{content:"▴"}
+.today-mobile-admin{display:flex;gap:8px;margin-top:12px}
+.today-mobile-admin>.btn{flex:1}
+.today-mobile-admin .today-more>summary{min-width:44px;min-height:44px}
+@media (min-width:768px){
+  #odFold,.today-mobile-admin{display:none}
+}
+@media (max-width:767px){
+  /* el resumen nuevo reemplaza las tarjetas y recuadros anteriores */
+  #today .cards,#today .today-intelligence,#today .today-mobile-kpis,#today .today-mobile-insights{display:none!important}
+  .od-top{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+  .od-low{display:none}
+  .od-hero{grid-template-columns:1fr;border-radius:18px}
+  .od-hero>div{padding:14px 16px}
+  .od-hero>div+div{border-left:0;padding-top:0}
+  .od-ring{gap:14px}
+  .od-ring .wc-donut,.od-ring .wc-donut svg{width:84px;height:84px}
+  .od-ring .wc-donut circle{stroke-width:11}
+  .od-ring .wc-donut .c b{font-size:21px}
+  .od-ring .wc-donut .c small{display:none}
+  .od-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .od-st{padding:10px 4px;text-align:center}
+  .od-st.x{display:none}
+  .od-st span{font-size:10px;letter-spacing:.02em}
+  .od-st b{font-size:19px;margin-top:2px}
+  .od-alert{padding:11px 12px;font-size:12.5px}
+  .od-alert .tx span{display:none}
+  .od-cov{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .od-cc{flex-direction:column;gap:6px;padding:10px 4px;text-align:center;border-radius:14px}
+  #today .topbar .actions .od-seg{grid-column:1/-1;display:flex}
+  #today .topbar .actions .od-seg button{flex:1}
+  #today .od-fold-body .ic-bars{height:110px}
+}
+@media (max-width:767px){
+  body[data-role="admin"] #today .topbar .actions .od-seg button:not(.global-period-btn){display:block!important}
+  body[data-role="admin"] #today .topbar .actions .od-seg{margin-bottom:2px}
+  body[data-role="admin"] #today .topbar .actions .od-seg button{min-height:38px;padding:8px 10px}
+}
