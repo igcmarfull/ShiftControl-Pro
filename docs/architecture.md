@@ -237,9 +237,10 @@ Estos almacenes no pasan por `src/storage.js` y no forman parte del JSON sincron
 `src/app/permissions.js`.
 
 - El administrador ve y administra la isla y la tienda.
-- `company_memberships.area` (`ISLA` o `TIENDA`) identifica el área de cada
-  jefa. Sin la migración `20261014000002_chief_areas.sql`, toda jefa se
-  considera de isla.
+- `company_memberships.area` (`ESTACION` o `TIENDA` en Supabase) identifica
+  el área de cada jefa; la app trata `ESTACION` como isla. Una jefa sin área
+  se considera de isla. La asignación usa `assign_chief_area` mediante la Edge
+  Function `assign-chief`.
 - El área de cada trabajador se toma de `employee.area` ("Isla" o "Tienda",
   sin distinguir mayúsculas ni tildes).
 - Al cargar, una jefa recibe solo los trabajadores de su área y sus registros

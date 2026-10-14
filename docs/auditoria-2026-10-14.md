@@ -37,9 +37,9 @@ Producción no fue modificada. No se aplicaron migraciones en Supabase.
    `supabase/migrations/20260804000001_team_management.sql`). La policy
    `company_memberships_select_admin` consulta su propia tabla. Aplicada tal
    cual, bloquea el inicio de sesión de todos los usuarios ("infinite
-   recursion detected in policy"). **Migración correctora preparada:**
-   `20261014000001_fix_memberships_admin_policy.sql` (probada en PostgreSQL,
-   idempotente, pendiente de aplicar por el administrador).
+   recursion detected in policy"). **Ya estaba corregido en producción**
+   por `20260804000002_fix_company_memberships_rls_recursion.sql`, que ahora
+   está en el repositorio.
 4. **La rama de ChatGPT elimina el panel de la jefa.** En
    `feature/areas-estacion-tienda` la jefa solo ve "Planificación de turnos"
    con el mensaje "El administrador aún no ha migrado los turnos de esta
@@ -121,8 +121,9 @@ Implementación:
 - `src/auth.js` y `src/app/permissions.js`: área de la jefatura y vistas de la
   Jefa de Tienda.
 - «Equipo de estación»: el gerente asigna o reemplaza cada jefatura.
-- `supabase/migrations/20261014000002_chief_areas.sql` y la Edge Function
-  `assign-chief`: una jefatura activa por área. La migración impide además que
+- Supabase (ya aplicado en producción): `assign_chief_area` y el índice de una
+  jefatura activa por área (`20261013030435`, `20261013035308`,
+  `20261014004254`), con la Edge Function `assign-chief`. Impiden además que
   un administrador se asigne como jefa.
 
 Verificado en navegador con tres sesiones (gerente, Jefa de Isla y Jefa de
