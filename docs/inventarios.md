@@ -53,6 +53,19 @@ Interfaz (cargada desde `index.html` después de `src/app/areas.js`):
 
 Integración mínima con lo existente: botón de navegación «Inventarios» (grupo Tienda), `<section id="inventory">`, la vista `inventory` añadida a `CHIEF` y `CHIEF_TIENDA` en `src/app/permissions.js` y un acceso rápido en el Centro de acciones móvil (`src/v20-interface.js`). No se modificó ningún panel ni flujo existente.
 
+## Diseño visual (estilo «Papel»)
+
+Claro, limpio y aireado: superficies planas con línea fina, sombras suaves y color solo en íconos, estados y detalles. Sin imágenes de producto.
+
+- **Tema:** usa las variables de la app, así que sigue el modo claro y el oscuro. En modo claro, los colores de estado usan tonos más profundos (`body.light`) para que se lean sobre blanco.
+- **Íconos y gráficos:** SVG en línea (no hay archivos de imagen ni dependencias). Cada inventario tiene su ícono y su color: Tienda verde azulado, Cigarrillos violeta, Lubricantes azul.
+- **Anillo de estado** por inventario (normales / bajo mínimo / agotados) y barra de stock con marca del mínimo por producto.
+- **Avatares con iniciales** en vez de fotos. El color es estable por categoría, marca o presentación; así un aceite de 1 L y uno de 4 L se distinguen de un vistazo.
+- **Franja de resumen** en el Panel: referencias activas, para reponer, por vencer y mermas del mes (suma de lo que ya muestra cada inventario).
+- **Filas con franja de color** cuando el producto está bajo el mínimo (ámbar) o agotado (rojo).
+- **Celular:** las tablas pasan a tarjetas, la barra del conteo se apoya sobre la barra inferior de ShiftControl y el formulario de recepción cabe sin desbordar.
+- **Ajustes:** las medidas y los colores están como variables al inicio de `inventory.css` (radios `--r-*`, colores por inventario `--ac-*`, estados `--inv-*`, sombra `--sh`).
+
 ## Activación
 
 1. Migraciones: aplicadas en producción (registradas como `20261015000100/200/300`).
@@ -70,6 +83,8 @@ No hay suite automatizada en el repositorio; estas pruebas se ejecutaron en un P
 - `supabase/tests/inventario_local.sql`: 80 comprobaciones (stock, FEFO, idempotencia, permisos, RLS, inmutabilidad, conteos, ajustes, reversas).
 - `supabase/tests/inventario_concurrencia.js`: 27 comprobaciones con transacciones simultáneas (sin sobreventa, sin duplicados por reintento, un conteo abierto).
 - Navegador (Chromium) con tres perfiles contra esa base: activación, alta de productos, código duplicado, recepción 5 cartones → 50 cajetillas, factura duplicada, SKU 1 L y 4 L independientes, aislamiento Jefa de Isla / Jefa de Tienda, conteo con diferencia, aprobación solo del administrador, sincronización entre perfiles, merma mayor al stock, triple clic, caída de red con reintento sin duplicar, corrección compensatoria, conflicto de conteo, módulo sin migrar, carga sin errores de consola de las 24/16/15 vistas de cada rol, y ausencia de desbordamiento horizontal en 390 px y 820 px.
+
+Después del rediseño visual se repitió la batería de navegador (31 comprobaciones, todas correctas) y se revisaron capturas de todas las vistas en modo claro, modo oscuro y celular.
 
 No verificado: ejecución contra el Supabase de producción, lector de códigos de barras en un dispositivo real, impresión.
 

@@ -107,20 +107,6 @@ function ringSvg(ok,low,out,total){
   const length=2*Math.PI*radius;
   return `<svg class="inv-ring" viewBox="0 0 100 100" role="img" aria-label="${ok} normales, ${low} bajo mínimo, ${out} agotados"><circle class="trk" cx="50" cy="50" r="${radius}"/><g transform="rotate(-90 50 50)">${arcs([['a',ok],['b',low],['c',out]],total,length,radius)}</g></svg>`;
 }
-// Tablero semicircular con aguja (el mismo dato, otra forma; lo usa el estilo «Estación»).
-function gaugeSvg(ok,low,out,total){
-  const radius=42;
-  const length=Math.PI*radius;
-  const pct=total>0?ok/total:0;
-  const ticks=Array.from({length:11},(_,i)=>{
-    const angle=(180+i*18)*Math.PI/180;
-    const r1=i%5===0?30:32;
-    const r2=36;
-    return `<line x1="${(50+r1*Math.cos(angle)).toFixed(2)}" y1="${(50+r1*Math.sin(angle)).toFixed(2)}" x2="${(50+r2*Math.cos(angle)).toFixed(2)}" y2="${(50+r2*Math.sin(angle)).toFixed(2)}"/>`;
-  }).join('');
-  return `<svg class="inv-gauge" viewBox="0 0 100 60" role="img" aria-label="${ok} normales, ${low} bajo mínimo, ${out} agotados"><g transform="rotate(180 50 50)"><circle class="trk" cx="50" cy="50" r="${radius}" stroke-dasharray="${length.toFixed(2)} ${(length*2).toFixed(2)}"/>${arcs([['a',ok],['b',low],['c',out]],total,length,radius)}</g><g class="ticks">${ticks}</g><g transform="rotate(${(-90+pct*180).toFixed(1)} 50 50)"><line class="needle" x1="50" y1="50" x2="50" y2="17"/></g><circle class="hub" cx="50" cy="50" r="3.2"/></svg>`;
-}
-
 // Avatares con iniciales: un color estable por categoría, marca o presentación.
 // Así un aceite de 1 L y uno de 4 L se distinguen de un vistazo, sin fotos.
 const HUES=[215,262,330,24,152,188,44,290,8,100];
@@ -447,7 +433,6 @@ function viewHome(){
       <header class="inv-ch">${tile(item.code,'','lg')}<div class="inv-chn"><h3>${esc(item.name)}</h3><div class="area">Área ${esc(item.area)}${item.active?'':' · desactivado'}</div></div>${attention?`<span class="inv-pill warn">${attention} por revisar</span>`:'<span class="inv-pill ok">Todo en orden</span>'}</header>
       <div class="inv-viz">
         <div class="inv-ringbox">${ringSvg(healthy,item.low,item.out,item.refs)}<div class="inv-ringc">${pctHtml}</div></div>
-        <div class="inv-gaugebox">${gaugeSvg(healthy,item.low,item.out,item.refs)}<div class="inv-gaugec">${pctHtml}</div></div>
         <div class="inv-stat"><span class="k">${item.control_unit==='cajetilla'?'Cajetillas':'Unidades en stock'}</span><b class="inv-num big">${fmt(item.stock_total)}</b><span class="s">${plural(item.refs,'referencia','referencias')}</span></div>
       </div>
       <div class="inv-hl"><span style="--d:var(--green)"><b>${healthy}</b> normales</span><span style="--d:var(--yellow)"><b>${item.low}</b> bajo mínimo</span><span style="--d:var(--red)"><b>${item.out}</b> agotados</span></div>
@@ -534,7 +519,7 @@ function listHtml(item){
   const stockCell=product=>`<div class="inv-sc"><span class="inv-stk inv-num">${fmt(product.stock)}</span>${gauge(product)}</div>`;
   const cells=product=>{
     const lot=(product.stock_detail||[]).find(row=>row.expires_on);
-    if(item.code==='tienda')return [productCell(product,product.name,esc([product.code,product.brand,product.presentation].filter(Boolean).join(' · '))),esc(product.category),esc(product.default_location||'—'),stockCell(product),fmt(product.min_stock),product.next_expiry?`${fshort(product.next_expiry)} <span class="inv-dim">(${esc(lot?.lot_code||'')})</span>`:'—',statusPills(product,item)];
+    if(item.code==='tienda')return [productCell(product,product.name,esc([product.code,product.brand,product.presentation].filter(Boolean).join(' · '))),esc(product.category),esc(product.default_location||'—'),stockCell(product),fmt(product.min_stock),product.next_expiry?`${fshort(product.next_expiry)}${lot?.lot_code?` <span class="inv-dim">(${esc(lot.lot_code)})</span>`:''}`:'—',statusPills(product,item)];
     if(item.code==='cigarrillos'){
       const factor=product.receive_factor||1;
       return [productCell(product,titleOf(product,attrOf(product,'variety')||product.name),esc(product.code)),esc(product.presentation),stockCell(product),product.receive_unit?`<span class="inv-dim inv-num">${Math.floor(product.stock/factor)} + ${product.stock%factor}</span>`:'—',fmt(product.min_stock),statusPills(product,item)];
