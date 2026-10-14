@@ -15030,7 +15030,7 @@ window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>applyAppRole(false
 function focusIncidentForm(){
   openIncidentDrawer();
   const field=document.getElementById('incidentTitle');
-  if(field){field.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>field.focus(),280)}
+  if(field)setTimeout(()=>field.focus({preventScroll:true}),280);
 }
 function incidentSetToday(){
   filterOpsIncidents('all');
@@ -15437,7 +15437,22 @@ function renderOpsIncidents(){
     &&(!query||[x.title,x.description,x.reporter,x.createdBy,x.owner,x.type].some(v=>String(v||'').toLowerCase().includes(query))));
   const labels={open:'Abierta',review:'En revisión',resolved:'Resuelta'};
   const isAdmin=getAppRole()==='admin';
-  const row=x=>`<div class="ic-row ${x.status==='resolved'?'done':''}" style="--c:var(--${x.priority==='Alta'?'red':x.priority==='Media'?'orange':'blue'})"><span class="ic-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${INCIDENT_ICONS[x.type]||INCIDENT_ICONS.Otro}</svg></span><div class="ic-txt"><strong>${opsEsc(x.title)}</strong><small>${opsEsc(x.description)}</small></div><div class="ic-chips"><span class="ic-chip">${opsEsc(x.priority)}</span><span class="ic-chip n">${opsEsc(x.type)}</span><span class="ic-chip n">${opsEsc(x.shift)}</span></div><div class="ic-who"><small>Reportó: ${opsEsc(x.reporter||x.createdBy)}</small><small>Asignada: ${opsEsc(x.owner)}${x.dueDate?` · Compromiso ${opsEsc(x.dueDate)}`:''}</small></div><div class="ic-acts">${x.status==='open'?`<button type="button" class="ic-btn pri" onclick="updateOpsIncidentStatus('${x.id}','review')">Tomar en revisión</button>`:''}${isAdmin?(x.status!=='resolved'?`<button type="button" class="ic-btn ${x.status==='review'?'pri':''}" onclick="updateOpsIncidentStatus('${x.id}','resolved')">Marcar resuelta</button>`:`<button type="button" class="ic-btn" onclick="updateOpsIncidentStatus('${x.id}','open')">Reabrir</button>`)+`<button type="button" class="ic-btn" onclick="archiveOpsIncident('${x.id}')">Archivar</button>`:''}</div></div>`;
+  const actionsFor=x=>{
+    const list=[];
+    if(x.status==='open')list.push(['Tomar en revisión',`updateOpsIncidentStatus('${x.id}','review')`]);
+    if(isAdmin){
+      if(x.status!=='resolved')list.push(['Marcar resuelta',`updateOpsIncidentStatus('${x.id}','resolved')`]);
+      else list.push(['Reabrir',`updateOpsIncidentStatus('${x.id}','open')`]);
+      list.push(['Archivar',`archiveOpsIncident('${x.id}')`]);
+    }
+    return list;
+  };
+  const row=x=>{
+    const acts=actionsFor(x);
+    const button=([label,js],primary)=>`<button type="button" class="ic-btn ${primary?'pri':''}" onclick="${js}">${label}</button>`;
+    const rest=acts.slice(1);
+    return `<div class="ic-row ${x.status==='resolved'?'done':''}" style="--c:var(--${x.priority==='Alta'?'red':x.priority==='Media'?'orange':'blue'})"><span class="ic-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${INCIDENT_ICONS[x.type]||INCIDENT_ICONS.Otro}</svg></span><div class="ic-txt"><strong>${opsEsc(x.title)}</strong><small>${opsEsc(x.description)}</small></div><div class="ic-chips"><span class="ic-chip">${opsEsc(x.priority)}</span><span class="ic-chip n">${opsEsc(x.type)}</span><span class="ic-chip n">${opsEsc(x.shift)}</span></div><div class="ic-who"><small>Reportó: ${opsEsc(x.reporter||x.createdBy)}</small><small>Asignada: ${opsEsc(x.owner)}${x.dueDate?` · Compromiso ${opsEsc(x.dueDate)}`:''}</small></div><div class="ic-acts">${acts.length?button(acts[0],x.status!=='resolved'):''}${rest.length?`<details class="ic-more"><summary aria-label="Más acciones">⋯</summary><div class="ic-menu">${rest.map(a=>button(a,false)).join('')}</div></details>`:''}</div></div>`;
+  };
   const sorted=group=>matches.filter(x=>x.status===group).sort((a,b)=>(rank[a.priority]??3)-(rank[b.priority]??3)||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const groups=[['open','Abiertas'],['review','En revisión'],['resolved','Resueltas']].filter(([key])=>opsIncidentFilter==='all'||opsIncidentFilter===key);
   root.className='ic-list';
