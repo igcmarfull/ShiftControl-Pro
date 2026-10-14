@@ -180,6 +180,10 @@ Expone `getAll()`, `get(key)`, `set(key, value, options)` y
 cálculos, formularios y la clave auxiliar `localStorage.shiftcontrol_settings`
 permanecen fuera del módulo.
 
+### Inventarios
+
+Módulo nuevo, **fuera de `state`**: no usa `app_state` ni `save()`. Los datos viven en tablas `inv_*` de Supabase y se leen y escriben solo mediante funciones RPC (`src/modules/inventory/inventory-api.js`, `window.InventoryApi`). La interfaz (`inventory.js`, `window.InventoryUI`) se pinta en `#inventoryRoot` y se activa al abrir la vista `inventory`. Si las migraciones no están aplicadas, muestra «Aún no está habilitado». Detalle en `docs/inventarios.md`.
+
 ## Resumen de propiedad del estado principal
 
 | Colección | Módulo propietario |
