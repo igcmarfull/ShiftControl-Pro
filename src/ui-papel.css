@@ -689,5 +689,17 @@ body:not(.light) .person .avatar,body:not(.light) .cal-name .avatar{background:#
 .od-cc>div:last-child{min-width:0}
 @media (min-width:768px){
   .od-low .ic-cp{justify-content:flex-start}
-  .od-low .ic-bars{margin-top:auto;margin-bottom:6px}
+}
+
+/* Operación del día · bloques inferiores alineados */
+@media (min-width:768px){
+  .od-low .ic-ch{min-height:48px;align-items:flex-start}
+  .od-low .ic-ch .tot{display:flex;align-items:baseline;gap:6px;text-align:right}
+  .od-low .ic-ch .tot b{display:inline;font-size:20px}
+  .od-low .ic-bars{margin-top:30px;height:150px}
+  .od-low .od-ex,.od-low .od-next,.od-low .od-quiet{margin-top:12px}
+}
+@media (min-width:768px){
+  .od-low .od-exr:first-child{padding-top:0}
+  .od-low .od-next .when{margin-top:0}
 }
