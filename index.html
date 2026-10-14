@@ -13744,6 +13744,11 @@ function adminInboxOpenAbsences(){
   showView('absences');
   setTimeout(()=>document.getElementById('absences')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
 }
+function adminInboxOpenClosure(day){
+  const field=document.getElementById('todayDate');
+  if(field&&/^\d{4}-\d{2}-\d{2}$/.test(day||''))field.value=day;
+  showView('daily-summary');
+}
 function adminInboxOpenView(view){
   showView(view);
 }
@@ -14143,7 +14148,7 @@ function renderAdminInbox(){
           </section>
           <section class="abx-panel">
             <div class="abx-ph"><h4>Cierres</h4><span>${esc(period)}</span></div>
-            ${overdueDays.length?overdueDays.slice(0,4).map(day=>`<div class="abx-line"><span>${esc(fmt(day))}<small>Sin cierre de jornada</small></span><b class="warn">Atrasado</b></div>`).join(''):'<div class="abx-line"><span>Jornadas anteriores<small>Todas cerradas</small></span><b class="ok">Al día</b></div>'}
+            ${overdueDays.length?overdueDays.slice(0,4).map(day=>`<div class="abx-line"><span>${esc(fmt(day))}<small>Sin cierre de jornada</small></span><div class="abx-val"><button type="button" class="abx-mini" onclick="adminInboxOpenClosure(${jsArg(day)})">Revisar y cerrar</button></div></div>`).join(''):'<div class="abx-line"><span>Jornadas anteriores<small>Todas cerradas</small></span><b class="ok">Al día</b></div>'}
             ${overdueDays.length>4?`<p class="abx-more">y ${overdueDays.length-4} día(s) más</p>`:''}
             <div class="abx-line"><span>Hoy ${esc(fmt(isoToday))}<small>${window.DailyClosureModule?.isClosed?.(isoToday)?'Jornada cerrada':'Jornada abierta'}</small></span><b class="${window.DailyClosureModule?.isClosed?.(isoToday)?'ok':''}">${window.DailyClosureModule?.isClosed?.(isoToday)?'Cerrada':'En curso'}</b></div>
             <div class="abx-line"><span>Cierre de mes<small>${monthClosed?'Mes cerrado':`Faltan ${daysLeft} día(s)`}</small></span><b class="${monthClosed?'ok':''}">${monthClosed?'Cerrado':'Abierto'}</b></div>

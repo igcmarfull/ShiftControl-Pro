@@ -36,7 +36,7 @@ Fuentes de datos (todas ya existentes; no se agregó ninguna entidad ni tabla):
 - Incumplimientos de checklist de Tienda y checklists con observaciones: igual que antes.
 - Evaluaciones enviadas: `EvaluationModule`.
 - Ajustes de inventario pendientes: `InventoryApi.adjustments(companyId,'pending')`, agrupados por inventario. Se consulta de forma asíncrona (máx. una vez por minuto); si el servidor no tiene Inventarios habilitados o falla, simplemente no aparece esa fila.
-- Cierres atrasados: días de los últimos 14 con turnos planificados y sin cierre de jornada (`DailyClosureModule`), más el estado del mes (`MonthClosureModule`).
+- Cierres atrasados: días de los últimos 14 con turnos planificados y sin cierre de jornada (`DailyClosureModule`), más el estado del mes (`MonthClosureModule`). Cada día atrasado trae «Revisar y cerrar», que abre ese día en «Cierre del día» (no cierra nada por sí solo).
 
 No se muestran depósitos: el módulo no expone un estado de «sin arquear» verificable.
 La tarjeta de estado superior pasó a ser «Requiere atención» / «Todo al día» según haya urgentes (antes decía siempre «Operación estable»).
