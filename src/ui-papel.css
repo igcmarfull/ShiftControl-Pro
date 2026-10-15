@@ -1087,3 +1087,59 @@ body #settings .table-wrap table,body #settings .table-wrap tbody,body #settings
 body #settings .form-grid>label{display:block!important}
 body #settings .money-field-wrap{display:flex!important;flex-direction:row;align-items:center;gap:8px;width:100%}
 body #settings .money-field-wrap .field{width:auto!important;min-width:0;flex:1}
+
+/* ===== Facturas y compras (escritorio; el flujo móvil existente se mantiene) ===== */
+.inv-count{font-style:normal;opacity:.6;margin-left:6px;font-weight:600}
+@media (min-width:821px){
+ body #invoices .invoices-kpi-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+ body #invoices .invoices-kpi-card{display:flex;flex-direction:column;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:18px 20px!important;min-width:0}
+ body #invoices .invoices-kpi-card+.invoices-kpi-card{border-left:1px solid var(--line)!important}
+ body #invoices .invoices-kpi-head{display:flex;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:10px}
+ body #invoices .invoices-kpi-label{font-size:11px!important;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)!important}
+ body #invoices .invoices-kpi-icon{width:34px!important;height:34px!important;border-radius:10px!important}
+ body #invoices .invoices-kpi-icon svg{width:16px!important;height:16px!important}
+ body #invoices .invoices-kpi-value{font-size:26px!important;font-weight:650;letter-spacing:-.03em;color:var(--text)!important}
+ body #invoices .invoices-kpi-sub{font-size:12px;color:var(--muted)}
+ body #invoices .invoices-sparkline{height:20px!important;margin-top:8px!important;padding-top:0!important}
+ body #invoices .invoices-kpi-dots{display:none}
+ body #invoices .invoices-tabs-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:16px 0;padding:0;background:transparent;border:0;box-shadow:none}
+ body #invoices .invoices-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:0;background:transparent;border:0;box-shadow:none}
+ body #invoices .invoices-tab{padding:7px 14px;border:1px solid var(--line);border-radius:99px;background:var(--panel2);color:var(--muted);font-size:12.5px;font-weight:650;box-shadow:none}
+ body #invoices .invoices-tab:after{display:none}
+ body #invoices .invoices-tab.active{background:var(--pri-bg);color:var(--pri-fg);border-color:var(--pri-bg)}
+ body #invoices .invoices-filters{display:flex;gap:8px;align-items:center;flex:1;justify-content:flex-end;min-width:280px}
+ body #invoices .invoices-search-wrap{flex:1;max-width:420px}
+ body #invoices .invoices-search-wrap .field{width:100%}
+ body #invoices .invoices-main-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+ body #invoices .invoices-table-card{padding:20px 22px;min-width:0}
+ body #invoices .invoices-table-card .table-wrap{overflow:visible;border:0;background:transparent;box-shadow:none}
+ body #invoices .invoices-table-card table{width:100%;min-width:0!important;table-layout:auto}
+ body #invoices .invoices-table-card thead th{padding:0 6px 10px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:transparent;border:0;white-space:nowrap}
+ body #invoices .invoices-table-card tbody td{padding:12px 6px;border-top:1px solid var(--line);background:transparent;font-size:13px;vertical-align:middle}
+ body #invoices .invoices-table-card th:last-child,body #invoices .invoices-table-card td:last-child{text-align:right}
+ body #invoices .invoices-table-card td[data-label="Estado"]{white-space:nowrap}
+ body #invoices .invoices-row-actions{display:inline-flex;gap:4px;justify-content:flex-end}
+ body #invoices .invoices-icon-btn{width:28px;height:28px}
+ body #invoices .invoices-sidebar{display:flex;flex-direction:column;gap:16px}
+ body #invoices .invoices-sidebar .dashboard-panel{padding:20px 22px;min-width:0}
+ body #invoices .invoices-category-donut{position:relative}
+ body #invoices .invoices-category-donut:after{content:attr(data-total);position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--text)}
+}
+@media (min-width:821px){
+ body #invoices .invoices-main-grid{grid-template-columns:minmax(0,1fr) 300px!important}
+ body #invoices .invoices-table-card{padding:18px 16px 18px 20px!important}
+ body #invoices .invoices-table-card thead th{white-space:normal!important;line-height:1.25;vertical-align:bottom}
+ body #invoices .invoices-table-card thead th,body #invoices .invoices-table-card tbody td{padding-left:5px!important;padding-right:5px!important}
+ body #invoices .invoices-provider-cell small{white-space:nowrap}
+ body #invoices .invoices-provider-cell strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;display:block}
+ body #invoices .invoices-filters{display:flex!important;flex-wrap:nowrap!important;align-items:center;justify-content:flex-end;gap:8px;flex:1 1 auto;min-width:0!important}
+ body #invoices .invoices-search-wrap{flex:1 1 auto!important;max-width:420px;min-width:200px;width:auto!important}
+ body #invoices .invoices-filters-toggle-btn{flex:0 0 auto}
+ body #invoices .invoices-category-legend>*{gap:8px}
+ body #invoices .invoices-category-legend{min-width:0;overflow:hidden}
+}
+@media (min-width:821px){
+ body #invoices .invoices-composition{display:flex!important;flex-direction:column;align-items:stretch;gap:14px}
+ body #invoices .invoices-category-donut{margin:0 auto}
+ body #invoices .invoices-category-legend{width:100%;overflow:visible}
+}
