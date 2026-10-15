@@ -1,0 +1,69 @@
+/* Máquinas de café */
+#coffee .cf-root,#coffee{max-width:none}
+.cf-root{max-width:none}
+.cf-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cf-head h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.035em}
+.cf-head p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.cf-acts{display:flex;gap:8px}
+.cf-btn{padding:11px 16px;border-radius:12px;border:1px solid var(--pri-bg);background:var(--pri-bg);color:var(--pri-fg);font:inherit;font-weight:650;font-size:14px;cursor:pointer}
+.cf-btn.ghost{background:var(--panel);color:var(--text);border-color:var(--line)}
+.cf-btn:disabled{opacity:.5;cursor:not-allowed}
+.cf-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.cf-kpi{display:flex;gap:14px;align-items:center;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.cf-kpi i{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);font-style:normal;font-weight:800}
+.cf-kpi b{display:block;font-size:24px;font-weight:650;letter-spacing:-.04em;line-height:1.1}
+.cf-kpi span{display:block;margin-top:3px;font-size:12.5px;color:var(--muted);font-weight:600}
+.cf-main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.cf-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);min-width:0}
+.cf-h{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.cf-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--orange) 15%,transparent);color:var(--orange);font-size:22px}
+.cf-h h3{margin:0;font-size:16px}.cf-h small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.cf-tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.cf-tabs button{padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+.cf-tabs button.on{background:var(--pri-bg);color:var(--pri-fg);border-color:var(--pri-bg)}
+.cf-t{padding:4px 10px 12px}
+.cf-th,.cf-r{display:grid;grid-template-columns:minmax(0,1.1fr) 110px 80px 90px 100px minmax(0,1.3fr);gap:12px;align-items:center;padding:11px 10px;font-size:13px}
+.cf-th{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.cf-r{border-top:1px solid var(--line)}
+.cf-r b{font-variant-numeric:tabular-nums;font-weight:650}.cf-r small{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+.cf-st{padding:4px 10px;border-radius:99px;font-size:11.5px;font-weight:700;justify-self:start}
+.cf-st.ok{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green)}
+.cf-st.warn{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
+.cf-st.bad{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.cf-note{margin:12px 8px;padding:13px 15px;border-radius:13px;background:var(--panel2);border:1px dashed var(--line);color:var(--muted);font-size:13px;line-height:1.5}
+.cf-err{margin:8px 0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--red) 12%,var(--panel2));color:var(--red);font-size:13px}
+.cf-link{border:0;background:transparent;padding:0;color:var(--blue);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+.cf-f{padding:20px;display:grid;gap:12px}
+.cf-f h4{margin:0;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cf-f label,.cf-modal label{display:grid;gap:5px;font-size:12px;color:var(--muted);font-weight:600}
+.cf-f input,.cf-f select,.cf-modal input,.cf-modal select,.cf-modal textarea{padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);font:inherit;font-size:14px}
+.cf-big{font-size:22px!important;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cf-hint{padding:12px 14px;border-radius:13px;background:color-mix(in srgb,var(--blue) 8%,var(--panel2));border:1px solid color-mix(in srgb,var(--blue) 25%,var(--line));font-size:12.5px;line-height:1.5;color:var(--text)}
+.cf-kp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf-kp div{padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel2)}
+.cf-kp small{display:block;color:var(--muted);font-size:11px}.cf-kp b{display:block;margin-top:3px;font-size:16px}
+.cf-ov{position:fixed;inset:0;z-index:950;background:rgba(10,14,22,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:18px}
+.cf-modal{width:min(560px,100%);max-height:94vh;overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);padding:22px 24px;display:grid;gap:14px}
+.cf-modal h3{margin:0;font-size:20px;letter-spacing:-.02em}
+.cf-modal small{font-weight:400;font-size:11.5px}
+.cf-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cf-check{display:flex!important;align-items:center;gap:8px}
+.cf-foot{display:flex;justify-content:flex-end;gap:8px}
+@media (max-width:820px){.cf-kpis{grid-template-columns:1fr 1fr;gap:10px}.cf-main{grid-template-columns:1fr}.cf-th{display:none}.cf-r{grid-template-columns:1fr 1fr 1fr}.cf-r>:first-child,.cf-r>:last-child{grid-column:1/-1}.cf-two{grid-template-columns:1fr}.cf-head h1{font-size:25px}}
+.cf-f input,.cf-f select,.cf-modal input,.cf-modal select,.cf-modal textarea{width:100%;min-width:0;box-sizing:border-box}
+.cf-kpis,.cf-main{min-width:0}
+@media (max-width:820px){.cf-r [data-l]::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}.cf-r>[data-l]{display:block}}
+/* Gráfico de diferencia diaria */
+.cf-chart{margin:8px 8px 14px;padding:14px 14px 10px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+.cf-chart-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;font-size:13px}
+.cf-leg{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.cf-leg i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-left:8px}
+.cf-leg i.ok,.cf-bar.ok{background:var(--green);fill:var(--green)}
+.cf-leg i.bad,.cf-bar.bad{background:var(--red);fill:var(--red)}
+.cf-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.cf-band{fill:var(--green);opacity:.1}
+.cf-zero{stroke:var(--muted);stroke-width:1;opacity:.5}
+.cf-cx{fill:var(--muted);font-size:10.5px}
+.cf-cv{fill:var(--text);font-size:11px;font-weight:700}
+.cf-chart-n{margin:6px 0 0;color:var(--muted);font-size:11.5px}
+.cf-leg i.band{background:color-mix(in srgb,var(--green) 18%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}

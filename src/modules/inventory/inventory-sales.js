@@ -72,7 +72,7 @@ async function readFile(file){
 }
 
 /* ------------------------------------------------------------- estado */
-const S={open:false,busy:false,step:'pick',message:'',file:'',parsed:null,products:new Map(),existing:new Map(),preview:null,result:null,requestId:null};
+const S={open:false,busy:false,step:'pick',message:'',file:'',parsed:null,products:new Map(),machineCodes:new Set(),existing:new Map(),existingMachine:new Map(),preview:null,result:null,requestId:null};
 const isAdmin=()=>(typeof window.getAppRole==='function'?window.getAppRole():'')==='admin';
 
 async function loadProducts(){
@@ -81,8 +81,20 @@ async function loadProducts(){
   const lists=await Promise.all(inventories.map(inv=>A().products(inv.id).then(rows=>(rows||[]).map(row=>({...row,inventory_id:inv.id,inventory:inv.name})))));
   S.products=new Map(lists.flat().filter(product=>product.active).map(product=>[String(product.code),product]));
 }
+async function loadMachineCodes(){
+  S.machineCodes=new Set();
+  try{
+    const response=await client().from('coffee_machine_codes').select('pos_code').eq('company_id',companyId());
+    if(!response.error)(response.data||[]).forEach(row=>S.machineCodes.add(String(row.pos_code)));
+  }catch(_error){}
+}
 async function loadExisting(from,to){
   S.existing=new Map();
+  S.existingMachine=new Map();
+  try{
+    const machine=await client().from('coffee_sales').select('sold_on, pos_code, qty').eq('company_id',companyId()).gte('sold_on',from).lte('sold_on',to);
+    if(!machine.error)(machine.data||[]).forEach(row=>S.existingMachine.set(`${row.sold_on}|${row.pos_code}`,row.qty));
+  }catch(_error){}
   const response=await client().from('inv_sales_lines').select('sold_on, pos_code, qty_reported').eq('company_id',companyId()).gte('sold_on',from).lte('sold_on',to);
   if(response.error)throw response.error;
   (response.data||[]).forEach(row=>S.existing.set(`${row.sold_on}|${row.pos_code}`,row.qty_reported));
@@ -90,8 +102,14 @@ async function loadExisting(from,to){
 
 function buildPreview(){
   const lines=S.parsed.lines;
-  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,byProduct:new Map()};
+  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,byProduct:new Map(),machine:{lines:0,units:0}};
   lines.forEach(line=>{
+    if(S.machineCodes.has(line.code)){
+      const key=`${line.date}|${line.code}`;
+      if(S.existingMachine.has(key)){if(S.existingMachine.get(key)===line.qty)preview.already++;else preview.changed++;return}
+      preview.machine.lines++;preview.machine.units+=line.qty;
+      return;
+    }
     const product=S.products.get(line.code);
     if(!product){preview.noProduct.lines++;preview.noProduct.units+=line.qty;return}
     const key=`${line.date}|${line.code}`;
@@ -138,21 +156,21 @@ function render(){
     frame(`<h3>Importar ventas del POS</h3>
       <p class="sv-sub">${esc(S.file)} · ventas del ${esc(range)}</p>
       <div class="sv-sum"><span class="g">● ${fmt(pv.matched.length)} líneas con producto (${fmt(pv.units)} unidades)</span>
-        <span>${fmt(pv.noProduct.lines)} sin producto en Inventarios (se ignoran)</span>
+        ${pv.machine.lines?`<span class="g">${fmt(pv.machine.lines)} líneas de máquinas de café (${fmt(pv.machine.units)} vasos, solo para cuadrar el numeral)</span>`:''}<span>${fmt(pv.noProduct.lines)} sin producto en Inventarios (se ignoran)</span>
         ${pv.already?`<span>${fmt(pv.already)} ya cargadas</span>`:''}${pv.changed?`<span class="o">${fmt(pv.changed)} con otra cantidad (no se tocan)</span>`:''}
         ${pv.short?`<span class="r">${fmt(pv.short)} productos sin stock suficiente</span>`:''}</div>
       ${pv.products.length?`<div class="sv-t"><div class="sv-h"><span>Producto</span><span>Vendidas</span><span>Stock</span><span>Resultado</span></div>${rows}${pv.products.length>60?`<div class="sv-r"><small>… y ${pv.products.length-60} productos más</small></div>`:''}</div>`
         :'<p class="sv-note">Ninguna línea nueva coincide con un producto de Inventarios. Revisa que los productos tengan el código del POS.</p>'}
       <p class="sv-note">Se ignoran las ventas hasta el día del saldo inicial de cada producto (ese conteo ya las incluye). Si el stock no alcanza, se descuenta hasta cero y se avisa la diferencia.</p>
       ${S.message?`<p class="sv-err">${esc(S.message)}</p>`:''}
-      <div class="sv-f"><span></span><div class="sv-fa"><button type="button" class="inv-btn" data-sv="close">Cancelar</button><button type="button" class="inv-btn pri" data-sv="apply" ${pv.matched.length&&!S.busy?'':'disabled'}>${S.busy?'Descontando…':`Descontar ${fmt(pv.units)} unidades`}</button></div></div>`);
+      <div class="sv-f"><span></span><div class="sv-fa"><button type="button" class="inv-btn" data-sv="close">Cancelar</button><button type="button" class="inv-btn pri" data-sv="apply" ${(pv.matched.length||pv.machine.lines)&&!S.busy?'':'disabled'}>${S.busy?'Descontando…':(pv.units?`Descontar ${fmt(pv.units)} unidades`:'Registrar las ventas')}</button></div></div>`);
     return;
   }
   const r=S.result;
   const shorts=(r.shortfalls||[]).slice(0,12).map(item=>`<div class="sv-r"><div><b>${esc(item.name)}</b><small>${esc(dmy(item.date))} · código ${esc(item.code)}</small></div><div class="sv-n bad"><b>faltaron ${fmt(item.sold-item.applied)}</b><small>de ${fmt(item.sold)} vendidas</small></div></div>`).join('');
   frame(`<h3>Ventas descontadas</h3>
     <p class="sv-sub">${fmt(r.applied_lines)} líneas · ${fmt(r.units_applied)} unidades descontadas del stock.</p>
-    <div class="sv-sum">${r.already?`<span>${fmt(r.already)} ya estaban cargadas</span>`:''}${r.no_product?`<span>${fmt(r.no_product)} sin producto (ignoradas)</span>`:''}${r.before_opening?`<span>${fmt(r.before_opening)} anteriores al saldo inicial (ignoradas)</span>`:''}${r.no_access?`<span>${fmt(r.no_access)} de otra área (ignoradas)</span>`:''}${(r.changed||[]).length?`<span class="o">${r.changed.length} con otra cantidad (no se tocaron)</span>`:''}</div>
+    <div class="sv-sum">${r.already?`<span>${fmt(r.already)} ya estaban cargadas</span>`:''}${r.machine_lines?`<span class="g">${fmt(r.machine_lines)} líneas de máquinas de café registradas (${fmt(r.machine_units)} vasos)</span>`:''}${r.no_product?`<span>${fmt(r.no_product)} sin producto (ignoradas)</span>`:''}${r.before_opening?`<span>${fmt(r.before_opening)} anteriores al saldo inicial (ignoradas)</span>`:''}${r.no_access?`<span>${fmt(r.no_access)} de otra área (ignoradas)</span>`:''}${(r.changed||[]).length?`<span class="o">${r.changed.length} con otra cantidad (no se tocaron)</span>`:''}</div>
     ${(r.shortfalls||[]).length?`<p class="sv-note">El stock no alcanzó para ${r.shortfalls.length} ${r.shortfalls.length===1?'línea':'líneas'}: se descontó hasta cero. Suele indicar un saldo inicial o una recepción sin cargar.</p><div class="sv-t">${shorts}${r.shortfalls.length>12?`<div class="sv-r"><small>… y ${r.shortfalls.length-12} más</small></div>`:''}</div>`:''}
     <div class="sv-f"><span></span><button type="button" class="inv-btn pri" data-sv="close">Listo</button></div>`);
 }
@@ -166,6 +184,7 @@ async function onFile(file){
     S.file=file.name;
     S.parsed=await readFile(file);
     await loadProducts();
+    await loadMachineCodes();
     const dates=S.parsed.lines.map(line=>line.date).sort();
     try{await loadExisting(dates[0],dates[dates.length-1])}catch(_error){S.existing=new Map()}
     buildPreview();
@@ -175,7 +194,7 @@ async function onFile(file){
   }finally{S.busy=false;render()}
 }
 async function apply(){
-  if(S.busy||!S.preview?.matched.length)return;
+  if(S.busy||!(S.preview?.matched.length||S.preview?.machine.lines))return;
   S.busy=true;S.message='';render();
   if(!S.requestId)S.requestId=A().uuid();
   try{
