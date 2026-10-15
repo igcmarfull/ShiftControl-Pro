@@ -18,7 +18,8 @@ const MESSAGES={
   already_reversed:'Este movimiento ya fue corregido.',
   count_closed:'Este conteo ya fue enviado.',
   request_reuse:'La operación ya se había usado. Vuelve a intentarlo.',
-  has_stock:'No se puede desactivar un producto con stock.'
+  has_stock:'No se puede desactivar un producto con stock.',
+  invalid_image:'La foto no pertenece a este producto.'
 };
 
 class InventoryError extends Error{
@@ -113,6 +114,51 @@ async function rpc(name,args){
   return response.data;
 }
 
+// --- Fotos de productos (bucket privado; solo el administrador sube) ---
+const PHOTO_BUCKET='shiftcontrol-product-photos';
+const PHOTO_URL_TTL=3600;
+
+function photoError(error,fallback){
+  const raw=String(error?.message||'');
+  if(/row-level security|not allowed|policy/i.test(raw))return new InventoryError({code:'forbidden',message:'No tienes permiso para cambiar fotos.'});
+  if(/exceeded|too large|payload/i.test(raw))return new InventoryError({code:'photo_too_large',message:'La foto es demasiado pesada.'});
+  if(/mime|type/i.test(raw))return new InventoryError({code:'photo_type',message:'Ese formato de imagen no está permitido.'});
+  if(error instanceof InventoryError)return error;
+  return new InventoryError({code:'photo_failed',message:fallback,network:!navigator.onLine});
+}
+
+// Sube la foto ya procesada y devuelve su ruta: <empresa>/<inventario>/<producto>/<marca>.<ext>
+async function uploadProductPhoto(companyId,inventoryId,productId,blob){
+  const ext=blob.type==='image/jpeg'?'jpg':blob.type==='image/png'?'png':'webp';
+  const path=`${companyId}/${inventoryId}/${productId}/${Date.now().toString(36)}.${ext}`;
+  let response;
+  try{
+    response=await client().storage.from(PHOTO_BUCKET).upload(path,blob,{contentType:blob.type,cacheControl:'31536000',upsert:false});
+  }catch(error){throw photoError(error,'No se pudo subir la foto.')}
+  if(response.error)throw photoError(response.error,'No se pudo subir la foto.');
+  return path;
+}
+
+// Borra archivos que ya no se usan. Nunca lanza: una foto huérfana no afecta a nadie.
+async function removeProductPhotos(paths){
+  const list=(paths||[]).filter(Boolean);
+  if(!list.length)return;
+  try{await client().storage.from(PHOTO_BUCKET).remove(list)}catch(_error){}
+}
+
+// URLs firmadas de varias fotos a la vez: {ruta: url|null}.
+async function signedPhotoUrls(paths){
+  const list=[...new Set((paths||[]).filter(Boolean))];
+  const out={};
+  if(!list.length)return out;
+  try{
+    const response=await client().storage.from(PHOTO_BUCKET).createSignedUrls(list,PHOTO_URL_TTL);
+    (response.data||[]).forEach(row=>{out[row.path]=row.error?null:row.signedUrl});
+  }catch(_error){}
+  list.forEach(path=>{if(!(path in out))out[path]=null});
+  return out;
+}
+
 const Api={
   InventoryError,
   classify,
@@ -156,6 +202,13 @@ const Api={
   setProductActive:(productId,active,version)=>rpc('inv_set_product_active',{
     p_product_id:productId,p_active:active,p_expected_version:version
   }),
+  setProductImage:(productId,path,version)=>rpc('inv_set_product_image',{
+    p_product_id:productId,p_image_path:path||null,p_expected_version:version
+  }),
+  uploadProductPhoto,
+  removeProductPhotos,
+  signedPhotoUrls,
+  PHOTO_URL_TTL,
   opening:(requestId,inventoryId,lines)=>rpc('inv_register_opening',{
     p_request_id:requestId,p_inventory_id:inventoryId,p_lines:lines
   }),
