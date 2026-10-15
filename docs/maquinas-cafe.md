@@ -18,6 +18,10 @@ Estados: «Cuadra», «Fuera de tolerancia» (la diferencia pasa la tolerancia),
 
 **Precisión:** como el informe del POS corta alrededor de las 22:57 y el numeral se anota en el turno que lo envían, la diferencia puede incluir vasos de otra franja horaria. Se decidió que no importa el turno; la tolerancia absorbe esa diferencia.
 
+## Cómo se cargan las ventas de café
+
+Con el mismo Excel del POS y el botón «Importar ventas», que está en Inventarios (Tienda y Cigarrillos) y en la propia pantalla de Máquinas de café. La importación reconoce los códigos de cada máquina y los guarda aparte (sin descontar stock); en la vista previa aparecen como «líneas de máquinas de café». Subir el mismo día dos veces no duplica.
+
 ## Logo de la máquina
 
 - **Código en el repositorio:** «Subir logo / Cambiar logo / Quitar logo» en «Configurar máquina» (solo administrador), con el mismo procesado de imagen que los logos de proveedores (`InvoiceLogos.processLogo`: un logo con fondo de color llena todo el recuadro). Se muestra en el encabezado de la máquina; sin logo queda el ícono de taza.
