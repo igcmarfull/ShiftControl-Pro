@@ -1246,3 +1246,38 @@ body #finance .finance-approval-actions .btn{padding:8px 14px;font-size:13px}
  body #finance .finance-approval-actions{justify-content:flex-start}
  body #finance .finance-approval-actions .btn{flex:1}
 }
+
+/* ===== Trabajadores (escritorio; el flujo móvil existente se mantiene) ===== */
+@media (min-width:801px){
+ body #employees.view.active{display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start}
+ body #employees .topbar{flex:1 1 100%;margin:0}
+ body #employees .toolbar.v37-employee-search-wrap{display:block!important;flex:1 1 280px;max-width:420px;margin:0;padding:0;background:transparent;border:0}
+ body #employees .toolbar.v37-employee-search-wrap .field{display:block!important;visibility:visible!important;height:auto;width:100%;padding:10px 14px;border-radius:11px;background:var(--panel)}
+ body #employees .v39-employee-filters{display:flex!important;gap:2px;padding:3px;margin:0;border:1px solid var(--line);border-radius:11px;background:var(--panel2);overflow:visible}
+ body #employees .v39-employee-filters button{padding:6px 13px;min-height:0;border:0;border-radius:9px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+ body #employees .v39-employee-filters button.active{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+ body #employees .employees-desktop-table{flex:1 1 100%;padding:6px 22px 12px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:visible}
+ body #employees .employees-desktop-table table{width:100%;min-width:0!important}
+ body #employees .employees-desktop-table thead th{padding:14px 8px 10px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:transparent;border:0;position:sticky;top:0}
+ body #employees .employees-desktop-table tbody td{padding:12px 8px;border-top:1px solid var(--line);background:transparent;vertical-align:middle}
+ body #employees .employees-desktop-table tbody tr:hover td{background:color-mix(in srgb,var(--panel2) 70%,transparent)}
+ body #employees .employees-desktop-table td:nth-child(2),body #employees .employees-desktop-table td:nth-child(5){color:var(--muted)}
+ body #employees .employees-desktop-table .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;background:color-mix(in srgb,var(--c) 15%,transparent)!important;color:var(--c)!important;border:0}
+ body #employees .employees-desktop-table .badge.bA{--c:var(--blue)}
+ body #employees .employees-desktop-table .badge.bB{--c:var(--orange)}
+ body #employees .employees-desktop-table .badge.bC{--c:var(--purple)}
+ body #employees .employees-desktop-table .badge[data-hours]:after{content:attr(data-hours);font-weight:500;opacity:.85}
+ body #employees .employees-desktop-table .status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;border:0}
+ body #employees .employees-desktop-table .status.s-ok{background:color-mix(in srgb,var(--green) 15%,transparent)!important;color:var(--green)!important}
+ body #employees .employees-desktop-table .status.s-ok:before{content:"●";font-size:9px}
+ body #employees .employees-desktop-table .status.s-bad{background:color-mix(in srgb,var(--red) 14%,transparent)!important;color:var(--red)!important}
+ body #employees .tw-tag{padding:2px 9px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);font-size:11px;font-weight:700;color:var(--muted)}
+ body #employees .employees-desktop-table .row-actions{justify-content:flex-end;flex-wrap:nowrap}
+ body #employees .employees-desktop-table .icon-btn{padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:650}
+ body #employees .employees-desktop-table .row-actions .icon-btn:last-child{border-color:color-mix(in srgb,var(--red) 30%,var(--line));background:transparent;color:var(--red)}
+ body #employees .employees-desktop-table th:last-child{text-align:right}
+}
+@media (min-width:801px){
+ body #employees .toolbar.v37-employee-search-wrap:before,body #employees .toolbar.v37-employee-search-wrap:after{display:none!important;content:none!important}
+}
+@media (min-width:801px){ body #employees .v19-search-toggle{display:none!important} }
