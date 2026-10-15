@@ -6496,6 +6496,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <div><h2>Facturas y Compras</h2><p>Gestiona tus compras, facturas y vencimientos.</p></div>
         <div class="actions">
           <button class="btn" onclick="exportInvoicesCSV()"><svg class="invoices-btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>Exportar CSV</button>
+          <button class="btn" onclick="InvoicePdf.pick()">Subir factura (PDF)</button>
           <button class="btn primary" onclick="openInvoiceModal()">＋ Nueva factura</button>
         </div>
       </div>
@@ -18116,6 +18117,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/modules/suppliers/suppliers.js"></script>
 <script src="src/modules/suppliers/suppliers-ui.js"></script>
 <script src="src/modules/suppliers/suppliers-invoice.js"></script>
+<script src="src/modules/invoices/invoice-pdf.js"></script>
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/ui-papel.js"></script>
 <script src="src/ui-workcenter.js"></script>

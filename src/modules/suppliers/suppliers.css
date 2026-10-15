@@ -134,7 +134,7 @@ body.su-lock{overflow:hidden}
 }
 
 /* Selector de proveedor en «Nueva factura» */
-.si-group{position:relative}
+.si-group{position:relative;align-self:start}
 .si-panel{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:6px;max-height:300px;overflow:auto}
 .si-panel[hidden],.si-hint[hidden]{display:none}
 .si-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer;font-family:inherit}
@@ -147,3 +147,9 @@ body.su-lock{overflow:hidden}
 .si-logo.ini{background:var(--c);color:#fff;font-size:12px;font-weight:800}
 .si-plus{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--pri-bg);color:var(--pri-fg);font-size:18px}
 .si-hint{margin-top:6px;font-size:12px;color:var(--muted)}
+
+/* Lectura de factura PDF en «Nueva factura» */
+.ip-banner{padding:11px 14px;border-radius:13px;font-size:12.5px;line-height:1.5;border:1px solid color-mix(in srgb,var(--green) 35%,var(--line));background:color-mix(in srgb,var(--green) 9%,var(--panel2));color:var(--text)}
+.ip-banner.warn{border-color:color-mix(in srgb,var(--orange) 45%,var(--line));background:color-mix(in srgb,var(--orange) 11%,var(--panel2))}
+.ip-banner.info{border-color:var(--line);background:var(--panel2);color:var(--muted)}
+.ip-link{border:0;background:transparent;padding:0;color:var(--blue);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}

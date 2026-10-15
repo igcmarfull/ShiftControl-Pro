@@ -26,3 +26,13 @@ Fuera de `state` y de `save()`: tabla `public.suppliers` en Supabase, escrita so
 ## Verificación realizada
 
 Playwright con Supabase simulado (importar, editar, logo, duplicados, inactivos, móvil, selector en factura) y 40 comprobaciones SQL en Postgres local. Tras aplicarla en producción solo se comprobó el esquema y los permisos; no se creó ningún proveedor real desde la aplicación.
+
+## Subir factura en PDF
+
+- **Activo:** botón «Subir factura (PDF)» en Facturas y compras (`src/modules/invoices/invoice-pdf.js`, `window.InvoicePdf`). También se puede arrastrar el PDF sobre «Nueva factura».
+- Lee solo PDFs **con texto** (factura electrónica). Completa proveedor, RUT, número, emisión, vencimiento y total, adjunta el PDF como respaldo y no guarda nada: la persona revisa y guarda. Avisa si la factura (mismo RUT y número) ya existe, y ofrece crear el proveedor si su RUT no está registrado.
+- Cuenta las líneas de detalle y avisa si su suma no coincide con el monto neto. Las líneas **no** se guardan ni alimentan Inventarios.
+- Un PDF escaneado o una foto no se puede leer: se adjunta igual y los datos se escriben a mano.
+- **Dependencia externa:** carga `pdfjs-dist@3.11.174` desde `cdn.jsdelivr.net` solo al usar la función (la app ya carga Supabase desde ese mismo CDN). Sin conexión a ese CDN la lectura falla y el formulario se completa a mano.
+- **Verificado:** con una factura electrónica de BAT Chile (28 líneas; la suma coincide con el neto) y con un PDF sin texto. Otros formatos de proveedor no se han probado: RUT, folio, fechas y total son estándar, pero un diseño distinto puede dejar campos vacíos.
+- **Trabajo futuro (no implementado):** convertir las líneas en recepción de Inventarios con una tabla código de proveedor → producto; leer fotos y escaneos.
