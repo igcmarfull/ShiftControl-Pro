@@ -108,3 +108,19 @@ Estado: **la migración `20261015164843_inventory_product_photos.sql` está apli
 - **Pruebas**: `supabase/tests/inventario_fotos_local.sql` (base local desechable, 25 comprobaciones: permisos por rol, otra empresa, rutas inválidas, versión, auditoría y políticas de Storage).
 - **Reversión**: `supabase/rollback/20261015164843_inventory_product_photos.rollback.sql` (borra las fotos y la columna; el resto del módulo no cambia).
 - **Derechos de las imágenes**: el sistema no trae fotos. Cada foto la sube el administrador; las de internet o de terceros pueden tener derechos de autor y las cajetillas traen advertencias gráficas obligatorias.
+
+## Importar ventas del POS (descuenta stock)
+
+- **Código en el repositorio:** `src/modules/inventory/inventory-sales.js` y `.css`, botón «Importar ventas» en Tienda y Cigarrillos (no en Lubricantes), `InventoryApi.applySales`, tipo de movimiento «Venta» y filtro «Ventas» en Movimientos.
+- **Migración `20261016120000_inventory_sales_import.sql`: aplicada en producción** (verificado: RLS activa con una política de lectura, sin escritura directa, función solo para `authenticated`, tabla y movimientos de venta vacíos). Agrega el tipo de movimiento `sale`, la tabla `inv_sales_lines` y la función `inv_apply_sales`. Si faltara, el botón abre la pantalla pero al confirmar el servidor responde que la función no existe. Reversión: `supabase/rollback/20261016120000_inventory_sales_import.rollback.sql` (se niega a correr si ya hay ventas registradas). Pruebas SQL locales: `supabase/tests/inventario_ventas_local.sql`.
+- **Formato:** el «Informe de Ventas por Artículos» del POS en Excel (columnas Fecha contable, Código, Descripción y Cantidad). Se lee en el navegador con SheetJS (`xlsx@0.18.5`, cargado desde `cdn.jsdelivr.net` solo al usarlo). Un archivo con otro formato se rechaza.
+- **Emparejamiento:** por el código del POS, que debe ser el código del producto en Inventarios. Las líneas sin producto se ignoran y se cuentan; no se crean productos.
+- **Reglas del servidor:**
+  - Una línea ya cargada (misma fecha y código) no se vuelve a descontar. Si el archivo trae otra cantidad para ese día, se informa y no se toca.
+  - Si el stock no alcanza, se descuenta hasta cero y se informa la diferencia; nunca queda negativo.
+  - Se ignoran las ventas hasta el día del saldo inicial de cada producto (ese conteo ya las incluye). Las del propio día del saldo inicial también se ignoran: puede subestimar lo vendido después del conteo hasta el siguiente inventario.
+  - El administrador aplica a cualquier inventario; una jefa solo al de su área. Cada aplicación queda en la auditoría de Inventarios.
+  - Corregir un movimiento de venta devuelve el stock, pero la línea sigue registrada como cargada y no se vuelve a descontar.
+- **Alcance real de la primera versión:** el servidor aplica cualquier producto que exista con ese código; el alcance «cigarros, Red Bull, Monster, café y hot dog» depende de cuáles productos estén creados en Inventarios. Requiere cargar antes el saldo inicial de esos productos.
+- **Verificado:** Playwright con Supabase simulado y el informe real del POS (300 líneas), más 30 comprobaciones SQL en Postgres local. Sin probar con una importación real en producción ni con el rol de jefa en el navegador.
+- **Trabajo futuro (no implementado):** insumos de café y hot dog (hoy se controlan los vasos y unidades vendidas), alertas de diferencia, marcar productos sensibles.

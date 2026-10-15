@@ -9,10 +9,10 @@ const Api=window.InventoryApi;
 if(!Api)return;
 
 const KIND_LABEL={
-  opening:'Saldo inicial',receipt:'Recepción',issue:'Salida',waste:'Merma',
+  opening:'Saldo inicial',receipt:'Recepción',issue:'Salida',waste:'Merma',sale:'Venta',
   transfer_out:'Traslado (sale)',transfer_in:'Traslado (entra)',adjustment:'Ajuste aprobado',reversal:'Corrección'
 };
-const KIND_TONE={receipt:'ok',opening:'info',waste:'or',issue:'',transfer_out:'',transfer_in:'',adjustment:'info',reversal:'pu'};
+const KIND_TONE={receipt:'ok',opening:'info',waste:'or',sale:'',issue:'',transfer_out:'',transfer_in:'',adjustment:'info',reversal:'pu'};
 const WASTE_REASONS=['Vencimiento','Daño','Manipulación','Otra causa justificada'];
 const ISSUE_REASONS=['Degustación autorizada','Uso interno','Consumo de la estación','Otra causa justificada'];
 const POLL_MS=20000;
@@ -83,7 +83,7 @@ const ICONS={
   arrow:'<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
   check:'<path d="M5 12l5 5 9-10"/>'
 };
-const KIND_ICON={opening:'opening',receipt:'receipt',issue:'issue',waste:'waste',transfer_out:'transfer',transfer_in:'transfer',adjustment:'adjustment',reversal:'reversal'};
+const KIND_ICON={opening:'opening',receipt:'receipt',issue:'issue',sale:'issue',waste:'waste',transfer_out:'transfer',transfer_in:'transfer',adjustment:'adjustment',reversal:'reversal'};
 const ico=name=>`<svg class="inv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name]||ICONS.box}</svg>`;
 const tile=(name,tone,size)=>`<span class="inv-tile${size?` ${size}`:''}${tone?` ${tone}`:''}" aria-hidden="true">${ico(name)}</span>`;
 
@@ -619,7 +619,7 @@ function viewInventory(){
   if(!item)return viewHome();
   const products=(S.products[item.id]||[]).filter(product=>product.active);
   const subTabs=`<div class="inv-chips" style="margin-bottom:14px">${[['products','Productos'],['receipts','Recepciones'],['reports','Reportes']].map(([key,label])=>`<button class="inv-chip ${S.sub===key?'on':''}" data-sub="${key}">${label}</button>`).join('')}</div>`;
-  const actions=`<button class="inv-btn" data-act="receive" data-code="${item.code}">Recepción</button><button class="inv-btn pri" data-act="count" data-code="${item.code}">Tomar inventario</button>${isAdmin()?`<button class="inv-btn" data-act="product-new" data-code="${item.code}">+ Producto</button><button class="inv-btn" data-act="opening" data-code="${item.code}">Saldo inicial</button>`:''}`;
+  const actions=`<button class="inv-btn" data-act="receive" data-code="${item.code}">Recepción</button>${item.code==='lubricantes'?'':'<button class="inv-btn" data-act="sales-import">Importar ventas</button>'}<button class="inv-btn pri" data-act="count" data-code="${item.code}">Tomar inventario</button>${isAdmin()?`<button class="inv-btn" data-act="product-new" data-code="${item.code}">+ Producto</button><button class="inv-btn" data-act="opening" data-code="${item.code}">Saldo inicial</button>`:''}`;
   let content='';
   if(S.sub==='products'){
     content=`<div class="inv-tools"><label class="inv-search"><span class="inv-dim inv-sico">${ico('search')}</span><input id="invQ" type="search" placeholder="${item.code==='cigarrillos'?'Buscar marca, variedad o código':item.code==='lubricantes'?'Buscar marca, viscosidad o SKU':'Buscar producto, código o código de barras'}" value="${esc(S.filters.q)}" autocomplete="off"></label>
@@ -667,7 +667,7 @@ function reportsHtml(item){
 
 function viewMovements(){
   const filters=[['todos','Todos'],...invList().map(item=>[item.id,item.name])];
-  const kinds=[['','Todos'],['receipt','Recepciones'],['waste','Mermas'],['issue','Salidas'],['adjustment','Ajustes'],['reversal','Correcciones']];
+  const kinds=[['','Todos'],['receipt','Recepciones'],['waste','Mermas'],['issue','Salidas'],['sale','Ventas'],['adjustment','Ajustes'],['reversal','Correcciones']];
   const rows=S.movs.map(m=>{
     const reversed=m.reversed;
     return `<tr class="${reversed?'inv-void':''}"><td data-l="Fecha" class="inv-dim hid nw">${fstamp(m.created_at)}</td><td data-l="Tipo"><span class="inv-pill ${KIND_TONE[m.kind]||''}">${KIND_LABEL[m.kind]||m.kind}</span></td>
@@ -1745,6 +1745,7 @@ function init(){
   sync();
 }
 
+window.addEventListener('inventory:changed',()=>{if(S.companyId)refreshSilently()});
 window.InventoryUI={init,onShow,onHide,state:S};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
 else init();
