@@ -231,3 +231,15 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 Solo presentación. `src/ui-audit.js` (cargado tras `ui-employees.js`) envuelve `window.renderAudit()` y redibuja `#auditList`: registros agrupados por día («Hoy», «Ayer», fecha), con ícono y hora; filtros por tipo (Planificación, Asistencia, Pagos, Cierres, Reportes, Otros) deducidos por expresiones regulares sobre el texto de `item.action` —no se guarda nada nuevo y lo que no coincide va a «Otros»—; las series consecutivas de «Jornada cerrada para …» del mismo día se agrupan en una fila desplegable; y paginación de 40 en 40 («Ver más movimientos»). Añade la tarjeta «Hoy» (movimientos del día) a las cifras. La búsqueda (`#auditSearch`), `exportAuditCSV()` y `clearAudit()` (con su confirmación) no cambian; la exportación sigue incluyendo todos los registros. El resto es CSS en `src/ui-papel.css`; «Limpiar historial» pasa a un estilo rojo tenue.
 
 Verificación: pruebas en navegador con datos simulados (73 registros; claro/oscuro, escritorio y celular): los filtros, la búsqueda, el grupo desplegable y «Ver más» funcionan, «Limpiar historial» sigue pidiendo confirmación (se canceló en la prueba), sin errores de consola. No se probó la exportación ni el borrado real.
+
+## Bandeja ADMIN en celular
+
+Solo presentación y solo hasta 820 px (escritorio sin cambios). `src/ui-inbox.js` envuelve `renderAdminInbox` y, tras el render original:
+
+- marca la primera fila si es "Urgente" (`lead`) y las filas con una sola acción (`single`); en celular tocar una fila `single` dispara su botón;
+- atenúa las pestañas con contador 0;
+- hace tocables los KPI (llevan a su sección);
+- si "Dinero pendiente" está todo en 0, agrega la franja "Todo al día" y oculta las filas en 0;
+- en "Cierres" deja 3 días visibles y agrega "Ver todos los cierres (N)" hacia `daily-summary`.
+
+El resto es CSS en `src/ui-papel.css` (bloques "Bandeja ADMIN en celular"): KPI compactos, pestañas con scroll horizontal, orden de paneles (actividad al final, 3 entradas). Para revertir basta quitar el script de `index.html` y esos bloques CSS.
