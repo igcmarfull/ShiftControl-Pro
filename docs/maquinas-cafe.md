@@ -5,7 +5,7 @@ Módulo `src/modules/coffee/` (vista `coffee`, menú Tienda → Máquinas de caf
 ## Estado
 
 - **Código en el repositorio:** pantalla, formulario del numeral, configuración de máquinas, cuadratura, y registro de las ventas de máquinas en la importación de ventas (`inventory-sales.js`).
-- **Migración `20261016180000_coffee_machines.sql`: NO aplicada en producción.** Sin ella la pantalla dice «todavía no están habilitadas» y la importación de ventas ignora los códigos de café como cualquier código sin producto.
+- **Migración `20261016180000_coffee_machines.sql`: aplicada SOLO EN PARTE en producción (15-10-2026).** Se crearon las cuatro tablas con RLS y `coffee_can_access` (registrada como `coffee_machines_tables_and_functions`, aunque solo contiene tablas). **Faltan** `coffee_machine_save`, `coffee_save_reading`, `coffee_reconcile` y la versión nueva de `inv_apply_sales`: al aplicarlas, la llamada al servidor de Supabase se quedó sin responder (más de 60 s) sin dejar errores en los registros, y también `drop function` de dos funciones de prueba (`coffee_probe`, `coffee_probe2`, inofensivas y por borrar). Mientras tanto la pantalla falla al guardar y la importación de ventas funciona como antes (ignora los códigos de café). Para completar: ejecutar el SQL de las funciones de `20261016180000_coffee_machines.sql` (desde `create function public.coffee_machine_save` hasta el final) en el editor SQL de Supabase y borrar las dos funciones de prueba.
 - **No integrado (trabajo futuro):** alerta en la Bandeja ADMIN, cuadratura por turno (el informe del POS viene por día), reportes en CSV.
 
 ## Qué hace
