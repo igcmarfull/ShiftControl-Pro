@@ -23,7 +23,7 @@
     ['Operación',[['daily-summary','Cierre del día'],['today','Operación del día'],['dashboard','Centro ejecutivo'],['workcenter','Centro de trabajo'],['actual','Registro real'],['execution','Ejecución diaria'],['absences','Ausencias y cobertura'],['incidents','Incidencias'],['checklists','Checklist operativo'],['handoff','Entrega de turno']]],
     ['Planificación',[['planning','Planificación'],['weekly','Vista semanal'],['employees','Trabajadores'],['evaluations','Evaluaciones']]],
     ['Administración',[['additional','Jornadas adicionales'],['finance','Finanzas'],['team','Equipo de estación'],['reports','Reportes'],['audit','Historial'],['settings','Configuración']]],
-    ['Tienda',[['invoices','Facturas y compras'],['inventory','Inventarios']]]
+    ['Tienda',[['invoices','Facturas y compras'],['suppliers','Proveedores'],['inventory','Inventarios']]]
   ];
   const menuState={open:new Set(['Operación']),query:''};
   let menuArgs=null;
