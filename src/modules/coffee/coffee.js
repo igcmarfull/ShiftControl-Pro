@@ -13,6 +13,8 @@ const client=()=>window.ShiftControlAuth?.getClient?.();
 const companyId=()=>window.AuthContext?.get?.()?.companyId||null;
 const isAdmin=()=>window.ShiftControlPermissions?.getRole?.()==='ADMIN';
 const SHIFTS=['A','B','C'];
+const BUCKET='shiftcontrol-machine-logos';
+const URL_TTL=3600;
 const MESSAGES={
   forbidden:'No tienes permiso para esto.',already_read:'Ya hay una lectura de ese turno. Solo el administrador la corrige.',
   duplicate_name:'Ya existe una máquina con ese nombre.',duplicate_code:'Un código ya pertenece a otra máquina.',
@@ -20,7 +22,37 @@ const MESSAGES={
 };
 
 const S={status:'idle',machines:[],codes:[],readings:[],selected:null,rec:null,loading:false,layer:false,form:null,message:'',busy:false};
-const cache=new Map();
+const urls={};
+const pendingUrls=new Set();
+let urlTimer=null;
+// URLs firmadas del bucket privado de logos, pedidas en lote.
+function logoUrl(path){
+  if(!path)return null;
+  const hit=urls[path];
+  if(hit&&hit.exp>Date.now())return hit.url;
+  if(!pendingUrls.has(path)){
+    pendingUrls.add(path);
+    clearTimeout(urlTimer);
+    urlTimer=setTimeout(async()=>{
+      const paths=[...pendingUrls];
+      let rows=[];
+      try{rows=(await client().storage.from(BUCKET).createSignedUrls(paths,URL_TTL))?.data||[]}catch(_error){}
+      const fresh=Date.now()+(URL_TTL-300)*1000;
+      paths.forEach(path=>{
+        const row=rows.find(entry=>entry.path===path);
+        const url=row&&!row.error?row.signedUrl:null;
+        urls[path]={url,exp:url?fresh:Date.now()+60000};
+        pendingUrls.delete(path);
+      });
+      render();
+    },60);
+  }
+  return hit?hit.url:null;
+}
+const icon=(m,cls)=>{
+  const url=logoUrl(m.logo_path);
+  return url?`<span class="cf-ic logo ${cls||''}"><img src="${esc(url)}" alt="" decoding="async"></span>`:`<span class="cf-ic ${cls||''}">☕</span>`;
+};
 
 function toError(error){
   const raw=String(error?.message||'');
@@ -163,7 +195,7 @@ function render(){
   const tabs=S.machines.filter(item=>item.active||isAdmin()).map(item=>`<button type="button" class="${item.id===S.selected?'on':''}" data-cf="tab" data-id="${esc(item.id)}">${esc(item.name)}${item.active?'':' (inactiva)'}</button>`).join('');
   const codes=S.codes.filter(code=>code.machine_id===m.id).length;
   root.innerHTML=`${head}${S.rec?kpis(S.rec.rows,m):''}
-    <div class="cf-main"><div class="cf-card"><div class="cf-h"><span class="cf-ic">☕</span><div><h3>${esc(m.name)}</h3><small>${codes} producto${codes===1?'':'s'} del POS</small></div><div class="cf-tabs">${tabs}</div></div><div class="cf-t">${S.loading?'<div class="cf-note">Cargando…</div>':chartHtml(S.rec?.rows||[],m)+tableHtml(m)}</div></div>${formHtml(m)}</div>`;
+    <div class="cf-main"><div class="cf-card"><div class="cf-h">${icon(m)}<div><h3>${esc(m.name)}</h3><small>${codes} producto${codes===1?'':'s'} del POS</small></div><div class="cf-tabs">${tabs}</div></div><div class="cf-t">${S.loading?'<div class="cf-note">Cargando…</div>':chartHtml(S.rec?.rows||[],m)+tableHtml(m)}</div></div>${formHtml(m)}</div>`;
 }
 
 /* ------------------------------------------------------------ acciones */
@@ -196,6 +228,7 @@ function openConfig(isNew){
     <label>Nombre<input id="cfName" value="${esc(m.name)}" maxlength="60"></label>
     <label>Tolerancia (vasos)<input id="cfTol" type="number" min="0" max="500" value="${esc(m.tolerance)}"><small>Diferencia aceptada entre lo que avanzó el numeral y lo vendido, por tramo.</small></label>
     <label>Códigos del POS que pasan por esta máquina<textarea id="cfCodes" rows="3" placeholder="Un código por línea o separados por coma">${esc(codes.join('\n'))}</textarea><small>Cada venta de estos códigos cuenta como un vaso. No descuentan stock.</small></label>
+    ${isNew?'<small>Después de crear la máquina puedes agregarle un logo.</small>':`<div class="cf-logorow">${icon(m,'lg')}<div class="cf-logobtns"><input type="file" id="cfLogoFile" accept="image/jpeg,image/png,image/webp" hidden><button type="button" class="cf-btn ghost" data-cf="logo">${m.logo_path?'Cambiar logo':'Subir logo'}</button>${m.logo_path?'<button type="button" class="cf-btn ghost" data-cf="logo-del">Quitar logo</button>':''}</div></div>`}
     ${isNew?'':`<label class="cf-check"><input type="checkbox" id="cfActive"${m.active?' checked':''}> Máquina activa</label>`}
     <div class="cf-err" id="cfModalErr"></div>
     <div class="cf-foot"><button type="button" class="cf-btn ghost" data-cf="cancel">Cancelar</button><button type="button" class="cf-btn" data-cf="config-ok" data-id="${esc(m.id)}">Guardar</button></div></div>`;
@@ -218,6 +251,37 @@ async function saveConfig(id){
     toast('Máquina guardada');
   }catch(error){err.textContent=error.message}
 }
+async function setLogo(path){
+  const m=machine();
+  const saved=await rpc('coffee_machine_set_logo',{p_machine_id:m.id,p_logo_path:path});
+  const old=m.logo_path;
+  Object.assign(m,{logo_path:saved.logo_path});
+  if(old&&old!==path){try{await client().storage.from(BUCKET).remove([old])}catch(_error){}}
+}
+async function uploadLogo(file){
+  const m=machine();
+  const err=$('cfModalErr');
+  if(!m||!file)return;
+  err.textContent='';
+  try{
+    if(!window.InvoiceLogos?.processLogo)throw new Error('El procesador de logos no está disponible.');
+    const blob=await window.InvoiceLogos.processLogo(file);
+    const ext=blob.type==='image/jpeg'?'jpg':blob.type==='image/png'?'png':'webp';
+    const id=typeof window.safeRandomUUID==='function'?window.safeRandomUUID():String(Date.now());
+    const path=`${m.company_id}/${m.id}/${id}.${ext}`;
+    const {error}=await client().storage.from(BUCKET).upload(path,blob,{contentType:blob.type,cacheControl:'31536000',upsert:false});
+    if(error)throw error;
+    await setLogo(path);
+    toast('Logo guardado');
+    openConfig(false);
+    render();
+  }catch(error){err.textContent=error?.message||'No se pudo guardar el logo.'}
+}
+async function removeLogo(){
+  const err=$('cfModalErr');
+  try{await setLogo(null);toast('Logo quitado');openConfig(false);render()}
+  catch(error){err.textContent=error?.message||'No se pudo quitar el logo.'}
+}
 function onClick(event){
   const target=event.target.closest('[data-cf]');
   if(!target)return;
@@ -229,6 +293,8 @@ function onClick(event){
   if(action==='new')return openConfig(true);
   if(action==='cancel')return closeLayer();
   if(action==='config-ok')return saveConfig(target.dataset.id);
+  if(action==='logo')return $('cfLogoFile')?.click();
+  if(action==='logo-del')return removeLogo();
 }
 function init(){
   const section=$('coffee');
@@ -238,6 +304,7 @@ function init(){
   if(!root){root=document.createElement('div');root.id='coffeeRoot';section.appendChild(root)}
   root.classList.add('cf-root');
   document.addEventListener('click',event=>{if(event.target.closest('#coffee,.cf-ov'))onClick(event)});
+  document.addEventListener('change',event=>{if(event.target&&event.target.id==='cfLogoFile')uploadLogo(event.target.files&&event.target.files[0])});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&S.layer)closeLayer()});
   let was=false;
   const sync=()=>{
