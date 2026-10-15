@@ -130,7 +130,13 @@ function parse(text){
     const amount=toInt(tokens[tokens.length-1]);
     const qtyIndex=tail>=5?tokens.length-5:tokens.length-3;
     const qty=Number(String(tokens[qtyIndex]).replace(',','.'));
-    out.lines.push({n:Number(tokens[0]),qty:Number.isFinite(qty)?qty:null,amount});
+    // Código del proveedor: primer número largo entre el ítem y el nombre (la columna «Tipo Cod.» se salta).
+    let start=1;
+    if(/^[A-Za-z]{2,5}\d?$/.test(tokens[start])&&/^\d{4,}$/.test(tokens[start+1]||''))start++;
+    const code=/^\d{4,}$/.test(tokens[start]||'')?tokens[start++]:'';
+    const name=tokens.slice(start,qtyIndex).join(' ');
+    const price=toInt(tokens[qtyIndex+1]);
+    out.lines.push({n:Number(tokens[0]),code,name,qty:Number.isFinite(qty)?qty:null,price,amount});
   });
   if(out.lines.length)out.linesSum=out.lines.reduce((sum,line)=>sum+(line.amount||0),0);
 
@@ -184,6 +190,10 @@ function duplicate(parsed,supplier){
     return (key&&invoiceKey===key)||(supplier&&window.SupplierModule.forInvoice(invoice)?.id===supplier.id);
   })||null;
 }
+function stockLink(parsed){
+  const can=parsed&&parsed.lines.length&&window.InvoiceStock&&window.InventoryApi&&window.ShiftControlPermissions?.canOpenView?.('inventory');
+  return can?`<button type="button" class="ip-link" data-ip="stock">Pasar ${parsed.lines.length} línea${parsed.lines.length===1?'':'s'} a stock</button>`:'';
+}
 function apply(parsed,file){
   attach(file);
   const M=window.SupplierModule;
@@ -200,6 +210,7 @@ function apply(parsed,file){
   setValue('invoiceMonto',parsed.total);
   if(!supplier&&parsed.category)setValue('invoiceCategoria',parsed.category);
   lastCategory=parsed.category||'';
+  lastParsed=parsed;
 
   const notes=[];
   const parts=[`<b>${esc(parsed.supplierName||'Proveedor')}</b>`,`N° ${esc(parsed.folio)}`];
@@ -209,6 +220,8 @@ function apply(parsed,file){
   if(!supplier&&M&&M.isAvailable()&&parsed.supplierName){
     notes.push(`Este proveedor aún no está registrado. <button type="button" class="ip-link" data-ip="create">Crear proveedor</button>`);
   }
+  const link=stockLink(parsed);
+  if(link)notes.push(link);
   const twin=duplicate(parsed,supplier);
   if(twin){kind='warn';notes.push(`Ya existe la factura N° ${esc(twin.numeroFactura)} de este proveedor. Revisa que no sea un duplicado.`)}
   parsed.warnings.forEach(message=>{kind='warn';notes.push(esc(message))});
@@ -217,6 +230,7 @@ function apply(parsed,file){
 
 let busy=false;
 let lastCategory='';
+let lastParsed=null;
 async function handle(file){
   if(busy||!file)return;
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){alert('Sube la factura en formato PDF.');return}
@@ -259,8 +273,12 @@ function pick(){chooser().click()}
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-ip]');
   if(!button)return;
-  if(button.dataset.ip==='create'&&window.SupplierInvoice?.create)window.SupplierInvoice.create({category:lastCategory}).then(()=>banner('ok','Proveedor creado. Revisa los datos y guarda la factura.'));
+  if(button.dataset.ip==='create'&&window.SupplierInvoice?.create)window.SupplierInvoice.create({category:lastCategory}).then(()=>banner('ok',['Proveedor creado. Revisa los datos y guarda la factura.',stockLink(lastParsed)].filter(Boolean).join('<br>')));
   if(button.dataset.ip==='pick')pick();
+  if(button.dataset.ip==='stock'&&lastParsed){
+    const supplier=window.SupplierModule?.get?.($('invoiceSupplierId')?.value||'')||null;
+    window.InvoiceStock.open(lastParsed,supplier);
+  }
 });
 
 // Arrastrar y soltar el PDF sobre el formulario.
