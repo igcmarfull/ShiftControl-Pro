@@ -15,6 +15,7 @@
     swap:'<path d="M7 4L3 8l4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/>',
     cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     week:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 10v11M13 10v11"/>',
+    cup:'<path d="M5 8h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M17 10h2a2 2 0 0 1 0 4h-2"/><path d="M9 3v2M13 3v2"/>',
     truck:'<path d="M10 17h4V5H2v12h3"/><path d="M14 8h4l4 4v5h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
     users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>',
     star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
@@ -26,7 +27,7 @@
     receipt:'<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
     box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>'
   };
-  const MAP={'operational-home':'home','admin-inbox':'inbox','daily-summary':'moon','today':'sun','dashboard':'layout','workcenter':'work','actual':'clock','execution':'check','absences':'plus','incidents':'alert','checklists':'list','handoff':'swap','planning':'cal','weekly':'week','employees':'users','evaluations':'star','additional':'plus','finance':'dollar','team':'team','reports':'chart','audit':'doc','settings':'gear','invoices':'receipt','suppliers':'truck','inventory':'box'};
+  const MAP={'operational-home':'home','admin-inbox':'inbox','daily-summary':'moon','today':'sun','dashboard':'layout','workcenter':'work','actual':'clock','execution':'check','absences':'plus','incidents':'alert','checklists':'list','handoff':'swap','planning':'cal','weekly':'week','employees':'users','evaluations':'star','additional':'plus','finance':'dollar','team':'team','reports':'chart','audit':'doc','settings':'gear','invoices':'receipt','suppliers':'truck','coffee':'cup','inventory':'box'};
   const SVG_ATTR='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
   const KEY='shiftcontrol.nav.collapsed';
   const root=()=>document.querySelector('.sidebar .nav');

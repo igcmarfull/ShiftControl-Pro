@@ -57,7 +57,8 @@
         'reports',
         'additional',
         'invoices',
-        'inventory'
+        'inventory',
+        'coffee'
       ]),
       actions:Object.freeze([
         'attendance.manage',
