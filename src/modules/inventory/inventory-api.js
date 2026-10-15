@@ -215,6 +215,9 @@ const Api={
   receive:(requestId,inventoryId,header,lines)=>rpc('inv_receive',{
     p_request_id:requestId,p_inventory_id:inventoryId,p_header:header,p_lines:lines
   }),
+  applySales:(requestId,companyId,lines)=>rpc('inv_apply_sales',{
+    p_request_id:requestId,p_company_id:companyId,p_lines:lines
+  }),
   issue:(requestId,data)=>rpc('inv_issue',{
     p_request_id:requestId,p_product_id:data.productId,p_qty:data.qty,p_kind:data.kind,
     p_reason:data.reason,p_note:data.note||null,p_location_id:data.locationId||null,p_lot_id:data.lotId||null
