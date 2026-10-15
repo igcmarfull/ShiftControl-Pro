@@ -1143,3 +1143,38 @@ body #settings .money-field-wrap .field{width:auto!important;min-width:0;flex:1}
  body #invoices .invoices-category-donut{margin:0 auto}
  body #invoices .invoices-category-legend{width:100%;overflow:visible}
 }
+
+/* ===== Finanzas · Resumen (solo presentación) ===== */
+body #finance .topbar .eyebrow,body #finance .finance-hero .eyebrow{display:none}
+body #finance .finance-tabs{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin:0 0 16px;padding:0;border:0;border-radius:0;background:transparent;scrollbar-width:none}
+body #finance .finance-tab{padding:8px 15px;border:1px solid var(--line);border-radius:99px;background:var(--panel2);color:var(--muted);font-size:12.5px;font-weight:650;box-shadow:none}
+body #finance .finance-tab.active{background:var(--pri-bg);color:var(--pri-fg);border-color:var(--pri-bg);box-shadow:none}
+body #finance .finance-kpi-grid{gap:0;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+body #finance .finance-kpi{padding:18px 20px;border:0;border-radius:0;background:transparent;box-shadow:none;min-width:0}
+body #finance .finance-kpi+.finance-kpi{border-left:1px solid var(--line)}
+body #finance .finance-kpi span{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+body #finance .finance-kpi span:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue);flex:none}
+body #finance .finance-kpi.red span:before{background:var(--red)}
+body #finance .finance-kpi.orange span:before{background:var(--orange)}
+body #finance .finance-kpi.purple span:before{background:var(--purple)}
+body #finance .finance-kpi.green span:before{background:var(--green)}
+body #finance .finance-kpi strong{margin:8px 0 4px;font-size:26px;font-weight:650;letter-spacing:-.03em;color:var(--text)!important}
+body #finance .finance-kpi small{font-size:12px}
+body #finance .finance-dashboard-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:stretch}
+body #finance .dashboard-panel{padding:20px 22px}
+body #finance .finance-composition{display:flex;align-items:center;gap:28px;padding:10px 0}
+body #finance .finance-legend{flex:1;min-width:0}
+body #finance .finance-pending-list,body #finance .finance-movement-list{display:flex;flex-direction:column;gap:0}
+body #finance .finance-pending-card,body #finance .finance-movement{border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;padding:12px 0}
+body #finance .finance-pending-card:first-child,body #finance .finance-movement:first-child{border-top:0}
+body #finance .task-empty,body #finance .finance-movement-list .empty{padding:26px 16px;border:1px dashed var(--line);border-radius:14px;background:var(--panel2);color:var(--muted);text-align:center;font-size:13px}
+@media (max-width:820px){
+ body #finance .finance-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body #finance .finance-kpi+.finance-kpi{border-left:0}
+ body #finance .finance-kpi:nth-child(n+3){border-top:1px solid var(--line)}
+ body #finance .finance-kpi:nth-child(even){border-left:1px solid var(--line)}
+ body #finance .finance-dashboard-grid{grid-template-columns:minmax(0,1fr)}
+ body #finance .finance-composition{flex-direction:column;align-items:stretch;gap:16px}
+ body #finance .finance-donut{margin:0 auto}
+}
+body #finance .finance-donut.is-empty{background:var(--panel3)!important}

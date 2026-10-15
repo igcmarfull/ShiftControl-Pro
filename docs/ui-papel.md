@@ -199,3 +199,15 @@ Verificación: pruebas en navegador con el servidor simulado del módulo (admini
 Solo presentación. `src/ui-invoices.js` (cargado tras `ui-handoff.js`) envuelve `window.renderInvoices()` y añade el contador de cada pestaña (con los mismos criterios que el filtro de `renderInvoices`: todas, pendientes y pagadas aprobadas, vencidas por `invoiceDisplayStatus`, por aprobar = no aprobadas) y el total compacto en el centro del anillo por categoría (`data-total`, leído de `#invoiceCategoryDonutTotal`). El resto es CSS en `src/ui-papel.css`, dentro de `@media (min-width:821px)`: franja única con las cinco cifras (con sus mini líneas reales), pestañas en pastillas, búsqueda y filtros en una fila, tabla sin desbordes (columna lateral de 300 px y encabezados que pueden partirse en dos líneas) y anillo sobre su leyenda. El listado, las acciones (ver, editar, registrar pago para el administrador), los permisos, el CSV y las tarjetas móviles no se tocaron: el flujo móvil existente se mantiene.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): la tabla cabe en su tarjeta con las acciones visibles, los contadores coinciden con las pestañas y el celular conserva su diseño. Sin errores de consola. No se probó crear, editar ni aprobar facturas.
+
+## Finanzas · Resumen (rediseño)
+
+Casi todo es presentación (CSS en `src/ui-papel.css`, `body #finance`): pestañas en pastillas, franja única con las cuatro cifras (sin cambiar `financeKpi`), anillo con su leyenda al lado, pendientes y últimos movimientos como listas con mensajes de estado vacío, y en celular pestañas deslizables y cifras en dos columnas.
+
+Dos cambios de comportamiento mínimos en `index.html`:
+- `showView('finance')` ahora llama a `renderFinance()`. Antes el resumen solo se dibujaba al cargar la app o al cambiar el mes; si en ese momento la sesión aún no estaba identificada como administrador (`renderFinance` sale si el rol no es admin), el Resumen quedaba vacío hasta tocar el mes. Es una hipótesis de causa: en el entorno de prueba el resumen sí se dibujaba.
+- Sin faltantes ni gastos el anillo se muestra gris (`.is-empty`) y los porcentajes en 0 %, en lugar de «100 % gastos» con $0.
+
+Los cálculos, los registros y las otras pestañas (Faltantes, Cuadraturas, Gastos, Depósitos, Aprobaciones) no se tocaron.
+
+Verificación: pruebas en navegador con datos simulados (con y sin registros; claro/oscuro, escritorio y celular), sin errores de consola. No se probó registrar, aprobar ni editar movimientos.

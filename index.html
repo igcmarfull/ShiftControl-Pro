@@ -14589,6 +14589,7 @@ function showView(id){
   if(id==='admin-inbox')renderAdminInbox();
   if(id==='daily-summary')renderDailySummary();
   if(id==='team'&&typeof renderTeam==='function')renderTeam();
+  if(id==='finance'&&typeof renderFinance==='function')renderFinance();
   if(id==='checklists')selectChecklistDateForReview();
   if(id==='incidents'||id==='checklists')setTimeout(()=>window.renderOpsModules?.(),0);
   if(id==='myshift'&&typeof renderMyShift==='function')renderMyShift();
@@ -17211,10 +17212,10 @@ function renderFinance(){
 
   const totalImpact=Math.max(shortageTotal+expenseTotal,1);
   const shortagePct=Math.round(shortageTotal/totalImpact*100);
-  const expensePct=100-shortagePct;
+  const expensePct=shortageTotal+expenseTotal?100-shortagePct:0;
   const composition=document.getElementById('financeComposition');
   if(composition)composition.innerHTML=`
-    <div class="finance-donut" style="--shortage:${shortagePct}"><div><strong>${money(shortageTotal+expenseTotal)}</strong><span>impacto total</span></div></div>
+    <div class="finance-donut${shortageTotal+expenseTotal?'':' is-empty'}" style="--shortage:${shortagePct}"><div><strong>${money(shortageTotal+expenseTotal)}</strong><span>impacto total</span></div></div>
     <div class="finance-legend">
       <div><i class="shortage"></i><span>Faltantes</span><strong>${money(shortageTotal)}</strong><small>${shortagePct}%</small></div>
       <div><i class="expense"></i><span>Gastos</span><strong>${money(expenseTotal)}</strong><small>${expensePct}%</small></div>
