@@ -17332,6 +17332,8 @@ function renderFinanceExpenses(rows){
 function renderFinanceApprovals(rows){
   const root=document.getElementById('financeApprovalList');
   if(!root)return;
+  const approvalsTab=document.querySelector('[data-finance-tab="approvals"]');
+  if(approvalsTab)approvalsTab.innerHTML=`<span>◎</span>Aprobaciones${rows.length?` <em class="inv-count">${rows.length}</em>`:''}`;
   root.innerHTML=rows.length?rows.map(row=>`
     <article class="finance-approval-card">
       ${financePendingCard(row)}
