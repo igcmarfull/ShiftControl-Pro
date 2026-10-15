@@ -1,4 +1,4 @@
--- Reversión de 20261015120000_inventory_product_photos.sql
+-- Reversión de 20261015164843_inventory_product_photos.sql
 --
 -- NO es una migración: está fuera de supabase/migrations/ a propósito. Se
 -- ejecuta a mano, solo si se decide quitar las fotos de productos.

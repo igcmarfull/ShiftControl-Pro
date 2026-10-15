@@ -1,4 +1,4 @@
--- Pruebas de la migración 20261015120000_inventory_product_photos.sql
+-- Pruebas de la migración 20261015164843_inventory_product_photos.sql
 -- (foto opcional por producto: columna, función, lectura y políticas de Storage).
 --
 -- SOLO PARA UNA BASE LOCAL DESECHABLE con todas las migraciones aplicadas.

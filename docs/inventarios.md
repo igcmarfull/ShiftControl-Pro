@@ -98,7 +98,7 @@ No verificado: ejecución contra el Supabase de producción, lector de códigos 
 
 ## Fotos de productos
 
-Estado: **código y migración listos en la rama; la migración `20261015120000_inventory_product_photos.sql` aún NO está aplicada en producción**. Mientras no se aplique, la interfaz sigue funcionando igual: la columna `image_path` no existe y ningún producto trae foto (se muestra la inicial de color).
+Estado: **la migración `20261015164843_inventory_product_photos.sql` está aplicada en producción** desde el 2026-10-15. Ningún producto tiene foto todavía: se muestra la inicial de color hasta que el administrador suba una.
 
 - **Datos**: columna opcional `inv_products.image_path` (ruta en Storage, validada con una restricción para que pertenezca al propio producto).
 - **Archivos**: bucket privado `shiftcontrol-product-photos`, límite 300 KB, solo `webp/jpeg/png`. Ruta `<empresa>/<inventario>/<producto>/<archivo>.webp`.
@@ -106,5 +106,5 @@ Estado: **código y migración listos en la rama; la migración `20261015120000_
 - **Interfaz**: en «Editar producto» (administrador) aparece «Subir foto / Cambiar foto / Quitar». La imagen se recorta al producto (márgenes casi blancos), se deja cuadrada de 480 px y se comprime a WebP en el navegador, y se sube al instante. Las fotos se muestran en las tarjetas del Panel (hasta 4), en «Requiere atención», en los últimos movimientos, en las listas y en la ficha. Se piden URLs firmadas por lote y se guardan en memoria.
 - **Sin foto**: se muestra la inicial de color. En Cigarrillos, Kent, Lucky Strike y Pall Mall tienen color propio.
 - **Pruebas**: `supabase/tests/inventario_fotos_local.sql` (base local desechable, 25 comprobaciones: permisos por rol, otra empresa, rutas inválidas, versión, auditoría y políticas de Storage).
-- **Reversión**: `supabase/rollback/20261015120000_inventory_product_photos.rollback.sql` (borra las fotos y la columna; el resto del módulo no cambia).
+- **Reversión**: `supabase/rollback/20261015164843_inventory_product_photos.rollback.sql` (borra las fotos y la columna; el resto del módulo no cambia).
 - **Derechos de las imágenes**: el sistema no trae fotos. Cada foto la sube el administrador; las de internet o de terceros pueden tener derechos de autor y las cajetillas traen advertencias gráficas obligatorias.
