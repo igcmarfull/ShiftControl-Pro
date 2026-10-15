@@ -243,3 +243,14 @@ Solo presentación y solo hasta 820 px (escritorio sin cambios). `src/ui-inbox.j
 - en "Cierres" deja 3 días visibles y agrega "Ver todos los cierres (N)" hacia `daily-summary`.
 
 El resto es CSS en `src/ui-papel.css` (bloques "Bandeja ADMIN en celular"): KPI compactos, pestañas con scroll horizontal, orden de paneles (actividad al final, 3 entradas). Para revertir basta quitar el script de `index.html` y esos bloques CSS.
+
+
+## Inventarios: Panel más limpio
+
+Cambios en `src/modules/inventory/inventory.js` y `inventory.css` (el módulo es el propietario de su vista, no hay parche aparte):
+
+- Cada tarjeta lleva una franja de color del inventario y el estado como barra apilada (normales / bajo mínimo / agotados) con su leyenda.
+- «Requiere atención» y «Últimos movimientos» usan el avatar del producto (foto si existe, inicial de color si no); filas más aireadas, tocables (abren la ficha) y cantidades en chips.
+- «Acceso y reglas por inventario» queda plegado (`details`).
+- Tira opcional de hasta 4 fotos en cada tarjeta (solo si hay productos con foto).
+- Cigarrillos: Kent, Lucky Strike y Pall Mall con color propio en el avatar.

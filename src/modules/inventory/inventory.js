@@ -119,6 +119,49 @@ function initialsOf(text){
   const words=String(text||'').replace(/[^\p{L}\p{N} ]/gu,' ').trim().split(/\s+/).filter(Boolean);
   return ((words[0]||'?')[0]+(words[1]?words[1][0]:'')).toUpperCase();
 }
+// Color propio de las marcas de cigarrillos más conocidas (el resto usa el color estable por marca).
+const BRAND_HUES=[[/kent/i,215],[/lucky/i,8],[/pall\s*mall/i,350]];
+function brandHue(text){
+  const hit=BRAND_HUES.find(([pattern])=>pattern.test(String(text||'')));
+  return hit?hit[1]:hueOf(text);
+}
+
+// Fotos de productos: la ruta llega con el producto; las URLs firmadas se piden por lote
+// y se guardan en memoria. Mientras no llega la foto (o si no hay), se muestra la inicial.
+const PHOTO={urls:{},pending:new Set(),timer:null};
+function photoUrl(product){
+  const path=product?.image_path;
+  if(!path)return null;
+  const hit=PHOTO.urls[path];
+  if(hit&&hit.exp>Date.now())return hit.url;
+  queuePhoto(path);
+  return hit?.url||null;
+}
+function queuePhoto(path){
+  if(PHOTO.pending.has(path))return;
+  PHOTO.pending.add(path);
+  clearTimeout(PHOTO.timer);
+  PHOTO.timer=setTimeout(async()=>{
+    const paths=[...PHOTO.pending];
+    const urls=await Api.signedPhotoUrls(paths);
+    const fresh=Date.now()+(Api.PHOTO_URL_TTL-300)*1000;
+    paths.forEach(entry=>{
+      PHOTO.urls[entry]={url:urls[entry]||null,exp:urls[entry]?fresh:Date.now()+60000};
+      PHOTO.pending.delete(entry);
+    });
+    hydratePhotos();
+  },60);
+}
+// Pone la foto en los avatares que ya estaban dibujados con la inicial.
+function hydratePhotos(){
+  document.querySelectorAll('.inv-av[data-ph]:not(.has-ph)').forEach(element=>{
+    const hit=PHOTO.urls[element.dataset.ph];
+    if(!hit||!hit.url)return;
+    element.classList.add('has-ph');
+    element.innerHTML=`<img src="${esc(hit.url)}" alt="" decoding="async">`;
+  });
+}
+
 function avatar(product,item,size){
   let seed,label;
   if(item.code==='lubricantes'){
@@ -131,7 +174,9 @@ function avatar(product,item,size){
     seed=item.code==='tienda'?(product.category||product.name):(product.brand||product.name);
     label=initialsOf(product.name);
   }
-  return `<span class="inv-av${size?` ${size}`:''}" style="--h:${hueOf(seed)}" aria-hidden="true">${esc(label.slice(0,3))}</span>`;
+  const hue=item.code==='cigarrillos'?brandHue(`${product.brand||''} ${product.name||''}`):hueOf(seed);
+  const url=photoUrl(product);
+  return `<span class="inv-av${size?` ${size}`:''}${url?' has-ph':''}" style="--h:${hue}"${product.image_path?` data-ph="${esc(product.image_path)}"`:''} aria-hidden="true">${url?`<img src="${esc(url)}" alt="" decoding="async">`:esc(label.slice(0,3))}</span>`;
 }
 
 /* ---------------------------------------------------------------- capas */
@@ -421,6 +466,17 @@ function statsHtml(items){
   return `<div class="inv-stats">${cell('box','info','Referencias activas',refs,plural(items.length,'inventario','inventarios'))}${cell('low',need?'warn':'ok','Para reponer',need,need?'bajo mínimo o agotadas':'sin faltantes')}${cell('clock',soon?'or':'ok','Por vencer',soon,soon?'vencidas o próximas':'sin vencimientos')}${cell('waste',waste?'bad':'','Mermas del mes',waste,'unidades registradas')}</div>`;
 }
 
+// Hasta 4 productos con foto: 2 que piden atención (agotados o bajo mínimo) y el resto con más stock.
+// Si ninguno tiene foto, no se dibuja nada.
+function photoStrip(item){
+  const withPhoto=(S.products[item.id]||[]).filter(product=>product.active&&product.image_path);
+  if(!withPhoto.length)return '';
+  const flagged=withPhoto.filter(product=>product.status!=='ok').sort((a,b)=>(a.status==='out'?0:1)-(b.status==='out'?0:1)||b.stock-a.stock);
+  const healthy=withPhoto.filter(product=>product.status==='ok').sort((a,b)=>b.stock-a.stock);
+  const list=[...flagged.slice(0,2),...healthy].concat(flagged.slice(2)).slice(0,4);
+  return `<div class="inv-strip">${list.map(product=>`<button type="button" class="inv-ph ${product.status}" data-open="${product.id}" aria-label="${esc(product.name)}">${avatar(product,item,'xl')}<b class="inv-num">${fmt(product.stock)}</b><small>${esc(product.name)}</small></button>`).join('')}</div>`;
+}
+
 function viewHome(){
   const items=invList();
   const data=S.homeData||{movs:[],products:[],wastes:[]};
@@ -435,7 +491,9 @@ function viewHome(){
         <div class="inv-ringbox">${ringSvg(healthy,item.low,item.out,item.refs)}<div class="inv-ringc">${pctHtml}</div></div>
         <div class="inv-stat"><span class="k">${item.control_unit==='cajetilla'?'Cajetillas':'Unidades en stock'}</span><b class="inv-num big">${fmt(item.stock_total)}</b><span class="s">${plural(item.refs,'referencia','referencias')}</span></div>
       </div>
-      <div class="inv-hl"><span style="--d:var(--green)"><b>${healthy}</b> normales</span><span style="--d:var(--yellow)"><b>${item.low}</b> bajo mínimo</span><span style="--d:var(--red)"><b>${item.out}</b> agotados</span></div>
+      ${photoStrip(item)}
+      <div class="inv-seg"><div class="inv-bar2" role="img" aria-label="${healthy} normales, ${item.low} bajo mínimo, ${item.out} agotados">${[[healthy,'g'],[item.low,'y'],[item.out,'r']].filter(([count])=>count>0).map(([count,tone])=>`<i class="${tone}" style="flex:${count}"></i>`).join('')}</div>
+        <div class="inv-hl"><span style="--d:var(--green)"><b>${healthy}</b> normales</span><span style="--d:var(--yellow)"><b>${item.low}</b> bajo mínimo</span><span style="--d:var(--red)"><b>${item.out}</b> agotados</span></div></div>
       ${item.code==='tienda'&&(item.expiring||item.expired)?`<div class="inv-note warn">${item.expired?`${plural(item.expired,'producto vencido','productos vencidos')}. `:''}${item.expiring?`${plural(item.expiring,'producto vence','productos vencen')} en ${item.expiry_alert_days} días o menos.`:''}</div>`:''}
       ${item.active?`<div class="inv-acts"><button class="inv-btn pri" data-go="inv:${item.code}">Abrir ${ico('arrow')}</button><button class="inv-btn" data-act="count" data-code="${item.code}">Tomar inventario</button></div>`:''}
     </section>`;
@@ -452,7 +510,7 @@ function viewHome(){
     });
   });
   attention.sort((a,b)=>a.rank-b.rank);
-  const attentionHtml=attention.slice(0,8).map(({product,item,pill})=>`<div class="inv-row">${tile(pill[1]==='Agotado'?'out':pill[0]==='warn'?'low':'clock',pill[0])}<div class="t"><b>${esc(product.name)}</b><span>${esc(item.name)} · stock ${fmt(product.stock)} / mín. ${fmt(product.min_stock)}</span></div>${gauge(product,'inv-mini')}<span class="inv-pill ${pill[0]}">${esc(pill[1])}</span></div>`).join('')||'<div class="inv-empty">Sin alertas.</div>';
+  const attentionHtml=attention.slice(0,8).map(({product,item,pill})=>`<div class="inv-row" data-open="${product.id}">${avatar(product,item)}<div class="t"><b>${esc(product.name)}</b><span>${esc(item.name)} · stock ${fmt(product.stock)} / mín. ${fmt(product.min_stock)}</span></div>${gauge(product,'inv-mini')}<span class="inv-pill ${pill[0]}">${esc(pill[1])}</span></div>`).join('')||'<div class="inv-empty">Sin alertas.</div>';
 
   const recent=(data.movs||[]).map(movRow).join('')||'<div class="inv-empty">Aún no hay movimientos.</div>';
   const reasons={};
@@ -464,13 +522,13 @@ function viewHome(){
     :'<div class="inv-empty">Sin mermas este mes.</div>';
 
   const pending=S.overview?.pending_total||0;
-  const config=isAdmin()?`<div class="inv-box"><h3>Acceso y reglas por inventario <small>solo administrador</small></h3>
+  const config=isAdmin()?`<details class="inv-fold"><summary><span>Acceso y reglas por inventario</span><small>solo administrador</small></summary><div class="inv-box">
       ${items.map(item=>`<div class="inv-row first" style="flex-wrap:wrap"><div class="t" style="min-width:110px"><b>${esc(item.name)}</b></div>
         <select class="inv-sel" data-cfg="area" data-id="${item.id}" aria-label="Área de ${esc(item.name)}"><option value="TIENDA"${item.area==='TIENDA'?' selected':''}>Área TIENDA</option><option value="ISLA"${item.area==='ISLA'?' selected':''}>Área ISLA</option></select>
         <label class="inv-sub" style="display:flex;align-items:center;gap:6px;margin:0">Alerta de vencimiento <input type="number" min="1" max="90" value="${item.expiry_alert_days}" data-cfg="expiry_alert_days" data-id="${item.id}" style="width:64px" aria-label="Días de alerta"> d</label>
         <label class="inv-sub" style="display:flex;align-items:center;gap:6px;margin:0">Ajustes automáticos hasta <input type="number" min="0" value="${item.auto_approve_max_abs}" data-cfg="auto_approve_max_abs" data-id="${item.id}" style="width:64px" aria-label="Umbral de aprobación automática"> u.</label>
         <button class="inv-btn sm" data-act="cfg-save" data-id="${item.id}">Guardar</button></div>`).join('')}
-      <p class="inv-sub" style="margin-top:8px;font-size:12px">«Ajustes automáticos hasta 0» significa que toda diferencia de conteo espera tu aprobación. La asignación de área se aplica en el servidor: una jefa solo ve los inventarios de su área.</p></div>`
+      <p class="inv-sub" style="margin-top:8px;font-size:12px">«Ajustes automáticos hasta 0» significa que toda diferencia de conteo espera tu aprobación. La asignación de área se aplica en el servidor: una jefa solo ve los inventarios de su área.</p></div></details>`
     :`<div class="inv-box"><h3>Tu acceso</h3><p class="inv-sub" style="color:var(--text)">${items.filter(item=>item.active).map(item=>esc(item.name)).join(' · ')||'Sin inventarios'}</p><p class="inv-sub" style="font-size:12px">Puedes registrar recepciones, mermas, salidas justificadas y conteos. Los ajustes los aprueba el administrador.</p></div>`;
 
   return `${head('Inventarios',`Hola, ${esc(Api.context()?.displayName||'')}. ${items.length===3?'Ves los tres inventarios.':`Ves ${items.map(item=>esc(item.name)).join(' y ')}.`}`)}${nav()}
@@ -484,7 +542,14 @@ function viewHome(){
 }
 
 function movRow(m){
-  return `<div class="inv-row">${tile(KIND_ICON[m.kind]||'box',KIND_TONE[m.kind]||'')}<div class="t"><b>${esc(m.product_name)}</b><span>${KIND_LABEL[m.kind]||m.kind} · ${esc(m.created_by_name||'—')} · ${fstamp(m.created_at)}${m.reason?` · ${esc(m.reason)}`:''}${m.note?` · ${esc(m.note)}`:''}</span></div><b class="inv-num inv-qty ${m.qty>0?'inv-pos':'inv-neg'}">${m.qty>0?'+':''}${fmt(m.qty)}</b></div>`;
+  let lead=tile(KIND_ICON[m.kind]||'box',KIND_TONE[m.kind]||'');
+  if(m.product_id){
+    for(const item of invList()){
+      const product=(S.products[item.id]||[]).find(row=>row.id===m.product_id);
+      if(product&&product.image_path){lead=avatar(product,item);break}
+    }
+  }
+  return `<div class="inv-row">${lead}<div class="t"><b>${esc(m.product_name)}</b><span>${KIND_LABEL[m.kind]||m.kind} · ${esc(m.created_by_name||'—')} · ${fstamp(m.created_at)}${m.reason?` · ${esc(m.reason)}`:''}${m.note?` · ${esc(m.note)}`:''}</span></div><b class="inv-num inv-qty ${m.qty>0?'inv-pos':'inv-neg'}">${m.qty>0?'+':''}${fmt(m.qty)}</b></div>`;
 }
 
 function filteredProducts(item){
@@ -1095,6 +1160,7 @@ function openProductForm(code,productId){
       :`${field('Control de vencimiento',`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pfExpiry"${p.tracks_expiry?' checked':''} style="min-height:auto"> Registrar lotes y fechas de vencimiento</label>`)}`;
   openModal(product?`Editar producto · ${esc(product.name)}`:`Nuevo producto · ${esc(item.name)}`,`
     <div class="inv-g2">${field(item.code==='lubricantes'?'SKU':'Código interno',`<input id="pfCode" value="${esc(p.code||'')}" autocomplete="off">`)}${field('Código de barras',`<input id="pfBarcode" inputmode="numeric" value="${esc(p.barcode||'')}" placeholder="Opcional">`)}</div>
+    ${photoField(product)}
     ${field('Descripción',`<input id="pfName" value="${esc(p.name||'')}">`)}
     <div class="inv-g2">${field('Marca',`<input id="pfBrand" value="${esc(p.brand||'')}">`)}${field('Presentación',`<input id="pfPres" value="${esc(p.presentation||'')}" placeholder="${item.code==='lubricantes'?'1 L, 4 L, 5 L':item.code==='cigarrillos'?'Cajetilla 20':'Botella 500 ml'}">`,product&&'No se puede cambiar si el producto ya tiene movimientos.')}</div>
     ${item.code==='tienda'?field('Categoría',`<input id="pfCat" list="pfCats" value="${esc(p.category||'')}" autocomplete="off"><datalist id="pfCats">${cats.map(name=>`<option value="${esc(name)}">`).join('')}</datalist>`):''}
@@ -1102,7 +1168,147 @@ function openProductForm(code,productId){
     <div class="inv-g2">${field('Ubicación predeterminada',`<select id="pfLoc">${optionsHtml(locations.map(row=>({value:row.id,label:row.name})),p.default_location_id,'Sin ubicación')}</select>`)}${field('Stock mínimo',`<input id="pfMin" type="number" min="0" step="1" value="${esc(p.min_stock??0)}">`)}</div>
     <div class="inv-err" id="invFormErr"></div>`,
     '<button class="inv-btn" data-act="close">Cancelar</button><button class="inv-btn pri" data-act="pf-ok" id="invPfOk">Guardar</button>');
+  bindPhotoInput();
 }
+
+/* Foto de producto: se recorta al producto, se deja cuadrada y se comprime en el navegador. */
+const PHOTO_SIZE=480;
+const PHOTO_MAX_INPUT=15*1024*1024;
+const PHOTO_MAX_OUTPUT=300*1024;
+async function loadBitmap(file){
+  if(window.createImageBitmap)return createImageBitmap(file);
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file);
+    const image=new Image();
+    image.onload=()=>{URL.revokeObjectURL(url);resolve(image)};
+    image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('imagen no válida'))};
+    image.src=url;
+  });
+}
+const canvasBlob=(canvas,type,quality)=>new Promise(resolve=>canvas.toBlob(resolve,type,quality));
+async function processProductPhoto(file){
+  const fail=message=>new Api.InventoryError({code:'photo_invalid',message});
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw fail('Usa una imagen JPG, PNG o WebP.');
+  if(file.size>PHOTO_MAX_INPUT)throw fail('La imagen supera los 15 MB.');
+  let bitmap;
+  try{bitmap=await loadBitmap(file)}catch(_error){throw fail('No se pudo leer la imagen.')}
+  const scale=Math.min(1,1200/Math.max(bitmap.width,bitmap.height));
+  const w=Math.max(1,Math.round(bitmap.width*scale));
+  const h=Math.max(1,Math.round(bitmap.height*scale));
+  const work=document.createElement('canvas');
+  work.width=w;work.height=h;
+  const wctx=work.getContext('2d',{willReadFrequently:true});
+  wctx.fillStyle='#fff';
+  wctx.fillRect(0,0,w,h);
+  wctx.drawImage(bitmap,0,0,w,h);
+  if(bitmap.close)bitmap.close();
+  // Márgenes casi blancos fuera del producto: se recortan.
+  const data=wctx.getImageData(0,0,w,h).data;
+  let x0=w,y0=h,x1=-1,y1=-1;
+  for(let y=0;y<h;y+=2){
+    for(let x=0;x<w;x+=2){
+      const i=(y*w+x)*4;
+      if(data[i]<244||data[i+1]<244||data[i+2]<244){
+        if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+      }
+    }
+  }
+  if(x1<0){x0=0;y0=0;x1=w-1;y1=h-1}
+  const pad=Math.round(Math.max(x1-x0,y1-y0)*0.05);
+  x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);
+  const cw=x1-x0+1,ch=y1-y0+1;
+  const k=(PHOTO_SIZE*0.94)/Math.max(cw,ch);
+  const out=document.createElement('canvas');
+  out.width=PHOTO_SIZE;out.height=PHOTO_SIZE;
+  const octx=out.getContext('2d');
+  octx.fillStyle='#fff';
+  octx.fillRect(0,0,PHOTO_SIZE,PHOTO_SIZE);
+  octx.imageSmoothingQuality='high';
+  octx.drawImage(work,x0,y0,cw,ch,(PHOTO_SIZE-cw*k)/2,(PHOTO_SIZE-ch*k)/2,cw*k,ch*k);
+  let blob=await canvasBlob(out,'image/webp',0.82);
+  if(!blob||blob.type!=='image/webp')blob=await canvasBlob(out,'image/jpeg',0.86);
+  if(blob&&blob.size>PHOTO_MAX_OUTPUT)blob=await canvasBlob(out,blob.type,0.7);
+  if(!blob||blob.size>PHOTO_MAX_OUTPUT)throw fail('No se pudo reducir la imagen. Prueba con otra.');
+  return blob;
+}
+
+function photoField(product){
+  if(!isAdmin())return '';
+  if(!product)return field('Foto','<div class="inv-sub" style="font-size:12.5px">Guarda el producto y luego podrás agregar su foto.</div>');
+  const url=photoUrl(product);
+  const hasPhoto=Boolean(product.image_path);
+  return `<div class="inv-fld" id="pfPhotoField"><label>Foto</label>
+    <div class="inv-phrow"><span class="inv-av lg${url?' has-ph':''}" style="--h:215"${hasPhoto?` data-ph="${esc(product.image_path)}"`:''} id="pfPhotoPrev">${url?`<img src="${esc(url)}" alt="" decoding="async">`:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="m21 16-5-5-8 8"/></svg>'}</span>
+      <div class="inv-phbtns"><button type="button" class="inv-btn sm" data-act="pf-photo" id="pfPhotoBtn">${hasPhoto?'Cambiar foto':'Subir foto'}</button>${hasPhoto?'<button type="button" class="inv-btn sm bad" data-act="pf-photo-del" id="pfPhotoDel">Quitar</button>':''}<input type="file" id="pfPhotoFile" accept="image/jpeg,image/png,image/webp" hidden></div></div>
+    <div class="hint">Usa una foto de frente y con fondo claro. Se recorta y se comprime sola; la foto se guarda al instante.</div></div>`;
+}
+function bindPhotoInput(){
+  const input=$('pfPhotoFile');
+  if(input&&!input.dataset.bound){input.dataset.bound='1';input.addEventListener('change',onPhotoPicked)}
+}
+function refreshPhotoField(productId){
+  const form=S.form;
+  const holder=$('pfPhotoField');
+  const product=form?productById(form.inventoryId,productId):null;
+  if(!holder||!product)return;
+  holder.outerHTML=photoField(product);
+  bindPhotoInput();
+}
+async function onPhotoPicked(event){
+  const file=event.target.files&&event.target.files[0];
+  event.target.value='';
+  const form=S.form;
+  if(!file||!form||form.type!=='product'||!form.productId||form.photoBusy)return;
+  form.photoBusy=true;
+  setFormError('');
+  setBusy('pfPhotoBtn',true,'Subiendo…');
+  try{
+    const blob=await processProductPhoto(file);
+    const before=productById(form.inventoryId,form.productId)?.image_path||null;
+    const path=await Api.uploadProductPhoto(S.companyId,form.inventoryId,form.productId,blob);
+    let saved;
+    try{saved=await Api.setProductImage(form.productId,path,form.version)}
+    catch(error){Api.removeProductPhotos([path]);throw error}
+    form.version=saved.version;
+    if(before)Api.removeProductPhotos([before]);
+    await ensureProducts(form.inventoryId,true);
+    Object.assign(PHOTO.urls,Object.fromEntries(Object.entries(await Api.signedPhotoUrls([path])).map(([key,url])=>[key,{url,exp:Date.now()+(Api.PHOTO_URL_TTL-300)*1000}])));
+    refreshPhotoField(form.productId);
+    render();
+    toast('Foto guardada.');
+  }catch(error){
+    const info=handleError(error,{form:true});
+    if(info&&info.code==='version_conflict'){await ensureProducts(form.inventoryId,true).catch(()=>{});render()}
+    setBusy('pfPhotoBtn',false,(productById(form.inventoryId,form.productId)?.image_path)?'Cambiar foto':'Subir foto');
+  }finally{
+    form.photoBusy=false;
+  }
+}
+async function removeProductPhoto(){
+  const form=S.form;
+  if(!form||form.type!=='product'||!form.productId||form.photoBusy)return;
+  const before=productById(form.inventoryId,form.productId)?.image_path;
+  if(!before)return;
+  form.photoBusy=true;
+  setFormError('');
+  setBusy('pfPhotoDel',true,'Quitando…');
+  try{
+    const saved=await Api.setProductImage(form.productId,null,form.version);
+    form.version=saved.version;
+    Api.removeProductPhotos([before]);
+    await ensureProducts(form.inventoryId,true);
+    refreshPhotoField(form.productId);
+    render();
+    toast('Foto quitada.');
+  }catch(error){
+    const info=handleError(error,{form:true});
+    if(info&&info.code==='version_conflict'){await ensureProducts(form.inventoryId,true).catch(()=>{});render()}
+    setBusy('pfPhotoDel',false,'Quitar');
+  }finally{
+    form.photoBusy=false;
+  }
+}
+
 async function submitProduct(){
   const form=S.form;
   if(!form||form.busy)return;
@@ -1401,6 +1607,8 @@ function onLayerClick(event){
     case 'rec-ok':submitReceive();break;
     case 'mv-ok':submitMovement();break;
     case 'pf-ok':submitProduct();break;
+    case 'pf-photo':$('pfPhotoFile')?.click();break;
+    case 'pf-photo-del':removeProductPhoto();break;
     case 'op-ok':submitOpening();break;
     case 'waste':case 'issue':case 'transfer':closeLayers();openMovementForm(data.act,data.id);break;
     case 'product-edit':{

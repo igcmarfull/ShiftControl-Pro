@@ -14,7 +14,7 @@ Tres inventarios independientes por empresa:
 
 Funciones: panel con alertas, ficha de producto, recepciones de mercadería (distintas de las facturas), saldo inicial, mermas, salidas justificadas, traslados entre ubicaciones, toma de inventario con diferencias y aprobación del administrador, correcciones compensatorias, historial de movimientos, auditoría, reportes de mermas, faltantes y vencimientos, exportación CSV.
 
-No incluye imágenes de producto ni integración automática con ventas (propuesto para el futuro).
+Las fotos de producto son opcionales (ver «Fotos de productos»). No incluye integración automática con ventas (propuesto para el futuro).
 
 ## Reglas de negocio aplicadas por el servidor
 
@@ -94,3 +94,17 @@ No verificado: ejecución contra el Supabase de producción, lector de códigos 
 - Conteo ciego en los tres inventarios.
 - Umbral de autoaprobación 0: todo ajuste lo aprueba el administrador.
 - Integración con ventas y fotos de producto: fuera de alcance.
+
+
+## Fotos de productos
+
+Estado: **código y migración listos en la rama; la migración `20261015120000_inventory_product_photos.sql` aún NO está aplicada en producción**. Mientras no se aplique, la interfaz sigue funcionando igual: la columna `image_path` no existe y ningún producto trae foto (se muestra la inicial de color).
+
+- **Datos**: columna opcional `inv_products.image_path` (ruta en Storage, validada con una restricción para que pertenezca al propio producto).
+- **Archivos**: bucket privado `shiftcontrol-product-photos`, límite 300 KB, solo `webp/jpeg/png`. Ruta `<empresa>/<inventario>/<producto>/<archivo>.webp`.
+- **Permisos**: leen el administrador y la jefa del área dueña del inventario (`inv_can_read`). Suben, cambian o borran solo administradores (`can_manage_product_photo_path`). Guardar la ruta es la función `inv_set_product_image`, solo administrador, con control de versión y auditoría (`product.image`).
+- **Interfaz**: en «Editar producto» (administrador) aparece «Subir foto / Cambiar foto / Quitar». La imagen se recorta al producto (márgenes casi blancos), se deja cuadrada de 480 px y se comprime a WebP en el navegador, y se sube al instante. Las fotos se muestran en las tarjetas del Panel (hasta 4), en «Requiere atención», en los últimos movimientos, en las listas y en la ficha. Se piden URLs firmadas por lote y se guardan en memoria.
+- **Sin foto**: se muestra la inicial de color. En Cigarrillos, Kent, Lucky Strike y Pall Mall tienen color propio.
+- **Pruebas**: `supabase/tests/inventario_fotos_local.sql` (base local desechable, 25 comprobaciones: permisos por rol, otra empresa, rutas inválidas, versión, auditoría y políticas de Storage).
+- **Reversión**: `supabase/rollback/20261015120000_inventory_product_photos.rollback.sql` (borra las fotos y la columna; el resto del módulo no cambia).
+- **Derechos de las imágenes**: el sistema no trae fotos. Cada foto la sube el administrador; las de internet o de terceros pueden tener derechos de autor y las cajetillas traen advertencias gráficas obligatorias.

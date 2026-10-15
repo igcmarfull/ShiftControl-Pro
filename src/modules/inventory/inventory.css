@@ -352,3 +352,55 @@ td.inv-empty::before{display:none}
   .inv-viz{gap:16px}
 }
 @media (prefers-reduced-motion:reduce){.inv-root *,.inv-layer *{transition:none!important;animation:none!important}}
+
+/* ======================================================================
+   Panel más limpio y fotos de producto (todo opcional: sin foto se ve la inicial)
+   ====================================================================== */
+
+/* Avatar con foto: fondo blanco, el producto entero y sin recorte agresivo. */
+.inv-av.has-ph{background:#fff;color:transparent;border-color:var(--line);overflow:hidden;padding:0}
+.inv-av.has-ph img{display:block;width:100%;height:100%;object-fit:contain}
+.inv-av.xl{width:100%;height:auto;aspect-ratio:1;border-radius:14px;font-size:20px}
+.inv-phrow{display:flex;align-items:center;gap:14px}
+.inv-phrow .inv-av{flex:0 0 auto}
+.inv-phbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Tarjetas: franja de color del inventario y estado en una barra apilada. */
+.inv-card:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--ac)}
+.inv-card h3{font-size:19px;letter-spacing:-.02em}
+.inv-seg{margin-top:auto;display:grid;gap:10px}
+.inv-bar2{display:flex;gap:2px;height:9px;border-radius:99px;overflow:hidden;background:var(--panel3)}
+.inv-bar2 i{display:block;min-width:6px}
+.inv-bar2 i.g{background:var(--inv-ok)}.inv-bar2 i.y{background:var(--inv-warn)}.inv-bar2 i.r{background:var(--inv-danger)}
+.inv-seg .inv-hl{padding-top:0;border-top:0;gap:6px 16px}
+.inv-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.inv-ph{position:relative;display:block;min-width:0;padding:0;border:0;background:none;text-align:left;color:inherit}
+.inv-ph .inv-av{width:100%}
+.inv-ph b{position:absolute;right:6px;top:6px;min-width:22px;padding:1px 6px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:11px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.inv-ph.out .inv-av img{filter:grayscale(1);opacity:.5}
+.inv-ph.out b{background:var(--inv-danger);color:#fff;border-color:transparent}
+.inv-ph.low b{background:var(--inv-warn);color:#fff;border-color:transparent}
+.inv-ph small{display:block;margin-top:5px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Filas más aireadas y cantidades como chips. */
+.inv-three .inv-row{padding:12px 10px;margin:0 -10px;border-radius:12px;border-top:0}
+.inv-three .inv-row+.inv-row{box-shadow:0 -1px 0 var(--line)}
+.inv-three .inv-row[data-open]{cursor:pointer}
+.inv-three .inv-row:hover{background:var(--panel2)}
+.inv-three .inv-row .inv-av{width:44px;height:44px}
+.inv-qty{padding:4px 10px;border-radius:99px;font-size:13px}
+.inv-qty.inv-pos{background:color-mix(in srgb,var(--inv-ok) 14%,transparent)}
+.inv-qty.inv-neg{background:color-mix(in srgb,var(--inv-danger) 13%,transparent)}
+
+/* Acceso y reglas: plegado por defecto. */
+.inv-fold{border:1px solid var(--box-bd);border-radius:var(--r-box);background:var(--box-bg);box-shadow:var(--sh);margin-bottom:16px}
+.inv-fold>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;cursor:pointer;font-weight:650;font-size:14px;list-style:none}
+.inv-fold>summary::-webkit-details-marker{display:none}
+.inv-fold>summary small{font-weight:400;color:var(--muted);font-size:12px}
+.inv-fold>summary:after{content:"›";font-size:20px;line-height:1;color:var(--muted);transform:rotate(90deg);transition:transform .15s}
+.inv-fold[open]>summary:after{transform:rotate(-90deg)}
+.inv-fold>.inv-box{border:0;box-shadow:none;background:none;padding-top:0}
+@media (max-width:640px){
+  .inv-strip{gap:8px}
+  .inv-ph small{font-size:11px}
+}
