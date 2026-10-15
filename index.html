@@ -15982,13 +15982,13 @@ function saveOpsChecklistNotes(){const d=getOpsChecklist();d.notes=checklistNote
 function createIncidentFromChecklist(id,title){if(!ensureIncidentPermission())return;showView('incidents');setTimeout(()=>{incidentTitle.value=`Checklist: ${title}`;incidentDescription.value=`Problema detectado en ${title}, durante el turno ${v14CurrentShift()}.`;incidentShift.value=v14CurrentShift();incidentType.value=id==='surtidores'?'Equipo':'Instalaciones';incidentTitle.focus()},80)}
 function completeOpsChecklist(){const d=getOpsChecklist(),unanswered=opsChecklistItems().filter(([id])=>!d.items[id]);if(unanswered.length&&!confirm(`Quedan ${unanswered.length} ítem(s) sin responder. ¿Confirmar igualmente?`))return;d.completed=true;d.completedAt=new Date().toISOString();d.completedBy=authenticatedDisplayName();saveOpsChecklist(d);renderOpsChecklist();showToast('Checklist confirmado')}
 const CHECKLIST_ICONS={
-  personal:'<svg viewBox="0 0 24 24"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',
-  uniformes:'<svg viewBox="0 0 24 24"><path d="M8 4l4 2 4-2 4 3-2 3-2-1v11H8V9l-2 1-2-3z"/></svg>',
-  surtidores:'<svg viewBox="0 0 24 24"><path d="M4 21V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15"/><path d="M4 11h10"/><path d="M16 8l3 2v7a1.5 1.5 0 0 0 3 0v-5l-2-2"/></svg>',
-  banos:'<svg viewBox="0 0 24 24"><path d="M7 3c0 2-2 2-2 4s2 2 2 4"/><path d="M4 13h16l-1 4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/></svg>',
-  patio:'<svg viewBox="0 0 24 24"><path d="M4 21l5-5"/><path d="M9 16l8-8 3 3-8 8z"/><path d="M17 8l2-5 2 2-5 2z"/></svg>',
-  instalaciones:'<svg viewBox="0 0 24 24"><path d="M9 21V9l3-6 3 6v12"/><path d="M5 21V13l4-2"/><path d="M19 21V13l-4-2"/></svg>',
-  entrega:'<svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4"/><path d="M8 3h8l1 2h3v16H4V5h3l1-2z"/></svg>',
+  personal:'<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg>',
+  uniformes:'<svg viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>',
+  surtidores:'<svg viewBox="0 0 24 24"><path d="M3 22h12"/><path d="M4 9h10"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>',
+  banos:'<svg viewBox="0 0 24 24"><path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.68 3 4 3.68 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="m10 5-2 2"/><path d="M2 12h20"/><path d="M7 19v2M17 19v2"/></svg>',
+  patio:'<svg viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></svg>',
+  instalaciones:'<svg viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>',
+  entrega:'<svg viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>',
   temperaturas:'<svg viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></svg>',
   vencimientos:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>',
   sanitizacion:'<svg viewBox="0 0 24 24"><path d="M12 3l1.6 3.4L17 8l-3.4 1.6L12 13l-1.6-3.4L7 8l3.4-1.6z"/><path d="M18 14l.8 1.7 1.7.8-1.7.8L18 19l-.8-1.7-1.7-.8 1.7-.8zM6 15l.8 1.7 1.7.8-1.7.8L6 20l-.8-1.7-1.7-.8 1.7-.8z"/></svg>',
