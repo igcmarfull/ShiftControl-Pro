@@ -254,3 +254,13 @@ Cambios en `src/modules/inventory/inventory.js` y `inventory.css` (el módulo es
 - «Acceso y reglas por inventario» queda plegado (`details`).
 - Tira opcional de hasta 4 fotos en cada tarjeta (solo si hay productos con foto).
 - Cigarrillos: Kent, Lucky Strike y Pall Mall con color propio en el avatar.
+
+## Facturas y compras: logos de proveedor y tarjetas de análisis
+
+Presentación más un campo opcional en las facturas (`logoProveedor`, ruta del logo). Sin logo se mantiene el círculo con la inicial.
+
+- **Logo del proveedor** (`src/ui-invoice-logos.js`, `InvoiceModule`): tocando el avatar del proveedor se sube un logo (JPG/PNG/WebP). Se recorta al contenido, se deja cuadrado de 256 px y se comprime a WebP en el navegador (máx. 120 KB). Se guarda en el bucket privado `shiftcontrol-evidence` bajo `<empresa>/invoices/<ÁREA>/proveedores/<uuid>.webp` (las políticas existentes de evidencia ya cubren al administrador y a la jefa del área; no hay migración) y la ruta se aplica a todas las facturas del mismo proveedor (misma clave: RUT sin puntos o, si no hay, el nombre) **en la misma área**. Si el proveedor tiene facturas en Tienda e Isla, el logo se sube una vez por área. Con logo, el avatar abre un menú «Cambiar logo / Quitar logo». Pueden cambiarlo el administrador y la jefa del área de la factura. Las URLs se piden firmadas por lote (1 h) y se guardan en memoria. El bucket no tiene política de borrado: al cambiar o quitar un logo el archivo anterior queda en Storage (pesa unos KB).
+- **Funciones nuevas en `InvoiceModule`**: `supplierKey`, `supplierLogoPath`, `setSupplierLogo`.
+- **Tarjetas nuevas** (`src/ui-invoices.js`, calculadas con las mismas facturas y reglas de la pantalla, sin datos nuevos): «Pagos · próximos 14 días» (facturas pendientes aprobadas por fecha de vencimiento), «Antigüedad» (al día / vence en 7 días o menos / vencida 1 a 30 / vencida más de 30), «Por categoría» y «Principales proveedores» (compras del mes, igual que el KPI «Total comprado»). El anillo «Resumen por categoría» original sigue en el DOM pero oculto, porque `renderInvoiceSidebar` lo rellena.
+- **Celular**: el calendario de pagos queda antes del listado.
+- **Reversión**: quitar los dos `<script>` (`ui-invoice-logos.js`) y el bloque CSS «Facturas: logos de proveedor y tarjetas de análisis», volver a `invoiceAvatar(name)` y mostrar el bloque oculto. Los campos `logoProveedor` ya guardados no estorban.
