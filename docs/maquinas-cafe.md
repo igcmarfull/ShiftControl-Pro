@@ -18,6 +18,12 @@ Estados: «Cuadra», «Fuera de tolerancia» (la diferencia pasa la tolerancia),
 
 **Precisión:** como el informe del POS corta alrededor de las 22:57 y el numeral se anota en el turno que lo envían, la diferencia puede incluir vasos de otra franja horaria. Se decidió que no importa el turno; la tolerancia absorbe esa diferencia.
 
+## Logo de la máquina
+
+- **Código en el repositorio:** «Subir logo / Cambiar logo / Quitar logo» en «Configurar máquina» (solo administrador), con el mismo procesado de imagen que los logos de proveedores (`InvoiceLogos.processLogo`: un logo con fondo de color llena todo el recuadro). Se muestra en el encabezado de la máquina; sin logo queda el ícono de taza.
+- **Migración `20261016210000_coffee_machine_logos.sql`: NO aplicada en producción.** Agrega `coffee_machines.logo_path`, `coffee_machine_set_logo` y el bucket privado `shiftcontrol-machine-logos` (leen administrador y jefa de tienda; sube, reemplaza y borra solo el administrador, en la carpeta de una máquina existente). Sin ella, subir un logo falla. Reversión: `supabase/rollback/20261016210000_coffee_machine_logos.rollback.sql`. Pruebas SQL locales: `supabase/tests/maquinas_cafe_logos_local.sql`.
+- **Corregir una lectura:** volver a anotar la misma fecha y el mismo turno la reemplaza (solo administrador). No hay botón de eliminar ni lista de lecturas.
+
 ## Datos
 
 Tablas `coffee_machines`, `coffee_machine_codes`, `coffee_readings` y `coffee_sales`, con RLS de lectura para administrador y jefa de tienda; las escrituras solo por funciones (`coffee_machine_save`, `coffee_save_reading`, y `inv_apply_sales` para las ventas). `coffee_reconcile` calcula la cuadratura en el servidor. Reversión: `supabase/rollback/20261016180000_coffee_machines.rollback.sql` (se niega a correr si ya hay lecturas o ventas). Pruebas SQL locales: `supabase/tests/maquinas_cafe_local.sql`.
