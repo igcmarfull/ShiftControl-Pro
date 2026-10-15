@@ -24,7 +24,7 @@
 .su-list .su-row:first-child{border-top:0}
 .su-row.on{background:color-mix(in srgb,var(--blue) 8%,var(--panel));border-color:transparent}
 .su-logo{flex:0 0 auto;width:48px;height:48px;border-radius:14px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06)}
-.su-logo img{display:block;width:100%;height:100%;object-fit:contain;padding:5px}
+.su-logo img{display:block;width:100%;height:100%;object-fit:contain;padding:0}
 .su-logo.lg{width:68px;height:68px;border-radius:18px}
 .su-logo.ini{background:var(--c);border:0;color:#fff;font-weight:800;font-size:14px}
 .su-nm strong{display:block;font-size:14px;font-weight:650;color:var(--text)}
