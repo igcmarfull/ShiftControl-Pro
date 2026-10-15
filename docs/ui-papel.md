@@ -231,3 +231,12 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 Solo presentación. `src/ui-audit.js` (cargado tras `ui-employees.js`) envuelve `window.renderAudit()` y redibuja `#auditList`: registros agrupados por día («Hoy», «Ayer», fecha), con ícono y hora; filtros por tipo (Planificación, Asistencia, Pagos, Cierres, Reportes, Otros) deducidos por expresiones regulares sobre el texto de `item.action` —no se guarda nada nuevo y lo que no coincide va a «Otros»—; las series consecutivas de «Jornada cerrada para …» del mismo día se agrupan en una fila desplegable; y paginación de 40 en 40 («Ver más movimientos»). Añade la tarjeta «Hoy» (movimientos del día) a las cifras. La búsqueda (`#auditSearch`), `exportAuditCSV()` y `clearAudit()` (con su confirmación) no cambian; la exportación sigue incluyendo todos los registros. El resto es CSS en `src/ui-papel.css`; «Limpiar historial» pasa a un estilo rojo tenue.
 
 Verificación: pruebas en navegador con datos simulados (73 registros; claro/oscuro, escritorio y celular): los filtros, la búsqueda, el grupo desplegable y «Ver más» funcionan, «Limpiar historial» sigue pidiendo confirmación (se canceló en la prueba), sin errores de consola. No se probó la exportación ni el borrado real.
+
+## Ausencias y cobertura (menos espacio vacío)
+
+Solo presentación. `src/ui-absences.js` envuelve `renderAbsencePanel` y, tras el render original:
+
+- marca como `calm` las tarjetas de KPI con valor `0` (icono de visto verde si es "Turnos por cubrir", calendario neutro si no);
+- agrega `sin ausencias` (punto + texto) a los días de la tira de 14 días que no traen etiqueta.
+
+El resto es CSS en `src/ui-papel.css`: chips para los tipos de ausencia, columnas repartidas en las filas (solo ≥1400 px), franja compacta para "Todos los turnos desde hoy están cubiertos" y día actual con más contraste. No cambia datos, ids ni funciones; para revertir basta quitar el script de `index.html` y el bloque CSS "Ausencias y cobertura".

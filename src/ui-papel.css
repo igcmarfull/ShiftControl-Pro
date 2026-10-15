@@ -1323,3 +1323,25 @@ body #checklists .ops-check-icon svg{width:20px;height:20px;stroke-width:1.7}
 body #checklists .ops-check-copy .ops-check-icon{display:flex!important;align-items:center;justify-content:center;flex:0 0 40px;line-height:0}
 body #checklists .ops-check-icon svg{display:block;flex:none}
 body #checklists .ops-check-icon.pending{background:var(--panel2,var(--soft))}
+
+/* Ausencias y cobertura: menos espacio vacío (solo presentación) */
+.ab-k .types{display:flex;flex-wrap:wrap;gap:6px 8px}
+.ab-k .types div{gap:6px;padding:4px 10px 4px 8px;border:1px solid var(--line);border-radius:99px;background:var(--panel2);font-size:12px}
+.ab-k .types em{min-width:0;font-size:13px}
+.ab-k .split{gap:18px;align-items:center}
+.ab-k.calm{position:relative}
+.ab-k.calm>.ab-calm-ic{position:absolute;top:14px;right:14px;display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--panel3);color:var(--muted)}
+.ab-k.calm.is-ok>.ab-calm-ic{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+.ab-k.calm>.ab-calm-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#uncoveredShiftsList>.empty,#upcomingReturnsList>.empty{display:flex;align-items:center;gap:10px;margin:0;padding:12px 14px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-size:13px;text-align:left}
+#uncoveredShiftsList>.empty:before{content:"✓";flex:0 0 22px;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green);font-size:12px;font-weight:800}
+#uncoveredShiftsList>.empty{background:color-mix(in srgb,var(--green) 8%,var(--panel));border-color:var(--ok-bd);color:var(--text)}
+.ab-day small.nil{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:5px;font-weight:600;color:var(--muted);opacity:.75}
+.ab-day small.nil i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.55}
+.ab-day{padding:12px 4px}
+.ab-day.today{background:color-mix(in srgb,var(--blue) 10%,var(--panel));outline-width:2px}
+.ab-day.today b{color:var(--blue)}
+@media (max-width:1299px){.ab-day small.nil span{display:none}}
+@media (min-width:1400px){
+  .ab-row{grid-template-columns:38px minmax(150px,230px) 92px minmax(120px,1fr) minmax(150px,1fr) auto;gap:18px}
+}
