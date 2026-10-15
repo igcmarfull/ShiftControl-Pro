@@ -4770,6 +4770,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 
 <link rel="stylesheet" href="src/v20-interface.css?v=20260727-payment-mobile-fix">
 <link rel="stylesheet" href="src/modules/inventory/inventory.css">
+<link rel="stylesheet" href="src/modules/suppliers/suppliers.css">
 <link rel="stylesheet" href="src/ui-papel.css">
 
 
@@ -5882,6 +5883,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
   <div class="nav-group">
     <div class="nav-group-title">Tienda</div>
     <button class="nav-btn role-admin-visible" data-view="invoices"><span>🧾</span>Facturas y compras</button>
+    <button class="nav-btn role-admin-visible" data-view="suppliers"><span>🚚</span>Proveedores</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="inventory"><span>▦</span>Inventarios</button>
   </div>
 </nav>
@@ -6486,6 +6488,8 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     </section>
 
     <section id="inventory" class="view"><div id="inventoryRoot"></div></section>
+
+    <section id="suppliers" class="view"><div id="suppliersRoot"></div></section>
 
     <section id="invoices" class="view">
       <div class="topbar">
@@ -7682,7 +7686,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 <input type="hidden" id="additionalId"><div class="form-group full"><label>Trabajador</label><select class="select" id="additionalEmployee"></select></div><div class="form-group"><label>Fecha</label><input class="field" type="date" id="additionalDate"></div><div class="form-group"><label>Turno</label><select class="select" id="additionalShift"><option>A</option><option>B</option><option>C</option></select></div><div class="form-group full"><label>Motivo</label><input class="field" id="additionalReason"></div><div class="form-group admin-financial-only"><label>Monto</label><input class="field" type="number" min="0" id="additionalAmount"></div><div class="form-group admin-financial-only"><label>Estado</label><select class="select" id="additionalPaid"><option>Pendiente</option><option>Pagado</option></select></div><div class="form-group admin-financial-only"><label>Fecha de pago</label><input class="field" type="date" id="additionalPaidDate"></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeModal(&#39;additionalModal&#39;)">Cancelar</button><button class="btn primary">Guardar</button></div></form></div></div>
 
 <div class="modal" id="invoiceModal"><div class="modal-card"><div class="modal-head"><h3 id="invoiceTitle">Nueva factura</h3><button class="close" onclick="closeModal('invoiceModal')">×</button></div><form id="invoiceForm" class="form-grid">
-<input type="hidden" id="invoiceId"><input type="hidden" id="invoiceEstado">
+<input type="hidden" id="invoiceId"><input type="hidden" id="invoiceEstado"><input type="hidden" id="invoiceSupplierId">
 <div class="form-group"><label>Proveedor</label><input class="field" id="invoiceProveedor" list="invoiceProveedorList" placeholder="Ej: Copec Distribución" oninput="applyInvoiceProviderAutofill()"><datalist id="invoiceProveedorList"></datalist></div>
 <div class="form-group"><label>RUT proveedor</label><input class="field" id="invoiceRut" placeholder="76.123.456-7"></div>
 <div class="form-group"><label>N° factura</label><input class="field" id="invoiceNumero" placeholder="F-0001"></div>
@@ -12487,6 +12491,7 @@ document.getElementById('invoiceForm')?.addEventListener('submit',async event=>{
   const montoTotal=Number(document.getElementById('invoiceMonto').value||0);
   const nota=document.getElementById('invoiceNota').value.trim();
   const estado=document.getElementById('invoiceEstado').value||'pendiente';
+  const supplierId=document.getElementById('invoiceSupplierId')?.value||'';
 
   if(!proveedor)return alert('Indica el proveedor.');
   if(!numeroFactura)return alert('Indica el número de factura.');
@@ -12523,13 +12528,13 @@ document.getElementById('invoiceForm')?.addEventListener('submit',async event=>{
 
   if(id){
     InvoiceModule.patch(id,{
-      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,...approvalFields
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,supplierId,...approvalFields
     },{save:false});
     log(`Factura actualizada: ${proveedor} (${numeroFactura})`);
   }else{
     InvoiceModule.create({
       id:safeRandomUUID(),
-      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,
+      proveedor,rutProveedor,numeroFactura,categoria,fechaEmision,fechaVencimiento,montoTotal,nota,adjunto,supplierId,
       estado:'pendiente',
       aprobacion:'aprobada',
       ...approvalFields
@@ -18108,6 +18113,9 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/app/areas.js"></script>
 <script src="src/modules/inventory/inventory-api.js"></script>
 <script src="src/modules/inventory/inventory.js"></script>
+<script src="src/modules/suppliers/suppliers.js"></script>
+<script src="src/modules/suppliers/suppliers-ui.js"></script>
+<script src="src/modules/suppliers/suppliers-invoice.js"></script>
 <script src="src/v20-interface.js?v=20260729-invoices-add"></script>
 <script src="src/ui-papel.js"></script>
 <script src="src/ui-workcenter.js"></script>

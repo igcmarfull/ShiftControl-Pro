@@ -264,3 +264,7 @@ Presentación más un campo opcional en las facturas (`logoProveedor`, ruta del 
 - **Tarjetas nuevas** (`src/ui-invoices.js`, calculadas con las mismas facturas y reglas de la pantalla, sin datos nuevos): «Pagos · próximos 14 días» (facturas pendientes aprobadas por fecha de vencimiento), «Antigüedad» (al día / vence en 7 días o menos / vencida 1 a 30 / vencida más de 30), «Por categoría» y «Principales proveedores» (compras del mes, igual que el KPI «Total comprado»). El anillo «Resumen por categoría» original sigue en el DOM pero oculto, porque `renderInvoiceSidebar` lo rellena.
 - **Celular**: el calendario de pagos queda antes del listado.
 - **Reversión**: quitar los dos `<script>` (`ui-invoice-logos.js`) y el bloque CSS «Facturas: logos de proveedor y tarjetas de análisis», volver a `invoiceAvatar(name)` y mostrar el bloque oculto. Los campos `logoProveedor` ya guardados no estorban.
+
+## Proveedores (sección nueva)
+
+Sección aparte, con lista, ficha (contacto, condiciones, resumen, últimas facturas) y selector de proveedor en «Nueva factura». Estilos `su-*` y `si-*` en `src/modules/suppliers/suppliers.css`. Detalle y estado de la migración en `docs/proveedores.md`.

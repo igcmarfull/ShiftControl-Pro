@@ -58,6 +58,11 @@
   }
   // Pone el logo en los avatares que ya estaban dibujados con la inicial.
   function hydrate(){
+    document.querySelectorAll('#invoices [data-su-logo]').forEach(element=>{
+      const url=window.SupplierModule?.logoUrl?.(element.dataset.suLogo);
+      if(!url||element.querySelector('img'))return;
+      element.innerHTML=`<span class="sp-logo"><img src="${esc(url)}" alt="" decoding="async"></span>`;
+    });
     document.querySelectorAll('#invoices [data-sp-path]').forEach(element=>{
       const hit=URLS[element.dataset.spPath];
       if(!hit||!hit.url||element.querySelector('img'))return;
@@ -69,6 +74,13 @@
   // Reemplaza a invoiceAvatar cuando hay una factura: logo si existe, círculo si no.
   function avatar(inv,fallbackHtml){
     if(!inv)return fallbackHtml;
+    // El logo del proveedor registrado (sección Proveedores) manda sobre el logo guardado en la factura.
+    const supplier=window.SupplierModule?.forInvoice?.(inv);
+    if(supplier&&supplier.logo_path){
+      const suUrl=window.SupplierModule.logoUrl(supplier.logo_path);
+      const suInner=suUrl?`<span class="sp-logo"><img src="${esc(suUrl)}" alt="" decoding="async"></span>`:fallbackHtml;
+      return `<span class="sp-wrap" data-su-logo="${esc(supplier.logo_path)}">${suInner}</span>`;
+    }
     const path=window.InvoiceModule?.supplierLogoPath?.(inv)||'';
     const url=path?urlOf(path):null;
     let inner;
@@ -227,5 +239,5 @@
   });
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu()});
 
-  window.InvoiceLogos={avatar,hydrate,canEdit};
+  window.InvoiceLogos={avatar,hydrate,canEdit,processLogo};
 })();
