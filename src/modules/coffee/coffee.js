@@ -159,7 +159,7 @@ function chartHtml(rows,m){
 }
 function tableHtml(m){
   const rows=S.rec?.rows||[];
-  if(!rows.length)return `<div class="cf-note">Aún no hay lecturas de dos días distintos. Anota el numeral en dos días para ver la primera cuadratura.</div>`;
+  if(!rows.length)return `<div class="cf-note">Aún no hay lecturas de dos días distintos. Anota el numeral en dos días para ver la primera cuadratura. Las ventas de café se cargan con «Importar ventas» (arriba), con el mismo Excel del POS.</div>`;
   const head='<div class="cf-th"><span>Tramo</span><span>Numeral</span><span>Avanzó</span><span>Vendidos</span><span>Diferencia</span><span>Estado</span></div>';
   return head+rows.slice(0,31).map(row=>{
     const [cls,label]=STATUS[row.status]||['warn',row.status];
@@ -186,7 +186,7 @@ function formHtml(m){
 function render(){
   const root=$('coffeeRoot');
   if(!root)return;
-  const head=`<div class="cf-head"><div><h1>Máquinas de café</h1><p>El numeral de cada máquina contra los vasos vendidos en el POS, día a día.</p></div><div class="cf-acts">${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="new">+ Nueva máquina</button>':''}</div></div>`;
+  const head=`<div class="cf-head"><div><h1>Máquinas de café</h1><p>El numeral de cada máquina contra los vasos vendidos en el POS, día a día.</p></div><div class="cf-acts"><button type="button" class="cf-btn ghost" data-act="sales-import">Importar ventas</button>${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="new">+ Nueva máquina</button>':''}</div></div>`;
   if(S.status==='unavailable'){root.innerHTML=`${head}<div class="cf-note">Las máquinas de café todavía no están habilitadas en el servidor.</div>`;return}
   if(S.status==='error'){root.innerHTML=`${head}<div class="cf-err">${esc(S.message)}</div><button type="button" class="cf-btn" data-cf="reload">Reintentar</button>`;return}
   if(S.status!=='ready'){root.innerHTML=`${head}<div class="cf-note">${S.loading?'Cargando…':'Esperando la sesión…'}</div>`;return}
