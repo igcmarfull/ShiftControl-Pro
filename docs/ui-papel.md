@@ -219,3 +219,9 @@ Solo presentación, en CSS (`src/ui-papel.css`, `body #finance`): encabezado de 
 Único cambio en JavaScript: `renderFinanceApprovals()` actualiza el título de la pestaña «Aprobaciones» con el número de pendientes (`.inv-count`). Los registros, las acciones (editar, marcar recuperado/rendido, aprobar, rechazar, depositar), los permisos y los cálculos no se tocaron.
 
 Verificación: pruebas en navegador con datos simulados (con registros de faltantes, cuadraturas, gastos y depósitos; claro/oscuro, escritorio y celular), sin errores de consola. No se probó registrar, aprobar ni eliminar movimientos.
+
+## Trabajadores (rediseño de escritorio)
+
+Solo presentación en escritorio (≥ 801 px); el flujo móvil existente (tarjetas, «Buscar», filtros y botón «＋») no se tocó. `src/ui-employees.js` (cargado tras `ui-invoices.js`) envuelve `window.renderEmployees()` y añade: el horario de cada turno dentro del chip (`data-hours`, tomado de `state.settings.A/B/C`), el área como etiqueta y el conteo «N trabajadores · x Isla · y Tienda» en la cabecera (el área se lee con `ShiftControlAreas.employeeArea`; sin área cuenta como Isla). El resto es CSS en `src/ui-papel.css`: la búsqueda (`#employeeSearch`) y los filtros existentes (Todos, Activos, Vacaciones, Licencia, Inactivos, `v37SetEmployeeFilter`) pasan a verse en escritorio —antes solo existían en el celular—, la tabla va en una tarjeta con chips legibles de turno y estado y «Eliminar» en rojo tenue. La búsqueda ya cubría el área (escribir «Isla» o «Tienda» filtra); no se añadieron filtros nuevos.
+
+Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): la búsqueda y los filtros cambian las filas, «Editar» abre la ficha y el celular conserva su diseño. Sin errores de consola. No se probó crear ni eliminar trabajadores.
