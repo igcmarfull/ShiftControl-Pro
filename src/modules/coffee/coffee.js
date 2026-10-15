@@ -96,9 +96,8 @@ function kpis(rows,m){
     <div class="cf-kpi" style="--c:var(--red)"><i>!</i><div><b>${s.over}</b><span>Fuera de tolerancia</span></div></div></div>`;
 }
 function tableHtml(m){
-  if(S.rec?.needs_close_shift)return `<div class="cf-note">Elige el <b>turno de cierre</b> de esta máquina (el que coincide con el corte del sistema diario) para poder cuadrar. ${isAdmin()?'<button type="button" class="cf-link" data-cf="config">Configurar</button>':'Pídeselo al administrador.'}</div>`;
   const rows=S.rec?.rows||[];
-  if(!rows.length)return `<div class="cf-note">Aún no hay dos lecturas del turno de cierre (${esc(m.close_shift)}). Anota el numeral de ese turno dos días distintos para ver la primera cuadratura.</div>`;
+  if(!rows.length)return `<div class="cf-note">Aún no hay lecturas de dos días distintos. Anota el numeral en dos días para ver la primera cuadratura.</div>`;
   const head='<div class="cf-th"><span>Tramo</span><span>Numeral</span><span>Avanzó</span><span>Vendidos</span><span>Diferencia</span><span>Estado</span></div>';
   return head+rows.slice(0,31).map(row=>{
     const [cls,label]=STATUS[row.status]||['warn',row.status];
@@ -110,22 +109,22 @@ function tableHtml(m){
 function formHtml(m){
   const last=S.readings[0];
   const hint=last?`Última lectura: <b>${fmt(last.numeral)}</b> (${dmy(last.read_on)}, turno ${esc(last.shift)}).`:'Aún no hay lecturas de esta máquina.';
-  const f=S.form||{date:today(),shift:m.close_shift||'C',numeral:''};
+  const f=S.form||{date:today(),shift:'A',numeral:''};
   return `<aside class="cf-card cf-side"><div class="cf-f"><h4>Anotar el numeral</h4>
     <label>Fecha<input type="date" id="cfDate" value="${esc(f.date)}" max="${today()}"></label>
-    <label>Turno<select id="cfShift">${SHIFTS.map(shift=>`<option value="${shift}"${f.shift===shift?' selected':''}>Turno ${shift}${m.close_shift===shift?' · cierre del día':''}</option>`).join('')}</select></label>
+    <label>Turno<select id="cfShift">${SHIFTS.map(shift=>`<option value="${shift}"${f.shift===shift?' selected':''}>Turno ${shift}</option>`).join('')}</select></label>
     <label>Numeral<input id="cfNumeral" inputmode="numeric" placeholder="Ej: 48.944" value="${esc(f.numeral)}" class="cf-big"></label>
     <div class="cf-hint">${hint}</div>
     ${S.message?`<div class="cf-err">${esc(S.message)}</div>`:''}
     <button type="button" class="cf-btn" data-cf="save" ${S.busy?'disabled':''}>${S.busy?'Guardando…':'Guardar lectura'}</button>
     <h4 style="margin-top:6px">Configuración</h4>
-    <div class="cf-kp"><div><small>Turno de cierre</small><b>${m.close_shift?`Turno ${esc(m.close_shift)}`:'Sin definir'}</b></div><div><small>Tolerancia por tramo</small><b>±${m.tolerance} vasos</b></div></div>
+    <div class="cf-kp"><div><small>Tolerancia por tramo</small><b>±${m.tolerance} vasos</b></div><div><small>Numeral del día</small><b>El más alto</b></div></div>
     ${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="config">Configurar máquina</button>':''}</div></aside>`;
 }
 function render(){
   const root=$('coffeeRoot');
   if(!root)return;
-  const head=`<div class="cf-head"><div><h1>Máquinas de café</h1><p>El numeral de cada máquina contra los vasos vendidos en el POS.</p></div><div class="cf-acts">${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="new">+ Nueva máquina</button>':''}</div></div>`;
+  const head=`<div class="cf-head"><div><h1>Máquinas de café</h1><p>El numeral de cada máquina contra los vasos vendidos en el POS, día a día.</p></div><div class="cf-acts">${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="new">+ Nueva máquina</button>':''}</div></div>`;
   if(S.status==='unavailable'){root.innerHTML=`${head}<div class="cf-note">Las máquinas de café todavía no están habilitadas en el servidor.</div>`;return}
   if(S.status==='error'){root.innerHTML=`${head}<div class="cf-err">${esc(S.message)}</div><button type="button" class="cf-btn" data-cf="reload">Reintentar</button>`;return}
   if(S.status!=='ready'){root.innerHTML=`${head}<div class="cf-note">${S.loading?'Cargando…':'Esperando la sesión…'}</div>`;return}
@@ -133,7 +132,7 @@ function render(){
   const m=machine();
   const tabs=S.machines.filter(item=>item.active||isAdmin()).map(item=>`<button type="button" class="${item.id===S.selected?'on':''}" data-cf="tab" data-id="${esc(item.id)}">${esc(item.name)}${item.active?'':' (inactiva)'}</button>`).join('');
   const codes=S.codes.filter(code=>code.machine_id===m.id).length;
-  root.innerHTML=`${head}${S.rec&&!S.rec.needs_close_shift?kpis(S.rec.rows,m):''}
+  root.innerHTML=`${head}${S.rec?kpis(S.rec.rows,m):''}
     <div class="cf-main"><div class="cf-card"><div class="cf-h"><span class="cf-ic">☕</span><div><h3>${esc(m.name)}</h3><small>${codes} producto${codes===1?'':'s'} del POS</small></div><div class="cf-tabs">${tabs}</div></div><div class="cf-t">${S.loading?'<div class="cf-note">Cargando…</div>':tableHtml(m)}</div></div>${formHtml(m)}</div>`;
 }
 
@@ -157,7 +156,7 @@ async function saveReading(){
 }
 function closeLayer(){S.layer=false;const el=$('cfLayer');if(el)el.remove()}
 function openConfig(isNew){
-  const m=isNew?{id:'',name:'',close_shift:'',tolerance:5,active:true}:machine();
+  const m=isNew?{id:'',name:'',tolerance:5,active:true}:machine();
   if(!m)return;
   const codes=isNew?[]:S.codes.filter(code=>code.machine_id===m.id).map(code=>code.pos_code);
   closeLayer();
@@ -165,8 +164,7 @@ function openConfig(isNew){
   layer.id='cfLayer';layer.className='cf-ov';
   layer.innerHTML=`<div class="cf-modal" role="dialog" aria-label="Configurar máquina"><h3>${isNew?'Nueva máquina':'Configurar '+esc(m.name)}</h3>
     <label>Nombre<input id="cfName" value="${esc(m.name)}" maxlength="60"></label>
-    <div class="cf-two"><label>Turno de cierre<select id="cfClose"><option value="">Sin definir</option>${SHIFTS.map(shift=>`<option value="${shift}"${m.close_shift===shift?' selected':''}>Turno ${shift}</option>`).join('')}</select><small>El turno que coincide con el corte del sistema diario.</small></label>
-    <label>Tolerancia (vasos)<input id="cfTol" type="number" min="0" max="500" value="${esc(m.tolerance)}"></label></div>
+    <label>Tolerancia (vasos)<input id="cfTol" type="number" min="0" max="500" value="${esc(m.tolerance)}"><small>Diferencia aceptada entre lo que avanzó el numeral y lo vendido, por tramo.</small></label>
     <label>Códigos del POS que pasan por esta máquina<textarea id="cfCodes" rows="3" placeholder="Un código por línea o separados por coma">${esc(codes.join('\n'))}</textarea><small>Cada venta de estos códigos cuenta como un vaso. No descuentan stock.</small></label>
     ${isNew?'':`<label class="cf-check"><input type="checkbox" id="cfActive"${m.active?' checked':''}> Máquina activa</label>`}
     <div class="cf-err" id="cfModalErr"></div>
@@ -180,7 +178,7 @@ async function saveConfig(id){
   const name=$('cfName').value.trim();
   if(!name){err.textContent='La máquina necesita un nombre.';return}
   const codes=[...new Set($('cfCodes').value.split(/[\s,;]+/).map(code=>code.trim()).filter(Boolean))].map(code=>({code,cups:1}));
-  const payload={name,close_shift:$('cfClose').value||null,tolerance:Number($('cfTol').value||0),codes};
+  const payload={name,tolerance:Number($('cfTol').value||0),codes};
   if(id){payload.id=id;payload.active=$('cfActive')?$('cfActive').checked:true}
   try{
     const saved=await rpc('coffee_machine_save',{p_company_id:companyId(),p_machine:payload});

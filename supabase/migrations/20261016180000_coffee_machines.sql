@@ -1,9 +1,10 @@
 -- Máquinas de café: cuadratura del numeral contra las ventas del POS.
 --
 -- Cambio aditivo:
---   1. coffee_machines / coffee_machine_codes: cada máquina, su turno de cierre (el que coincide con
---      el corte del sistema diario), su tolerancia y los códigos del POS que pasan por ella.
---   2. coffee_readings: el numeral que marca la máquina en cada turno (A, B o C).
+--   1. coffee_machines / coffee_machine_codes: cada máquina, su tolerancia y los códigos del POS que
+--      pasan por ella.
+--   2. coffee_readings: el numeral que marca la máquina en cada turno (A, B o C). La cuadratura es
+--      diaria: usa el numeral más alto de cada día (el numeral solo sube).
 --   3. coffee_sales: ventas del POS de los códigos de una máquina, registradas por la importación de
 --      ventas (inv_apply_sales). Esos productos no descuentan stock.
 --   4. coffee_machine_save, coffee_save_reading y coffee_reconcile (numeral de cierre contra vasos
@@ -32,7 +33,6 @@ create table public.coffee_machines (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies (id) on delete cascade,
   name text not null check (length(trim(name)) > 0 and length(name) <= 60),
-  close_shift text check (close_shift in ('A', 'B', 'C')),
   tolerance integer not null default 5 check (tolerance between 0 and 500),
   active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -91,7 +91,7 @@ begin
 end;
 $$;
 
--- Crea o edita una máquina (administrador). p_machine: {id?, name, close_shift, tolerance, active, codes: [{code, cups}]}
+-- Crea o edita una máquina (administrador). p_machine: {id?, name, tolerance, active, codes: [{code, cups}]}
 create function public.coffee_machine_save(p_company_id uuid, p_machine jsonb)
 returns jsonb
 language plpgsql
@@ -104,7 +104,6 @@ declare
   v_old public.coffee_machines;
   v_new public.coffee_machines;
   v_name text;
-  v_shift text;
   v_tol integer;
   v_active boolean;
   v_code jsonb;
@@ -120,18 +119,16 @@ begin
     if not found then perform public.inv_fail('not_found', 'La máquina no existe.', null, '42501'); end if;
   end if;
   v_name := trim(case when p_machine ? 'name' then coalesce(p_machine->>'name', '') else coalesce(v_old.name, '') end);
-  v_shift := case when p_machine ? 'close_shift' then nullif(p_machine->>'close_shift', '') else v_old.close_shift end;
   v_tol := case when p_machine ? 'tolerance' then coalesce((p_machine->>'tolerance')::integer, 5) else coalesce(v_old.tolerance, 5) end;
   v_active := case when p_machine ? 'active' then coalesce((p_machine->>'active')::boolean, true) else coalesce(v_old.active, true) end;
   if v_name = '' then perform public.inv_fail('name_required', 'La máquina necesita un nombre.'); end if;
-  if v_shift is not null and v_shift not in ('A', 'B', 'C') then perform public.inv_fail('invalid_shift', 'El turno de cierre debe ser A, B o C.'); end if;
   if v_tol < 0 or v_tol > 500 then perform public.inv_fail('invalid_tolerance', 'La tolerancia debe estar entre 0 y 500 vasos.'); end if;
   begin
     if v_id is null then
-      insert into public.coffee_machines (company_id, name, close_shift, tolerance, active)
-      values (p_company_id, v_name, v_shift, v_tol, v_active) returning * into v_new;
+      insert into public.coffee_machines (company_id, name, tolerance, active)
+      values (p_company_id, v_name, v_tol, v_active) returning * into v_new;
     else
-      update public.coffee_machines set name = v_name, close_shift = v_shift, tolerance = v_tol, active = v_active, updated_at = now()
+      update public.coffee_machines set name = v_name, tolerance = v_tol, active = v_active, updated_at = now()
       where id = v_id returning * into v_new;
     end if;
   exception when unique_violation then
@@ -197,9 +194,9 @@ begin
 end;
 $$;
 
--- Cuadratura: entre dos lecturas consecutivas del turno de cierre, cuánto avanzó el numeral contra los
--- vasos vendidos en los días contables que cubre ese tramo (desde el día siguiente a la lectura anterior
--- hasta el día de la actual). Estados: ok, over (diferencia mayor que la tolerancia), reset (el numeral
+-- Cuadratura diaria: el numeral de cada día es el más alto de sus lecturas (el numeral solo sube). Entre
+-- dos días consecutivos con lectura, compara cuánto avanzó con los vasos vendidos en los días contables
+-- que cubre ese tramo (desde el día siguiente a la lectura anterior hasta el día de la actual). Estados: ok, over (diferencia mayor que la tolerancia), reset (el numeral
 -- bajó), pending (faltan ventas cargadas de algún día del tramo).
 create function public.coffee_reconcile(p_company_id uuid, p_machine_id uuid, p_from date default null, p_to date default null)
 returns jsonb
@@ -224,16 +221,13 @@ begin
   end if;
   select * into v_m from public.coffee_machines where id = p_machine_id and company_id = p_company_id;
   if not found then perform public.inv_fail('not_found', 'La máquina no existe.', null, '42501'); end if;
-  if v_m.close_shift is null then
-    return jsonb_build_object('machine', to_jsonb(v_m), 'rows', '[]'::jsonb, 'needs_close_shift', true);
-  end if;
   for r in
     select * from (
-      select cr.read_on, cr.numeral, cr.entered_by_name,
-             lag(cr.read_on) over (order by cr.read_on) as prev_on,
-             lag(cr.numeral) over (order by cr.read_on) as prev_numeral
-      from public.coffee_readings cr
-      where cr.machine_id = p_machine_id and cr.shift = v_m.close_shift
+      select d.read_on, d.numeral,
+             lag(d.read_on) over (order by d.read_on) as prev_on,
+             lag(d.numeral) over (order by d.read_on) as prev_numeral
+      from (select cr.read_on, max(cr.numeral) as numeral
+            from public.coffee_readings cr where cr.machine_id = p_machine_id group by cr.read_on) d
     ) t
     where t.prev_on is not null
       and (p_from is null or t.read_on >= p_from) and (p_to is null or t.read_on <= p_to)
@@ -255,9 +249,9 @@ begin
     v_out := v_out || jsonb_build_object(
       'read_on', r.read_on, 'prev_on', r.prev_on, 'numeral', r.numeral, 'prev_numeral', r.prev_numeral,
       'advanced', v_adv, 'sold', v_sold, 'diff', v_diff, 'days', v_days, 'days_loaded', v_loaded,
-      'status', v_status, 'entered_by', r.entered_by_name);
+      'status', v_status);
   end loop;
-  return jsonb_build_object('machine', to_jsonb(v_m), 'rows', v_out, 'needs_close_shift', false);
+  return jsonb_build_object('machine', to_jsonb(v_m), 'rows', v_out);
 end;
 $$;
 

@@ -10,9 +10,11 @@ Módulo `src/modules/coffee/` (vista `coffee`, menú Tienda → Máquinas de caf
 
 ## Qué hace
 
-Cada máquina (por ejemplo Marley y Nescafé) tiene un nombre, un **turno de cierre** (A, B o C: el que coincide con el corte del sistema diario), una tolerancia en vasos y los códigos del POS que pasan por ella. Se anota el numeral de cada turno. La cuadratura usa solo las lecturas del turno de cierre: entre dos lecturas consecutivas compara cuánto avanzó el numeral con los vasos vendidos en los días contables de ese tramo (desde el día siguiente a la lectura anterior hasta el día de la actual).
+Cada máquina (por ejemplo Marley y Nescafé) tiene un nombre, una tolerancia en vasos y los códigos del POS que pasan por ella. Se anota el numeral de cada turno (A, B o C), pero la cuadratura es **diaria**: el numeral de un día es el más alto de sus lecturas (el numeral solo sube) y no importa de qué turno venga. Entre dos días consecutivos con lectura, la pantalla compara cuánto avanzó el numeral con los vasos vendidos en los días contables de ese tramo (desde el día siguiente a la lectura anterior hasta el día de la actual).
 
-Estados: «Cuadra», «Fuera de tolerancia» (la diferencia pasa la tolerancia), «El numeral bajó» (posible reinicio; no se cuadra) y «Faltan ventas por cargar» (algún día del tramo no tiene un informe de ventas importado). Una máquina sin turno de cierre pide configurarlo.
+Estados: «Cuadra», «Fuera de tolerancia» (la diferencia pasa la tolerancia), «El numeral bajó» (posible reinicio; no se cuadra) y «Faltan ventas por cargar» (algún día del tramo no tiene un informe de ventas importado).
+
+**Precisión:** como el informe del POS corta alrededor de las 22:57 y el numeral se anota en el turno que lo envían, la diferencia puede incluir vasos de otra franja horaria. Se decidió que no importa el turno; la tolerancia absorbe esa diferencia.
 
 ## Datos
 
@@ -22,7 +24,7 @@ Tablas `coffee_machines`, `coffee_machine_codes`, `coffee_readings` y `coffee_sa
 
 - Los códigos de una máquina **no descuentan stock** ni necesitan un producto en Inventarios: la importación de ventas los guarda aparte en `coffee_sales`. Un código no puede pertenecer a dos máquinas.
 - Cada vaso suma 1 en el numeral (configurable por código: 1 a 20).
-- Una lectura por máquina, fecha y turno. La jefa no puede corregir una lectura guardada.
+- Una lectura por máquina, fecha y turno (se pueden anotar varios turnos el mismo día). La jefa no puede corregir una lectura guardada.
 - Los productos de café creados en Tienda (por vaso) siguen activos pero la importación los ignora mientras su código pertenezca a una máquina.
 
 ## Verificación realizada

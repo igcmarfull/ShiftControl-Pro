@@ -108,26 +108,23 @@ declare r jsonb; v_msg text; v_n jsonb; v_mid text; v_nid text;
 begin
   -- 1. Máquinas
   r := pg_temp.call('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'),
-    '{"name":"Marley","close_shift":"C","tolerance":5,"codes":[{"code":"219113"},{"code":"219109"}]}'));
+    '{"name":"Marley","tolerance":5,"codes":[{"code":"219113"},{"code":"219109"}]}'));
   perform pg_temp.put('m1', r->>'id');
-  perform pg_temp.ok('El admin crea la máquina con sus códigos', r->>'close_shift' = 'C' and (select count(*) from public.coffee_machine_codes where machine_id = (r->>'id')::uuid) = 2, r::text);
+  perform pg_temp.ok('El admin crea la máquina con sus códigos', (select count(*) from public.coffee_machine_codes where machine_id = (r->>'id')::uuid) = 2, r::text);
   r := pg_temp.call('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), '{"name":"Nescafé","codes":[{"code":"221608"}]}'));
   perform pg_temp.put('m2', r->>'id');
-  perform pg_temp.ok('Una máquina nace sin turno de cierre', r->>'close_shift' is null, r::text);
   v_msg := pg_temp.try('jt', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), '{"name":"Otra"}'));
   perform pg_temp.ok('La jefa no configura máquinas', v_msg = 'inv:forbidden', v_msg);
   v_msg := pg_temp.try('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), '{"name":"marley"}'));
   perform pg_temp.ok('El nombre no se repite', v_msg = 'inv:duplicate_name', v_msg);
   v_msg := pg_temp.try('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), '{"name":"X","codes":[{"code":"219113"}]}'));
   perform pg_temp.ok('Un código no pertenece a dos máquinas', v_msg = 'inv:duplicate_code', v_msg);
-  v_msg := pg_temp.try('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), '{"name":"Y","close_shift":"D"}'));
-  perform pg_temp.ok('Solo turnos A, B o C', v_msg = 'inv:invalid_shift', v_msg);
 
   -- 2. Lecturas
   perform pg_temp.ok('La jefa de tienda anota un numeral', pg_temp.reading('jt', 'm1', 3, 'C', 1000) = 'OK');
   perform pg_temp.ok('...y otro día', pg_temp.reading('jt', 'm1', 2, 'C', 1030) = 'OK');
-  perform pg_temp.ok('...y un turno que no cierra', pg_temp.reading('jt', 'm1', 2, 'A', 1010) = 'OK');
-  perform pg_temp.ok('El admin anota el cierre de ayer', pg_temp.reading('adm', 'm1', 1, 'C', 1062) = 'OK');
+  perform pg_temp.ok('...y otro turno del mismo día con un numeral menor', pg_temp.reading('jt', 'm1', 2, 'A', 1010) = 'OK');
+  perform pg_temp.ok('El admin anota la lectura de ayer', pg_temp.reading('adm', 'm1', 1, 'C', 1062) = 'OK');
   v_msg := pg_temp.reading('jt', 'm1', 3, 'C', 999);
   perform pg_temp.ok('La jefa no corrige una lectura guardada', v_msg = 'inv:already_read', v_msg);
   perform pg_temp.ok('El admin sí corrige', pg_temp.reading('adm', 'm1', 3, 'C', 1000) = 'OK');
@@ -144,7 +141,7 @@ begin
   r := pg_temp.call('jt', format('select public.coffee_reconcile(%L, %L)', pg_temp.g('A'), pg_temp.g('m1')));
   perform pg_temp.ok('Sin ventas cargadas el estado es pendiente', jsonb_array_length(r->'rows') = 2 and (r->'rows'->0->>'status') = 'pending', r::text);
   r := pg_temp.call('jt', format('select public.coffee_reconcile(%L, %L)', pg_temp.g('A'), pg_temp.g('m2')));
-  perform pg_temp.ok('Una máquina sin turno de cierre lo pide', (r->>'needs_close_shift')::boolean, r::text);
+  perform pg_temp.ok('Una máquina sin lecturas no tiene tramos', jsonb_array_length(r->'rows') = 0, r::text);
 
   -- 4. La importación registra las ventas de máquina sin tocar stock
   r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
@@ -159,9 +156,9 @@ begin
 
   -- 5. Cuadratura
   r := pg_temp.call('jt', format('select public.coffee_reconcile(%L, %L)', pg_temp.g('A'), pg_temp.g('m1')));
-  perform pg_temp.ok('Entre cierres el numeral avanza 30 y se vendieron 28', (r->'rows'->1->>'advanced')::int = 30 and (r->'rows'->1->>'sold')::int = 28 and (r->'rows'->1->>'diff')::int = 2, r::text);
+  perform pg_temp.ok('Entre dos días el numeral avanza 30 y se vendieron 28', (r->'rows'->1->>'advanced')::int = 30 and (r->'rows'->1->>'sold')::int = 28 and (r->'rows'->1->>'diff')::int = 2, r::text);
   perform pg_temp.ok('Dentro de la tolerancia cuadra', (r->'rows'->0->>'status') = 'ok' and (r->'rows'->1->>'status') = 'ok', r::text);
-  perform pg_temp.ok('La lectura de otro turno no entra en la cuenta', (r->'rows'->1->>'prev_numeral')::int = 1000 and (r->'rows'->1->>'numeral')::int = 1030, r::text);
+  perform pg_temp.ok('El numeral del día es el más alto de sus turnos', (r->'rows'->1->>'prev_numeral')::int = 1000 and (r->'rows'->1->>'numeral')::int = 1030, r::text);
   perform pg_temp.call('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), json_build_object('id', pg_temp.g('m1'), 'tolerance', 1)::text));
   r := pg_temp.call('adm', format('select public.coffee_reconcile(%L, %L)', pg_temp.g('A'), pg_temp.g('m1')));
   perform pg_temp.ok('Con tolerancia 1 una diferencia de 2 se marca', (r->'rows'->0->>'status') = 'over', r::text);
