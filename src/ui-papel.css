@@ -1316,3 +1316,10 @@ body #audit .btn.danger{color:var(--red);background:transparent;border-color:col
  .hs-sub{margin-left:20px}
 }
 body #audit #auditLastDate{font-size:20px!important;letter-spacing:-.02em;margin-top:12px}
+
+/* Checklist: iconos más limpios y legibles */
+body #checklists .ops-check-icon{width:40px;height:40px;border-radius:12px}
+body #checklists .ops-check-icon svg{width:20px;height:20px;stroke-width:1.7}
+body #checklists .ops-check-copy .ops-check-icon{display:flex!important;align-items:center;justify-content:center;flex:0 0 40px;line-height:0}
+body #checklists .ops-check-icon svg{display:block;flex:none}
+body #checklists .ops-check-icon.pending{background:var(--panel2,var(--soft))}
