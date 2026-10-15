@@ -12,6 +12,8 @@ Módulo `src/modules/coffee/` (vista `coffee`, menú Tienda → Máquinas de caf
 
 Cada máquina (por ejemplo Marley y Nescafé) tiene un nombre, una tolerancia en vasos y los códigos del POS que pasan por ella. Se anota el numeral de cada turno (A, B o C), pero la cuadratura es **diaria**: el numeral de un día es el más alto de sus lecturas (el numeral solo sube) y no importa de qué turno venga. Entre dos días consecutivos con lectura, la pantalla compara cuánto avanzó el numeral con los vasos vendidos en los días contables de ese tramo (desde el día siguiente a la lectura anterior hasta el día de la actual).
 
+**Gráfico:** barras de la diferencia por día (numeral menos vasos vendidos) con la banda de tolerancia; verde si cuadra, rojo si está fuera. Solo incluye los tramos que se pueden cuadrar (no los pendientes ni los reinicios) y los últimos 21. SVG propio, sin librería; el detalle está en la tabla.
+
 Estados: «Cuadra», «Fuera de tolerancia» (la diferencia pasa la tolerancia), «El numeral bajó» (posible reinicio; no se cuadra) y «Faltan ventas por cargar» (algún día del tramo no tiene un informe de ventas importado).
 
 **Precisión:** como el informe del POS corta alrededor de las 22:57 y el numeral se anota en el turno que lo envían, la diferencia puede incluir vasos de otra franja horaria. Se decidió que no importa el turno; la tolerancia absorbe esa diferencia.

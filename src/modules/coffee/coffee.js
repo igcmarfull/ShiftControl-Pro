@@ -95,6 +95,36 @@ function kpis(rows,m){
     <div class="cf-kpi" style="--c:var(--blue)"><i>☕</i><div><b>${fmt(s.sold)}</b><span>Vasos vendidos</span></div></div>
     <div class="cf-kpi" style="--c:var(--red)"><i>!</i><div><b>${s.over}</b><span>Fuera de tolerancia</span></div></div></div>`;
 }
+// Diferencia por día (numeral − vendidos) con la banda de tolerancia. Solo cuenta lo que se puede cuadrar.
+function chartHtml(rows,m){
+  const data=rows.filter(row=>row.status==='ok'||row.status==='over').slice(0,21).reverse();
+  if(data.length<2)return '';
+  const W=720,H=190,L=40,R=12,T=14,B=30;
+  const tol=Number(m.tolerance)||0;
+  const max=Math.max(5,tol*1.6,...data.map(row=>Math.abs(row.diff)));
+  const y=value=>T+(H-T-B)*(1-(value+max)/(2*max));
+  const slot=(W-L-R)/data.length;
+  const bw=Math.max(6,Math.min(26,slot*0.55));
+  const bars=data.map((row,index)=>{
+    const cx=L+slot*index+slot/2;
+    const top=y(Math.max(row.diff,0)),bottom=y(Math.min(row.diff,0));
+    const height=Math.max(2,bottom-top);
+    const over=row.status==='over';
+    const label=`${dmy(row.read_on)}: avanzó ${fmt(row.advanced)}, vendidos ${fmt(row.sold)}, diferencia ${row.diff>0?'+':''}${fmt(row.diff)}`;
+    const text=over?`<text x="${cx}" y="${row.diff>=0?top-5:bottom+13}" text-anchor="middle" class="cf-cv">${row.diff>0?'+':''}${fmt(row.diff)}</text>`:'';
+    const every=Math.ceil(data.length/10);
+    const tick=index%every===0?`<text x="${cx}" y="${H-10}" text-anchor="middle" class="cf-cx">${dmy(row.read_on)}</text>`:'';
+    return `<g><rect x="${cx-slot/2}" y="${T}" width="${slot}" height="${H-T-B}" fill="transparent"><title>${esc(label)}</title></rect><rect x="${cx-bw/2}" y="${top}" width="${bw}" height="${height}" rx="3" class="cf-bar ${over?'bad':'ok'}"><title>${esc(label)}</title></rect>${text}${tick}</g>`;
+  }).join('');
+  const band=tol?`<rect x="${L}" y="${y(tol)}" width="${W-L-R}" height="${y(-tol)-y(tol)}" class="cf-band"/>`:'';
+  return `<div class="cf-chart"><div class="cf-chart-h"><b>Diferencia por día</b><span class="cf-leg"><i class="ok"></i>Cuadra<i class="bad"></i>Fuera de tolerancia<i class="band"></i>Banda: tolerancia ±${tol}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Diferencia diaria entre el numeral y los vasos vendidos">${band}
+    <line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" class="cf-zero"/>
+    <text x="${L-6}" y="${y(0)+4}" text-anchor="end" class="cf-cx">0</text>
+    <text x="${L-6}" y="${y(max)+10}" text-anchor="end" class="cf-cx">+${fmt(Math.round(max))}</text>
+    <text x="${L-6}" y="${y(-max)}" text-anchor="end" class="cf-cx">−${fmt(Math.round(max))}</text>${bars}</svg>
+    <p class="cf-chart-n">Vasos de más (+) o de menos (−) que el numeral respecto de lo vendido. El detalle está en la tabla.</p></div>`;
+}
 function tableHtml(m){
   const rows=S.rec?.rows||[];
   if(!rows.length)return `<div class="cf-note">Aún no hay lecturas de dos días distintos. Anota el numeral en dos días para ver la primera cuadratura.</div>`;
@@ -133,7 +163,7 @@ function render(){
   const tabs=S.machines.filter(item=>item.active||isAdmin()).map(item=>`<button type="button" class="${item.id===S.selected?'on':''}" data-cf="tab" data-id="${esc(item.id)}">${esc(item.name)}${item.active?'':' (inactiva)'}</button>`).join('');
   const codes=S.codes.filter(code=>code.machine_id===m.id).length;
   root.innerHTML=`${head}${S.rec?kpis(S.rec.rows,m):''}
-    <div class="cf-main"><div class="cf-card"><div class="cf-h"><span class="cf-ic">☕</span><div><h3>${esc(m.name)}</h3><small>${codes} producto${codes===1?'':'s'} del POS</small></div><div class="cf-tabs">${tabs}</div></div><div class="cf-t">${S.loading?'<div class="cf-note">Cargando…</div>':tableHtml(m)}</div></div>${formHtml(m)}</div>`;
+    <div class="cf-main"><div class="cf-card"><div class="cf-h"><span class="cf-ic">☕</span><div><h3>${esc(m.name)}</h3><small>${codes} producto${codes===1?'':'s'} del POS</small></div><div class="cf-tabs">${tabs}</div></div><div class="cf-t">${S.loading?'<div class="cf-note">Cargando…</div>':chartHtml(S.rec?.rows||[],m)+tableHtml(m)}</div></div>${formHtml(m)}</div>`;
 }
 
 /* ------------------------------------------------------------ acciones */
