@@ -21,7 +21,7 @@ Estados: «Cuadra», «Fuera de tolerancia» (la diferencia pasa la tolerancia),
 ## Logo de la máquina
 
 - **Código en el repositorio:** «Subir logo / Cambiar logo / Quitar logo» en «Configurar máquina» (solo administrador), con el mismo procesado de imagen que los logos de proveedores (`InvoiceLogos.processLogo`: un logo con fondo de color llena todo el recuadro). Se muestra en el encabezado de la máquina; sin logo queda el ícono de taza.
-- **Migración `20261016210000_coffee_machine_logos.sql`: NO aplicada en producción.** Agrega `coffee_machines.logo_path`, `coffee_machine_set_logo` y el bucket privado `shiftcontrol-machine-logos` (leen administrador y jefa de tienda; sube, reemplaza y borra solo el administrador, en la carpeta de una máquina existente). Sin ella, subir un logo falla. Reversión: `supabase/rollback/20261016210000_coffee_machine_logos.rollback.sql`. Pruebas SQL locales: `supabase/tests/maquinas_cafe_logos_local.sql`.
+- **Migración `20261016210000_coffee_machine_logos.sql`: aplicada en producción (15-10-2026), en dos entradas (`coffee_machine_logos` y `coffee_machine_logos_remove_policy`).** Verificado: bucket privado con límite de 200 KB, 4 políticas, función solo para `authenticated`. Agrega `coffee_machines.logo_path`, `coffee_machine_set_logo` y el bucket privado `shiftcontrol-machine-logos` (leen administrador y jefa de tienda; sube, reemplaza y borra solo el administrador, en la carpeta de una máquina existente). Reversión: `supabase/rollback/20261016210000_coffee_machine_logos.rollback.sql`. Pruebas SQL locales: `supabase/tests/maquinas_cafe_logos_local.sql`.
 - **Corregir una lectura:** volver a anotar la misma fecha y el mismo turno la reemplaza (solo administrador). No hay botón de eliminar ni lista de lecturas.
 
 ## Datos
