@@ -121,27 +121,58 @@
     wctx.drawImage(bitmap,0,0,w,h);
     if(bitmap.close)bitmap.close();
     const data=wctx.getImageData(0,0,w,h).data;
-    let x0=w,y0=h,x1=-1,y1=-1;
-    for(let y=0;y<h;y+=2){
-      for(let x=0;x<w;x+=2){
-        const i=(y*w+x)*4;
-        if(data[i]<244||data[i+1]<244||data[i+2]<244){
-          if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+    const at=(x,y)=>{const k=(y*w+x)*4;return [data[k],data[k+1],data[k+2]]};
+    const far=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2]));
+    // Caja que contiene todo lo que se distingue del fondo `bg` (dentro de `area`).
+    const boxOf=(bg,tol,area)=>{
+      let a=area.x1,b=area.y1,c=area.x0,d=area.y0;
+      for(let y=area.y0;y<=area.y1;y+=2){
+        for(let x=area.x0;x<=area.x1;x+=2){
+          if(far(at(x,y),bg)>tol){if(x<a)a=x;if(x>c)c=x;if(y<b)b=y;if(y>d)d=y}
+        }
+      }
+      return c<a?null:{x0:a,y0:b,x1:c,y1:d};
+    };
+    const whole={x0:0,y0:0,x1:w-1,y1:h-1};
+    let box=boxOf([255,255,255],11,whole)||whole;
+    let fill=[255,255,255];
+    let solid=false;
+    // ¿La imagen es un bloque de color sin espacio blanco (como un logo azul con letras blancas)?
+    // Entonces el recuadro se llena con ese color y las letras se agrandan hasta ocuparlo.
+    const ring=[];
+    for(let x=box.x0+1;x<=box.x1-1;x+=3){ring.push(at(x,box.y0+1),at(x,box.y1-1))}
+    for(let y=box.y0+1;y<=box.y1-1;y+=3){ring.push(at(box.x0+1,y),at(box.x1-1,y))}
+    if(ring.length>8){
+      const white=[255,255,255];
+      const colored=ring.filter(c=>far(c,white)>11);
+      if(colored.length/ring.length>=0.75){
+        const median=index=>{const v=colored.map(c=>c[index]).sort((m,n)=>m-n);return v[Math.floor(v.length/2)]};
+        const base=[median(0),median(1),median(2)];
+        if(colored.filter(c=>far(c,base)<=28).length/colored.length>=0.9){
+          // Se ignoran los bordes (esquinas redondeadas con fondo blanco no son parte del logo).
+          const ix=Math.round((box.x1-box.x0)*0.12),iy=Math.round((box.y1-box.y0)*0.12);
+          const inner=boxOf(base,40,{x0:box.x0+ix,y0:box.y0+iy,x1:box.x1-ix,y1:box.y1-iy});
+          if(inner){
+            const margin=Math.round(Math.max(inner.x1-inner.x0,inner.y1-inner.y0)*0.18);
+            box={x0:Math.max(box.x0,inner.x0-margin),y0:Math.max(box.y0,inner.y0-margin),x1:Math.min(box.x1,inner.x1+margin),y1:Math.min(box.y1,inner.y1+margin)};
+            fill=base;solid=true;
+          }
         }
       }
     }
-    if(x1<0){x0=0;y0=0;x1=w-1;y1=h-1}
-    const pad=Math.round(Math.max(x1-x0,y1-y0)*0.04);
-    x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);
-    const cw=x1-x0+1,ch=y1-y0+1;
-    const k=(SIZE*0.9)/Math.max(cw,ch);
+    if(!solid){
+      const pad=Math.round(Math.max(box.x1-box.x0,box.y1-box.y0)*0.03);
+      box={x0:Math.max(0,box.x0-pad),y0:Math.max(0,box.y0-pad),x1:Math.min(w-1,box.x1+pad),y1:Math.min(h-1,box.y1+pad)};
+    }
+    const cw=box.x1-box.x0+1,ch=box.y1-box.y0+1;
+    const k=(solid?SIZE:SIZE*0.96)/Math.max(cw,ch);
     const out=document.createElement('canvas');
     out.width=SIZE;out.height=SIZE;
     const octx=out.getContext('2d');
-    octx.fillStyle='#fff';
+    octx.fillStyle=`rgb(${fill[0]},${fill[1]},${fill[2]})`;
     octx.fillRect(0,0,SIZE,SIZE);
     octx.imageSmoothingQuality='high';
-    octx.drawImage(work,x0,y0,cw,ch,(SIZE-cw*k)/2,(SIZE-ch*k)/2,cw*k,ch*k);
+    octx.drawImage(work,box.x0,box.y0,cw,ch,(SIZE-cw*k)/2,(SIZE-ch*k)/2,cw*k,ch*k);
     let blob=await canvasBlob(out,'image/webp',0.86);
     if(!blob||blob.type!=='image/webp')blob=await canvasBlob(out,'image/jpeg',0.88);
     if(blob&&blob.size>MAX_OUTPUT)blob=await canvasBlob(out,blob.type,0.7);
