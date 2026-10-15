@@ -102,16 +102,17 @@ async function loadExisting(from,to){
 
 function buildPreview(){
   const lines=S.parsed.lines;
-  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,byProduct:new Map(),machine:{lines:0,units:0}};
+  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,byProduct:new Map(),machine:{lines:0,units:0},byMachine:new Map(),byOther:new Map()};
   lines.forEach(line=>{
     if(S.machineCodes.has(line.code)){
       const key=`${line.date}|${line.code}`;
       if(S.existingMachine.has(key)){if(S.existingMachine.get(key)===line.qty)preview.already++;else preview.changed++;return}
       preview.machine.lines++;preview.machine.units+=line.qty;
+      const mk=preview.byMachine.get(line.code)||{code:line.code,name:line.name,qty:0,days:0};mk.qty+=line.qty;mk.days++;preview.byMachine.set(line.code,mk);
       return;
     }
     const product=S.products.get(line.code);
-    if(!product){preview.noProduct.lines++;preview.noProduct.units+=line.qty;return}
+    if(!product){preview.noProduct.lines++;preview.noProduct.units+=line.qty;const ok=preview.byOther.get(line.code)||{code:line.code,name:line.name,qty:0};ok.qty+=line.qty;preview.byOther.set(line.code,ok);return}
     const key=`${line.date}|${line.code}`;
     if(S.existing.has(key)){if(S.existing.get(key)===line.qty)preview.already++;else preview.changed++;return}
     preview.matched.push(line);
@@ -120,6 +121,8 @@ function buildPreview(){
     preview.byProduct.set(product.id,entry);
   });
   preview.products=[...preview.byProduct.values()].sort((a,b)=>b.qty-a.qty);
+  preview.machines=[...preview.byMachine.values()].sort((a,b)=>b.qty-a.qty);
+  preview.others=[...preview.byOther.values()].sort((a,b)=>b.qty-a.qty);
   preview.units=preview.matched.reduce((sum,line)=>sum+line.qty,0);
   preview.short=preview.products.filter(entry=>entry.qty>Number(entry.product.stock||0)).length;
   S.preview=preview;
@@ -153,6 +156,8 @@ function render(){
       const left=stock-entry.qty;
       return `<div class="sv-r"><div><b>${esc(entry.product.name)}</b><small>${esc(entry.product.inventory)} · código ${esc(entry.product.code)}</small></div><div class="sv-n"><b>${fmt(entry.qty)}</b><small>vendidas</small></div><div class="sv-n"><b>${fmt(stock)}</b><small>stock ahora</small></div><div class="sv-n ${left<0?'bad':''}"><b>${left<0?`faltan ${fmt(-left)}`:fmt(left)}</b><small>${left<0?'quedaría en 0':'quedaría'}</small></div></div>`;
     }).join('');
+    const machineRows=pv.machines.map(m=>`<div class="sv-r"><div><b>${esc(m.name||'Café')}</b><small>Máquina de café · código ${esc(m.code)}</small></div><div class="sv-n"><b>${fmt(m.qty)}</b><small>vasos</small></div><div class="sv-n"><b>${fmt(m.days)}</b><small>${m.days===1?'día':'días'}</small></div><div class="sv-n"><b>—</b><small>sin stock</small></div></div>`).join('');
+    const otherRows=pv.others.slice(0,15).map(o=>`<div class="sv-r"><div><b>${esc(o.name||'Sin nombre')}</b><small>Sin producto · código ${esc(o.code)}</small></div><div class="sv-n"><b>${fmt(o.qty)}</b><small>vendidas</small></div><div class="sv-n"><b>—</b><small>se ignora</small></div><div class="sv-n"><b>—</b><small></small></div></div>`).join('');
     frame(`<h3>Importar ventas del POS</h3>
       <p class="sv-sub">${esc(S.file)} · ventas del ${esc(range)}</p>
       <div class="sv-sum"><span class="g">● ${fmt(pv.matched.length)} líneas con producto (${fmt(pv.units)} unidades)</span>
@@ -161,6 +166,8 @@ function render(){
         ${pv.short?`<span class="r">${fmt(pv.short)} productos sin stock suficiente</span>`:''}</div>
       ${pv.products.length?`<div class="sv-t"><div class="sv-h"><span>Producto</span><span>Vendidas</span><span>Stock</span><span>Resultado</span></div>${rows}${pv.products.length>60?`<div class="sv-r"><small>… y ${pv.products.length-60} productos más</small></div>`:''}</div>`
         :'<p class="sv-note">Ninguna línea nueva coincide con un producto de Inventarios. Revisa que los productos tengan el código del POS.</p>'}
+      ${pv.machines.length?`<div class="sv-t"><div class="sv-h"><span>Café (solo cuadra el numeral)</span><span>Vasos</span><span>Días</span><span></span></div>${machineRows}</div>`:''}
+      ${pv.others.length?`<details class="sv-note"><summary>${fmt(pv.others.length)} códigos sin producto (se ignoran) — revisa si falta algún café</summary><div class="sv-t">${otherRows}${pv.others.length>15?`<div class="sv-r"><small>… y ${pv.others.length-15} más</small></div>`:''}</div></details>`:''}
       <p class="sv-note">Se ignoran las ventas hasta el día del saldo inicial de cada producto (ese conteo ya las incluye). Si el stock no alcanza, se descuenta hasta cero y se avisa la diferencia.</p>
       ${S.message?`<p class="sv-err">${esc(S.message)}</p>`:''}
       <div class="sv-f"><span></span><div class="sv-fa"><button type="button" class="inv-btn" data-sv="close">Cancelar</button><button type="button" class="inv-btn pri" data-sv="apply" ${(pv.matched.length||pv.machine.lines)&&!S.busy?'':'disabled'}>${S.busy?'Descontando…':(pv.units?`Descontar ${fmt(pv.units)} unidades`:'Registrar las ventas')}</button></div></div>`);
