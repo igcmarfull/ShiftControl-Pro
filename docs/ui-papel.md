@@ -211,3 +211,11 @@ Dos cambios de comportamiento mínimos en `index.html`:
 Los cálculos, los registros y las otras pestañas (Faltantes, Cuadraturas, Gastos, Depósitos, Aprobaciones) no se tocaron.
 
 Verificación: pruebas en navegador con datos simulados (con y sin registros; claro/oscuro, escritorio y celular), sin errores de consola. No se probó registrar, aprobar ni editar movimientos.
+
+## Finanzas · subpantallas (Faltantes, Cuadraturas, Gastos, Depósitos y arqueo, Aprobaciones)
+
+Solo presentación, en CSS (`src/ui-papel.css`, `body #finance`): encabezado de cada pestaña como en el resto de la app, franja única de cifras (las mismas de `financeKpi` / `depositKpis`), registros como filas dentro de una tarjeta con las acciones de siempre, conciliación diaria como flujo iTam → Brinks y Caja fuerte → Diferencia, y en celular pestañas deslizables en píldoras, cifras en dos columnas, filas apiladas y aprobaciones con los botones a todo el ancho.
+
+Único cambio en JavaScript: `renderFinanceApprovals()` actualiza el título de la pestaña «Aprobaciones» con el número de pendientes (`.inv-count`). Los registros, las acciones (editar, marcar recuperado/rendido, aprobar, rechazar, depositar), los permisos y los cálculos no se tocaron.
+
+Verificación: pruebas en navegador con datos simulados (con registros de faltantes, cuadraturas, gastos y depósitos; claro/oscuro, escritorio y celular), sin errores de consola. No se probó registrar, aprobar ni eliminar movimientos.

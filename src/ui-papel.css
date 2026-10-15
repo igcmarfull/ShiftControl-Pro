@@ -1178,3 +1178,71 @@ body #finance .task-empty,body #finance .finance-movement-list .empty{padding:26
  body #finance .finance-donut{margin:0 auto}
 }
 body #finance .finance-donut.is-empty{background:var(--panel3)!important}
+
+/* ===== Finanzas · subpantallas (solo presentación) ===== */
+body #finance .finance-module-head{align-items:flex-end;margin:0 0 16px}
+body #finance .finance-module-head h3{font-size:26px;font-weight:700;letter-spacing:-.03em;margin:0 0 4px}
+body #finance .finance-module-head p{font-size:13.5px}
+body #finance .finance-module-stats,body #finance .deposit-kpis{display:grid;gap:0;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+body #finance .finance-module-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+body #finance .deposit-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+body #finance .finance-record-list,body #finance .finance-approval-list{padding:6px 22px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);display:block}
+body #finance .finance-record-card{grid-template-columns:minmax(0,1fr) auto auto;gap:16px;padding:16px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}
+body #finance .finance-record-card:first-child{border-top:0}
+body #finance .finance-record-main span,body #finance .finance-record-main p{font-size:12.5px}
+body #finance .finance-record-main strong{font-size:14px}
+body #finance .finance-record-icon{width:38px;height:38px;border-radius:11px}
+body #finance .finance-record-amount{justify-items:end;gap:4px}
+body #finance .finance-record-amount small{font-size:11.5px}
+body #finance .finance-record-actions{align-items:center}
+body #finance .finance-record-list .empty,body #finance .finance-approval-list .task-empty{margin:16px 0;padding:26px 16px;border:1px dashed var(--line);border-radius:14px;background:var(--panel2);color:var(--muted);text-align:center;font-size:13px}
+body #finance .finance-approval-card{grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:12px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;align-items:center}
+body #finance .finance-approval-card:first-child{border-top:0}
+body #finance .deposit-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+body #finance .deposit-flow-card{padding:20px 22px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin-bottom:16px}
+body #finance .deposit-flow-node,body #finance .deposit-flow-result{border-radius:14px;background:var(--panel2);box-shadow:none}
+body #finance .deposit-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:16px;align-items:start;margin-bottom:16px}
+body #finance .deposit-layout .dashboard-panel,body #finance .deposit-history-panel{padding:20px 22px}
+body #finance .deposit-movement,body #finance .safe-pending-card{border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;padding:12px 0}
+body #finance .deposit-movement:first-child,body #finance .safe-pending-card:first-child{border-top:0}
+body #finance .deposit-history-row{border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;padding:12px 0}
+body #finance .deposit-history-row:first-child{border-top:0}
+@media (max-width:1000px){body #finance .deposit-layout{grid-template-columns:minmax(0,1fr)}body #finance .deposit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){
+ body #finance .finance-module-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body #finance .finance-module-stats .finance-kpi:last-child:nth-child(odd){grid-column:1/-1}
+ body #finance .finance-module-stats .finance-kpi:nth-child(n+3),body #finance .deposit-kpis .finance-kpi:nth-child(n+3){border-top:1px solid var(--line)}
+ body #finance .finance-module-stats .finance-kpi:nth-child(3){border-left:0}
+ body #finance .finance-module-head{align-items:stretch}
+ body #finance .finance-record-list,body #finance .finance-approval-list{padding:4px 16px}
+}
+body #finance .deposit-toolbar{padding:0;background:transparent;border:0;box-shadow:none}
+body #finance .deposit-toolbar label{display:flex;align-items:center;gap:8px}
+body #finance .deposit-toolbar label>span{font-size:12px;font-weight:700;color:var(--muted)}
+body #finance .deposit-toolbar .field,body #finance .deposit-toolbar .btn{font-size:13px;padding:9px 14px;min-height:0}
+body #finance .deposit-movement{display:flex!important;align-items:center;gap:12px}
+body #finance .deposit-movement>div{flex:1;min-width:0}
+body #finance .deposit-movement>b{white-space:nowrap}
+body #finance .deposit-movement .icon-action{flex:none}
+body #finance .finance-approval-actions .btn{padding:8px 14px;font-size:13px}
+@media (max-width:820px){
+ body #finance .finance-tab{flex-direction:row!important;white-space:nowrap;height:auto!important;min-height:0!important;padding:8px 14px!important;border-radius:99px!important}
+ body #finance .finance-tab span{margin:0}
+ body #finance .deposit-toolbar{display:flex!important;flex-wrap:wrap}
+ body #finance .deposit-toolbar .btn{width:auto!important;flex:1 1 auto}
+ body #finance .deposit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body #finance .deposit-kpis .finance-kpi{border-left:0!important}
+ body #finance .deposit-kpis .finance-kpi:nth-child(even){border-left:1px solid var(--line)!important}
+ body #finance .deposit-kpis .finance-kpi:nth-child(n+3){border-top:1px solid var(--line)}
+}
+@media (max-width:820px){
+ body #finance .finance-tab{display:flex!important;align-items:center;min-width:0!important;font-size:12.5px!important;gap:7px}
+ body #finance .finance-tabs{margin-left:0;margin-right:0}
+}
+@media (max-width:820px){
+ body #finance .finance-approval-card{grid-template-columns:minmax(0,1fr)!important;gap:10px}
+ body #finance .finance-approval-card .finance-pending-card{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:0}
+ body #finance .finance-approval-card .finance-pending-card>div{flex:1 1 130px;min-width:0}
+ body #finance .finance-approval-actions{justify-content:flex-start}
+ body #finance .finance-approval-actions .btn{flex:1}
+}
