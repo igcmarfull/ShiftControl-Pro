@@ -97,6 +97,46 @@ window.InvoiceModule = {
     return items;
   },
 
+  // --- Logo del proveedor ---
+  // No existe una entidad "proveedor": el logo se guarda como ruta en cada factura del mismo
+  // proveedor y área (misma clave de RUT o, si no hay, el nombre).
+  supplierKey(inv){
+    const rut=String(inv?.rutProveedor||'').replace(/[^0-9kK]/g,'').toLowerCase();
+    if(rut.length>=7)return 'rut:'+rut;
+    const name=String(inv?.proveedor||'').trim().toLowerCase().replace(/\s+/g,' ');
+    return name?'name:'+name:'';
+  },
+
+  _areaOf(inv){
+    return window.ShiftControlAreas?.normalizeArea?.(inv?.area)||'';
+  },
+
+  supplierLogoPath(inv){
+    if(!inv)return '';
+    if(inv.logoProveedor)return inv.logoProveedor;
+    const key=this.supplierKey(inv);
+    if(!key)return '';
+    const area=this._areaOf(inv);
+    const match=this.getAll().find(item=>item.logoProveedor&&this.supplierKey(item)===key&&this._areaOf(item)===area);
+    return match?match.logoProveedor:'';
+  },
+
+  // Aplica (o quita, con path vacío) el logo a todas las facturas del proveedor en el área de la factura.
+  setSupplierLogo(inv,path,{save=true}={}){
+    const key=this.supplierKey(inv);
+    if(!key)return 0;
+    const area=this._areaOf(inv);
+    let count=0;
+    this.getAll().forEach(item=>{
+      if(this.supplierKey(item)!==key||this._areaOf(item)!==area)return;
+      if(path)item.logoProveedor=path;
+      else delete item.logoProveedor;
+      count++;
+    });
+    if(count)this._saveIfNeeded(save);
+    return count;
+  },
+
   remove(id, {save=true}={}){
     const state=this._getState();
 

@@ -6584,6 +6584,9 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
           <div class="invoices-pagination" id="invoicesPagination"></div>
         </div>
 
+        <section class="fv-cal" id="invoiceCalendar" aria-label="Pagos de los próximos 14 días"></section>
+        <div class="fv-two" id="invoiceInsights"></div>
+
         <aside class="invoices-sidebar">
           <article class="dashboard-panel">
             <div class="dashboard-panel-head">
@@ -6592,7 +6595,9 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
             <div id="invoiceUpcomingList" class="invoices-upcoming-list"></div>
           </article>
 
-          <article class="dashboard-panel">
+          <article class="dashboard-panel fv-top-card" id="invoiceTopSuppliers"></article>
+
+          <article class="dashboard-panel invoices-legacy-category">
             <div class="dashboard-panel-head">
               <div><span class="section-kicker">Compras</span><h3>Resumen por categoría</h3><p>Distribución del monto comprado este mes.</p></div>
             </div>
@@ -12035,9 +12040,10 @@ function invoiceProviderTone(name){
   return INVOICE_TONES[invoiceHashIndex(name)];
 }
 
-function invoiceAvatar(name){
+function invoiceAvatar(name,inv){
   const tone=invoiceProviderTone(name);
-  return `<span class="invoices-avatar tone-${tone}">${escapeHtml(initials(name))}</span>`;
+  const base=`<span class="invoices-avatar tone-${tone}">${escapeHtml(initials(name))}</span>`;
+  return window.InvoiceLogos?.avatar?window.InvoiceLogos.avatar(inv,base):base;
 }
 
 const INVOICE_CATEGORY_TONES={
@@ -12225,7 +12231,7 @@ function renderInvoices(keepPage){
     const status=invoiceDisplayStatus(inv);
     const meta=invoiceStatusMeta(status);
     return `<tr>
-      <td data-label="Proveedor"><div class="invoices-provider-cell">${invoiceAvatar(inv.proveedor)}<div><strong>${escapeHtml(inv.proveedor||'—')}</strong>${inv.rutProveedor?`<small>${escapeHtml(inv.rutProveedor)}</small>`:''}</div></div></td>
+      <td data-label="Proveedor"><div class="invoices-provider-cell">${invoiceAvatar(inv.proveedor,inv)}<div><strong>${escapeHtml(inv.proveedor||'—')}</strong>${inv.rutProveedor?`<small>${escapeHtml(inv.rutProveedor)}</small>`:''}</div></div></td>
       <td data-label="Factura">${escapeHtml(inv.numeroFactura||'—')}${invoiceAreaLabel(inv)?`<small class="invoice-area-tag">${escapeHtml(invoiceAreaLabel(inv))}${inv.enviadaPor?` · ${escapeHtml(inv.enviadaPor)}`:''}</small>`:''}${invoiceApproval(inv)==='rechazada'&&inv.motivoRechazo?`<small class="invoice-reject-note">Rechazo: ${escapeHtml(inv.motivoRechazo)}</small>`:''}</td>
       <td data-label="Fecha emisión">${inv.fechaEmision?new Date(`${inv.fechaEmision}T00:00:00`).toLocaleDateString('es-CL'):'—'}</td>
       <td data-label="Vencimiento">${inv.fechaVencimiento?new Date(`${inv.fechaVencimiento}T00:00:00`).toLocaleDateString('es-CL'):'—'}${invoiceDueSubtitle(inv)}</td>
@@ -12262,7 +12268,7 @@ function invoiceMobileCardHTML(inv){
   return `<div class="invoices-mcard ${meta.cls}">
     <div class="invoices-mcard-top">
       <div class="invoices-mcard-provider">
-        ${invoiceAvatar(inv.proveedor)}
+        ${invoiceAvatar(inv.proveedor,inv)}
         <strong>${escapeHtml(inv.proveedor||'—')}</strong>
       </div>
       <div class="invoices-mcard-amount">
@@ -12346,7 +12352,7 @@ function renderInvoiceSidebar(all){
       const daysLeft=Math.ceil((new Date(`${inv.fechaVencimiento}T00:00:00`)-invoiceTodayMidnight())/86400000);
       const dueLabel=daysLeft<0?`vencida hace ${Math.abs(daysLeft)}d`:daysLeft===0?'vence hoy':`vence en ${daysLeft}d`;
       return `<div class="invoices-upcoming-item">
-        ${invoiceAvatar(inv.proveedor)}
+        ${invoiceAvatar(inv.proveedor,inv)}
         <div class="invoices-upcoming-info"><strong>${escapeHtml(inv.proveedor||'—')}</strong><small>${escapeHtml(inv.numeroFactura||'')} · ${dueLabel}</small></div>
         <span class="invoices-upcoming-amount">${money(inv.montoTotal)}</span>
       </div>`;
@@ -18111,6 +18117,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/ui-checklist.js"></script>
 <script src="src/ui-handoff.js"></script>
 <script src="src/ui-invoices.js"></script>
+<script src="src/ui-invoice-logos.js"></script>
 <script src="src/ui-employees.js"></script>
 <script src="src/ui-audit.js"></script>
 <script src="src/ui-inbox.js"></script>
