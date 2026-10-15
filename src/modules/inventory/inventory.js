@@ -477,9 +477,10 @@ function viewHome(){
     ${pending?`<div class="inv-note warn inv-banner"><span>${ico('apr')}<span class="tx"><b>${plural(pending,'ajuste','ajustes')} por revisar.</b> ${isAdmin()?'Esperan tu aprobación.':'Los aprueba el administrador.'}</span></span><button class="inv-btn sm" data-go="apr">Ver</button></div>`:''}
     ${statsHtml(items)}
     <div class="inv-cards">${cards}</div>
-    <div class="inv-two"><div class="inv-box"><h3>Requiere atención <small>${attention.length} alertas</small></h3>${attentionHtml}</div>
-      <div class="inv-box"><h3>Últimos movimientos <button class="inv-btn sm" data-go="mov">Historial</button></h3>${recent}</div></div>
-    <div class="inv-two"><div class="inv-box"><h3>Mermas del mes por motivo <small>${fmt(total)} unidades</small></h3>${wasteHtml}</div>${config}</div>`;
+    <div class="inv-three"><div class="inv-box"><h3>Requiere atención <small>${attention.length} alertas</small></h3>${attentionHtml}</div>
+      <div class="inv-box"><h3>Últimos movimientos <button class="inv-btn sm" data-go="mov">Historial</button></h3>${recent}</div>
+      <div class="inv-box"><h3>Mermas del mes por motivo <small>${fmt(total)} unidades</small></h3>${wasteHtml}</div></div>
+    ${config}`;
 }
 
 function movRow(m){
