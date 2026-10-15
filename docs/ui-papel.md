@@ -243,3 +243,15 @@ Solo presentación y solo hasta 820 px (escritorio sin cambios). `src/ui-inbox.j
 - en "Cierres" deja 3 días visibles y agrega "Ver todos los cierres (N)" hacia `daily-summary`.
 
 El resto es CSS en `src/ui-papel.css` (bloques "Bandeja ADMIN en celular"): KPI compactos, pestañas con scroll horizontal, orden de paneles (actividad al final, 3 entradas). Para revertir basta quitar el script de `index.html` y esos bloques CSS.
+
+## Ficha del trabajador
+
+Solo presentación. `src/ui-worker-profile.js` envuelve `renderWorkerProfile` y, tras el render original:
+
+- asigna un color de avatar por nombre (`--hue`);
+- hace que el mes del período abra el selector `input[type=month]` (que queda oculto pero funcional);
+- marca cada indicador del Resumen con su tendencia (`data-tr`: pos/neg/neu) y envuelve los textos auxiliares;
+- calcula el nivel del índice operacional (`data-level`: ok ≥75, mid ≥60, low) y el porcentaje del anillo;
+- reestructura las filas de línea de tiempo: fecha a la derecha, estado como título (en Asistencia) y color por tipo (`data-tone`).
+
+El resto es CSS en `src/ui-papel.css` (bloque "Ficha del trabajador"): barra de período, encabezado, pestañas con subrayado, indicadores, anillo con color según puntaje, reconocimientos como chips y versión celular (pantalla completa). No cambia datos, pestañas ni acciones; para revertir basta quitar el script de `index.html` y ese bloque CSS.
