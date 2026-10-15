@@ -5,7 +5,7 @@ Módulo `src/modules/suppliers/`. Vista `suppliers` (menú Tienda → Proveedore
 ## Estado
 
 - **Código activo en el repositorio:** lista, ficha, importación desde facturas, logos, selector en «Nueva factura».
-- **Migración `20261015190000_suppliers.sql`: NO aplicada en producción.** Sin ella la vista muestra «Aún no está habilitado» y «Nueva factura» conserva el campo de texto libre de siempre.
+- **Migración `20261015190000_suppliers.sql`: aplicada en producción** (verificado: RLS activa, bucket privado, 4 políticas de storage, funciones solo para `authenticated`). Si faltara, la vista muestra «Aún no está habilitado» y «Nueva factura» conserva el campo de texto libre. El nombre del archivo del repositorio puede diferir de la versión registrada por Supabase.
 - **Trabajo futuro (no implementado):** vincular productos o marcas a proveedores y listas de pedido.
 
 ## Almacenamiento
@@ -25,4 +25,4 @@ Fuera de `state` y de `save()`: tabla `public.suppliers` en Supabase, escrita so
 
 ## Verificación realizada
 
-Playwright con Supabase simulado (importar, editar, logo, duplicados, inactivos, móvil, selector en factura) y 40 comprobaciones SQL en Postgres local. No se probó contra producción.
+Playwright con Supabase simulado (importar, editar, logo, duplicados, inactivos, móvil, selector en factura) y 40 comprobaciones SQL en Postgres local. Tras aplicarla en producción solo se comprobó el esquema y los permisos; no se creó ningún proveedor real desde la aplicación.
