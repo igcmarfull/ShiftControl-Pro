@@ -295,7 +295,6 @@ declare
   v_before_opening integer := 0;
   v_short jsonb := '[]'::jsonb;
   v_machine uuid;
-  v_cups integer;
   v_cs public.coffee_sales;
   v_machine_lines integer := 0;
   v_machine_units integer := 0;
