@@ -108,13 +108,13 @@ function pick(supplier,{fromOpen=false}={}){
   showHint(supplier);
   close();
 }
-async function create(){
+async function create(options){
   if(busy)return;
   const name=$('invoiceProveedor').value.trim();
   if(!name)return;
   busy=true;
   try{
-    const fields={name,category:$('invoiceCategoria')?.value||null};
+    const fields={name,category:options&&'category' in options?options.category:($('invoiceCategoria')?.value||null)};
     const rut=$('invoiceRut').value.trim();
     if(rut)fields.rut=rut;
     const row=await M().save(fields);
@@ -180,6 +180,6 @@ function init(){
   if(M().isAvailable())M().load();
 }
 
-window.SupplierInvoice={init,pick,applyDue};
+window.SupplierInvoice={init,pick,applyDue,create};
 init();
 })();
