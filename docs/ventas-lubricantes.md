@@ -5,7 +5,7 @@ Módulo `src/modules/lubricants/` (vista `lubricants`, menú Tienda → Ventas d
 ## Estado
 
 - **Código en el repositorio:** pantalla, importación que guarda el historial, migración y pruebas.
-- **Migración `20261017120000_sales_history.sql`: pendiente de aplicar en producción** (tabla `sales_history` y función `sales_history_save`). Hasta aplicarla, la pantalla avisa que no está habilitada y la importación de ventas sigue funcionando igual (el guardado del historial falla en silencio).
+- **Migración `20261017120000_sales_history.sql`: aplicada en producción (16-10-2026)**, en dos partes (`sales_history_table` y `sales_history_save_fn`). Verificado: tabla con RLS y una política de lectura, función sin acceso para `anon`. Si la migración no estuviera, la pantalla avisa que no está habilitada y la importación sigue funcionando (el guardado del historial falla en silencio).
 - **No integrado (trabajo futuro):** historial de otros inventarios (la tabla ya guarda cualquier producto, pero solo hay pantalla para Lubricantes), comparación entre períodos, exportación.
 
 ## Cómo llegan los datos
