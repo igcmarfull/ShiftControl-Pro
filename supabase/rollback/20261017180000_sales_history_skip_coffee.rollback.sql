@@ -1,0 +1,2 @@
+-- Reversión de 20261017180000_sales_history_skip_coffee.sql: vuelve a ejecutar la definición de
+-- sales_history_save de 20261017120000_sales_history.sql (sin omitir los códigos de café).

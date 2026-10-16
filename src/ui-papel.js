@@ -27,7 +27,7 @@
     receipt:'<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
     box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>'
   };
-  const MAP={'operational-home':'home','admin-inbox':'inbox','daily-summary':'moon','today':'sun','dashboard':'layout','workcenter':'work','actual':'clock','execution':'check','absences':'plus','incidents':'alert','checklists':'list','handoff':'swap','planning':'cal','weekly':'week','employees':'users','evaluations':'star','additional':'plus','finance':'dollar','team':'team','reports':'chart','audit':'doc','settings':'gear','invoices':'receipt','suppliers':'truck','coffee':'cup','lubricants':'chart','inventory':'box'};
+  const MAP={'operational-home':'home','admin-inbox':'inbox','daily-summary':'moon','today':'sun','dashboard':'layout','workcenter':'work','actual':'clock','execution':'check','absences':'plus','incidents':'alert','checklists':'list','handoff':'swap','planning':'cal','weekly':'week','employees':'users','evaluations':'star','additional':'plus','finance':'dollar','team':'team','reports':'chart','audit':'doc','settings':'gear','invoices':'receipt','suppliers':'truck','coffee':'cup','sales':'chart','inventory':'box'};
   const SVG_ATTR='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
   const KEY='shiftcontrol.nav.collapsed';
   const root=()=>document.querySelector('.sidebar .nav');
