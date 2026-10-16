@@ -126,3 +126,5 @@ Estado: **la migración `20261015164843_inventory_product_photos.sql` está apli
 - **Trabajo futuro (no implementado):** insumos de café y hot dog (hoy se controlan los vasos y unidades vendidas), alertas de diferencia, marcar productos sensibles.
 
 Los códigos del POS que pertenecen a una **máquina de café** no descuentan stock: la importación los registra aparte para cuadrar el numeral. Ver `docs/maquinas-cafe.md` (migración `20261016180000`, no aplicada al escribir esto).
+
+La importación también guarda las unidades y el monto vendidos en `sales_history` para la pantalla «Ventas de lubricantes». Ver `docs/ventas-lubricantes.md`.

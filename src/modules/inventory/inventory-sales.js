@@ -51,7 +51,7 @@ async function readFile(file){
   const headerAt=rows.findIndex(row=>row&&row.some(cell=>norm(cell)==='codigo')&&row.some(cell=>norm(cell)==='cantidad')&&row.some(cell=>norm(cell).startsWith('fecha')));
   if(headerAt<0)throw new Error('No reconozco este archivo. Sube el «Informe de Ventas por Artículos» tal como sale del POS.');
   const head=rows[headerAt].map(norm);
-  const col={date:head.findIndex(cell=>cell.startsWith('fecha')),code:head.indexOf('codigo'),name:head.indexOf('descripcion'),qty:head.indexOf('cantidad')};
+  const col={date:head.findIndex(cell=>cell.startsWith('fecha')),code:head.indexOf('codigo'),name:head.indexOf('descripcion'),qty:head.indexOf('cantidad'),amount:head.findIndex(cell=>cell.startsWith('$ venta total neta')&&!cell.includes('sin'))};
   const map=new Map();
   let skipped=0;
   rows.slice(headerAt+1).forEach(row=>{
@@ -62,8 +62,9 @@ async function readFile(file){
     if(!code||!date||!Number.isFinite(qty)){if(code||date)skipped++;return}
     if(qty<=0||!Number.isInteger(qty)){skipped++;return}
     const key=`${date}|${code}`;
-    const entry=map.get(key)||{date,code,name:col.name>=0?String(row[col.name]??''):'',qty:0};
+    const entry=map.get(key)||{date,code,name:col.name>=0?String(row[col.name]??''):'',qty:0,amount:0};
     entry.qty+=qty;
+    if(col.amount>=0){const money=Number(row[col.amount]);if(Number.isFinite(money)&&money>0)entry.amount+=Math.round(money)}
     map.set(key,entry);
   });
   const lines=[...map.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.code.localeCompare(b.code));
@@ -206,6 +207,8 @@ async function apply(){
   if(!S.requestId)S.requestId=A().uuid();
   try{
     S.result=await A().applySales(S.requestId,companyId(),S.parsed.lines.map(line=>({date:line.date,code:line.code,qty:line.qty})));
+    // Historial para la página de ventas; si falla, el descuento de stock ya quedó aplicado.
+    try{await A().saveSalesHistory(companyId(),S.parsed.lines.map(line=>({date:line.date,code:line.code,qty:line.qty,amount:line.amount||0})))}catch(_error){}
     S.step='done';
     S.requestId=null;
     try{window.dispatchEvent(new CustomEvent('inventory:changed'))}catch(_error){}
