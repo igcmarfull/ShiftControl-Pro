@@ -106,7 +106,7 @@ function tabData(){
   const visible=S.filter&&options.includes(S.filter)?products.filter(product=>key(product)===S.filter):products;
   const codes=new Set(visible.map(product=>String(product.code)));
   const rows=entry.rows.filter(row=>codes.has(String(row.pos_code)));
-  return {products:visible,all:products,rows,options,byBrand,last:entry.rows.length?entry.rows[entry.rows.length-1].sold_on:null};
+  return {products:visible,all:products,rows,options,byBrand,keyOf:key,last:entry.rows.length?entry.rows[entry.rows.length-1].sold_on:null};
 }
 function monthsOf(rows){return [...new Set(rows.map(row=>row.sold_on.slice(0,7)))].sort().reverse()}
 // Rango elegido y el rango anterior de igual largo con el que se compara.
@@ -143,63 +143,84 @@ const delta=(now,before)=>before>0?Math.round((now-before)/before*100):null;
 const chip=(value,label)=>value===null?'':`<span class="sl-chip ${value>=0?'up':'dn'}">${value>0?'+':''}${value}% vs ${esc(label)}</span>`;
 
 /* --------------------------------------------------------------- dibujo */
-function chartHtml(data,rg){
-  const span=daysBetween(rg.from,rg.to);
-  if(span<2||!data.rows.some(row=>row.sold_on>=rg.from&&row.sold_on<=rg.to))return '';
-  const daily=new Map();
-  data.rows.forEach(row=>{if(row.sold_on>=rg.from&&row.sold_on<=rg.to)daily.set(row.sold_on,(daily.get(row.sold_on)||0)+Number(row.amount||0))});
-  const weekly=span>62;
-  const buckets=[];
-  if(weekly){
-    for(let from=rg.from;from<=rg.to;from=addDays(from,7)){
-      let value=0;for(let i=0;i<7;i++)value+=daily.get(addDays(from,i))||0;
-      buckets.push([from,value,`semana del ${dmy(from)}`]);
-    }
-  }else{
-    for(let day=rg.from;day<=rg.to;day=addDays(day,1))buckets.push([day,daily.get(day)||0,dmy(day)]);
-  }
-  const W=900,H=190,L=50,R=10,T=14,B=28;
-  const max=Math.max(1,...buckets.map(item=>item[1]));
-  const slot=(W-L-R)/buckets.length,bw=Math.max(4,Math.min(28,slot*.62));
-  const every=Math.ceil(buckets.length/10);
-  const base=H-B;
-  const bars=buckets.map(([day,value,label],index)=>{
-    const h=(H-T-B)*value/max,cx=L+slot*index+slot/2;
-    const tick=index%every===0?`<text x="${cx}" y="${H-9}" text-anchor="middle" class="sl-cx">${dmy(day)}</text>`:'';
-    return `<g><rect x="${cx-slot/2}" y="${T}" width="${slot}" height="${H-T-B}" fill="transparent"><title>${esc(label)}: ${money(value)}</title></rect><rect x="${cx-bw/2}" y="${base-h}" width="${bw}" height="${value?Math.max(2,h):0}" rx="3" class="sl-bar"><title>${esc(label)}: ${money(value)}</title></rect>${tick}</g>`;
-  }).join('');
-  const grid=[0,.5,1].map(f=>{const y=base-(H-T-B)*f;return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" class="sl-grid${f?' soft':''}"/><text x="${L-6}" y="${y+4}" text-anchor="end" class="sl-cx">${f?(max*f>=10000?'$'+fmt(max*f/1000)+' mil':money(max*f)):'0'}</text>`}).join('');
-  return `<div class="sl-chart"><div class="sl-chart-h"><b>${weekly?'Venta por semana ($)':'Venta por día ($)'}</b><span>${dmy(rg.from)} al ${dmy(rg.to)}</span></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Venta en pesos por ${weekly?'semana':'día'}">${grid}${bars}</svg></div>`;
+const COLORS=['--blue','--green','--orange','--red'];
+const short=n=>n>=1000?'$'+fmt(n/1000)+' mil':money(n);
+const plural=(n,one,many)=>n===1?one:many;
+function sparkline(values,w,h,color){
+  if(values.length<2)return '';
+  const max=Math.max(...values,1),step=w/(values.length-1);
+  const points=values.map((v,i)=>`${(i*step).toFixed(1)},${(h-2-(h-4)*v/max).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" class="sl-spark" aria-hidden="true"><polyline points="${points}" fill="none" stroke="var(${color})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
-function monthsHtml(data,rg){
-  const months=monthsOf(data.rows).slice(0,12).reverse();
+// Cubetas de la serie: por día, o por semana si el período es largo.
+function buckets(rg){
+  const span=daysBetween(rg.from,rg.to);
+  const weekly=span>62;
+  const list=[];
+  for(let from=rg.from;from<=rg.to;from=addDays(from,weekly?7:1))list.push({from,to:weekly?addDays(from,6):from});
+  return {weekly,list};
+}
+function series(rows,bk){
+  const index=new Map();
+  bk.list.forEach((bucket,i)=>{for(let day=bucket.from;day<=bucket.to;day=addDays(day,1))index.set(day,i)});
+  const amount=bk.list.map(()=>0),qty=bk.list.map(()=>0);
+  rows.forEach(row=>{const i=index.get(row.sold_on);if(i!==undefined){amount[i]+=Number(row.amount||0);qty[i]+=row.qty}});
+  return {amount,qty};
+}
+function chartHtml(data,rg){
+  const bk=buckets(rg);
+  if(bk.list.length<2||!data.rows.some(row=>row.sold_on>=rg.from&&row.sold_on<=rg.to))return '';
+  const values=series(data.rows,bk).amount;
+  const W=640,H=150,L=8,R=8,T=22,B=24;
+  const max=Math.max(1,...values);
+  const slot=(W-L-R)/values.length,bw=Math.max(4,Math.min(30,slot*.58));
+  const every=Math.ceil(values.length/(bk.weekly?8:15));
+  const base=H-B;
+  const bars=values.map((value,index)=>{
+    const h=(H-T-B)*value/max,cx=L+slot*index+slot/2;
+    const day=parse(bk.list[index].from).getDay();
+    const weekend=!bk.weekly&&(day===0||day===6);
+    const top=value===max;
+    const label=bk.weekly?`semana del ${dmy(bk.list[index].from)}`:dmy(bk.list[index].from);
+    const tick=index%every===0?`<text x="${cx}" y="${H-7}" text-anchor="middle" class="sl-cx">${bk.weekly?dmy(bk.list[index].from):bk.list[index].from.slice(8)}</text>`:'';
+    return `<g>${weekend?`<rect x="${cx-slot/2}" y="${T-6}" width="${slot}" height="${H-T-B+6}" class="sl-we"/>`:''}<rect x="${cx-bw/2}" y="${base-h}" width="${bw}" height="${value?Math.max(2,h):0}" rx="4" class="sl-bar${top?' top':''}"><title>${esc(label)}: ${money(value)}</title></rect>${top&&value?`<text x="${Math.min(W-30,Math.max(30,cx))}" y="${base-h-6}" text-anchor="middle" class="sl-cv">${short(value)}</text>`:''}${tick}</g>`;
+  }).join('');
+  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}${bk.weekly?'':' · fines de semana sombreados'}</small></h4><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}" class="sl-daily">${bars}</svg></div>`;
+}
+function monthsHtml(data){
+  const months=monthsOf(data.rows).slice(0,6).reverse();
   if(months.length<2)return '';
-  const totals=months.map(ym=>{
-    const total=data.rows.filter(row=>row.sold_on.startsWith(ym)).reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const partial=data.last&&data.last.startsWith(ym)&&data.last<monthEnd(ym);
-    return {ym,total,partial};
-  });
+  const totals=months.map(ym=>({ym,total:data.rows.filter(row=>row.sold_on.startsWith(ym)).reduce((sum,row)=>sum+Number(row.amount||0),0),partial:Boolean(data.last&&data.last.startsWith(ym)&&data.last<monthEnd(ym))}));
   const max=Math.max(1,...totals.map(item=>item.total));
-  const rows=totals.map(item=>`<div class="sl-mrow"><span>${esc(monthName(item.ym))}${item.partial?' <small>(parcial)</small>':''}</span><div class="sl-meter big"><i style="width:${Math.round(item.total/max*100)}%"></i></div><b>${money(item.total)}</b></div>`).join('');
-  return `<div class="sl-chart"><div class="sl-chart-h"><b>Evolución por mes</b><span>Total vendido en $</span></div>${rows}</div>`;
+  const cols=totals.map(item=>`<div class="sl-mcol"><small class="v">${short(item.total)}</small><div class="sl-mb${item.partial?' part':''}" style="height:${Math.max(4,Math.round(item.total/max*88))}px"></div><small>${esc(monthShort(item.ym))}${item.partial?' · parcial':''}</small></div>`).join('');
+  return `<div class="sl-card"><h4>Por mes<small>total vendido</small></h4><div class="sl-months">${cols}</div></div>`;
 }
 function tableHtml(data,cur,prev,rg){
-  const head=`<div class="sl-th"><span>Producto</span><span>Unid.</span><span>Vendido</span><span>${prev?'vs '+esc(rg.prev.label):''}</span><span>Por semana</span><span>Participación</span></div>`;
+  const bk=buckets(rg);
   const span=daysBetween(rg.from,rg.to);
   const byCode=new Map(data.products.map(product=>[String(product.code),product]));
+  const colorOf=new Map(data.options.map((option,i)=>[option,COLORS[i%COLORS.length]]));
   const prevAmount=new Map((prev?.list||[]).map(item=>[item.code,item.amount]));
-  const top=cur.list[0]?.amount||0;
+  const perCode=new Map();
+  data.rows.forEach(row=>{if(row.sold_on>=rg.from&&row.sold_on<=rg.to){const list=perCode.get(String(row.pos_code))||[];list.push(row);perCode.set(String(row.pos_code),list)}});
+  const head=`<div class="sl-th"><span>Producto</span><span>Unid.</span><span>Vendido</span><span>${prev?'vs '+esc(rg.prev.label):''}</span><span>Tendencia</span><span class="r">Part.</span></div>`;
   const rows=cur.list.map(item=>{
     const product=byCode.get(item.code);
+    const group=data.keyOf(product);
+    const color=colorOf.get(group)||COLORS[0];
     const share=cur.amount?item.amount/cur.amount*100:0;
-    const change=prev?delta(item.amount,prevAmount.get(item.code)||0):null;
-    const tag=prev?(change===null?'<span class="sl-chip">nuevo</span>':`<span class="sl-chip ${change>=0?'up':'dn'}">${change>0?'+':''}${change}%</span>`):'';
-    return `<div class="sl-r"><div><b>${esc(product.name)}</b><small>${esc(product.category||'Sin categoría')} · código ${esc(item.code)}</small></div><b data-l="Unid.">${fmt(item.qty)}</b><b data-l="Vendido">${money(item.amount)}</b><div data-l="${prev?'vs '+esc(rg.prev.label):''}">${tag}</div><b data-l="Por semana">${dec(item.qty/span*7)}</b><div data-l="Participación"><div class="sl-meter"><i style="width:${top?Math.round(item.amount/top*100):0}%"></i></div><small>${dec(share)}% del total</small></div></div>`;
+    let tag='';
+    if(prev){
+      const change=delta(item.amount,prevAmount.get(item.code)||0);
+      tag=change===null?'<span class="sl-chip">nuevo</span>':change===0?'<span class="sl-chip">sin cambio</span>':`<span class="sl-chip ${change>0?'up':'dn'}">${change>0?'+':''}${change}%</span>`;
+    }
+    const trend=sparkline(series(perCode.get(item.code)||[],bk).qty,110,26,color);
+    return `<div class="sl-r"><div class="sl-p"><div class="sl-av" style="--c:var(${color})">${esc(group.slice(0,2).toUpperCase())}</div><div><b>${esc(product.name)}</b><small>${esc(product.category||'Sin categoría')} · código ${esc(item.code)}</small></div></div><b class="q" data-one="${item.qty===1?1:0}">${fmt(item.qty)}</b><b class="a">${money(item.amount)}</b><div class="c">${tag}</div><div class="t">${trend}</div><span class="sh">${dec(share)}%</span></div>`;
   }).join('');
   const sold=new Set(cur.list.map(item=>item.code));
   const quiet=data.products.filter(product=>!sold.has(String(product.code)));
-  const none=quiet.length?`<div class="sl-note">Sin ventas en este período: ${quiet.slice(0,12).map(product=>esc(product.name)).join(' · ')}${quiet.length>12?` y ${quiet.length-12} más`:''}.</div>`:'';
-  return head+rows+none;
+  const none=quiet.length?`<details class="sl-fold"><summary>${quiet.length} ${plural(quiet.length,'producto sin ventas','productos sin ventas')} en este período <u>Ver</u></summary><p>${quiet.map(product=>esc(product.name)).join(' · ')}</p></details>`:'';
+  return `<div class="sl-card sl-table">${head}${rows}${none}</div>`;
 }
 function rangeOptions(data,rg){
   const items=[['7','Últimos 7 días'],['30','Últimos 30 días'],...monthsOf(data.rows).map(ym=>['m:'+ym,monthName(ym)[0].toUpperCase()+monthName(ym).slice(1)]),['all','Todo el período']];
@@ -208,30 +229,38 @@ function rangeOptions(data,rg){
 function render(){
   const root=$('salesRoot');
   if(!root)return;
-  const head=`<div class="sl-head"><div><h1>Ventas</h1><p>Lo que vendes por producto, según el POS. El stock se controla en Inventarios y el café en Máquinas de café.</p></div><div class="sl-acts"><button type="button" class="sl-btn ghost" data-act="sales-import">Importar ventas</button></div></div>`;
+  const head=`<div class="sl-head"><div><h1>Ventas</h1><p>Lo que vendes por producto, según el POS. El stock está en Inventarios y el café en Máquinas de café.</p></div><div class="sl-acts"><button type="button" class="sl-btn ghost" data-act="sales-import">Importar ventas</button></div></div>`;
   if(S.status==='idle'){root.innerHTML=head+'<div class="sl-note">Cargando…</div>';return}
   if(S.status==='unavailable'||S.status==='error'){root.innerHTML=head+`<div class="sl-note">${esc(S.message||'No se pudo cargar.')} <button type="button" class="sl-link" data-sl="reload">Reintentar</button></div>`;return}
   if(S.status==='missing'){root.innerHTML=head+'<div class="sl-note">No encuentro inventarios activos. Créalos en Inventarios para ver sus ventas aquí.</div>';return}
-  const tabs=`<div class="sl-tabs top">${visibleTabs().map(tab=>`<button type="button" data-sl="tab" data-v="${tab.key}" class="${S.tab===tab.key?'on':''}">${esc(tab.label)}</button>`).join('')}</div>`;
+  const tabs=`<div class="sl-tabs top" role="tablist">${visibleTabs().map(tab=>`<button type="button" role="tab" data-sl="tab" data-v="${tab.key}" class="${S.tab===tab.key?'on':''}">${esc(tab.label)}</button>`).join('')}</div>`;
   const inv=S.invs[tabDef().inv];
-  if(!S.cache[inv?.id]){root.innerHTML=head+tabs+'<div class="sl-note">Cargando…</div>';return}
+  if(!S.cache[inv?.id]){root.innerHTML=head+`<div class="sl-bar">${tabs}</div><div class="sl-note">Cargando…</div>`;return}
   const data=tabData();
   const rg=ranges(data);
   const cur=aggregate(data.rows,rg.from,rg.to);
   const prev=rg.prev?aggregate(data.rows,rg.prev.from,rg.prev.to):null;
   const best=cur.list[0]?data.products.find(product=>String(product.code)===cur.list[0].code):null;
   const dAmount=prev?delta(cur.amount,prev.amount):null,dQty=prev?delta(cur.qty,prev.qty):null;
-  const kpis=`<div class="sl-kpis">
-    <div class="sl-kpi" style="--c:var(--blue)"><i>$</i><div><b>${money(cur.amount)}</b><span>Vendido · ${esc(rg.label)}</span>${chip(dAmount,rg.prev?.label)}</div></div>
-    <div class="sl-kpi" style="--c:var(--green)"><i>#</i><div><b>${fmt(cur.qty)}</b><span>Unidades vendidas</span>${chip(dQty,rg.prev?.label)}</div></div>
-    <div class="sl-kpi" style="--c:var(--orange)"><i>★</i><div><b class="sm">${esc(best?best.name:'—')}</b><span>El que más vende ($)</span></div></div>
-    <div class="sl-kpi" style="--c:var(--red)"><i>▤</i><div><b>${cur.list.length} de ${data.products.length}</b><span>Productos con ventas</span></div></div></div>`;
+  const bk=buckets(rg);
+  const trend=sparkline(series(data.rows,bk).amount,120,44,'--blue');
+  const kchip=(value,label)=>value===null?'':value===0?'<span class="sl-chip">sin cambio</span>':`<span class="sl-chip ${value>0?'up':'dn'}">${value>0?'+':''}${value}%${label?' vs '+esc(label):''}</span>`;
   const filter=data.options.length>1?`<select data-sl="filter" aria-label="${data.byBrand?'Marca':'Categoría'}"><option value="">${data.byBrand?'Todas las marcas':'Todas las categorías'}</option>${data.options.map(option=>`<option value="${esc(option)}"${S.filter===option?' selected':''}>${esc(option)}</option>`).join('')}</select>`:'';
-  const controls=`<div class="sl-bar-top"><div class="sl-sel"><select data-sl="range" aria-label="Período">${rangeOptions(data,rg)}</select>${filter}</div>${rg.partial?`<span class="sl-hint">Se muestra ${esc(rg.label)} hasta el ${dmy(rg.to)}; se compara con los mismos días de ${esc(rg.prev.label)}.</span>`:''}</div>`;
-  const body=data.rows.length
-    ?chartHtml(data,rg)+(rg.key==='all'||rg.key.startsWith('m:')?monthsHtml(data,rg):'')+(cur.list.length?tableHtml(data,cur,prev,rg):'<div class="sl-note">No hay ventas en este período.</div>')
-    :`<div class="sl-note">Aún no hay ventas guardadas de ${esc(tabDef().label.toLowerCase())}. Sube el «Informe de Ventas por Artículos» del POS con «Importar ventas» (arriba) y aparecerán aquí.</div>`;
-  root.innerHTML=head+tabs+kpis+`<div class="sl-card">${controls}${body}</div>`;
+  const bar=`<div class="sl-bar">${tabs}<div class="sl-sel"><select data-sl="range" aria-label="Período">${rangeOptions(data,rg)}</select>${filter}</div></div>`;
+  const hint=rg.partial?`<div class="sl-hint">${esc(rg.label[0].toUpperCase()+rg.label.slice(1))} hasta el ${dmy(rg.to)} · comparado con los mismos días de ${esc(rg.prev.label)}</div>`:'';
+  const kpis=`<div class="sl-kpis">
+    <div class="sl-k big"><span>Vendido · ${esc(rg.label)}</span><div class="row"><div><b>${money(cur.amount)}</b>${kchip(dAmount,rg.prev?.label)}</div>${trend}</div></div>
+    <div class="sl-k"><span>Unidades</span><b>${fmt(cur.qty)}</b>${kchip(dQty,'')}</div>
+    <div class="sl-k best"><span>El que más vende</span><b>${esc(best?best.name:'—')}</b>${best&&cur.amount?`<span class="sub">${money(cur.list[0].amount)} · ${Math.round(cur.list[0].amount/cur.amount*100)}% del total</span>`:''}</div>
+    <div class="sl-k"><span>Con ventas</span><b>${cur.list.length} <small>de ${data.products.length}</small></b><div class="sl-prog"><i style="width:${data.products.length?Math.round(cur.list.length/data.products.length*100):0}%"></i></div></div></div>`;
+  let body;
+  if(!data.rows.length){
+    body=`<div class="sl-note">Aún no hay ventas guardadas de ${esc(tabDef().label.toLowerCase())}. Sube el «Informe de Ventas por Artículos» del POS con «Importar ventas» (arriba) y aparecerán aquí.</div>`;
+  }else{
+    const months=monthsHtml(data);
+    body=`<div class="sl-two${months?'':' one'}">${chartHtml(data,rg)}${months}</div>`+(cur.list.length?tableHtml(data,cur,prev,rg):'<div class="sl-note">No hay ventas en este período.</div>');
+  }
+  root.innerHTML=head+bar+hint+kpis+body;
 }
 
 /* --------------------------------------------------------------- eventos */
