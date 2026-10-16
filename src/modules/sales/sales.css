@@ -96,3 +96,7 @@
   .sl-av{width:34px;height:34px}
 }
 @media (max-width:520px){.sl-head h1{font-size:26px}}
+@media (max-width:900px){
+  .sl-acts{display:none}
+  .sl-root{padding-bottom:96px}
+}

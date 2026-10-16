@@ -76,3 +76,6 @@
 .cf-logobtns .cf-btn{padding:9px 13px;font-size:13px}
 .cf-modal input[type=checkbox]{width:auto}
 .cf-err:empty{display:none}
+@media (max-width:900px){
+  .cf-acts [data-act="sales-import"]{display:none}
+}
