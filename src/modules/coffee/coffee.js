@@ -13,6 +13,7 @@ const client=()=>window.ShiftControlAuth?.getClient?.();
 const companyId=()=>window.AuthContext?.get?.()?.companyId||null;
 const isAdmin=()=>window.ShiftControlPermissions?.getRole?.()==='ADMIN';
 const SHIFTS=['A','B','C'];
+const SHIFT_HOURS={A:'23:00–07:00',B:'07:00–15:00',C:'15:00–23:00'};
 const BUCKET='shiftcontrol-machine-logos';
 const URL_TTL=3600;
 const MESSAGES={
@@ -173,8 +174,9 @@ function formHtml(m){
   const hint=last?`Última lectura: <b>${fmt(last.numeral)}</b> (${dmy(last.read_on)}, turno ${esc(last.shift)}).`:'Aún no hay lecturas de esta máquina.';
   const f=S.form||{date:today(),shift:'A',numeral:''};
   return `<aside class="cf-card cf-side"><div class="cf-f"><h4>Anotar el numeral</h4>
-    <label>Fecha<input type="date" id="cfDate" value="${esc(f.date)}" max="${today()}"></label>
-    <label>Turno<select id="cfShift">${SHIFTS.map(shift=>`<option value="${shift}"${f.shift===shift?' selected':''}>Turno ${shift}</option>`).join('')}</select></label>
+    <label>Día operativo<input type="date" id="cfDate" value="${esc(f.date)}" max="${today()}"></label>
+    <label>Turno<select id="cfShift">${SHIFTS.map(shift=>`<option value="${shift}"${f.shift===shift?' selected':''}>Turno ${shift} · ${SHIFT_HOURS[shift]}</option>`).join('')}</select></label>
+    <div class="cf-hint">El día operativo empieza a las 23:00 del día anterior. El numeral es el de fin de turno: el A de las 07:00 va con la fecha de ese mismo día.</div>
     <label>Numeral<input id="cfNumeral" inputmode="numeric" placeholder="Ej: 48.944" value="${esc(f.numeral)}" class="cf-big"></label>
     <div class="cf-hint">${hint}</div>
     ${S.message?`<div class="cf-err">${esc(S.message)}</div>`:''}
