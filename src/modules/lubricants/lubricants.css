@@ -1,0 +1,41 @@
+/* Ventas de lubricantes */
+#lubricants .ls-root,#lubricants{max-width:none}
+.ls-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.ls-head h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.035em}
+.ls-head p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.ls-acts{display:flex;gap:8px}
+.ls-btn{padding:11px 16px;border-radius:12px;border:1px solid var(--pri-bg);background:var(--pri-bg);color:var(--pri-fg);font:inherit;font-weight:650;font-size:14px;cursor:pointer}
+.ls-btn.ghost{background:var(--panel);color:var(--text);border-color:var(--line)}
+.ls-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.ls-kpi{display:flex;gap:14px;align-items:center;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);min-width:0}
+.ls-kpi i{flex:none;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);font-style:normal;font-weight:800}
+.ls-kpi>div{min-width:0}
+.ls-kpi b{display:block;font-size:24px;font-weight:650;letter-spacing:-.04em;line-height:1.1}
+.ls-kpi b.sm{font-size:16px;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ls-kpi span{display:block;margin-top:3px;font-size:12.5px;color:var(--muted);font-weight:600}
+.ls-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);min-width:0;padding-bottom:6px}
+.ls-bar-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px}
+.ls-tabs,.ls-per{display:flex;gap:6px;flex-wrap:wrap}
+.ls-tabs button,.ls-per button{padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+.ls-tabs button.on,.ls-per button.on{background:var(--pri-bg);color:var(--pri-fg);border-color:var(--pri-bg)}
+.ls-chart{margin:0 18px 12px;padding:14px 16px 8px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+.ls-chart-h{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:4px}.ls-chart-h span{color:var(--muted)}
+.ls-chart svg{width:100%;height:auto;display:block}
+.ls-bar{fill:var(--blue)}
+.ls-grid{stroke:var(--line);stroke-width:1}.ls-grid.soft{opacity:.5}
+.ls-cx{fill:var(--muted);font-size:11px}
+.ls-th,.ls-r{display:grid;grid-template-columns:minmax(0,2.4fr) 70px 100px 70px 100px minmax(0,1.3fr);gap:12px;align-items:center;padding:11px 18px;font-size:13px}
+.ls-th{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ls-r{border-top:1px solid var(--line)}
+.ls-r b{font-variant-numeric:tabular-nums;font-weight:650}.ls-r small{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+.ls-meter{height:8px;border-radius:99px;background:color-mix(in srgb,var(--blue) 14%,transparent);overflow:hidden}.ls-meter i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.ls-note{margin:12px 18px;padding:13px 15px;border-radius:13px;background:var(--panel2);border:1px dashed var(--line);color:var(--muted);font-size:13px;line-height:1.5}
+.ls-link{border:0;background:transparent;padding:0;color:var(--blue);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+@media (max-width:900px){
+  .ls-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ls-th{display:none}
+  .ls-r{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+  .ls-r>:first-child,.ls-r>:last-child{grid-column:1/-1}
+  .ls-r [data-l]::before{content:attr(data-l);display:block;color:var(--muted);font-size:11px;font-weight:600}
+}
+@media (max-width:520px){.ls-head h1{font-size:26px}.ls-kpi b{font-size:21px}}
