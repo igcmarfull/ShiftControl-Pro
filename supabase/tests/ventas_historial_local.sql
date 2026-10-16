@@ -1,4 +1,4 @@
--- Pruebas de la migración 20261017120000_sales_history.sql (historial de ventas).
+-- Pruebas de las migraciones 20261017120000_sales_history.sql y 20261017180000_sales_history_skip_coffee.sql (historial de ventas).
 --
 -- SOLO PARA UNA BASE LOCAL DESECHABLE con todas las migraciones aplicadas (incluidas inventario y proveedores).
 -- Crea empresas, usuarios y datos ficticios dentro de una transacción que
@@ -107,6 +107,14 @@ begin
   v_msg := pg_temp.try('adm', format('select public.sales_history_save(%L, %L::jsonb)', pg_temp.g('A'), '[]'));
   perform pg_temp.ok('Sin líneas se rechaza', v_msg = 'inv:lines_required', v_msg);
 
+  -- Café: un código de máquina no entra al historial.
+  perform pg_temp.call('adm', format('select public.coffee_machine_save(%L, %L::jsonb)', pg_temp.g('A'), '{"name":"Marley","codes":[{"code":"CF1"}]}'));
+  perform pg_temp.call('adm', format('select public.inv_save_product(%L, %L::jsonb)', pg_temp.g('inv_tienda'), '{"code":"CF1","name":"Café","control_unit":"unidad"}'));
+  r := pg_temp.call('adm', format('select public.sales_history_save(%L, %L::jsonb)', pg_temp.g('A'), format('[{"date":"%s","code":"CF1","qty":9,"amount":9000},{"date":"%s","code":"T1","qty":4,"amount":8000}]', current_date - 4, current_date - 4)));
+  perform pg_temp.ok('El café no entra al historial', (r->>'coffee')::int = 1 and (r->>'saved')::int = 1, r::text);
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(count(*)) from public.sales_history where pos_code = 'CF1' and company_id = %L$q$, pg_temp.g('A')));
+  perform pg_temp.ok('No hay filas de café', (v_n#>>'{}')::int = 0, v_n::text);
+
   -- Acceso por área: jefa de tienda solo a TIENDA; lubricantes es ISLA.
   r := pg_temp.call('jt', format('select public.sales_history_save(%L, %L::jsonb)', pg_temp.g('A'), format('[{"date":"%s","code":"L1","qty":1,"amount":1},{"date":"%s","code":"T1","qty":1,"amount":2000}]', current_date - 3, current_date - 3)));
   perform pg_temp.ok('La jefa de tienda solo guarda su área', (r->>'saved')::int = 1 and (r->>'no_access')::int = 1, r::text);
@@ -117,9 +125,9 @@ begin
 
   -- Lectura
   v_n := pg_temp.call('adm', format($q$select to_jsonb(count(*)) from public.sales_history where company_id = %L$q$, pg_temp.g('A')));
-  perform pg_temp.ok('El admin lee todo', (v_n#>>'{}')::int = 4, v_n::text);
+  perform pg_temp.ok('El admin lee todo', (v_n#>>'{}')::int = 5, v_n::text);
   v_n := pg_temp.call('jt', format($q$select to_jsonb(count(*)) from public.sales_history where company_id = %L$q$, pg_temp.g('A')));
-  perform pg_temp.ok('La jefa de tienda solo lee su área', (v_n#>>'{}')::int = 2, v_n::text);
+  perform pg_temp.ok('La jefa de tienda solo lee su área', (v_n#>>'{}')::int = 3, v_n::text);
   v_n := pg_temp.call('ji', format($q$select to_jsonb(count(*)) from public.sales_history where company_id = %L$q$, pg_temp.g('A')));
   perform pg_temp.ok('La jefa de isla lee solo lubricantes', (v_n#>>'{}')::int = 2, v_n::text);
   v_n := pg_temp.call('ji', format($q$select to_jsonb(count(*)) from public.sales_history where company_id = %L and pos_code = 'T1'$q$, pg_temp.g('A')));
