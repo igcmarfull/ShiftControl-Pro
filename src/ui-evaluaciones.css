@@ -1,0 +1,58 @@
+/* Evaluaciones: controles en una fila, lista compacta y filas más limpias.
+   Se carga después de ui-papel.css y reutiliza sus clases (.ev-*). */
+
+/* ---------- Mes con flechas ---------- */
+#evaluations .ev-top .actions{align-items:center}
+.ev-month{display:inline-flex;align-items:center;gap:2px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.ev-month button{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--muted);font:inherit;font-size:19px;line-height:1;cursor:pointer}
+.ev-month button:hover{background:var(--panel2);color:var(--text)}
+.ev-month select{border:0!important;background:transparent!important;box-shadow:none!important;min-height:0;height:32px;padding:0 6px;font-weight:650;font-size:13.5px;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--text)!important}
+
+/* ---------- Pastillas y controles en la misma fila ---------- */
+#evaluations .evaluation-list-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+#evaluations .evaluation-list-panel>#evaluationList{grid-column:1/-1}
+#evaluations .ev-tabs{margin:0;gap:6px}
+#evaluations .ev-tabs button{padding:8px 15px;font-size:13px;font-weight:650;background:var(--panel)}
+#evaluations .ev-tabs button.on{background:var(--pri-bg);color:var(--pri-fg);border-color:var(--pri-bg)}
+#evaluations .eval-toolbar{margin:0;gap:10px;justify-content:flex-end;flex-wrap:nowrap}
+#evaluations .eval-search{display:flex;align-items:center;gap:9px;min-width:260px;height:42px;padding:0 13px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+#evaluations .eval-search>span{display:none}
+#evaluations .eval-search::before{content:"";flex:none;width:18px;height:18px;background:#7a859d;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='M20 20l-4.2-4.2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='M20 20l-4.2-4.2'/%3E%3C/svg%3E") center/contain no-repeat}
+#evaluations .eval-search input{flex:1;min-width:0;height:100%;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;outline:0;font-size:14px}
+#evaluations .ev-seg{height:42px;gap:2px;padding:3px;border:0;border-radius:12px;background:var(--panel3)}
+#evaluations .ev-seg button{padding:0 15px;font-size:13px;font-weight:650;border-radius:9px}
+
+/* ---------- Lista ---------- */
+#evaluationList.ev-list{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;padding-bottom:4px}
+#evaluationList .ev-gh{margin:0;padding:16px 20px 8px}
+#evaluationList .ev-row{padding:12px 20px;grid-template-columns:44px minmax(0,2fr) 90px 130px 150px auto}
+#evaluationList .ev-av{width:44px;height:44px;border-radius:14px;border:0;background:color-mix(in srgb,var(--c,var(--blue)) 14%,transparent);color:var(--c,var(--act-fg));font-size:12.5px;font-weight:800}
+#evaluationList .ev-row strong{font-size:15px;font-weight:650}
+#evaluationList .ev-row small{margin-top:2px;font-size:12.5px}
+#evaluationList .ev-chip{display:inline-flex;align-items:center;gap:6px;padding:0;background:transparent;font-size:12.5px;color:var(--c)}
+#evaluationList .ev-chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+#evaluationList .ev-tag{font-size:12px;padding:4px 11px;border:0;background:var(--panel3)}
+#evaluationList .ev-go.pri{background:var(--act-bg);color:var(--act-fg);border-color:transparent;padding:8px 16px;font-weight:700}
+#evaluationList .ev-go.pri:hover{background:color-mix(in srgb,var(--act-bg) 70%,var(--act-fg) 12%)}
+#evaluationList .ev-go.pri::after{content:" ›"}
+
+/* ---------- Celular ---------- */
+@media (max-width:820px){
+  #evaluations .evaluation-list-panel{grid-template-columns:minmax(0,1fr)}
+  #evaluations .evaluation-list-panel>*{min-width:0;max-width:100%}
+  #evaluations .ev-tabs{flex-wrap:nowrap;overflow-x:auto;margin:0 -12px;padding:2px 12px;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);scrollbar-width:none}
+  #evaluations .ev-tabs::-webkit-scrollbar{display:none}
+  #evaluations .ev-tabs button{flex:none;white-space:nowrap}
+  #evaluations .eval-toolbar{flex-wrap:nowrap;justify-content:stretch}
+  #evaluations .eval-search{flex:1;min-width:0}
+  #evaluations .ev-seg{order:0;width:auto;flex:none}
+  #evaluations .ev-seg button{flex:none;padding:0 11px}
+  #evaluationList .ev-row{grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+  #evaluationList .ev-row .ev-tag,#evaluationList .ev-row .ev-score,#evaluationList .ev-row .ev-chip{display:none}
+  #evaluationList .ev-row .ev-actions{grid-column:3;grid-row:1;justify-content:flex-end}
+  #evaluationList .ev-gh{padding:14px 16px 6px}
+  #evaluations .ev-top .actions{width:100%}
+  #evaluations .ev-month{width:100%;justify-content:space-between}
+  #evaluations{padding-bottom:96px}
+  #evaluations .ev-hero>.ev-avg.empty{display:none}
+}
