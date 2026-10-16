@@ -12,3 +12,10 @@ La aplicación se presenta como la herramienta de **Prosercom** («Prosercom · 
 - **Archivos:** `src/brand-prosercom.css` (se carga al final de `<head>`; reafirma con `!important` el estilo de los campos del acceso porque `ui-papel.css` fuerza el fondo de todos los `input`), y `src/assets/prosercom-logo.png`, `prosercom-mark.png` y `prosercom-icon.png`.
 - **Provisional:** el nombre «Operaciones» que acompaña a Prosercom en la barra lateral, el acceso y el título.
 - **No integrado (trabajo futuro):** revisar pantalla por pantalla los colores fijos que no usan variables, modo oscuro del acceso, marca configurable por empresa en la base de datos y logo vectorial (SVG).
+
+## Pantalla Evaluaciones
+
+Se reorganizó la presentación de «Evaluación mensual» sin cambiar el modelo de datos ni el editor: `src/ui-evaluaciones.css` (se carga después de `ui-papel.css`) y ajustes menores en `src/ui-evaluaciones.js`.
+
+- **Activo:** selector de mes con flechas (‹ ›) junto al `<select>` existente; pastillas de estado y controles (buscador con lupa de línea fina y Todas/Isla/Tienda) en una misma fila; lista dentro de una tarjeta, con inicial de color por persona, estado «Sin evaluar» con punto naranja y botón «Evaluar ›»; en celular, filas compactas (inicial, nombre y cargo, botón a la derecha), pastillas deslizables con degradado y espacio al final para el botón flotante. La tarjeta de resumen (anillo y tres cajas) se mantiene.
+- **Cambio de comportamiento visual:** el estado de quien no tiene evaluación pasó de «Pendiente» (rojo) a «Sin evaluar» (naranja). En celular se oculta la tarjeta «Promedio del mes» mientras no haya evaluaciones enviadas.

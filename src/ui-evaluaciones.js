@@ -81,7 +81,7 @@
     }
     root.innerHTML=`<div class="ev-ring"><div class="wc-donut" style="width:110px;height:110px"><svg viewBox="0 0 128 128" style="width:110px;height:110px"><circle class="bg" cx="64" cy="64" r="54"/><circle class="fg" cx="64" cy="64" r="54" stroke-dasharray="${CIRC}" stroke-dashoffset="${(CIRC*(1-pct)).toFixed(1)}"/></svg><div class="c"><b style="font-size:26px">${Math.round(pct*100)}%</b></div></div><div><h4>${done} de ${total} evaluadas</h4><p>${pending?`Faltan ${plural(pending,'persona','personas')} este mes`:total?'Todo el personal tiene evaluación':'No hay personal activo'}</p></div></div>`
       +`<div><div class="ev-stats"><div class="ev-st ok"><span>Completadas</span><b>${approved}</b><small>evaluaciones aprobadas</small></div><div class="ev-st warn"><span>Borradores</span><b>${drafts+review}</b><small>${review?`${review} en revisión`:'pendientes de revisión'}</small></div><div class="ev-st"><span>Sin evaluar</span><b>${pending}</b><small>personal activo</small></div></div></div>`
-      +`<div class="ev-avg"><span>Promedio del mes</span><b>${avg===null?'—':fmt(avg)}<small> / 5</small></b>${compare}</div>`;
+      +`<div class="ev-avg${avg===null?' empty':''}"><span>Promedio del mes</span><b>${avg===null?'—':fmt(avg)}<small> / 5</small></b>${compare}</div>`;
   }
 
   function renderTabs(entries){
@@ -96,6 +96,25 @@
     root.innerHTML=tabs.map(([key,label,n])=>`<button type="button" role="tab" class="${current===key?'on':''}" onclick="evalSetStatus('${key}')">${label}<em>${n}</em></button>`).join('');
   }
 
+  // Flechas junto al selector de mes: cambian a la opción anterior o siguiente del mismo <select>.
+  function ensureMonthNav(){
+    const select=$('evaluationMonth');
+    if(!select||select.closest('.ev-month'))return;
+    const wrap=document.createElement('div');
+    wrap.className='ev-month';
+    const step=direction=>{
+      const options=[...select.options].map(option=>option.value).sort();
+      const index=options.indexOf(select.value)+direction;
+      if(index<0||index>=options.length)return;
+      select.value=options[index];
+      if(typeof window.renderEvaluations==='function')window.renderEvaluations();
+    };
+    const prev=document.createElement('button');prev.type='button';prev.setAttribute('aria-label','Mes anterior');prev.textContent='‹';prev.onclick=()=>step(-1);
+    const next=document.createElement('button');next.type='button';next.setAttribute('aria-label','Mes siguiente');next.textContent='›';next.onclick=()=>step(1);
+    select.parentNode.insertBefore(wrap,select);
+    wrap.append(prev,select,next);
+  }
+
   function ensureToolbar(){
     const bar=document.querySelector('#evaluations .eval-toolbar');
     if(!bar||bar.querySelector('.ev-seg'))return;
@@ -107,12 +126,16 @@
     bar.appendChild(seg);
   }
 
+  // Color estable por persona para la inicial (marca: azul, verde y naranja).
+  const TONES=['blue','green','orange'];
+  const avatarTone=name=>TONES[[...String(name||'')].reduce((sum,ch)=>sum+ch.charCodeAt(0),0)%TONES.length];
+
   function rowHtml(entry,period){
     const w=entry.worker,record=entry.record;
     const name=w?w.name:'Trabajador eliminado';
     const role=w?(w.role||w.area||'Equipo'):'Sin ficha activa';
     const area=AREAS[areaOf(w)]||'';
-    const labels={draft:['Borrador','yellow'],submitted:['En revisión','blue'],approved:['Aprobada','green'],pending:['Pendiente','red']};
+    const labels={draft:['Borrador','yellow'],submitted:['En revisión','blue'],approved:['Aprobada','green'],pending:['Sin evaluar','orange']};
     const [label,tone]=labels[entry.status]||labels.pending;
     const score=scoreOf(record);
     const bar=score!==null&&entry.status!=='draft'?`<div class="ev-score">${fmt(score)}<i><b style="width:${Math.round(score*20)}%"></b></i></div>`:'<span></span>';
@@ -124,7 +147,7 @@
       go=`<button type="button" class="ev-go pri" onclick="newEvaluationFor('${esc(w?.id)}')">Evaluar</button>`;
     }
     const del=record?`<button type="button" class="ev-del role-admin-only" onclick="deleteEvaluationFromList('${esc(record.id)}',event)" aria-label="Eliminar evaluación">✕</button>`:'';
-    return `<div class="ev-row ${entry.status==='approved'?'done':''}"><span class="ev-av">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${esc(role)}</small></div><span class="ev-tag">${esc(area||'—')}</span><span class="ev-chip" style="--c:var(--${tone})">${label}</span>${bar}<span class="ev-actions">${go}${del}</span></div>`;
+    return `<div class="ev-row ${entry.status==='approved'?'done':''}"><span class="ev-av" style="--c:var(--${avatarTone(name)})">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${esc(role)}</small></div><span class="ev-tag">${esc(area||'—')}</span><span class="ev-chip" style="--c:var(--${tone})">${label}</span>${bar}<span class="ev-actions">${go}${del}</span></div>`;
   }
 
   function renderList(period,entries){
@@ -160,6 +183,7 @@
     const period=select.value;
     const entries=buildEntries(period);
     ensureToolbar();
+    ensureMonthNav();
     renderHero(period,entries);
     renderTabs(entries);
     renderList(period,entries);
