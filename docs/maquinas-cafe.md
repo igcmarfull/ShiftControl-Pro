@@ -44,3 +44,11 @@ Tablas `coffee_machines`, `coffee_machine_codes`, `coffee_readings` y `coffee_sa
 ## Verificación realizada
 
 36 comprobaciones SQL en Postgres local (más las 30 de ventas, que siguen pasando) y Playwright con Supabase simulado (crear máquinas, código duplicado, lecturas, repetir lectura, estados pendiente / fuera de tolerancia / cuadra, escritorio y celular). No se probó contra Supabase real, con el rol de jefa en el navegador, ni con una importación real de ventas con códigos de máquina.
+
+## Vista en celular (≤820px)
+
+- Los cuatro recuadros de resumen se reemplazan por una tarjeta con anillo «cuadran» y cuatro cifras (fuera de tolerancia, sin ventas cargadas, vasos sin vender, vasos vendidos). En escritorio no cambia.
+- Cada tramo es una fila compacta con barra de color (verde cuadra, rojo fuera de tolerancia, gris sin ventas), diferencia grande a la derecha y Numeral / Avanzó / Vendidos debajo. Se oculta «antes N» (queda en la vista de escritorio).
+- «+ Nueva máquina» y «Importar ventas» se ocultan en celular; siguen en escritorio. Crear máquinas desde el celular no está disponible por ahora.
+- Un tramo con numeral avanzado y 0 vasos vendidos se muestra como «Sin ventas cargadas» (gris), no como fuera de tolerancia, y no suma a «fuera de tolerancia» ni a la diferencia. Es una regla de presentación en `coffee.js` (`effStatus`); el estado del servidor no cambia.
+- El gráfico «Diferencia por día» y la cabecera de la máquina no cambian.

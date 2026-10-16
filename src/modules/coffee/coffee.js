@@ -110,19 +110,29 @@ async function loadMachine(){
 const machine=()=>S.machines.find(item=>item.id===S.selected)||null;
 
 /* -------------------------------------------------------------- dibujo */
-const STATUS={ok:['ok','Cuadra'],over:['bad','Fuera de tolerancia'],reset:['warn','El numeral bajó (¿reinicio?)'],pending:['warn','Faltan ventas por cargar']};
+const STATUS={ok:['ok','Cuadra'],over:['bad','Fuera de tolerancia'],reset:['warn','El numeral bajó (¿reinicio?)'],pending:['warn','Faltan ventas por cargar'],nosales:['mute','Sin ventas cargadas']};
+// Un tramo con numeral avanzado pero 0 vasos vendidos casi siempre es un día sin importar ventas: no se cuenta como diferencia.
+const effStatus=row=>row.status==='over'&&row.sold===0&&row.advanced>0?'nosales':row.status;
+const SHORT={ok:'Cuadra',over:'Fuera de tol.',reset:'Numeral bajó',pending:'Faltan ventas',nosales:'Sin ventas'};
 function summary(rows,tol){
-  const done=rows.filter(row=>row.status==='ok'||row.status==='over');
+  const done=rows.filter(row=>effStatus(row)==='ok'||effStatus(row)==='over');
   return {
     ok:done.filter(row=>row.status==='ok').length,total:done.length,
-    over:rows.filter(row=>row.status==='over').length,
+    over:rows.filter(row=>effStatus(row)==='over').length,
+    nosales:rows.filter(row=>effStatus(row)==='nosales'||row.status==='pending').length,
     sold:done.reduce((sum,row)=>sum+row.sold,0),
     gap:done.reduce((sum,row)=>sum+row.diff,0)
   };
 }
 function kpis(rows,m){
   const s=summary(rows,m.tolerance);
-  return `<div class="cf-kpis">
+  const pct=s.total?Math.round(s.ok/s.total*100):0;
+  const sum=`<div class="cf-sum"><div class="cf-ring" style="--p:${pct}"><b>${s.ok}/${s.total}<small>cuadran</small></b></div><div class="cf-sum-l">
+    <div>Fuera de tolerancia<b><i style="background:var(--red)"></i>${s.over}</b></div>
+    <div>Sin ventas cargadas<b><i style="background:var(--muted)"></i>${s.nosales}</b></div>
+    <div>Vasos sin vender<b>${s.gap>0?'+':''}${fmt(s.gap)}</b></div>
+    <div>Vasos vendidos<b>${fmt(s.sold)}</b></div></div></div>`;
+  return sum+`<div class="cf-kpis">
     <div class="cf-kpi" style="--c:var(--green)"><i>✓</i><div><b>${s.ok} de ${s.total}</b><span>Tramos que cuadran</span></div></div>
     <div class="cf-kpi" style="--c:var(--orange)"><i>≠</i><div><b>${s.gap>0?'+':''}${fmt(s.gap)}</b><span>Vasos sin vender (suma)</span></div></div>
     <div class="cf-kpi" style="--c:var(--blue)"><i>☕</i><div><b>${fmt(s.sold)}</b><span>Vasos vendidos</span></div></div>
@@ -163,10 +173,10 @@ function tableHtml(m){
   if(!rows.length)return `<div class="cf-note">Aún no hay lecturas de dos días distintos. Anota el numeral en dos días para ver la primera cuadratura. Las ventas de café se cargan con «Importar ventas» (arriba), con el mismo Excel del POS.</div>`;
   const head='<div class="cf-th"><span>Tramo</span><span>Numeral</span><span>Avanzó</span><span>Vendidos</span><span>Diferencia</span><span>Estado</span></div>';
   return head+rows.slice(0,31).map(row=>{
-    const [cls,label]=STATUS[row.status]||['warn',row.status];
+    const eff=effStatus(row);const [cls,label]=STATUS[eff]||['warn',row.status];
     const range=row.days>1?`${dmy(row.prev_on)} → ${dmy(row.read_on)}`:dmy(row.read_on);
     const pending=row.status==='pending'?` · ${row.days_loaded} de ${row.days} días con ventas`:'';
-    return `<div class="cf-r"><div><b>${range}</b><small>${row.days} día${row.days===1?'':'s'}</small></div><div data-l="Numeral"><b>${fmt(row.numeral)}</b><small>antes ${fmt(row.prev_numeral)}</small></div><b data-l="Avanzó">${fmt(row.advanced)}</b><b data-l="Vendidos">${fmt(row.sold)}</b><b data-l="Diferencia">${row.diff>0?'+':''}${fmt(row.diff)}</b><span class="cf-st ${cls}">${esc(label)}${pending}</span></div>`;
+    return `<div class="cf-r st-${cls}"><div><b>${range}</b><small>${row.days} día${row.days===1?'':'s'}</small></div><div data-l="Numeral"><b>${fmt(row.numeral)}</b><small>antes ${fmt(row.prev_numeral)}</small></div><b data-l="Avanzó">${fmt(row.advanced)}</b><b data-l="Vendidos">${fmt(row.sold)}</b><b data-l="Diferencia" data-s="${esc(SHORT[eff]||'')}">${eff==='nosales'?'—':(row.diff>0?'+':'')+fmt(row.diff)}</b><span class="cf-st ${cls}">${esc(label)}${pending}</span></div>`;
   }).join('');
 }
 function formHtml(m){
