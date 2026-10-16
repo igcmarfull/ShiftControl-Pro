@@ -1,6 +1,9 @@
 /* Capa para iPad (13" y similares): 821–1400px con puntero táctil.
    Menú lateral compacto (se expande al tocar), zonas táctiles de 44px,
    encabezados y KPIs sin saltos. No afecta escritorio con mouse ni celular. */
+/* Paneles laterales cerrados: su sombra no debe asomar por el borde (celular y tablet) */
+.v19-command-center:not(.open),.v17-notification-drawer:not(.open),.worker-drawer:not(.open){box-shadow:none!important}
+
 @media (min-width:821px) and (max-width:1400px) and (pointer:coarse){
   .app{grid-template-columns:76px minmax(0,1fr)!important}
   .main{padding:20px 22px calc(24px + env(safe-area-inset-bottom))!important}
