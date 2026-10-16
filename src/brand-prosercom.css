@@ -69,3 +69,18 @@
 .login-screen .login-form input:hover{border-color:#d3dbec!important}
 .login-screen .login-form input:focus{background:#fff!important;border-color:#0c3b82!important}
 .login-screen .login-form input::placeholder{color:#8a93ab}
+
+/* ---------- Paleta de la marca (azul marino, azul, verde y gris acero del logo) ---------- */
+:root{--accent:#0c3b82}
+body.light{
+  --blue:#0f4c9c;--green:#2f9e44;--cyan:#1d6fd6;
+  --act-bg:#e8f0fb;--act-fg:#0c3b82;--soft-bg:#e8f0fb;--soft-fg:#0c3b82;--soft-bd:#cfe0f5;
+  --ok-bg:#e6f5ea;--ok-fg:#1b7a32;--ok-bd:#bfe3c8;--pri-bg:#0c3b82;--pri-fg:#fff;
+}
+body:not(.light){
+  --blue:#5c9aea;--green:#4cc364;--cyan:#6db2f5;
+  --act-bg:rgba(92,154,234,.16);--act-fg:#dbe9ff;--soft-bg:rgba(92,154,234,.16);--soft-fg:#bcd5fb;--soft-bd:rgba(92,154,234,.32);
+  --ok-bg:rgba(76,195,100,.14);--ok-fg:#8be3a0;--ok-bd:rgba(76,195,100,.34);
+}
+body:not(.light) .brand-mark{background:#fff!important}
+.role-avatar,.v523-mobile-user-avatar{background:linear-gradient(135deg,#0f4c9c,#0c3b82)!important;color:#fff!important}
