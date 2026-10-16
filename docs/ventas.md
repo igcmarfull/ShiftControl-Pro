@@ -6,7 +6,7 @@ Módulo `src/modules/sales/` (vista `sales`, menú Tienda → Ventas, solo admin
 
 - **Código en el repositorio:** pantalla con pestañas, selector de período (últimos 7 días, últimos 30 días, cada mes con datos, todo el período), comparación con el período anterior de igual largo, evolución por mes, importación que guarda el historial, migraciones y pruebas.
 - **Migración `20261017120000_sales_history.sql`: aplicada en producción (16-10-2026)**, en dos partes (`sales_history_table` y `sales_history_save_fn`). Verificado: tabla con RLS y una política de lectura, función sin acceso para `anon`.
-- **Migración `20261017180000_sales_history_skip_coffee.sql`: pendiente de aplicar en producción.** Hace que `sales_history_save` omita los códigos de máquinas de café. Mientras no esté aplicada, la pantalla igualmente oculta los productos de café de la pestaña Tienda.
+- **Migración `20261017180000_sales_history_skip_coffee.sql`: aplicada en producción (16-10-2026)** como `sales_history_skip_coffee`. Hace que `sales_history_save` omita los códigos de máquinas de café. Verificado: la función sigue sin acceso para `anon` y contiene la omisión. La pantalla además oculta los productos de café de la pestaña Tienda.
 - **No integrado (trabajo futuro):** entrada única «Importar ventas del POS» en el menú, exportación, pestañas para otros inventarios.
 - La pantalla antes se llamaba «Ventas de lubricantes» (PR anterior); ahora es general y reemplaza a esa vista.
 
