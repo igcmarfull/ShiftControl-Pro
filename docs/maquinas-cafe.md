@@ -10,6 +10,8 @@ Módulo `src/modules/coffee/` (vista `coffee`, menú Tienda → Máquinas de caf
 
 ## Qué hace
 
+El día operativo empieza a las 23:00 del día anterior: el turno A es 23:00–07:00, el B 07:00–15:00 y el C 15:00–23:00, y los tres se anotan con la fecha del día operativo. El numeral es el de fin de turno, así que el cierre del día es el del turno C. El formulario muestra estos horarios.
+
 Cada máquina (por ejemplo Marley y Nescafé) tiene un nombre, una tolerancia en vasos y los códigos del POS que pasan por ella. Se anota el numeral de cada turno (A, B o C), pero la cuadratura es **diaria**: el numeral de un día es el más alto de sus lecturas (el numeral solo sube) y no importa de qué turno venga. Entre dos días consecutivos con lectura, la pantalla compara cuánto avanzó el numeral con los vasos vendidos en los días contables de ese tramo (desde el día siguiente a la lectura anterior hasta el día de la actual).
 
 **Gráfico:** barras de la diferencia por día (numeral menos vasos vendidos) con la banda de tolerancia; verde si cuadra, rojo si está fuera. Solo incluye los tramos que se pueden cuadrar (no los pendientes ni los reinicios) y los últimos 21. SVG propio, sin librería; el detalle está en la tabla.
