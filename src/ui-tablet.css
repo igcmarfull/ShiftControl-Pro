@@ -1,0 +1,63 @@
+/* Capa para iPad (13" y similares): 821–1400px con puntero táctil.
+   Menú lateral compacto (se expande al tocar), zonas táctiles de 44px,
+   encabezados y KPIs sin saltos. No afecta escritorio con mouse ni celular. */
+@media (min-width:821px) and (max-width:1400px) and (pointer:coarse){
+  .app{grid-template-columns:76px minmax(0,1fr)!important}
+  .main{padding:20px 22px calc(24px + env(safe-area-inset-bottom))!important}
+
+  .sidebar{width:76px!important;padding:14px 10px!important;z-index:1300;transition:width .18s ease,box-shadow .18s ease}
+  .sidebar .brand{justify-content:center;padding:2px 0 12px!important;cursor:pointer}
+  .sidebar .brand>div:not(.brand-mark),
+  .sidebar .role-card,
+  .sidebar .nav-group-title,
+  .sidebar .sidebar-foot .save-status span:last-child,
+  .sidebar .logout-button strong{display:none!important}
+  .sidebar .nav-btn{font-size:0!important;justify-content:center;gap:0!important;padding:6px 0!important;min-height:48px!important}
+  .sidebar .nav-btn .mk-ico{width:34px!important;height:34px!important}
+  .sidebar .nav-btn .v52-nav-badge{display:none}
+  .sidebar .nav-group{padding:2px 0!important}
+  .sidebar .logout-button{justify-content:center}
+
+  /* Menú abierto: se superpone al contenido sin empujarlo */
+  body.tab-nav-open .sidebar{position:fixed!important;left:0;top:0;width:290px!important;padding:18px 14px!important;box-shadow:0 0 0 100vmax rgba(10,14,24,.35),12px 0 40px rgba(0,0,0,.25)}
+  body.tab-nav-open .main{grid-column:2}
+  body.tab-nav-open .sidebar .brand{justify-content:flex-start}
+  body.tab-nav-open .sidebar .brand>div:not(.brand-mark),
+  body.tab-nav-open .sidebar .role-card,
+  body.tab-nav-open .sidebar .nav-group-title,
+  body.tab-nav-open .sidebar .sidebar-foot .save-status span:last-child,
+  body.tab-nav-open .sidebar .logout-button strong{display:revert!important}
+  body.tab-nav-open .sidebar .role-card{display:flex!important}
+  body.tab-nav-open .sidebar .nav-btn{font-size:14px!important;justify-content:flex-start;gap:11px!important;padding:6px 8px!important}
+  body.tab-nav-open .sidebar .nav-btn .v52-nav-badge{display:inline-block}
+
+  /* Zonas táctiles */
+  .btn,select,input:not([type=checkbox]):not([type=radio]),textarea,.field{min-height:44px}
+  .chip,.tab,[role=tab]{min-height:40px}
+  .topbar .actions,.panel-head .actions{display:flex;flex-wrap:wrap;gap:8px}
+  .topbar{gap:14px}
+  .topbar h2{font-size:26px}
+
+  /* KPIs: tres columnas con etiquetas completas */
+  .dashboard-kpis,.ops-summary-grid,.cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px}
+  .today-intelligence,.ops-two-column,.ops-checklist-layout{grid-template-columns:minmax(0,1fr)!important}
+
+  /* Tablas anchas: scroll horizontal propio, nunca de toda la página */
+  .table-wrap,.planning-grid-wrap,.calendar-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* Paneles laterales cerrados: su sombra no debe asomar por el borde */
+  .v19-command-center:not(.open),.v17-notification-drawer:not(.open),.worker-drawer:not(.open){box-shadow:none!important}
+
+  /* Operación del día: KPIs en 3 columnas para que las etiquetas entren completas */
+  .od-hero{grid-template-columns:280px minmax(0,1fr)}
+  .od-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+  /* Botón de notificaciones: no tapa contenido */
+  .v18-notification-fab{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));opacity:.92}
+}
+
+/* Horizontal: más ancho útil, dos columnas donde el escritorio ya las usa */
+@media (min-width:1101px) and (max-width:1400px) and (pointer:coarse){
+  .dashboard-kpis,.ops-summary-grid,.cards{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .today-intelligence,.ops-two-column{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}

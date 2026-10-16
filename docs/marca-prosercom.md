@@ -19,3 +19,12 @@ Se reorganizó la presentación de «Evaluación mensual» sin cambiar el modelo
 
 - **Activo:** selector de mes con flechas (‹ ›) junto al `<select>` existente; pastillas de estado y controles (buscador con lupa de línea fina y Todas/Isla/Tienda) en una misma fila; lista dentro de una tarjeta, con inicial de color por persona, estado «Sin evaluar» con punto naranja y botón «Evaluar ›»; en celular, filas compactas (inicial, nombre y cargo, botón a la derecha), pastillas deslizables con degradado y espacio al final para el botón flotante. La tarjeta de resumen (anillo y tres cajas) se mantiene.
 - **Cambio de comportamiento visual:** el estado de quien no tiene evaluación pasó de «Pendiente» (rojo) a «Sin evaluar» (naranja). En celular se oculta la tarjeta «Promedio del mes» mientras no haya evaluaciones enviadas.
+
+## iPad (13") · capa táctil
+
+Activa solo con `(min-width:821px) and (max-width:1400px) and (pointer:coarse)`; escritorio con mouse y celular no cambian.
+
+- `src/ui-tablet.css` (cargado después de `ui-evaluaciones.css`): menú lateral compacto de 76px (solo íconos), zonas táctiles de 44px, encabezados que se ajustan, KPIs en 3 columnas (4 en horizontal), "Operación del día" con KPIs en dos filas, sombra de paneles cerrados sin asomar y botón flotante junto al borde.
+- `src/ui-tablet.js`: al tocar la marca se abre el menú completo como panel superpuesto; se cierra al elegir una vista o tocar fuera.
+- Limitación conocida: el calendario de Planificación mensual conserva scroll horizontal propio para los días finales del mes.
+- Verificado con Playwright (emulación táctil) a 1032×1376 y 1376×1032; no probado en un iPad físico.
