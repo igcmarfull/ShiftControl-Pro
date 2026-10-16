@@ -176,14 +176,12 @@ function chartHtml(data,rg){
   // Barras en HTML (no SVG escalado) para que el texto conserve su tamaño en cualquier ancho.
   const cols=values.map((value,index)=>{
     const from=bk.list[index].from;
-    const day=parse(from).getDay();
-    const weekend=!bk.weekly&&(day===0||day===6);
     const top=value===max&&value>0;
     const label=bk.weekly?`semana del ${dmy(from)}`:dmy(from);
     const tick=index%every===0?`<i>${bk.weekly?dmy(from):from.slice(8)}</i>`:'';
-    return `<div class="sl-dcol${weekend?' we':''}" title="${esc(label)}: ${money(value)}"><div class="sl-dv">${top?`<b>${short(value)}</b>`:''}</div><div class="sl-db${top?' top':''}" style="height:${value?Math.max(3,Math.round(value/max*96)):0}px"></div><div class="sl-dt">${tick}</div></div>`;
+    return `<div class="sl-dcol" title="${esc(label)}: ${money(value)}"><div class="sl-dv">${top?`<b>${short(value)}</b>`:''}</div><div class="sl-db${top?' top':''}" style="height:${value?Math.max(3,Math.round(value/max*96)):0}px"></div><div class="sl-dt">${tick}</div></div>`;
   }).join('');
-  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}${bk.weekly?'':' · fines de semana sombreados'}</small></h4><div class="sl-dchart" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}">${cols}</div></div>`;
+  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}</small></h4><div class="sl-dchart" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}">${cols}</div></div>`;
 }
 function monthsHtml(data){
   const months=monthsOf(data.rows).slice(0,6).reverse();

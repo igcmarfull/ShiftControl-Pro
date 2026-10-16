@@ -18,7 +18,7 @@ El historial parte desde la primera vez que se sube cada informe con esta versi�
 
 ## Qué muestra
 
-Pestañas y filtros (período y categoría o marca) en la misma fila; tarjeta principal «Vendido» con variación contra el período anterior y mini tendencia, más unidades, producto que más vende y productos con ventas; gráfico de venta por día (barras suaves, mejor día destacado, fines de semana sombreados; por semana si el período pasa de 62 días); venta por mes (hasta 6 meses, el mes en curso marcado como parcial); y una tabla por producto con iniciales y color por categoría, unidades, $, variación, mini tendencia y participación. Los productos sin ventas quedan plegados al final. Un mes en curso se compara con los mismos días del mes anterior. Se carga por pestaña, con los últimos 400 días. En celular las tarjetas y la tabla se compactan.
+Pestañas y filtros (período y categoría o marca) en la misma fila; tarjeta principal «Vendido» con variación contra el período anterior y mini tendencia, más unidades, producto que más vende y productos con ventas; gráfico de venta por día (barras suaves, mejor día destacado; por semana si el período pasa de 62 días); venta por mes (hasta 6 meses, el mes en curso marcado como parcial); y una tabla por producto con iniciales y color por categoría, unidades, $, variación, mini tendencia y participación. Los productos sin ventas quedan plegados al final. Un mes en curso se compara con los mismos días del mes anterior. Se carga por pestaña, con los últimos 400 días. En celular las tarjetas y la tabla se compactan.
 
 ## Pruebas
 
