@@ -171,21 +171,19 @@ function chartHtml(data,rg){
   const bk=buckets(rg);
   if(bk.list.length<2||!data.rows.some(row=>row.sold_on>=rg.from&&row.sold_on<=rg.to))return '';
   const values=series(data.rows,bk).amount;
-  const W=640,H=150,L=8,R=8,T=22,B=24;
   const max=Math.max(1,...values);
-  const slot=(W-L-R)/values.length,bw=Math.max(4,Math.min(30,slot*.58));
-  const every=Math.ceil(values.length/(bk.weekly?8:15));
-  const base=H-B;
-  const bars=values.map((value,index)=>{
-    const h=(H-T-B)*value/max,cx=L+slot*index+slot/2;
-    const day=parse(bk.list[index].from).getDay();
+  const every=Math.ceil(values.length/(bk.weekly?10:16));
+  // Barras en HTML (no SVG escalado) para que el texto conserve su tamaño en cualquier ancho.
+  const cols=values.map((value,index)=>{
+    const from=bk.list[index].from;
+    const day=parse(from).getDay();
     const weekend=!bk.weekly&&(day===0||day===6);
-    const top=value===max;
-    const label=bk.weekly?`semana del ${dmy(bk.list[index].from)}`:dmy(bk.list[index].from);
-    const tick=index%every===0?`<text x="${cx}" y="${H-7}" text-anchor="middle" class="sl-cx">${bk.weekly?dmy(bk.list[index].from):bk.list[index].from.slice(8)}</text>`:'';
-    return `<g>${weekend?`<rect x="${cx-slot/2}" y="${T-6}" width="${slot}" height="${H-T-B+6}" class="sl-we"/>`:''}<rect x="${cx-bw/2}" y="${base-h}" width="${bw}" height="${value?Math.max(2,h):0}" rx="4" class="sl-bar${top?' top':''}"><title>${esc(label)}: ${money(value)}</title></rect>${top&&value?`<text x="${Math.min(W-30,Math.max(30,cx))}" y="${base-h-6}" text-anchor="middle" class="sl-cv">${short(value)}</text>`:''}${tick}</g>`;
+    const top=value===max&&value>0;
+    const label=bk.weekly?`semana del ${dmy(from)}`:dmy(from);
+    const tick=index%every===0?`<i>${bk.weekly?dmy(from):from.slice(8)}</i>`:'';
+    return `<div class="sl-dcol${weekend?' we':''}" title="${esc(label)}: ${money(value)}"><div class="sl-dv">${top?`<b>${short(value)}</b>`:''}</div><div class="sl-db${top?' top':''}" style="height:${value?Math.max(3,Math.round(value/max*96)):0}px"></div><div class="sl-dt">${tick}</div></div>`;
   }).join('');
-  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}${bk.weekly?'':' · fines de semana sombreados'}</small></h4><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}" class="sl-daily">${bars}</svg></div>`;
+  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}${bk.weekly?'':' · fines de semana sombreados'}</small></h4><div class="sl-dchart" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}">${cols}</div></div>`;
 }
 function monthsHtml(data){
   const months=monthsOf(data.rows).slice(0,6).reverse();
