@@ -1,6 +1,7 @@
--- La importación de ventas reemplaza la cantidad de una venta de café ya guardada cuando el informe trae otra
--- (antes la dejaba como estaba y solo avisaba). Las ventas de café no descuentan stock, así que es seguro.
--- El resultado suma 'machine_updated' y 'machine_changes' (código, fecha, antes, ahora). Sin cambios de tablas.
+-- La importación de ventas actualiza la cantidad de una venta de café ya guardada cuando el informe trae MÁS vasos
+-- (antes la dejaba como estaba y solo avisaba). Si trae menos, se conserva lo guardado: suele ser un informe del
+-- día en curso, incompleto. Las ventas de café no descuentan stock, así que es seguro.
+-- El resultado suma 'machine_updated', 'machine_lower' y 'machine_changes' (código, fecha, antes, ahora). Sin cambios de tablas.
 
 create or replace function public.inv_apply_sales(p_request_id uuid, p_company_id uuid, p_lines jsonb)
 returns jsonb
@@ -32,6 +33,7 @@ declare
   v_machine_lines integer := 0;
   v_machine_units integer := 0;
   v_machine_updated integer := 0;
+  v_machine_lower integer := 0;
   v_machine_changes jsonb := '[]'::jsonb;
   v_result jsonb;
 begin
@@ -67,12 +69,15 @@ begin
       select * into v_cs from public.coffee_sales where company_id = p_company_id and sold_on = l.sold_on and pos_code = l.code;
       if found then
         if v_cs.qty = l.qty then v_already := v_already + 1;
-        else
-          -- Las ventas de café no mueven stock: un informe más completo reemplaza la cantidad guardada.
+        elsif l.qty > v_cs.qty then
+          -- Las ventas de café no mueven stock: un informe más completo (más vasos) reemplaza la cantidad guardada.
           update public.coffee_sales set qty = l.qty, request_id = p_request_id where id = v_cs.id;
           v_machine_updated := v_machine_updated + 1;
           v_machine_changes := v_machine_changes || jsonb_build_object('code', l.code, 'date', l.sold_on,
             'before', v_cs.qty, 'now', l.qty);
+        else
+          -- Un informe con menos vasos suele ser del día en curso (incompleto): se conserva lo guardado.
+          v_machine_lower := v_machine_lower + 1;
         end if;
         continue;
       end if;
@@ -132,7 +137,7 @@ begin
     'applied_lines', v_applied, 'units_applied', v_units, 'already', v_already, 'changed', v_changed,
     'no_product', v_no_product, 'no_access', v_no_access, 'before_opening', v_before_opening, 'shortfalls', v_short,
     'machine_lines', v_machine_lines, 'machine_units', v_machine_units,
-    'machine_updated', v_machine_updated, 'machine_changes', v_machine_changes);
+    'machine_updated', v_machine_updated, 'machine_lower', v_machine_lower, 'machine_changes', v_machine_changes);
   return public.inv_idem_end(p_company_id, p_request_id, v_result);
 end;
 $$;

@@ -103,11 +103,11 @@ async function loadExisting(from,to){
 
 function buildPreview(){
   const lines=S.parsed.lines;
-  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,machineUpdated:0,byProduct:new Map(),machine:{lines:0,units:0},byMachine:new Map(),byOther:new Map()};
+  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,machineUpdated:0,machineLower:0,byProduct:new Map(),machine:{lines:0,units:0},byMachine:new Map(),byOther:new Map()};
   lines.forEach(line=>{
     if(S.machineCodes.has(line.code)){
       const key=`${line.date}|${line.code}`;
-      if(S.existingMachine.has(key)){if(S.existingMachine.get(key)===line.qty)preview.already++;else preview.machineUpdated++;return}
+      if(S.existingMachine.has(key)){const had=S.existingMachine.get(key);if(had===line.qty)preview.already++;else if(line.qty>had)preview.machineUpdated++;else preview.machineLower++;return}
       preview.machine.lines++;preview.machine.units+=line.qty;
       const mk=preview.byMachine.get(line.code)||{code:line.code,name:line.name,qty:0,days:0};mk.qty+=line.qty;mk.days++;preview.byMachine.set(line.code,mk);
       return;
@@ -163,7 +163,7 @@ function render(){
       <p class="sv-sub">${esc(S.file)} · ventas del ${esc(range)}</p>
       <div class="sv-sum"><span class="g">● ${fmt(pv.matched.length)} líneas con producto (${fmt(pv.units)} unidades)</span>
         ${pv.machine.lines?`<span class="g">${fmt(pv.machine.lines)} líneas de máquinas de café (${fmt(pv.machine.units)} vasos, solo para cuadrar el numeral)</span>`:''}<span>${fmt(pv.noProduct.lines)} sin producto en Inventarios (se ignoran)</span>
-        ${pv.already?`<span>${fmt(pv.already)} ya cargadas</span>`:''}${pv.changed?`<span class="o">${fmt(pv.changed)} con otra cantidad (no se tocan)</span>`:''}${pv.machineUpdated?`<span class="g">${fmt(pv.machineUpdated)} ventas de café con otra cantidad (se actualizan)</span>`:''}
+        ${pv.already?`<span>${fmt(pv.already)} ya cargadas</span>`:''}${pv.changed?`<span class="o">${fmt(pv.changed)} con otra cantidad (no se tocan)</span>`:''}${pv.machineUpdated?`<span class="g">${fmt(pv.machineUpdated)} ventas de café con más vasos (se actualizan)</span>`:''}${pv.machineLower?`<span class="o">${fmt(pv.machineLower)} ventas de café con menos vasos (se conserva lo guardado)</span>`:''}
         ${pv.short?`<span class="r">${fmt(pv.short)} productos sin stock suficiente</span>`:''}</div>
       ${pv.products.length?`<div class="sv-t"><div class="sv-h"><span>Producto</span><span>Vendidas</span><span>Stock</span><span>Resultado</span></div>${rows}${pv.products.length>60?`<div class="sv-r"><small>… y ${pv.products.length-60} productos más</small></div>`:''}</div>`
         :'<p class="sv-note">Ninguna línea nueva coincide con un producto de Inventarios. Revisa que los productos tengan el código del POS.</p>'}
@@ -178,7 +178,7 @@ function render(){
   const shorts=(r.shortfalls||[]).slice(0,12).map(item=>`<div class="sv-r"><div><b>${esc(item.name)}</b><small>${esc(dmy(item.date))} · código ${esc(item.code)}</small></div><div class="sv-n bad"><b>faltaron ${fmt(item.sold-item.applied)}</b><small>de ${fmt(item.sold)} vendidas</small></div></div>`).join('');
   frame(`<h3>Ventas descontadas</h3>
     <p class="sv-sub">${fmt(r.applied_lines)} líneas · ${fmt(r.units_applied)} unidades descontadas del stock.</p>
-    <div class="sv-sum">${r.already?`<span>${fmt(r.already)} ya estaban cargadas</span>`:''}${r.machine_lines?`<span class="g">${fmt(r.machine_lines)} líneas de máquinas de café registradas (${fmt(r.machine_units)} vasos)</span>`:''}${r.machine_updated?`<span class="g">${fmt(r.machine_updated)} ventas de café actualizadas</span>`:''}${r.no_product?`<span>${fmt(r.no_product)} sin producto (ignoradas)</span>`:''}${r.before_opening?`<span>${fmt(r.before_opening)} anteriores al saldo inicial (ignoradas)</span>`:''}${r.no_access?`<span>${fmt(r.no_access)} de otra área (ignoradas)</span>`:''}${(r.changed||[]).length?`<span class="o">${r.changed.length} con otra cantidad (no se tocaron)</span>`:''}</div>
+    <div class="sv-sum">${r.already?`<span>${fmt(r.already)} ya estaban cargadas</span>`:''}${r.machine_lines?`<span class="g">${fmt(r.machine_lines)} líneas de máquinas de café registradas (${fmt(r.machine_units)} vasos)</span>`:''}${r.machine_updated?`<span class="g">${fmt(r.machine_updated)} ventas de café actualizadas</span>`:''}${r.machine_lower?`<span class="o">${fmt(r.machine_lower)} de café con menos vasos que lo guardado (sin cambios)</span>`:''}${r.no_product?`<span>${fmt(r.no_product)} sin producto (ignoradas)</span>`:''}${r.before_opening?`<span>${fmt(r.before_opening)} anteriores al saldo inicial (ignoradas)</span>`:''}${r.no_access?`<span>${fmt(r.no_access)} de otra área (ignoradas)</span>`:''}${(r.changed||[]).length?`<span class="o">${r.changed.length} con otra cantidad (no se tocaron)</span>`:''}</div>
     ${(r.shortfalls||[]).length?`<p class="sv-note">El stock no alcanzó para ${r.shortfalls.length} ${r.shortfalls.length===1?'línea':'líneas'}: se descontó hasta cero. Suele indicar un saldo inicial o una recepción sin cargar.</p><div class="sv-t">${shorts}${r.shortfalls.length>12?`<div class="sv-r"><small>… y ${r.shortfalls.length-12} más</small></div>`:''}</div>`:''}
     <div class="sv-f"><span></span><button type="button" class="inv-btn pri" data-sv="close">Listo</button></div>`);
 }

@@ -160,9 +160,11 @@ begin
     (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 31
     and (select count(*) from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 1);
   r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
-    pg_temp.lines(pg_temp.d(1),'219113','30')));
-  perform pg_temp.ok('Un informe con menos vasos también reemplaza (vuelve a 30)',
-    (r->>'machine_updated')::int = 1 and (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 30, r::text);
+    pg_temp.lines(pg_temp.d(1),'219113','25')));
+  perform pg_temp.ok('Un informe con menos vasos NO baja lo guardado (suele ser un día incompleto)',
+    (r->>'machine_updated')::int = 0 and (r->>'machine_lower')::int = 1
+    and (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 31, r::text);
+  update public.coffee_sales set qty = 30 where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113';
   r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
     pg_temp.lines(pg_temp.d(1),'219113','30')));
   perform pg_temp.ok('El mismo valor no cuenta como cambio', (r->>'already')::int = 1 and (r->>'machine_updated')::int = 0, r::text);
