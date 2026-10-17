@@ -33,3 +33,10 @@ Pestañas y filtros (período y categoría o marca) en la misma fila; tarjeta pr
 - La pestaña aparece solo si hay al menos una máquina activa. No hay historial anterior a lo que se haya importado.
 - Reversión: `supabase/rollback/20261018120000_coffee_sales_amount.rollback.sql` (vuelve a la función anterior y deja las columnas). Pruebas: `supabase/tests/maquinas_cafe_local.sql` (46 comprobaciones).
 - **Orden de despliegue:** aplicar la migración primero (es aditiva y compatible con la pantalla actual) y después fusionar el código; si la pantalla nueva llega antes, la consulta de `amount` falla.
+
+## Pestañas y gráficos (17-10-2026)
+
+- Pestañas: Lubricantes · Cigarros · **Energéticas** · **Hot dogs** · **Tienda** · Café. Energéticas y Hot dogs salen del inventario de Tienda por la categoría del producto (`Energéticas`, `Hot dog` o un nombre que contenga «hot dog»). **Tienda** muestra el resto de los productos de ese inventario, sin energéticas, sin hot dogs y sin café, así que ya no repite lo de las otras pestañas.
+- Solo aparecen en Ventas los productos que están en el catálogo del inventario: una venta de un código que no existe en Inventarios se ignora al importar. Para ver más productos de la tienda hay que crearlos primero en Inventarios (o ampliar la importación a productos fuera del catálogo; no hecho).
+- «Venta por día»: tocar o pasar el mouse por una barra muestra su día, el monto y las unidades en una línea bajo el gráfico (por defecto, el día de más ventas). En pantallas anchas con hasta 20 barras, todas llevan su valor; en celular solo la más alta y el resto por toque.
+- «Por mes»: cada mes se puede tocar para abrir su propio gráfico por día. Un mes con unidades pero sin monto (ventas de café anteriores a la migración de montos) dice «sin monto» y muestra las unidades.
