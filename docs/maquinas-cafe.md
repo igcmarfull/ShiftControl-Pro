@@ -52,3 +52,11 @@ Tablas `coffee_machines`, `coffee_machine_codes`, `coffee_readings` y `coffee_sa
 - «+ Nueva máquina» y «Importar ventas» se ocultan en celular; siguen en escritorio. Crear máquinas desde el celular no está disponible por ahora.
 - Un tramo con numeral avanzado y 0 vasos vendidos se muestra como «Sin ventas cargadas» (gris), no como fuera de tolerancia, y no suma a «fuera de tolerancia» ni a la diferencia. Es una regla de presentación en `coffee.js` (`effStatus`); el estado del servidor no cambia.
 - El gráfico «Diferencia por día» y la cabecera de la máquina no cambian.
+
+## Reimportar ventas del café (migración 20261017210000)
+
+- Antes, si el informe traía otra cantidad para un día y código ya guardados en `coffee_sales`, la importación lo mostraba como «con otra cantidad (no se tocan)» y lo dejaba igual. Eso impedía corregir un día importado con un informe incompleto o antes de agregar un código a la máquina.
+- Ahora la cantidad de una venta de café ya guardada se **actualiza cuando el informe trae más vasos** (el café no mueve stock, no hay riesgo de descontar dos veces). Si trae **menos**, se conserva lo guardado: suele ser el informe del día en curso, incompleto, y no debe pisar uno más completo. El resumen informa «N ventas de café actualizadas» y «N con menos vasos (sin cambios)»; el servidor devuelve `machine_updated`, `machine_lower` y `machine_changes` (código, fecha, antes, ahora).
+- Un mismo valor sigue contando como «ya cargada». Un código nuevo en un día ya importado se inserta como línea nueva.
+- Los productos con stock (cigarrillos, lubricantes, tienda) **no cambian**: una cantidad distinta sigue sin tocarse, para no duplicar descuentos.
+- Reversión: `supabase/rollback/20261017210000_coffee_sales_update.rollback.sql`. Pruebas: `supabase/tests/maquinas_cafe_local.sql` (37 comprobaciones).
