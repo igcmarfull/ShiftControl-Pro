@@ -23,3 +23,13 @@ Pestañas y filtros (período y categoría o marca) en la misma fila; tarjeta pr
 ## Pruebas
 
 `supabase/tests/ventas_historial_local.sql` (base local desechable) y reversiones en `supabase/rollback/`.
+
+## Pestaña «Café» (migración 20261018120000, pendiente de aplicar en producción)
+
+- Quinta pestaña, con el mismo diseño que Cigarros: total en pesos, unidades (vasos), producto más vendido, gráfico por día y por mes, y tabla por producto con tendencia. El filtro de categoría pasa a ser por **máquina** (aparece si hay más de una).
+- Los datos salen de `coffee_sales` (no de `sales_history`): la migración le agrega `amount` (venta neta en pesos) y `description` (nombre del producto en el POS), ambos opcionales. La importación del POS los guarda junto con los vasos.
+- Los días importados antes de la migración quedan sin monto ni nombre (se ven como «Código 219113» y $0). Basta **volver a subir el mismo informe**: con la misma cantidad, la importación completa el monto y el nombre sin tocar lo demás (`machine_filled`). La pantalla avisa cuántas ventas de café aún no los tienen.
+- Reglas de la importación de café: más vasos que lo guardado actualiza cantidad, monto y nombre; menos vasos no pisa nada; un monto o nombre ya guardado no se reemplaza con la misma cantidad.
+- La pestaña aparece solo si hay al menos una máquina activa. No hay historial anterior a lo que se haya importado.
+- Reversión: `supabase/rollback/20261018120000_coffee_sales_amount.rollback.sql` (vuelve a la función anterior y deja las columnas). Pruebas: `supabase/tests/maquinas_cafe_local.sql` (46 comprobaciones).
+- **Orden de despliegue:** aplicar la migración primero (es aditiva y compatible con la pantalla actual) y después fusionar el código; si la pantalla nueva llega antes, la consulta de `amount` falla.

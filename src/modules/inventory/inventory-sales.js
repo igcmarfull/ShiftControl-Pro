@@ -73,7 +73,7 @@ async function readFile(file){
 }
 
 /* ------------------------------------------------------------- estado */
-const S={open:false,busy:false,step:'pick',message:'',file:'',parsed:null,products:new Map(),machineCodes:new Set(),existing:new Map(),existingMachine:new Map(),preview:null,result:null,requestId:null};
+const S={open:false,busy:false,step:'pick',message:'',file:'',parsed:null,products:new Map(),machineCodes:new Set(),existing:new Map(),existingMachine:new Map(),machineMissing:new Set(),preview:null,result:null,requestId:null};
 const isAdmin=()=>(typeof window.getAppRole==='function'?window.getAppRole():'')==='admin';
 
 async function loadProducts(){
@@ -92,9 +92,10 @@ async function loadMachineCodes(){
 async function loadExisting(from,to){
   S.existing=new Map();
   S.existingMachine=new Map();
+  S.machineMissing=new Set();
   try{
-    const machine=await client().from('coffee_sales').select('sold_on, pos_code, qty').eq('company_id',companyId()).gte('sold_on',from).lte('sold_on',to);
-    if(!machine.error)(machine.data||[]).forEach(row=>S.existingMachine.set(`${row.sold_on}|${row.pos_code}`,row.qty));
+    const machine=await client().from('coffee_sales').select('sold_on, pos_code, qty, amount, description').eq('company_id',companyId()).gte('sold_on',from).lte('sold_on',to);
+    if(!machine.error)(machine.data||[]).forEach(row=>{const key=`${row.sold_on}|${row.pos_code}`;S.existingMachine.set(key,row.qty);if(row.amount===null||row.amount===undefined||!row.description)S.machineMissing.add(key)});
   }catch(_error){}
   const response=await client().from('inv_sales_lines').select('sold_on, pos_code, qty_reported').eq('company_id',companyId()).gte('sold_on',from).lte('sold_on',to);
   if(response.error)throw response.error;
@@ -103,11 +104,11 @@ async function loadExisting(from,to){
 
 function buildPreview(){
   const lines=S.parsed.lines;
-  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,machineUpdated:0,machineLower:0,byProduct:new Map(),machine:{lines:0,units:0},byMachine:new Map(),byOther:new Map()};
+  const preview={matched:[],noProduct:{lines:0,units:0},already:0,changed:0,machineUpdated:0,machineLower:0,machineFilled:0,byProduct:new Map(),machine:{lines:0,units:0},byMachine:new Map(),byOther:new Map()};
   lines.forEach(line=>{
     if(S.machineCodes.has(line.code)){
       const key=`${line.date}|${line.code}`;
-      if(S.existingMachine.has(key)){const had=S.existingMachine.get(key);if(had===line.qty)preview.already++;else if(line.qty>had)preview.machineUpdated++;else preview.machineLower++;return}
+      if(S.existingMachine.has(key)){const had=S.existingMachine.get(key);if(had===line.qty){if(S.machineMissing.has(key)&&(line.amount>0||line.name))preview.machineFilled++;else preview.already++}else if(line.qty>had)preview.machineUpdated++;else preview.machineLower++;return}
       preview.machine.lines++;preview.machine.units+=line.qty;
       const mk=preview.byMachine.get(line.code)||{code:line.code,name:line.name,qty:0,days:0};mk.qty+=line.qty;mk.days++;preview.byMachine.set(line.code,mk);
       return;
@@ -163,22 +164,22 @@ function render(){
       <p class="sv-sub">${esc(S.file)} · ventas del ${esc(range)}</p>
       <div class="sv-sum"><span class="g">● ${fmt(pv.matched.length)} líneas con producto (${fmt(pv.units)} unidades)</span>
         ${pv.machine.lines?`<span class="g">${fmt(pv.machine.lines)} líneas de máquinas de café (${fmt(pv.machine.units)} vasos, solo para cuadrar el numeral)</span>`:''}<span>${fmt(pv.noProduct.lines)} sin producto en Inventarios (se ignoran)</span>
-        ${pv.already?`<span>${fmt(pv.already)} ya cargadas</span>`:''}${pv.changed?`<span class="o">${fmt(pv.changed)} con otra cantidad (no se tocan)</span>`:''}${pv.machineUpdated?`<span class="g">${fmt(pv.machineUpdated)} ventas de café con más vasos (se actualizan)</span>`:''}${pv.machineLower?`<span class="o">${fmt(pv.machineLower)} ventas de café con menos vasos (se conserva lo guardado)</span>`:''}
+        ${pv.already?`<span>${fmt(pv.already)} ya cargadas</span>`:''}${pv.changed?`<span class="o">${fmt(pv.changed)} con otra cantidad (no se tocan)</span>`:''}${pv.machineUpdated?`<span class="g">${fmt(pv.machineUpdated)} ventas de café con más vasos (se actualizan)</span>`:''}${pv.machineLower?`<span class="o">${fmt(pv.machineLower)} ventas de café con menos vasos (se conserva lo guardado)</span>`:''}${pv.machineFilled?`<span class="g">${fmt(pv.machineFilled)} ventas de café por completar con monto y nombre</span>`:''}
         ${pv.short?`<span class="r">${fmt(pv.short)} productos sin stock suficiente</span>`:''}</div>
       ${pv.products.length?`<div class="sv-t"><div class="sv-h"><span>Producto</span><span>Vendidas</span><span>Stock</span><span>Resultado</span></div>${rows}${pv.products.length>60?`<div class="sv-r"><small>… y ${pv.products.length-60} productos más</small></div>`:''}</div>`
-        :(pv.machines.length||pv.machineUpdated||pv.machineLower?'':'<p class="sv-note">Ninguna línea nueva coincide con un producto de Inventarios. Revisa que los productos tengan el código del POS.</p>')}
+        :(pv.machines.length||pv.machineUpdated||pv.machineLower||pv.machineFilled?'':'<p class="sv-note">Ninguna línea nueva coincide con un producto de Inventarios. Revisa que los productos tengan el código del POS.</p>')}
       ${pv.machines.length?`<div class="sv-t"><div class="sv-h"><span>Café (solo cuadra el numeral)</span><span>Vasos</span><span>Días</span><span></span></div>${machineRows}</div>`:''}
       ${pv.others.length?`<details class="sv-note"><summary>${fmt(pv.others.length)} códigos sin producto (se ignoran) — revisa si falta algún café</summary><div class="sv-t">${otherRows}${pv.others.length>15?`<div class="sv-r"><small>… y ${pv.others.length-15} más</small></div>`:''}</div></details>`:''}
       <p class="sv-note">Se ignoran las ventas hasta el día del saldo inicial de cada producto (ese conteo ya las incluye). Si el stock no alcanza, se descuenta hasta cero y se avisa la diferencia.</p>
       ${S.message?`<p class="sv-err">${esc(S.message)}</p>`:''}
-      <div class="sv-f"><span></span><div class="sv-fa"><button type="button" class="inv-btn" data-sv="close">Cancelar</button><button type="button" class="inv-btn pri" data-sv="apply" ${(pv.matched.length||pv.machine.lines||pv.machineUpdated)&&!S.busy?'':'disabled'}>${S.busy?'Descontando…':(pv.units?`Descontar ${fmt(pv.units)} unidades`:'Registrar las ventas')}</button></div></div>`);
+      <div class="sv-f"><span></span><div class="sv-fa"><button type="button" class="inv-btn" data-sv="close">Cancelar</button><button type="button" class="inv-btn pri" data-sv="apply" ${(pv.matched.length||pv.machine.lines||pv.machineUpdated||pv.machineFilled)&&!S.busy?'':'disabled'}>${S.busy?'Descontando…':(pv.units?`Descontar ${fmt(pv.units)} unidades`:'Registrar las ventas')}</button></div></div>`);
     return;
   }
   const r=S.result;
   const shorts=(r.shortfalls||[]).slice(0,12).map(item=>`<div class="sv-r"><div><b>${esc(item.name)}</b><small>${esc(dmy(item.date))} · código ${esc(item.code)}</small></div><div class="sv-n bad"><b>faltaron ${fmt(item.sold-item.applied)}</b><small>de ${fmt(item.sold)} vendidas</small></div></div>`).join('');
   frame(`<h3>Ventas descontadas</h3>
     <p class="sv-sub">${fmt(r.applied_lines)} líneas · ${fmt(r.units_applied)} unidades descontadas del stock.</p>
-    <div class="sv-sum">${r.already?`<span>${fmt(r.already)} ya estaban cargadas</span>`:''}${r.machine_lines?`<span class="g">${fmt(r.machine_lines)} líneas de máquinas de café registradas (${fmt(r.machine_units)} vasos)</span>`:''}${r.machine_updated?`<span class="g">${fmt(r.machine_updated)} ventas de café actualizadas</span>`:''}${r.machine_lower?`<span class="o">${fmt(r.machine_lower)} de café con menos vasos que lo guardado (sin cambios)</span>`:''}${r.no_product?`<span>${fmt(r.no_product)} sin producto (ignoradas)</span>`:''}${r.before_opening?`<span>${fmt(r.before_opening)} anteriores al saldo inicial (ignoradas)</span>`:''}${r.no_access?`<span>${fmt(r.no_access)} de otra área (ignoradas)</span>`:''}${(r.changed||[]).length?`<span class="o">${r.changed.length} con otra cantidad (no se tocaron)</span>`:''}</div>
+    <div class="sv-sum">${r.already?`<span>${fmt(r.already)} ya estaban cargadas</span>`:''}${r.machine_lines?`<span class="g">${fmt(r.machine_lines)} líneas de máquinas de café registradas (${fmt(r.machine_units)} vasos)</span>`:''}${r.machine_updated?`<span class="g">${fmt(r.machine_updated)} ventas de café actualizadas</span>`:''}${r.machine_lower?`<span class="o">${fmt(r.machine_lower)} de café con menos vasos que lo guardado (sin cambios)</span>`:''}${r.machine_filled?`<span class="g">${fmt(r.machine_filled)} ventas de café completadas con monto y nombre</span>`:''}${r.no_product?`<span>${fmt(r.no_product)} sin producto (ignoradas)</span>`:''}${r.before_opening?`<span>${fmt(r.before_opening)} anteriores al saldo inicial (ignoradas)</span>`:''}${r.no_access?`<span>${fmt(r.no_access)} de otra área (ignoradas)</span>`:''}${(r.changed||[]).length?`<span class="o">${r.changed.length} con otra cantidad (no se tocaron)</span>`:''}</div>
     ${(r.shortfalls||[]).length?`<p class="sv-note">El stock no alcanzó para ${r.shortfalls.length} ${r.shortfalls.length===1?'línea':'líneas'}: se descontó hasta cero. Suele indicar un saldo inicial o una recepción sin cargar.</p><div class="sv-t">${shorts}${r.shortfalls.length>12?`<div class="sv-r"><small>… y ${r.shortfalls.length-12} más</small></div>`:''}</div>`:''}
     <div class="sv-f"><span></span><button type="button" class="inv-btn pri" data-sv="close">Listo</button></div>`);
 }
@@ -206,7 +207,7 @@ async function apply(){
   S.busy=true;S.message='';render();
   if(!S.requestId)S.requestId=A().uuid();
   try{
-    S.result=await A().applySales(S.requestId,companyId(),S.parsed.lines.map(line=>({date:line.date,code:line.code,qty:line.qty})));
+    S.result=await A().applySales(S.requestId,companyId(),S.parsed.lines.map(line=>S.machineCodes.has(line.code)?{date:line.date,code:line.code,qty:line.qty,amount:line.amount||0,name:line.name||''}:{date:line.date,code:line.code,qty:line.qty}));
     // Historial para la página de ventas; si falla, el descuento de stock ya quedó aplicado.
     try{await A().saveSalesHistory(companyId(),S.parsed.lines.map(line=>({date:line.date,code:line.code,qty:line.qty,amount:line.amount||0})))}catch(_error){}
     S.step='done';
