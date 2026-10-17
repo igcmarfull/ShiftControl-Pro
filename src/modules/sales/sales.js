@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-// Pantalla «Ventas»: cuánto se vende por producto, por pestaña (Lubricantes, Cigarros, Energéticas, Tienda, Café).
+// Pantalla «Ventas»: cuánto se vende por producto, por pestaña (Lubricantes, Cigarros, Energéticas, Hot dogs, Tienda, Café).
 // Los datos vienen de sales_history, que llena la importación de ventas del POS (Inventarios). No toca el
 // stock. El café sale de coffee_sales (vasos, monto y nombre que guarda la misma importación); allí el stock
 // no existe y la cuadratura con el numeral sigue en «Máquinas de café».
@@ -18,15 +18,19 @@ const A=()=>window.InventoryApi;
 const PAGE=1000;
 const HISTORY_DAYS=400;
 const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+// Energéticas y Hot dogs salen del inventario de Tienda por su categoría; la pestaña Tienda es el resto (sin ellas).
+const isEnergy=product=>/energ/.test(norm(product.category));
+const isHotDog=product=>/hot ?dog/.test(norm(`${product.category} ${product.name}`));
 const TABS=[
   {key:'lubricantes',label:'Lubricantes',inv:'lubricantes'},
   {key:'cigarros',label:'Cigarros',inv:'cigarrillos'},
-  {key:'energeticas',label:'Energéticas',inv:'tienda',match:product=>/energ/.test(norm(product.category))},
-  {key:'tienda',label:'Tienda',inv:'tienda'},
+  {key:'energeticas',label:'Energéticas',inv:'tienda',match:isEnergy},
+  {key:'hotdogs',label:'Hot dogs',inv:'tienda',match:isHotDog},
+  {key:'tienda',label:'Tienda',inv:'tienda',match:product=>!isEnergy(product)&&!isHotDog(product)},
   {key:'cafe',label:'Café',source:'coffee',filterLabel:'Todas las máquinas'}
 ];
 
-const S={status:'idle',invs:{},cache:{},coffee:new Set(),coffeeOk:false,coffeeMachine:new Map(),tab:'lubricantes',filter:'',range:null,loading:false,message:''};
+const S={status:'idle',invs:{},cache:{},coffee:new Set(),coffeeOk:false,coffeeMachine:new Map(),tab:'lubricantes',filter:'',range:null,sel:null,loading:false,message:''};
 
 /* ---------------------------------------------------------------- fechas */
 const isoOf=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -199,26 +203,40 @@ function series(rows,bk){
 function chartHtml(data,rg){
   const bk=buckets(rg);
   if(bk.list.length<2||!data.rows.some(row=>row.sold_on>=rg.from&&row.sold_on<=rg.to))return '';
-  const values=series(data.rows,bk).amount;
+  const sr=series(data.rows,bk);
+  const values=sr.amount,qtys=sr.qty;
   const max=Math.max(1,...values);
+  const topIndex=Math.max(...values)>0?values.indexOf(Math.max(...values)):-1;
+  const sel=S.sel!==null&&S.sel<values.length?S.sel:topIndex;
+  const labelAll=bk.list.length<=20;
   const every=Math.ceil(values.length/(bk.weekly?10:16));
+  const cap=text=>text.charAt(0).toUpperCase()+text.slice(1);
+  const nameOf=index=>{
+    const from=bk.list[index].from;
+    return bk.weekly?`Semana del ${dmy(from)} al ${dmy(bk.list[index].to)}`:`${cap(parse(from).toLocaleDateString('es-CL',{weekday:'long'}))} ${dmy(from)}`;
+  };
   // Barras en HTML (no SVG escalado) para que el texto conserve su tamaño en cualquier ancho.
+  // Un toque o clic en una barra muestra su día; en pantallas anchas todas llevan su valor.
   const cols=values.map((value,index)=>{
     const from=bk.list[index].from;
-    const top=value===max&&value>0;
-    const label=bk.weekly?`semana del ${dmy(from)}`:dmy(from);
+    const top=index===topIndex;
     const tick=index%every===0?`<i>${bk.weekly?dmy(from):from.slice(8)}</i>`:'';
-    return `<div class="sl-dcol" title="${esc(label)}: ${money(value)}"><div class="sl-dv">${top?`<b>${short(value)}</b>`:''}</div><div class="sl-db${top?' top':''}" style="height:${value?Math.max(3,Math.round(value/max*96)):0}px"></div><div class="sl-dt">${tick}</div></div>`;
+    const label=value>0&&(top||labelAll)?`<b${top?'':' class="mini"'}>${short(value)}</b>`:'';
+    return `<div class="sl-dcol${index===sel?' sel':''}" data-sl="bar" data-i="${index}" title="${esc(nameOf(index))}: ${money(value)} · ${fmt(qtys[index])} unid."><div class="sl-dv">${label}</div><div class="sl-db${index===sel?' sel':''}" style="height:${value?Math.max(3,Math.round(value/max*96)):0}px"></div><div class="sl-dt">${tick}</div></div>`;
   }).join('');
-  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}</small></h4><div class="sl-dchart" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}">${cols}</div></div>`;
+  const detail=sel>=0?`<div class="sl-dsel"><b>${esc(nameOf(sel))}</b><b>${money(values[sel])}</b><b>${fmt(qtys[sel])} ${plural(qtys[sel],'unidad','unidades')}</b><span>Toca una barra para ver otro ${bk.weekly?'período':'día'}</span></div>`:'';
+  return `<div class="sl-card"><h4>${bk.weekly?'Venta por semana':'Venta por día'}<small>${dmy(rg.from)} al ${dmy(rg.to)}</small></h4><div class="sl-dchart" role="img" aria-label="Venta en pesos por ${bk.weekly?'semana':'día'}">${cols}</div>${detail}</div>`;
 }
-function monthsHtml(data){
+function monthsHtml(data,rg){
   const months=monthsOf(data.rows).slice(0,6).reverse();
   if(months.length<2)return '';
-  const totals=months.map(ym=>({ym,total:data.rows.filter(row=>row.sold_on.startsWith(ym)).reduce((sum,row)=>sum+Number(row.amount||0),0),partial:Boolean(data.last&&data.last.startsWith(ym)&&data.last<monthEnd(ym))}));
+  const totals=months.map(ym=>{
+    const rows=data.rows.filter(row=>row.sold_on.startsWith(ym));
+    return {ym,total:rows.reduce((sum,row)=>sum+Number(row.amount||0),0),qty:rows.reduce((sum,row)=>sum+row.qty,0),partial:Boolean(data.last&&data.last.startsWith(ym)&&data.last<monthEnd(ym))};
+  });
   const max=Math.max(1,...totals.map(item=>item.total));
-  const cols=totals.map(item=>`<div class="sl-mcol"><small class="v">${short(item.total)}</small><div class="sl-mb${item.partial?' part':''}" style="height:${Math.max(4,Math.round(item.total/max*88))}px"></div><small>${esc(monthShort(item.ym))}${item.partial?' · parcial':''}</small></div>`).join('');
-  return `<div class="sl-card"><h4>Por mes<small>total vendido</small></h4><div class="sl-months">${cols}</div></div>`;
+  const cols=totals.map(item=>`<button type="button" class="sl-mcol${rg&&rg.key==='m:'+item.ym?' cur':''}" data-sl="month" data-v="${item.ym}" title="Ver ${esc(monthName(item.ym))} día por día"><small class="v">${item.total?short(item.total):'sin monto'}</small><div class="sl-mb${item.partial?' part':''}" style="height:${Math.max(4,Math.round(item.total/max*88))}px"></div><small>${esc(monthShort(item.ym))}${item.partial?' · parcial':''}</small><small class="u">${fmt(item.qty)} unid.</small></button>`).join('');
+  return `<div class="sl-card"><h4>Por mes<small>toca un mes para ver sus días</small></h4><div class="sl-months">${cols}</div></div>`;
 }
 function tableHtml(data,cur,prev,rg){
   const bk=buckets(rg);
@@ -283,7 +301,7 @@ function render(){
   if(!data.rows.length){
     body=`<div class="sl-note">Aún no hay ventas guardadas de ${esc(tabDef().label.toLowerCase())}. Sube el «Informe de Ventas por Artículos» del POS con «Importar ventas» (arriba) y aparecerán aquí.</div>`;
   }else{
-    const months=monthsHtml(data);
+    const months=monthsHtml(data,rg);
     body=`<div class="sl-two${months?'':' one'}">${chartHtml(data,rg)}${months}</div>`+(cur.list.length?tableHtml(data,cur,prev,rg):'<div class="sl-note">No hay ventas en este período.</div>');
   }
   root.innerHTML=head+bar+hint+pending+kpis+body;
@@ -294,14 +312,16 @@ function onClick(event){
   const target=event.target.closest('[data-sl]');
   if(!target)return;
   const action=target.dataset.sl;
-  if(action==='tab'){S.tab=target.dataset.v;S.filter='';S.range=null;load();return}
+  if(action==='tab'){S.tab=target.dataset.v;S.filter='';S.range=null;S.sel=null;load();return}
+  if(action==='bar'){S.sel=Number(target.dataset.i);render();return}
+  if(action==='month'){S.range='m:'+target.dataset.v;S.sel=null;render();return}
   if(action==='reload')load(true);
 }
 function onChange(event){
   const target=event.target.closest('[data-sl]');
   if(!target)return;
-  if(target.dataset.sl==='range'){S.range=target.value;render()}
-  if(target.dataset.sl==='filter'){S.filter=target.value;render()}
+  if(target.dataset.sl==='range'){S.range=target.value;S.sel=null;render()}
+  if(target.dataset.sl==='filter'){S.filter=target.value;S.sel=null;render()}
 }
 function init(){
   const section=$('sales');

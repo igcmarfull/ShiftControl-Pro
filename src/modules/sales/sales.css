@@ -100,3 +100,20 @@
   .sl-acts{display:none}
   .sl-root{padding-bottom:96px}
 }
+
+/* Gráfico por día: cada barra se puede tocar; en pantallas anchas todas muestran su valor */
+.sl-dcol[data-sl="bar"]{cursor:pointer;transition:background .12s}
+.sl-dcol[data-sl="bar"]:hover{background:color-mix(in srgb,var(--blue) 6%,transparent)}
+.sl-dcol.sel{background:color-mix(in srgb,var(--blue) 9%,transparent)}
+.sl-db.sel{opacity:1}
+.sl-dv b.mini{font-weight:600;font-size:10.5px;color:var(--muted)}
+.sl-dsel{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding:6px 18px 14px;font-size:13px}
+.sl-dsel b:nth-child(2){font-size:15px;letter-spacing:-.01em}
+.sl-dsel span{margin-left:auto;font-size:11.5px;color:var(--muted)}
+@media (max-width:900px){.sl-dv b.mini{display:none}.sl-dsel span{display:none}}
+/* Por mes: cada mes se abre en su propio gráfico por día */
+.sl-mcol{background:none;border:0;border-radius:12px;padding:6px 8px 6px;cursor:pointer;font:inherit;color:inherit}
+.sl-mcol:hover{background:color-mix(in srgb,var(--blue) 6%,transparent)}
+.sl-mcol.cur{background:color-mix(in srgb,var(--blue) 9%,transparent)}
+.sl-mcol.cur .sl-mb{opacity:1}
+.sl-mcol small.u{font-size:10.5px}
