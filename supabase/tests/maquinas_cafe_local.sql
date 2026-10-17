@@ -152,7 +152,20 @@ begin
   perform pg_temp.ok('Los códigos de máquina no crean productos', (v_n#>>'{}')::int = 0, v_n::text);
   r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
     pg_temp.lines(pg_temp.d(2),'219113','20', pg_temp.d(1),'219113','31')));
-  perform pg_temp.ok('Repetir un día no lo duplica; otra cantidad se informa', (r->>'already')::int = 1 and jsonb_array_length(r->'changed') = 1, r::text);
+  perform pg_temp.ok('Repetir un día no lo duplica; otra cantidad de café se actualiza y se informa',
+    (r->>'already')::int = 1 and (r->>'machine_updated')::int = 1 and (r->>'machine_lines')::int = 0
+    and jsonb_array_length(r->'machine_changes') = 1 and jsonb_array_length(r->'changed') = 0
+    and (r->'machine_changes'->0->>'before')::int = 30 and (r->'machine_changes'->0->>'now')::int = 31, r::text);
+  perform pg_temp.ok('La cantidad guardada quedó en la nueva (sin duplicar filas)',
+    (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 31
+    and (select count(*) from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 1);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    pg_temp.lines(pg_temp.d(1),'219113','30')));
+  perform pg_temp.ok('Un informe con menos vasos también reemplaza (vuelve a 30)',
+    (r->>'machine_updated')::int = 1 and (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(1)::date and pos_code = '219113') = 30, r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    pg_temp.lines(pg_temp.d(1),'219113','30')));
+  perform pg_temp.ok('El mismo valor no cuenta como cambio', (r->>'already')::int = 1 and (r->>'machine_updated')::int = 0, r::text);
 
   -- 5. Cuadratura
   r := pg_temp.call('jt', format('select public.coffee_reconcile(%L, %L)', pg_temp.g('A'), pg_temp.g('m1')));
