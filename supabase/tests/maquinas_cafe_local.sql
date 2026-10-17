@@ -169,6 +169,52 @@ begin
     pg_temp.lines(pg_temp.d(1),'219113','30')));
   perform pg_temp.ok('El mismo valor no cuenta como cambio', (r->>'already')::int = 1 and (r->>'machine_updated')::int = 0, r::text);
 
+  -- 4b. Monto y nombre del café (pestaña «Café» de Ventas)
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(5), 'code', '219109', 'qty', 7, 'amount', 17500, 'name', 'MARLEY LATTE 9OZ'))::text));
+  perform pg_temp.ok('Una venta nueva de café guarda monto y nombre',
+    (r->>'machine_lines')::int = 1
+    and (select amount from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 17500
+    and (select description from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 'MARLEY LATTE 9OZ', r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    pg_temp.lines(pg_temp.d(6),'219109','3')));
+  perform pg_temp.ok('Un cliente antiguo (sin monto ni nombre) sigue funcionando y deja el monto vacío',
+    (r->>'machine_lines')::int = 1
+    and (select amount from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(6)::date and pos_code = '219109') is null
+    and (select description from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(6)::date and pos_code = '219109') is null, r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(6), 'code', '219109', 'qty', 3, 'amount', 7500, 'name', 'MARLEY LATTE 9OZ'))::text));
+  perform pg_temp.ok('Con la misma cantidad, reimportar completa el monto y el nombre que faltaban',
+    (r->>'machine_filled')::int = 1 and (r->>'already')::int = 0
+    and (select amount from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(6)::date and pos_code = '219109') = 7500
+    and (select description from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(6)::date and pos_code = '219109') = 'MARLEY LATTE 9OZ', r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(6), 'code', '219109', 'qty', 3, 'amount', 7500, 'name', 'MARLEY LATTE 9OZ'))::text));
+  perform pg_temp.ok('Reimportar de nuevo ya no cambia nada', (r->>'already')::int = 1 and (r->>'machine_filled')::int = 0, r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(5), 'code', '219109', 'qty', 7, 'amount', 99999, 'name', 'OTRO NOMBRE'))::text));
+  perform pg_temp.ok('Un monto o nombre ya guardado no se pisa con la misma cantidad',
+    (r->>'already')::int = 1
+    and (select amount from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 17500
+    and (select description from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 'MARLEY LATTE 9OZ', r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(5), 'code', '219109', 'qty', 9, 'amount', 22500, 'name', 'MARLEY LATTE 9OZ'))::text));
+  perform pg_temp.ok('Con más vasos se actualizan cantidad y monto',
+    (r->>'machine_updated')::int = 1
+    and (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 9
+    and (select amount from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 22500, r::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(5), 'code', '219109', 'qty', 4, 'amount', 10000, 'name', 'MARLEY LATTE 9OZ'))::text));
+  perform pg_temp.ok('Con menos vasos no se toca ni la cantidad ni el monto',
+    (r->>'machine_lower')::int = 1
+    and (select qty from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 9
+    and (select amount from public.coffee_sales where company_id = pg_temp.g('A')::uuid and sold_on = pg_temp.d(5)::date and pos_code = '219109') = 22500, r::text);
+  v_msg := pg_temp.try('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    json_build_array(json_build_object('date', pg_temp.d(4), 'code', '219109', 'qty', 1, 'amount', -5))::text));
+  perform pg_temp.ok('Un monto negativo se rechaza', v_msg = 'inv:invalid_line', v_msg);
+  perform pg_temp.ok('La jefa de tienda ve el monto y el nombre (solo lectura)',
+    (select count(*) from (select pg_temp.call('jt', format('select to_jsonb(count(*)) from public.coffee_sales where company_id = %L and amount is not null', pg_temp.g('A'))) c) x) = 1);
+
   -- 5. Cuadratura
   r := pg_temp.call('jt', format('select public.coffee_reconcile(%L, %L)', pg_temp.g('A'), pg_temp.g('m1')));
   perform pg_temp.ok('Entre dos días el numeral avanza 30 y se vendieron 28', (r->'rows'->1->>'advanced')::int = 30 and (r->'rows'->1->>'sold')::int = 28 and (r->'rows'->1->>'diff')::int = 2, r::text);

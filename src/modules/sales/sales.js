@@ -1,9 +1,10 @@
 (function(){
 'use strict';
 
-// Pantalla «Ventas»: cuánto se vende por producto, por pestaña (Lubricantes, Cigarros, Energéticas, Tienda).
+// Pantalla «Ventas»: cuánto se vende por producto, por pestaña (Lubricantes, Cigarros, Energéticas, Tienda, Café).
 // Los datos vienen de sales_history, que llena la importación de ventas del POS (Inventarios). No toca el
-// stock. El café no entra aquí: se cuadra en «Máquinas de café».
+// stock. El café sale de coffee_sales (vasos, monto y nombre que guarda la misma importación); allí el stock
+// no existe y la cuadratura con el numeral sigue en «Máquinas de café».
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -21,10 +22,11 @@ const TABS=[
   {key:'lubricantes',label:'Lubricantes',inv:'lubricantes'},
   {key:'cigarros',label:'Cigarros',inv:'cigarrillos'},
   {key:'energeticas',label:'Energéticas',inv:'tienda',match:product=>/energ/.test(norm(product.category))},
-  {key:'tienda',label:'Tienda',inv:'tienda'}
+  {key:'tienda',label:'Tienda',inv:'tienda'},
+  {key:'cafe',label:'Café',source:'coffee',filterLabel:'Todas las máquinas'}
 ];
 
-const S={status:'idle',invs:{},cache:{},coffee:new Set(),tab:'lubricantes',filter:'',range:null,loading:false,message:''};
+const S={status:'idle',invs:{},cache:{},coffee:new Set(),coffeeOk:false,coffeeMachine:new Map(),tab:'lubricantes',filter:'',range:null,loading:false,message:''};
 
 /* ---------------------------------------------------------------- fechas */
 const isoOf=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -45,7 +47,8 @@ function toError(error){
   return error instanceof Error?error:new Error(error?.message||'No se pudo cargar la información.');
 }
 const tabDef=()=>TABS.find(tab=>tab.key===S.tab)||TABS[0];
-const visibleTabs=()=>TABS.filter(tab=>S.invs[tab.inv]);
+const visibleTabs=()=>TABS.filter(tab=>tab.source==='coffee'?S.coffeeOk:S.invs[tab.inv]);
+const cacheKey=tab=>tab.source==='coffee'?'coffee':S.invs[tab.inv]?.id;
 async function loadBase(){
   const company=companyId();
   const overview=await A().overview(company);
@@ -55,10 +58,35 @@ async function loadBase(){
     S.invs[code]=inv;
   });
   S.coffee=new Set();
+  S.coffeeOk=false;
+  S.coffeeMachine=new Map();
   try{
-    const response=await client().from('coffee_machine_codes').select('pos_code').eq('company_id',company);
-    if(!response.error)(response.data||[]).forEach(row=>S.coffee.add(String(row.pos_code)));
+    const [codes,machines]=await Promise.all([
+      client().from('coffee_machine_codes').select('pos_code, machine_id').eq('company_id',company),
+      client().from('coffee_machines').select('id, name, active').eq('company_id',company)
+    ]);
+    const names=new Map();
+    if(!machines.error)(machines.data||[]).filter(row=>row.active!==false).forEach(row=>names.set(row.id,row.name));
+    if(!codes.error)(codes.data||[]).forEach(row=>{S.coffee.add(String(row.pos_code));if(names.has(row.machine_id))S.coffeeMachine.set(String(row.pos_code),names.get(row.machine_id))});
+    S.coffeeOk=names.size>0;
   }catch(_error){}
+}
+// Café: no hay inventario; los productos salen de los códigos de las máquinas y los nombres de las ventas guardadas.
+async function loadCoffee(){
+  const company=companyId();
+  const since=addDays(today(),-HISTORY_DAYS);
+  const rows=[];
+  for(let from=0;;from+=PAGE){
+    const response=await client().from('coffee_sales').select('sold_on, pos_code, qty, amount, description').eq('company_id',company).gte('sold_on',since).order('sold_on',{ascending:true}).range(from,from+PAGE-1);
+    if(response.error)throw toError(response.error);
+    rows.push(...(response.data||[]));
+    if((response.data||[]).length<PAGE)break;
+  }
+  const names=new Map();
+  rows.forEach(row=>{if(row.description)names.set(String(row.pos_code),row.description)});
+  const codes=new Set([...S.coffee,...rows.map(row=>String(row.pos_code))]);
+  const products=[...codes].map(code=>({code,name:names.get(code)||`Código ${code}`,category:S.coffeeMachine.get(code)||'Café',brand:'',active:true}));
+  S.cache.coffee={products,rows};
 }
 async function loadInventory(inv){
   const company=companyId();
@@ -82,8 +110,8 @@ async function load(force){
     const tabs=visibleTabs();
     if(!tabs.length){S.status='missing';return}
     if(!tabs.some(tab=>tab.key===S.tab)){S.tab=tabs[0].key;S.range=null}
-    const inv=S.invs[tabDef().inv];
-    if(!S.cache[inv.id])await loadInventory(inv);
+    const tab=tabDef();
+    if(!S.cache[cacheKey(tab)])await(tab.source==='coffee'?loadCoffee():loadInventory(S.invs[tab.inv]));
     S.status='ready';
   }catch(error){
     const err=toError(error);
@@ -95,8 +123,9 @@ async function load(force){
 /* --------------------------------------------------------------- cálculo */
 function tabData(){
   const tab=tabDef();
-  const entry=S.cache[S.invs[tab.inv]?.id]||{products:[],rows:[]};
-  const products=entry.products.filter(product=>!S.coffee.has(String(product.code))&&!/^caf[eé]$/.test(norm(product.category))&&(!tab.match||tab.match(product)));
+  const entry=S.cache[cacheKey(tab)]||{products:[],rows:[]};
+  const isCoffee=tab.source==='coffee';
+  const products=entry.products.filter(product=>(isCoffee||(!S.coffee.has(String(product.code))&&!/^caf[eé]$/.test(norm(product.category))))&&(!tab.match||tab.match(product)));
   const cats=[...new Set(products.map(product=>product.category||'Sin categoría'))];
   const brands=[...new Set(products.map(product=>product.brand).filter(Boolean))];
   // Una sola lista de filtros: categorías si hay varias; si no, marcas.
@@ -225,13 +254,12 @@ function rangeOptions(data,rg){
 function render(){
   const root=$('salesRoot');
   if(!root)return;
-  const head=`<div class="sl-head"><div><h1>Ventas</h1><p>Lo que vendes por producto, según el POS. El stock está en Inventarios y el café en Máquinas de café.</p></div><div class="sl-acts"><button type="button" class="sl-btn ghost" data-act="sales-import">Importar ventas</button></div></div>`;
+  const head=`<div class="sl-head"><div><h1>Ventas</h1><p>Lo que vendes por producto, según el POS. El stock está en Inventarios y el control de los vasos en Máquinas de café.</p></div><div class="sl-acts"><button type="button" class="sl-btn ghost" data-act="sales-import">Importar ventas</button></div></div>`;
   if(S.status==='idle'){root.innerHTML=head+'<div class="sl-note">Cargando…</div>';return}
   if(S.status==='unavailable'||S.status==='error'){root.innerHTML=head+`<div class="sl-note">${esc(S.message||'No se pudo cargar.')} <button type="button" class="sl-link" data-sl="reload">Reintentar</button></div>`;return}
   if(S.status==='missing'){root.innerHTML=head+'<div class="sl-note">No encuentro inventarios activos. Créalos en Inventarios para ver sus ventas aquí.</div>';return}
   const tabs=`<div class="sl-tabs top" role="tablist">${visibleTabs().map(tab=>`<button type="button" role="tab" data-sl="tab" data-v="${tab.key}" class="${S.tab===tab.key?'on':''}">${esc(tab.label)}</button>`).join('')}</div>`;
-  const inv=S.invs[tabDef().inv];
-  if(!S.cache[inv?.id]){root.innerHTML=head+`<div class="sl-bar">${tabs}</div><div class="sl-note">Cargando…</div>`;return}
+  if(!S.cache[cacheKey(tabDef())]){root.innerHTML=head+`<div class="sl-bar">${tabs}</div><div class="sl-note">Cargando…</div>`;return}
   const data=tabData();
   const rg=ranges(data);
   const cur=aggregate(data.rows,rg.from,rg.to);
@@ -241,9 +269,11 @@ function render(){
   const bk=buckets(rg);
   const trend=sparkline(series(data.rows,bk).amount,120,44,'--blue');
   const kchip=(value,label)=>value===null?'':value===0?'<span class="sl-chip">sin cambio</span>':`<span class="sl-chip ${value>0?'up':'dn'}">${value>0?'+':''}${value}%${label?' vs '+esc(label):''}</span>`;
-  const filter=data.options.length>1?`<select data-sl="filter" aria-label="${data.byBrand?'Marca':'Categoría'}"><option value="">${data.byBrand?'Todas las marcas':'Todas las categorías'}</option>${data.options.map(option=>`<option value="${esc(option)}"${S.filter===option?' selected':''}>${esc(option)}</option>`).join('')}</select>`:'';
+  const filter=data.options.length>1?`<select data-sl="filter" aria-label="${data.byBrand?'Marca':(tabDef().source==='coffee'?'Máquina':'Categoría')}"><option value="">${data.byBrand?'Todas las marcas':(tabDef().filterLabel||'Todas las categorías')}</option>${data.options.map(option=>`<option value="${esc(option)}"${S.filter===option?' selected':''}>${esc(option)}</option>`).join('')}</select>`:'';
   const bar=`<div class="sl-bar">${tabs}<div class="sl-sel"><select data-sl="range" aria-label="Período">${rangeOptions(data,rg)}</select>${filter}</div></div>`;
   const hint=rg.partial?`<div class="sl-hint">${esc(rg.label[0].toUpperCase()+rg.label.slice(1))} hasta el ${dmy(rg.to)} · comparado con los mismos días de ${esc(rg.prev.label)}</div>`:'';
+  const noAmount=tabDef().source==='coffee'?data.rows.filter(row=>row.sold_on>=rg.from&&row.sold_on<=rg.to&&(row.amount===null||row.amount===undefined)).length:0;
+  const pending=noAmount?`<div class="sl-hint">${fmt(noAmount)} ${plural(noAmount,'venta de café aún no tiene','ventas de café aún no tienen')} monto ni nombre (se importaron antes). Vuelve a subir el informe del POS con «Importar ventas» para completarlos.</div>`:'';
   const kpis=`<div class="sl-kpis">
     <div class="sl-k big"><span>Vendido · ${esc(rg.label)}</span><div class="row"><div><b>${money(cur.amount)}</b>${kchip(dAmount,rg.prev?.label)}</div>${trend}</div></div>
     <div class="sl-k"><span>Unidades</span><b>${fmt(cur.qty)}</b>${kchip(dQty,'')}</div>
@@ -256,7 +286,7 @@ function render(){
     const months=monthsHtml(data);
     body=`<div class="sl-two${months?'':' one'}">${chartHtml(data,rg)}${months}</div>`+(cur.list.length?tableHtml(data,cur,prev,rg):'<div class="sl-note">No hay ventas en este período.</div>');
   }
-  root.innerHTML=head+bar+hint+kpis+body;
+  root.innerHTML=head+bar+hint+pending+kpis+body;
 }
 
 /* --------------------------------------------------------------- eventos */
