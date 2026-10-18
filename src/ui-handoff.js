@@ -73,16 +73,21 @@
   // ---- Quién recibe ----
   // «Recibe» es una lista de usuarios reales (administrador y jefatura del área, de handoff_recipients) más los
   // trabajadores planificados en el turno siguiente. Si la función del servidor no responde, queda el campo de texto.
-  let recipients=null,recipientsState='';
+  // La lista depende de quién tiene la sesión abierta: si cambia de usuario sin recargar la página, se descarta.
+  let recipients=null,recipientsState='',recipientsUser='';
+  const sessionUser=()=>window.AuthContext?.get?.()?.userId||'';
   function loadRecipients(){
+    const user=sessionUser();
+    if(recipientsUser!==user){recipients=null;recipientsState='';recipientsUser=user}
     if(recipients||recipientsState)return;
     const client=window.ShiftControlAuth?.getClient?.();
     if(!client?.rpc)return;
     recipientsState='loading';
     Promise.resolve(client.rpc('handoff_recipients')).then(({data,error})=>{
+      if(recipientsUser!==user)return;
       recipientsState=error?'failed':'';
       if(!error&&Array.isArray(data)){recipients=data;try{render()}catch(_error){}}
-    }).catch(()=>{recipientsState='failed'});
+    }).catch(()=>{if(recipientsUser===user)recipientsState='failed'});
   }
   function nextShiftNames(){
     const code=SHIFT_CODE[$('handoffShift')?.value];
@@ -96,6 +101,7 @@
     const group=to?.closest('.form-group');
     if(!group)return;
     loadRecipients();
+    if(recipientsUser!==sessionUser())recipients=null;
     let box=$('hoSug');
     if(!box){box=document.createElement('div');box.id='hoSug';box.className='ho-sug';group.appendChild(box)}
     const area=typeof window.opsArea==='function'?window.opsArea():'ISLA';
