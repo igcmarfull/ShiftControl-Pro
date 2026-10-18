@@ -71,19 +71,71 @@
   };
 
   // ---- Quién recibe ----
+  // «Recibe» es una lista de usuarios reales (administrador y jefatura del área, de handoff_recipients) más los
+  // trabajadores planificados en el turno siguiente. Si la función del servidor no responde, queda el campo de texto.
+  let recipients=null,recipientsState='';
+  function loadRecipients(){
+    if(recipients||recipientsState)return;
+    const client=window.ShiftControlAuth?.getClient?.();
+    if(!client?.rpc)return;
+    recipientsState='loading';
+    Promise.resolve(client.rpc('handoff_recipients')).then(({data,error})=>{
+      recipientsState=error?'failed':'';
+      if(!error&&Array.isArray(data)){recipients=data;try{render()}catch(_error){}}
+    }).catch(()=>{recipientsState='failed'});
+  }
+  function nextShiftNames(){
+    const code=SHIFT_CODE[$('handoffShift')?.value];
+    if(!code)return [];
+    const next=NEXT_CODE[code];
+    const date=next==='A'?addDays(dateValue(),1):dateValue();
+    return rowsFor(date).filter(row=>row.plan?.code===next).map(row=>row.employee.name).slice(0,8);
+  }
   function renderSuggestions(){
     const to=$('handoffTo');
     const group=to?.closest('.form-group');
     if(!group)return;
+    loadRecipients();
     let box=$('hoSug');
     if(!box){box=document.createElement('div');box.id='hoSug';box.className='ho-sug';group.appendChild(box)}
-    const code=SHIFT_CODE[$('handoffShift')?.value];
-    if(!code){box.innerHTML='';return}
-    const next=NEXT_CODE[code];
-    const date=next==='A'?addDays(dateValue(),1):dateValue();
-    const names=rowsFor(date).filter(row=>row.plan?.code===next).map(row=>row.employee.name).slice(0,5);
-    const html=names.length?`<small>Turno ${next}:</small>${names.map(name=>`<button type="button" class="ho-pick" data-name="${esc(name)}">${esc(name)}</button>`).join('')}`:'';
-    if(box.dataset.v!==html){box.dataset.v=html;box.innerHTML=html}
+    const area=typeof window.opsArea==='function'?window.opsArea():'ISLA';
+    const areaLabel=typeof window.opsAreaLabel==='function'?window.opsAreaLabel(area):'Isla';
+    const users=(recipients||[]).filter(u=>u.role==='ADMIN'||u.area===area);
+    const workers=nextShiftNames().filter(name=>!users.some(u=>u.name===name));
+    let sel=$('hoToSel');
+    if(!users.length&&!workers.length||!recipients){
+      // Sin lista de usuarios (aún cargando o sin respuesta): campo de texto y sugerencias de siempre.
+      if(sel)sel.remove();
+      to.style.display='';
+      const names=nextShiftNames().slice(0,5);
+      const html=names.length?`<small>Turno siguiente:</small>${names.map(name=>`<button type="button" class="ho-pick" data-name="${esc(name)}">${esc(name)}</button>`).join('')}`:'';
+      if(box.dataset.v!==html){box.dataset.v=html;box.innerHTML=html}
+      delete to.dataset.userId;
+      return;
+    }
+    if(!sel){
+      sel=document.createElement('select');sel.id='hoToSel';sel.className='select';sel.setAttribute('aria-label','Quién recibe');
+      sel.addEventListener('change',()=>{
+        const opt=sel.options[sel.selectedIndex];
+        to.value=opt&&opt.value?opt.value:'';
+        if(opt?.dataset.userId)to.dataset.userId=opt.dataset.userId;else delete to.dataset.userId;
+      });
+      to.insertAdjacentElement('afterend',sel);
+    }
+    to.style.display='none';
+    box.innerHTML='';box.dataset.v='';
+    const roleLabel=u=>u.role==='ADMIN'?'Administrador':`Jefa de ${typeof window.opsAreaLabel==='function'?window.opsAreaLabel(u.area):areaLabel}`;
+    const opt=(value,text,id)=>`<option value="${esc(value)}"${id?` data-user-id="${esc(id)}"`:''}>${esc(text)}</option>`;
+    const html=`${opt('', 'Elige quién recibe')}${users.length?`<optgroup label="Usuarios de la app">${users.map(u=>opt(u.name,`${u.name} · ${roleLabel(u)}`,u.user_id)).join('')}</optgroup>`:''}${workers.length?`<optgroup label="Turno siguiente (planificación)">${workers.map(name=>opt(name,name)).join('')}</optgroup>`:''}`;
+    if(sel.dataset.v!==html){
+      const keep=to.value;
+      sel.dataset.v=html;sel.innerHTML=html;
+      const found=[...sel.options].find(o=>o.value&&o.value===keep);
+      sel.value=found?found.value:'';
+      to.value=found?found.value:'';
+      if(found?.dataset.userId)to.dataset.userId=found.dataset.userId;else delete to.dataset.userId;
+    }
+    if(!to.value)sel.value='';
   }
   document.addEventListener('click',event=>{
     const pick=event.target.closest?.('.ho-pick');
