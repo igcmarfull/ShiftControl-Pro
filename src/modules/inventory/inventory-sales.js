@@ -203,7 +203,7 @@ async function onFile(file){
   }finally{S.busy=false;render()}
 }
 async function apply(){
-  if(S.busy||!(S.preview?.matched.length||S.preview?.machine.lines))return;
+  if(S.busy||!(S.preview?.matched.length||S.preview?.machine.lines||S.preview?.machineUpdated||S.preview?.machineFilled))return;
   S.busy=true;S.message='';render();
   if(!S.requestId)S.requestId=A().uuid();
   try{
