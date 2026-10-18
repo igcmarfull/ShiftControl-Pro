@@ -201,5 +201,30 @@ begin
   perform pg_temp.ok('Corregir una venta devuelve el stock', pg_temp.stock('L1') > 2, pg_temp.stock('L1')::text);
 end $$;
 
+-- 8. Saldo inicial con fecha: las ventas se descuentan desde el día siguiente
+do $$
+declare r jsonb; v_msg text; p jsonb; v_n jsonb;
+begin
+  p := pg_temp.call('adm', format('select public.inv_save_product(%L, %L::jsonb)', pg_temp.g('inv_cigarrillos'), '{"code":"C2","name":"Lucky","control_unit":"cajetilla"}'));
+  perform pg_temp.put('pc2', p->>'id');
+  v_msg := pg_temp.try('adm', format($q$select public.inv_register_opening(%L, %L, %L::jsonb, %L::date)$q$, gen_random_uuid(), pg_temp.g('inv_cigarrillos'),
+    json_build_array(json_build_object('product_id', pg_temp.g('pc2'), 'qty', 10))::text, (current_date + 2)::text));
+  perform pg_temp.ok('Rechaza un saldo inicial con fecha futura', v_msg ilike '%inv:%' or v_msg ilike '%fecha%', v_msg);
+  v_msg := pg_temp.try('adm', format($q$select public.inv_register_opening(%L, %L, %L::jsonb, %L::date)$q$, gen_random_uuid(), pg_temp.g('inv_cigarrillos'),
+    json_build_array(json_build_object('product_id', pg_temp.g('pc2'), 'qty', 10))::text, (current_date - 60)::text));
+  perform pg_temp.ok('Rechaza un saldo inicial de hace más de 31 días', v_msg ilike '%inv:%' or v_msg ilike '%fecha%', v_msg);
+  perform pg_temp.call('adm', format($q$select public.inv_register_opening(%L, %L, %L::jsonb, %L::date)$q$, gen_random_uuid(), pg_temp.g('inv_cigarrillos'),
+    json_build_array(json_build_object('product_id', pg_temp.g('pc2'), 'qty', 10))::text, pg_temp.d(3)));
+  perform pg_temp.ok('El saldo con fecha queda con esa fecha',
+    (select (m.created_at at time zone 'America/Santiago')::date = pg_temp.d(3)::date from public.inv_movements m
+     where m.product_id = pg_temp.g('pc2')::uuid and m.kind = 'opening'), 'fecha');
+  perform pg_temp.ok('El stock es el del saldo', pg_temp.stock('C2') = 10, pg_temp.stock('C2')::text);
+  r := pg_temp.call('adm', format('select public.inv_apply_sales(%L, %L, %L::jsonb)', gen_random_uuid(), pg_temp.g('A'),
+    pg_temp.lines(pg_temp.d(3),'C2','4', pg_temp.d(2),'C2','2', pg_temp.d(1),'C2','1')));
+  perform pg_temp.ok('Ignora el día del saldo y descuenta los siguientes',
+    (r->>'before_opening')::int = 1 and (r->>'applied_lines')::int = 2 and (r->>'units_applied')::int = 3, r::text);
+  perform pg_temp.ok('Quedan 7 en stock', pg_temp.stock('C2') = 7, pg_temp.stock('C2')::text);
+end $$;
+
 do $$ begin raise notice 'VENTAS DEL POS: TODAS LAS PRUEBAS PASARON'; end $$;
 rollback;
