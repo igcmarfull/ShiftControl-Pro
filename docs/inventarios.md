@@ -119,6 +119,7 @@ Estado: **la migración `20261015164843_inventory_product_photos.sql` está apli
   - Una línea ya cargada (misma fecha y código) no se vuelve a descontar. Si el archivo trae otra cantidad para ese día, se informa y no se toca.
   - Si el stock no alcanza, se descuenta hasta cero y se informa la diferencia; nunca queda negativo.
   - Se ignoran las ventas hasta el día del saldo inicial de cada producto (ese conteo ya las incluye). Las del propio día del saldo inicial también se ignoran: puede subestimar lo vendido después del conteo hasta el siguiente inventario.
+  - El saldo inicial acepta una **fecha del conteo** opcional (`inv_register_opening(..., p_opened_on)`, de hoy a 31 días atrás; migración `20261018150000_opening_date.sql`). El movimiento queda a las 12:00 de ese día (hora de Santiago), así que la importación descuenta desde el día siguiente. Las ventas del propio día del conteo siguen ignorándose: si se contó a media jornada hay que restarlas del conteo antes de cargarlo.
   - El administrador aplica a cualquier inventario; una jefa solo al de su área. Cada aplicación queda en la auditoría de Inventarios.
   - Corregir un movimiento de venta devuelve el stock, pero la línea sigue registrada como cargada y no se vuelve a descontar.
 - **Alcance real de la primera versión:** el servidor aplica cualquier producto que exista con ese código; el alcance «cigarros, Red Bull, Monster, café y hot dog» depende de cuáles productos estén creados en Inventarios. Requiere cargar antes el saldo inicial de esos productos.

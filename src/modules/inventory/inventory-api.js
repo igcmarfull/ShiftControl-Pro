@@ -209,8 +209,8 @@ const Api={
   removeProductPhotos,
   signedPhotoUrls,
   PHOTO_URL_TTL,
-  opening:(requestId,inventoryId,lines)=>rpc('inv_register_opening',{
-    p_request_id:requestId,p_inventory_id:inventoryId,p_lines:lines
+  opening:(requestId,inventoryId,lines,openedOn)=>rpc('inv_register_opening',{
+    p_request_id:requestId,p_inventory_id:inventoryId,p_lines:lines,p_opened_on:openedOn||null
   }),
   receive:(requestId,inventoryId,header,lines)=>rpc('inv_receive',{
     p_request_id:requestId,p_inventory_id:inventoryId,p_header:header,p_lines:lines

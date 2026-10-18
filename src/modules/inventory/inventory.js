@@ -1353,6 +1353,7 @@ function openOpening(code){
   const products=(S.products[item.id]||[]).filter(product=>product.active);
   S.form={type:'opening',inventoryId:item.id,requestId:Api.uuid(),busy:false};
   openModal(`Saldo inicial · ${esc(item.name)}`,`<div class="inv-note warn" style="margin-bottom:12px">Úsalo al poner en marcha el inventario, con lo que cuentes físicamente. Cada cantidad entra como un movimiento «Saldo inicial» y queda en la auditoría. Para correcciones posteriores usa conteos y ajustes.</div>
+    <label class="inv-line" style="grid-template-columns:1fr 150px;margin-bottom:10px"><div><b>Fecha del conteo</b><div class="inv-sub" style="font-size:12px">Si contaste antes de hoy, elige ese día: «Importar ventas» descontará desde el día siguiente. Las ventas de ese día no se descuentan: réstalas tú del conteo si vendiste después de contar.</div></div><input type="date" id="invOpDate" max="${new Date().toLocaleDateString('en-CA',{timeZone:'America/Santiago'})}" aria-label="Fecha del conteo"></label>
     ${products.length?products.map(product=>`<div class="inv-line" style="grid-template-columns:1fr 90px${product.tracks_expiry?' 150px':''}"><div><b>${esc(product.name)}</b><div class="inv-sub" style="font-size:12px">${esc(product.code)} · stock actual ${fmt(product.stock)}</div></div><input type="number" min="0" step="1" inputmode="numeric" data-op="${product.id}" placeholder="Cant." aria-label="Saldo inicial de ${esc(product.name)}">${product.tracks_expiry?`<input type="date" data-opexp="${product.id}" aria-label="Vencimiento de ${esc(product.name)}">`:''}</div>`).join(''):'<div class="inv-empty">Primero crea los productos.</div>'}
     <div class="inv-err" id="invFormErr"></div>`,
     '<button class="inv-btn" data-act="close">Cancelar</button><button class="inv-btn pri" data-act="op-ok" id="invOpOk">Registrar saldo inicial</button>');
@@ -1371,14 +1372,15 @@ async function submitOpening(){
     lines.push({product_id:input.dataset.op,qty,expires_on:expiry});
   }
   if(!lines.length)return setFormError('Ingresa al menos una cantidad.');
+  const openedOn=document.getElementById('invOpDate')?.value||null;
   confirmBox({
     title:'Registrar saldo inicial',
-    text:`Se registrarán ${plural(lines.length,'producto','productos')} con su saldo inicial. Esta acción queda en la auditoría.`,
+    text:`Se registrarán ${plural(lines.length,'producto','productos')} con su saldo inicial${openedOn?` con fecha ${openedOn.split('-').reverse().join('-')}`:''}. Esta acción queda en la auditoría.`,
     label:'Registrar',
     onConfirm:async()=>{
       setBusy('invConfirmOk',true,'Registrando…');
       try{
-        await Api.opening(form.requestId,form.inventoryId,lines);
+        await Api.opening(form.requestId,form.inventoryId,lines,openedOn);
         closeLayers();
         await afterWrite();
         toast('Saldo inicial registrado.');
