@@ -1,11 +1,10 @@
 -- Saldo inicial con fecha: inv_register_opening acepta p_opened_on (opcional, de hoy a 31 días atrás).
 -- El movimiento queda con esa fecha (12:00, hora de Santiago), así «Importar ventas» descuenta recién desde el día
 -- siguiente. Sirve cuando el conteo se hizo antes de cargarlo. Sin fecha se comporta como antes.
+-- La versión de 3 parámetros se conserva (sin uso desde la pantalla); la nueva exige p_opened_on (puede ser null).
 -- Sin cambios de tablas; el libro sigue siendo inmutable (se inserta con su fecha, no se modifica).
 
-drop function if exists public.inv_register_opening(uuid, uuid, jsonb);
-
-create function public.inv_register_opening(p_request_id uuid, p_inventory_id uuid, p_lines jsonb, p_opened_on date default null)
+create function public.inv_register_opening(p_request_id uuid, p_inventory_id uuid, p_lines jsonb, p_opened_on date)
 returns jsonb
 language plpgsql
 security definer
