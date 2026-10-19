@@ -103,6 +103,35 @@ assert.strictEqual(k.real,138000+18360);
 assert.strictEqual(k.lines.reduce((s,l)=>s+l.amount+l.freight+l.tax,0),k.real,'productos + flete + impuesto = costo real');
 console.log('ok  códigos alfanuméricos y flete en línea aparte');
 
+
+// Factura de tabaco: la unidad de venta es el cartón de 10 cajetillas y la columna «Un.» viene vacía.
+const TEXT3=`Proveedor Tabacos de Prueba S.A                                    R.U.T.: 76.222.222-2
+VENTA AL POR MAYOR DE TABACO
+Nº 9000111
+Fecha de Emisión: 15-10-2026
+Item      Tipo Cod.        Código                                      Nombre Item                 Cantidad     Un.    Precio Unit.     Descto.       Recargo     Monto
+     1              INT1    10221633      1135 Marca Uno 20s                                              1                 48.505              0         0        48.505
+     2              INT1    10242375      5059 Marca Dos XL 20s                                           3                 39.517              0         0       118.551
+Impuestos Adicionales
+         (19 %)
+        $ 3.000
+                                      Monto Exento         $                                     0
+                                      Monto Neto           $                              167.056
+                                      IVA (19%)            $                               31.741
+                                      Total                $                              201.797`;
+const tb=C.parse(TEXT3);
+assert.strictEqual(tb.ok,true,tb.warnings.join(' '));
+assert.strictEqual(tb.lines.length,2);
+assert.strictEqual(tb.lines[0].name,'1135 Marca Uno 20s');assert.strictEqual(tb.lines[0].unit,'');assert.strictEqual(tb.lines[0].qty,1);
+assert.strictEqual(tb.lines[0].packSize,10,'cartón = 10 cajetillas');
+assert.ok(tb.warnings.some(w=>/1 cartón = 10 cajetillas/.test(w)),'avisa el supuesto');
+assert.strictEqual(tb.extraTax,3000);assert.deepStrictEqual(tb.extraBreakdown,[{rate:19,amount:3000}]);
+const tk=C.compute(tb);
+assert.strictEqual(tk.lines[1].units,30);assert.strictEqual(tk.lines[1].packCost,39517);
+assert.ok(Math.abs(tk.lines[0].unitNet-4850.5)<1e-9,'48.505 por cartón son 4.850,5 por cajetilla');
+assert.strictEqual(C.parse(TEXT).warnings.length,0,'las facturas que no son de tabaco no cambian');
+console.log('ok  factura de tabaco: cartón de 10 cajetillas');
+
 const bad=C.parse('Texto cualquiera sin factura '.repeat(5));
 assert.strictEqual(bad.ok,false);assert.ok(bad.warnings.length);
 assert.strictEqual(C.parse('').ok,false);
