@@ -183,14 +183,16 @@ function formHtml(m){
   const last=S.readings[0];
   const hint=last?`Última lectura: <b>${fmt(last.numeral)}</b> (${dmy(last.read_on)}, turno ${esc(last.shift)}).`:'Aún no hay lecturas de esta máquina.';
   const f=S.form||{date:today(),shift:'A',numeral:''};
-  return `<aside class="cf-card cf-side"><div class="cf-f"><h4>Anotar el numeral</h4>
+  const entry=`<h4>Anotar el numeral</h4>
     <label>Día operativo<input type="date" id="cfDate" value="${esc(f.date)}" max="${today()}"></label>
     <label>Turno<select id="cfShift">${SHIFTS.map(shift=>`<option value="${shift}"${f.shift===shift?' selected':''}>Turno ${shift} · ${SHIFT_HOURS[shift]}</option>`).join('')}</select></label>
     <div class="cf-hint">El día operativo empieza a las 23:00 del día anterior. El numeral es el de fin de turno: el A de las 07:00 va con la fecha de ese mismo día.</div>
     <label>Numeral<input id="cfNumeral" inputmode="numeric" placeholder="Ej: 48.944" value="${esc(f.numeral)}" class="cf-big"></label>
     <div class="cf-hint">${hint}</div>
     ${S.message?`<div class="cf-err">${esc(S.message)}</div>`:''}
-    <button type="button" class="cf-btn" data-cf="save" ${S.busy?'disabled':''}>${S.busy?'Guardando…':'Guardar lectura'}</button>
+    <button type="button" class="cf-btn" data-cf="save" ${S.busy?'disabled':''}>${S.busy?'Guardando…':'Guardar lectura'}</button>`;
+  const head=isAdmin()?entry:`<h4>Numeral</h4><div class="cf-hint">${hint}</div><div class="cf-hint">El numeral lo anota el administrador.</div>`;
+  return `<aside class="cf-card cf-side"><div class="cf-f">${head}
     <h4 style="margin-top:6px">Configuración</h4>
     <div class="cf-kp"><div><small>Tolerancia por tramo</small><b>±${m.tolerance} vasos</b></div><div><small>Numeral del día</small><b>El más alto</b></div></div>
     ${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="config">Configurar máquina</button>':''}</div></aside>`;

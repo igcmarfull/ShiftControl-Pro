@@ -121,12 +121,14 @@ begin
   perform pg_temp.ok('Un código no pertenece a dos máquinas', v_msg = 'inv:duplicate_code', v_msg);
 
   -- 2. Lecturas
-  perform pg_temp.ok('La jefa de tienda anota un numeral', pg_temp.reading('jt', 'm1', 3, 'C', 1000) = 'OK');
-  perform pg_temp.ok('...y otro día', pg_temp.reading('jt', 'm1', 2, 'C', 1030) = 'OK');
-  perform pg_temp.ok('...y otro turno del mismo día con un numeral menor', pg_temp.reading('jt', 'm1', 2, 'A', 1010) = 'OK');
+  v_msg := pg_temp.reading('jt', 'm1', 3, 'C', 1000);
+  perform pg_temp.ok('La jefa de tienda no anota el numeral', v_msg = 'inv:forbidden', v_msg);
+  perform pg_temp.ok('El admin anota un numeral', pg_temp.reading('adm', 'm1', 3, 'C', 1000) = 'OK');
+  perform pg_temp.ok('...y otro día', pg_temp.reading('adm', 'm1', 2, 'C', 1030) = 'OK');
+  perform pg_temp.ok('...y otro turno del mismo día con un numeral menor', pg_temp.reading('adm', 'm1', 2, 'A', 1010) = 'OK');
   perform pg_temp.ok('El admin anota la lectura de ayer', pg_temp.reading('adm', 'm1', 1, 'C', 1062) = 'OK');
   v_msg := pg_temp.reading('jt', 'm1', 3, 'C', 999);
-  perform pg_temp.ok('La jefa no corrige una lectura guardada', v_msg = 'inv:already_read', v_msg);
+  perform pg_temp.ok('La jefa no corrige una lectura guardada', v_msg = 'inv:forbidden', v_msg);
   perform pg_temp.ok('El admin sí corrige', pg_temp.reading('adm', 'm1', 3, 'C', 1000) = 'OK');
   v_msg := pg_temp.reading('adm', 'm1', -2, 'C', 1);
   perform pg_temp.ok('Una fecha futura se rechaza', v_msg = 'inv:invalid_date', v_msg);
