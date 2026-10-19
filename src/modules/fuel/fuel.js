@@ -172,9 +172,10 @@ function render(){
   if(!root)return;
   const years=[...new Set([now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1,S.year])].sort();
   const head=`<div class="fu-top"><div><h1>Comisiones</h1><p>Litros vendidos y comisión del mes, según el contrato${S.contract?` vigente (${dmy(S.contract.valid_from)} al ${dmy(S.contract.valid_to)})`:''}.</p></div>`+
-    `<div class="fu-acts"><select class="fu-sel" data-fu="month" aria-label="Mes">${MONTHS.map((name,i)=>`<option value="${i+1}"${i+1===S.month?' selected':''}>${name}</option>`).join('')}</select>`+
+    `<div class="fu-acts"><div class="fu-sels"><select class="fu-sel" data-fu="month" aria-label="Mes">${MONTHS.map((name,i)=>`<option value="${i+1}"${i+1===S.month?' selected':''}>${name}</option>`).join('')}</select>`+
     `<select class="fu-sel" data-fu="year" aria-label="Año">${years.map(y=>`<option${y===S.year?' selected':''}>${y}</option>`).join('')}</select>`+
-    `<button type="button" class="fu-btn" data-fu="contract">Contrato</button><button type="button" class="fu-btn" data-fu="import">Importar informe</button><button type="button" class="fu-btn pri" data-fu="load">+ Cargar litros</button></div></div>`;
+    `<button type="button" class="fu-btn fu-contract" data-fu="contract" aria-label="Contrato" title="Contrato"><svg class="fu-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M9.5 12h5M9.5 16h5"/></svg><span class="fu-lbl">Contrato</span></button></div>`+
+    `<div class="fu-btns"><button type="button" class="fu-btn" data-fu="import">Importar informe</button><button type="button" class="fu-btn pri" data-fu="load">+ Cargar litros</button></div></div></div>`;
   if(S.status==='unavailable'){root.innerHTML=`${head}<div class="fu-card"><div class="fu-note">${esc(S.message)}</div></div>`;return}
   if(S.status==='error'){root.innerHTML=`${head}<div class="fu-card"><div class="fu-err">${esc(S.message)}</div><button type="button" class="fu-btn" data-fu="reload">Reintentar</button></div>`;return}
   if(S.status!=='ready'){root.innerHTML=`${head}<div class="fu-card"><div class="fu-note">${S.loading?'Cargando…':'Sin datos.'}</div></div>`;return}
