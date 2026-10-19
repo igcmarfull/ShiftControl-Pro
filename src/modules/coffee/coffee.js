@@ -22,7 +22,7 @@ const MESSAGES={
   invalid_date:'La fecha no puede ser futura.',invalid_numeral:'El numeral no es válido.',invalid_shift:'El turno debe ser A, B o C.'
 };
 
-const S={status:'idle',machines:[],codes:[],readings:[],selected:null,rec:null,loading:false,layer:false,form:null,message:'',busy:false};
+const S={status:'idle',machines:[],codes:[],readings:[],selected:null,rec:null,loading:false,layer:false,form:null,message:'',busy:false,confirmDel:''};
 const urls={};
 const pendingUrls=new Set();
 let urlTimer=null;
@@ -192,10 +192,17 @@ function formHtml(m){
     ${S.message?`<div class="cf-err">${esc(S.message)}</div>`:''}
     <button type="button" class="cf-btn" data-cf="save" ${S.busy?'disabled':''}>${S.busy?'Guardando…':'Guardar lectura'}</button>`;
   const head=isAdmin()?entry:`<h4>Numeral</h4><div class="cf-hint">${hint}</div><div class="cf-hint">El numeral lo anota el administrador.</div>`;
+  const saved=isAdmin()&&S.readings.length?`<h4 style="margin-top:6px">Lecturas guardadas</h4><div class="cf-rl">${S.readings.map(r=>{
+    const key=`${r.read_on}|${r.shift}`;
+    const ask=S.confirmDel===key;
+    return `<div class="cf-rr"><span><b>${dmy(r.read_on)}</b> · turno ${esc(r.shift)}</span><b>${fmt(r.numeral)}</b>${ask
+      ?`<span class="cf-rq"><button type="button" class="cf-lk bad" data-cf="rd-del" data-key="${esc(key)}">Anular</button><button type="button" class="cf-lk" data-cf="rd-no">No</button></span>`
+      :`<button type="button" class="cf-lk" data-cf="rd-ask" data-key="${esc(key)}">Anular…</button>`}</div>`;
+  }).join('')}</div><div class="cf-hint">Para corregir un valor, guarda de nuevo el mismo día y turno. Anular borra la lectura y queda en la auditoría.</div>`:'';
   return `<aside class="cf-card cf-side"><div class="cf-f">${head}
     <h4 style="margin-top:6px">Configuración</h4>
     <div class="cf-kp"><div><small>Tolerancia por tramo</small><b>±${m.tolerance} vasos</b></div><div><small>Numeral del día</small><b>El más alto</b></div></div>
-    ${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="config">Configurar máquina</button>':''}</div></aside>`;
+    ${isAdmin()?'<button type="button" class="cf-btn ghost" data-cf="config">Configurar máquina</button>':''}${saved}</div></aside>`;
 }
 function render(){
   const root=$('coffeeRoot');
@@ -227,6 +234,19 @@ async function saveReading(){
     S.form=null;
     await loadMachine();
     toast('Lectura guardada');
+  }catch(error){S.message=error.message}
+  finally{S.busy=false;render()}
+}
+async function deleteReading(key){
+  const m=machine();
+  const [date,shift]=String(key||'').split('|');
+  if(!m||S.busy||!date||!shift)return;
+  S.busy=true;S.message='';render();
+  try{
+    await rpc('coffee_delete_reading',{p_company_id:companyId(),p_machine_id:m.id,p_read_on:date,p_shift:shift});
+    S.confirmDel='';
+    await loadMachine();
+    toast('Lectura anulada');
   }catch(error){S.message=error.message}
   finally{S.busy=false;render()}
 }
@@ -302,6 +322,9 @@ function onClick(event){
   const action=target.dataset.cf;
   if(action==='tab'){S.selected=target.dataset.id;S.form=null;S.message='';S.loading=true;render();loadMachine().catch(error=>{S.message=error.message}).finally(()=>{S.loading=false;render()});return}
   if(action==='save')return saveReading();
+  if(action==='rd-ask'){S.confirmDel=target.dataset.key||'';return render()}
+  if(action==='rd-no'){S.confirmDel='';return render()}
+  if(action==='rd-del')return deleteReading(target.dataset.key);
   if(action==='reload')return load();
   if(action==='config')return openConfig(false);
   if(action==='new')return openConfig(true);

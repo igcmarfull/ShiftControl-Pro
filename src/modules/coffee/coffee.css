@@ -111,3 +111,13 @@
   .cf-r>[data-l="Numeral"] small{display:none}
   .cf-r{padding-top:10px;padding-bottom:10px}
 }
+
+/* Lecturas guardadas (solo administrador) */
+.cf-rl{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.cf-rr{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);font-size:13px}
+.cf-rr:first-child{border-top:0}
+.cf-rr span{color:var(--muted)}.cf-rr span b{color:inherit}
+.cf-rq{display:flex;gap:6px}
+.cf-lk{border:0;background:none;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;padding:4px 6px;border-radius:8px}
+.cf-lk:hover{background:color-mix(in srgb,var(--muted) 12%,transparent)}
+.cf-lk.bad{color:#b42318;font-weight:700}
