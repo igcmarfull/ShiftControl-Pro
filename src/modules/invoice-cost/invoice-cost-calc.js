@@ -25,6 +25,11 @@ function toIso(text){
 
 // Unidades por pack según el nombre: «x 6», «x6», «x 12», «pack x 1*6».
 function packSize(name){
+  // Formatos de distribución: «4PCX6» y «6PFX4» (packs × unidades) y «24PF», «12PC» (unidades del pack).
+  const nested=/(\d+)\s*P[CF]\s*X\s*(\d+)/i.exec(name||'');
+  if(nested)return Number(nested[1])*Number(nested[2]);
+  const flat=/(?<!\d)(\d{1,3})\s*P[CF](?![A-Za-z])/i.exec(name||'');
+  if(flat)return Number(flat[1]);
   const star=/(\d+)\s*\*\s*(\d+)/.exec(name||'');
   if(star)return Number(star[1])*Number(star[2]);
   const matches=[...String(name||'').matchAll(/(?<![a-z])x\s*(\d{1,3})\b/gi)];

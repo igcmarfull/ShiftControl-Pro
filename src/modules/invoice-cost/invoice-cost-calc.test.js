@@ -40,6 +40,10 @@ assert.strictEqual(C.packSize('Vital C/G PT600cc x 12 ter'),12);
 assert.strictEqual(C.packSize('Monster Energy Zero Sugar Green LT473 x6'),6);
 assert.strictEqual(C.packSize('Coca-Cola Zero Cafe. Zero Azucar LT310x6'),6,'sin espacio antes de la x');
 assert.strictEqual(C.packSize('Max 2 unidades'),1,'una x dentro de una palabra no es un pack');
+[['RED BULL TRADIC 4PCX6-LAT250',24],['RED BULL TRADIC 24PF-LAT355',24],['RED BULL BLUE ED 24PF-LAT250',24],
+  ['RED BULL TRADIC 12PC-LATA473',12],['KEM XTREME 6PFX4-LATA 473',24],['PEPSI 6PFX4-LATA 350',24],
+  ['CACHANTUN C-GAS 12PF-PET 600',12],['GINGER ALE 12PF-PET600',12],['WATTS NARANJA GNB 300 X 12',12]]
+  .forEach(([name,units])=>assert.strictEqual(C.packSize(name),units,name));
 assert.strictEqual(C.packSize('Producto suelto'),1);
 console.log('ok  unidades por pack');
 
