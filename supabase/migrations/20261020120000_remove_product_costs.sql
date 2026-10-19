@@ -1,4 +1,5 @@
--- Revierte 20261020100000_product_costs.sql. Se pierde el historial de costos cargado.
+-- Quita los costos por producto de Inventarios (20261020100000_product_costs.sql).
+-- La función se retiró de la pantalla; la tabla no tenía datos cargados. Se ejecuta a mano en el editor SQL.
 drop function if exists public.inv_cost_history(uuid, uuid);
 drop function if exists public.inv_costs_overview(uuid, uuid);
 drop function if exists public.inv_cost_void(uuid, uuid, text);
