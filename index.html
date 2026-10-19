@@ -4777,6 +4777,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 <link rel="stylesheet" href="src/modules/coffee/coffee.css">
 <link rel="stylesheet" href="src/modules/sales/sales.css">
 <link rel="stylesheet" href="src/ui-papel.css">
+<link rel="stylesheet" href="src/report-export.css">
 
 
 <style id="v35-reportes-impresion-profesional">
@@ -6949,7 +6950,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
         <div class="actions reports-v32-actions"><button type="button" class="btn global-period-btn" title="Volver al período actual">◎ Hoy</button>
           <select class="select" id="reportMonth" onchange="renderReports()" data-period-bound="true"><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select>
           <select class="select" id="reportYear" onchange="renderReports()" data-period-bound="true"><option value="2027">2027</option><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option></select>
-          <button class="btn" id="reportExportBtn" onclick="exportMonthlyCSV()">Exportar CSV</button>
+          <button class="btn" id="reportExportBtn" aria-haspopup="menu" onclick="reportExportMenu(this,'operational')">Exportar ▾</button>
           <button class="btn primary" onclick="window.print()">Imprimir reporte</button>
           <button class="btn primary" data-permission-action="reports.financial" onclick="generatePayrollLiquidation()">Generar liquidación mensual</button>
         </div>
@@ -7148,7 +7149,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
               <h3>Reporte contabilidad</h3>
               <p>Resumen mensual por trabajador para remuneraciones y control administrativo.</p>
             </div>
-            <button class="btn primary" onclick="exportAccountingCSV()">Exportar para contabilidad</button>
+            <button class="btn primary" aria-haspopup="menu" onclick="reportExportMenu(this,'accounting')">Exportar ▾</button>
           </div>
 
           <div class="accounting-summary reports-v34-accounting-summary">
@@ -11137,8 +11138,8 @@ function switchReportTab(tab){
 
   const exportBtn=document.getElementById('reportExportBtn');
   if(exportBtn){
-    exportBtn.textContent=operational?'Exportar CSV':'Exportar contabilidad';
-    exportBtn.setAttribute('onclick',operational?'exportMonthlyCSV()':'exportAccountingCSV()');
+    exportBtn.textContent='Exportar ▾';
+    exportBtn.setAttribute('onclick',`reportExportMenu(this,'${operational?'operational':'accounting'}')`);
   }
 }
 
@@ -18142,6 +18143,8 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/ui-invoice-logos.js"></script>
 <script src="src/ui-employees.js"></script>
 <script src="src/ui-audit.js"></script>
+<script src="src/modules/exports/report-excel.js"></script>
+<script src="src/ui-report-export.js"></script>
 <script src="src/ui-inbox.js"></script>
 <script src="src/storage.js"></script>
 

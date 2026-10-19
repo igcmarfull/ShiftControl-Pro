@@ -262,7 +262,7 @@ Las siguientes vistas y flujos existen hoy, pero no están extraídos como módu
 | Jornadas adicionales | Vista `additional`, todavía monolítica |
 | Finanzas | Vista `finance`, almacén local separado para movimientos y aprobaciones |
 | Depósitos | Flujo dentro del área financiera, almacén local separado |
-| Reportes | Vista `reports`, reportes operativos/contables, CSV e impresión |
+| Reportes | Vista `reports`, reportes operativos/contables, CSV, Excel (`docs/reportes-excel.md`) e impresión |
 | Auditoría | Vista `audit`, más una auditoría auxiliar en clave local separada |
 | Ausencias | Vista `absences`, sincronización de ejecuciones y cobertura de reemplazos |
 | Incidencias | Vista `incidents`, clave local independiente |
