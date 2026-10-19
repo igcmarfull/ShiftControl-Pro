@@ -68,6 +68,41 @@ const none=C.compute(p,{flags:[false,false,false]});
 assert.strictEqual(none.lines.reduce((s,l)=>s+l.tax,0),0,'sin ninguna casilla marcada no se reparte');
 console.log('ok  casillas y unidades por pack editables');
 
+
+// Factura con códigos alfanuméricos, «Tipo Cod.» con letras y flete en una línea aparte (formato de otro distribuidor).
+const TEXT2=`Distribuidora de Prueba S.A.                                       R.U.T.: 76.111.111-1
+Nº 555000111
+Fecha de Emisión: 15-10-2026
+Item      Tipo Cod.        Código                                   Nombre Item               Cantidad    Un.       Precio Unit.    Descto.      Recargo   Monto
+     1              INT1   ET8712409      AGUA MINERAL C-GAS 12PF-PET 600                                3       CJA           7.000        5.000         0      16.000
+     2              INT1   ET8704007      ENERGETICA TRADIC 4PCX6-LAT250                                4       CJA          30.000       30.000         0      90.000
+     3              INT1     ET13404      GASEOSA 6PFX4-LATA 350                                         1       PAC          15.000        3.000         0      12.000
+     4              INT1        9999      Flete de Mercaderias                                        1                    20.000            0         0      20.000
+Impuestos Adicionales
+      ILA (10.00 %)                          (18.00 %)
+         $ 0                                 $ 18.360
+                                      Monto Exento            $
+                                      Monto Neto              $                            138.000
+                                      IVA (19.00%)            $                             26.220
+                                      Total                   $                            182.580`;
+const q=C.parse(TEXT2);
+assert.strictEqual(q.ok,true,q.warnings.join(' '));
+assert.strictEqual(q.lines.length,3,'el flete no es un producto');
+assert.strictEqual(q.freightTotal,20000);assert.strictEqual(q.freightLines.length,1);
+assert.strictEqual(q.linesSum,138000);assert.deepStrictEqual(q.warnings,[]);
+assert.strictEqual(q.lines[0].code,'ET8712409');assert.strictEqual(q.lines[0].name,'AGUA MINERAL C-GAS 12PF-PET 600');
+assert.strictEqual(q.lines[0].packSize,12);assert.strictEqual(q.lines[1].packSize,24);assert.strictEqual(q.lines[2].code,'ET13404');
+assert.strictEqual(q.extraTax,18360);
+const k=C.compute(q);
+assert.strictEqual(k.lines.reduce((s,l)=>s+l.freight,0),20000,'el flete se reparte completo');
+assert.strictEqual(k.lines[1].freight,Math.round(20000*90000/118000));
+assert.strictEqual(k.lines[0].hasTax,false);
+assert.strictEqual(k.lines[1].tax+k.lines[2].tax,18360);
+assert.ok(Math.abs(k.lines[1].unitNet-(90000+k.lines[1].freight)/96)<1e-9,'costo por unidad incluye el flete repartido');
+assert.strictEqual(k.real,138000+18360);
+assert.strictEqual(k.lines.reduce((s,l)=>s+l.amount+l.freight+l.tax,0),k.real,'productos + flete + impuesto = costo real');
+console.log('ok  códigos alfanuméricos y flete en línea aparte');
+
 const bad=C.parse('Texto cualquiera sin factura '.repeat(5));
 assert.strictEqual(bad.ok,false);assert.ok(bad.warnings.length);
 assert.strictEqual(C.parse('').ok,false);
