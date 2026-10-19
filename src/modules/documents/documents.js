@@ -201,7 +201,7 @@ function buildDocx(lib,doc,logo){
   const SIZE={roomy:26,normal:23,compact:22}[dens];
   const LINE={roomy:360,normal:300,compact:276}[dens];
   const AFTER={roomy:240,normal:170,compact:140}[dens];
-  const SIGN_BEFORE={roomy:1800,normal:900,compact:420}[dens];
+  const SIGN_BEFORE={roomy:3000,normal:1200,compact:420}[dens];
   const co=company();
   const none={style:BorderStyle.NONE,size:0,color:'FFFFFF'};
   const noBorders={top:none,bottom:none,left:none,right:none};

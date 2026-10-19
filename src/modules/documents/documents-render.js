@@ -74,8 +74,8 @@ function printHtml(doc,{company,logoUrl}={}){
 @page{size:Letter;margin:15mm 20mm 18mm}
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{font-family:"Times New Roman",Times,serif;font-size:10.8pt;line-height:1.38;color:#111}
-body.dens-roomy{font-size:13pt;line-height:1.85}body.dens-roomy .dc-p{margin-bottom:16px}body.dens-roomy .dc-sign{margin-top:130px}
-body.dens-normal{font-size:11.5pt;line-height:1.55}body.dens-normal .dc-p{margin-bottom:10px}body.dens-normal .dc-sign{margin-top:64px}
+body.dens-roomy{font-size:13pt;line-height:1.85}body.dens-roomy .dc-p{margin-bottom:16px}body.dens-roomy .dc-sign{margin-top:230px}
+body.dens-normal{font-size:11.5pt;line-height:1.55}body.dens-normal .dc-p{margin-bottom:10px}body.dens-normal .dc-sign{margin-top:90px}
 ${PAGE_CSS}
 .dc-foot{position:fixed;left:0;right:0;bottom:0;margin:0;background:#fff}
 .dc-body{padding-bottom:26px}
