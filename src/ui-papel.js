@@ -25,9 +25,10 @@
     doc:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
     gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
     receipt:'<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
-    box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>'
+    box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>',
+    drop:'<path d="M12 3s6 6.2 6 10.5A6 6 0 0 1 6 13.5C6 9.2 12 3 12 3z"/><path d="M9.5 14a2.5 2.5 0 0 0 2.5 2.5"/>'
   };
-  const MAP={'operational-home':'home','admin-inbox':'inbox','daily-summary':'moon','today':'sun','dashboard':'layout','workcenter':'work','actual':'clock','execution':'check','absences':'plus','incidents':'alert','checklists':'list','handoff':'swap','planning':'cal','weekly':'week','employees':'users','evaluations':'star','additional':'plus','finance':'dollar','team':'team','reports':'chart','audit':'doc','settings':'gear','invoices':'receipt','suppliers':'truck','coffee':'cup','sales':'chart','inventory':'box'};
+  const MAP={'operational-home':'home','admin-inbox':'inbox','daily-summary':'moon','today':'sun','dashboard':'layout','workcenter':'work','actual':'clock','execution':'check','absences':'plus','incidents':'alert','checklists':'list','handoff':'swap','planning':'cal','weekly':'week','employees':'users','evaluations':'star','additional':'plus','finance':'dollar','team':'team','reports':'chart','audit':'doc','settings':'gear','invoices':'receipt','suppliers':'truck','coffee':'cup','sales':'chart','inventory':'box','fuel':'drop'};
   const SVG_ATTR='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
   const KEY='shiftcontrol.nav.collapsed';
   const root=()=>document.querySelector('.sidebar .nav');

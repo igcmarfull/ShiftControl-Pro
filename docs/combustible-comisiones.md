@@ -1,6 +1,6 @@
 # Comisiones de combustible (pantalla «Comisiones», solo administrador)
 
-Módulo `src/modules/fuel/` (`fuel.js`, `fuel-calc.js`, `fuel.css`), vista `fuel` (menú Administración → Comisiones). Solo el administrador la ve y la usa: `ShiftControlPermissions` concede todas las vistas al administrador y ninguna jefatura tiene `fuel`; en el servidor las tablas y las funciones exigen administrador.
+Módulo `src/modules/fuel/` (`fuel.js`, `fuel-calc.js`, `fuel.css`), vista `fuel` (menú Administración → Comisiones, en la barra lateral y en el menú del celular, que tiene su propia lista en `src/v20-interface.js`; el ícono es `drop` en `src/ui-papel.js`). Solo el administrador la ve y la usa: `ShiftControlPermissions` concede todas las vistas al administrador y ninguna jefatura tiene `fuel`; en el servidor las tablas y las funciones exigen administrador.
 
 ## Qué hace
 - **Cargar litros** por día en tres líneas separadas: **retail** (gasolinas y diésel), **flota** y **kerosene**. Una fila por día; volver a cargar el mismo día lo reemplaza. No acepta fechas futuras ni litros negativos. Corregir un día: tocarlo en «Días cargados».
