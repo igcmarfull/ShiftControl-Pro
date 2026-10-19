@@ -134,11 +134,45 @@ begin
   v_n := pg_temp.call('admB', $q$select to_jsonb(count(*)) from public.fuel_contract$q$);
   perform pg_temp.ok('Otra empresa no ve el contrato', (v_n#>>'{}')::int = 0, v_n::text);
 
+  -- Importación de informes (columnas parciales)
+  r := pg_temp.call('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'),
+    json_build_array(json_build_object('date', (now() at time zone 'America/Santiago')::date - 10, 'flota', 1500),
+                     json_build_object('date', (now() at time zone 'America/Santiago')::date - 9, 'flota', 1200))::text));
+  perform pg_temp.ok('Importa dos días de flota', (r->>'days')::int = 2, r::text);
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(retail_l || '/' || flota_l || '/' || kerosene_l) from public.fuel_sales where company_id = %L and sold_on = (now() at time zone 'America/Santiago')::date - 10$q$, pg_temp.g('A')));
+  perform pg_temp.ok('Un día nuevo parte con ceros en lo que no viene', (v_n#>>'{}') = '0/1500/0', v_n::text);
+  r := pg_temp.call('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'),
+    json_build_array(json_build_object('date', (now() at time zone 'America/Santiago')::date - 10, 'retail', 13000, 'kerosene', 40))::text));
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(retail_l || '/' || flota_l || '/' || kerosene_l) from public.fuel_sales where company_id = %L and sold_on = (now() at time zone 'America/Santiago')::date - 10$q$, pg_temp.g('A')));
+  perform pg_temp.ok('El informe general no pisa la flota del informe de flota', (v_n#>>'{}') = '13000/1500/40', v_n::text);
+  r := pg_temp.call('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'),
+    json_build_array(json_build_object('date', (now() at time zone 'America/Santiago')::date - 10, 'flota', 1700))::text));
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(retail_l || '/' || flota_l || '/' || kerosene_l) from public.fuel_sales where company_id = %L and sold_on = (now() at time zone 'America/Santiago')::date - 10$q$, pg_temp.g('A')));
+  perform pg_temp.ok('Volver a subir flota cambia solo la flota', (v_n#>>'{}') = '13000/1700/40', v_n::text);
+  v_msg := pg_temp.try('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'),
+    json_build_array(json_build_object('date', (now() at time zone 'America/Santiago')::date - 8, 'flota', 10),
+                     json_build_object('date', (now() at time zone 'America/Santiago')::date + 3, 'flota', 10))::text));
+  perform pg_temp.ok('Una fecha futura rechaza todo el informe', v_msg = 'inv:invalid_date', v_msg);
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(count(*)) from public.fuel_sales where company_id = %L and sold_on = (now() at time zone 'America/Santiago')::date - 8$q$, pg_temp.g('A')));
+  perform pg_temp.ok('Si falla una fila no se guarda ninguna', (v_n#>>'{}')::int = 0, v_n::text);
+  v_msg := pg_temp.try('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'), '[{"date":"2026-10-01","flota":"abc"}]'));
+  perform pg_temp.ok('Litros que no son números se rechazan', v_msg = 'inv:invalid_line', v_msg);
+  v_msg := pg_temp.try('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'), '[{"date":"2026-10-01"}]'));
+  perform pg_temp.ok('Una fila sin ninguna columna de litros se rechaza', v_msg = 'inv:invalid_liters', v_msg);
+  v_msg := pg_temp.try('adm', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'), '[]'));
+  perform pg_temp.ok('Un informe vacío se rechaza', v_msg = 'inv:lines_required', v_msg);
+  v_msg := pg_temp.try('jt', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'), '[{"date":"2026-10-01","flota":10}]'));
+  perform pg_temp.ok('La jefa de tienda no importa', v_msg = 'inv:forbidden', v_msg);
+  v_msg := pg_temp.try('admB', format($q$select public.fuel_sales_import(%L, %L::jsonb)$q$, pg_temp.g('A'), '[{"date":"2026-10-01","flota":10}]'));
+  perform pg_temp.ok('Otra empresa no importa en esta', v_msg like 'inv:%', v_msg);
+
   -- Auditoría
   v_n := pg_temp.call('adm', $q$select to_jsonb(count(*)) from public.inv_audit where action = 'fuel.sales'$q$);
   perform pg_temp.ok('Cada carga de litros queda en la auditoría', (v_n#>>'{}')::int = 3, v_n::text);
   v_n := pg_temp.call('adm', $q$select to_jsonb(count(*)) from public.inv_audit where action = 'fuel.contract'$q$);
   perform pg_temp.ok('Cada cambio de contrato queda en la auditoría', (v_n#>>'{}')::int = 2, v_n::text);
+  v_n := pg_temp.call('adm', $q$select to_jsonb(count(*)) from public.inv_audit where action = 'fuel.import'$q$);
+  perform pg_temp.ok('Cada importación exitosa queda en la auditoría', (v_n#>>'{}')::int = 3, v_n::text);
 end $$;
 
 do $$ begin raise notice 'COMBUSTIBLE: TODAS LAS PRUEBAS PASARON'; end $$;

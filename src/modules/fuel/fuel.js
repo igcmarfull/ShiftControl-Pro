@@ -20,7 +20,9 @@ const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
 const MESSAGES={
   forbidden:'Solo el administrador puede hacer esto.',invalid_date:'La fecha no puede ser futura.',
   invalid_liters:'Los litros deben ser números enteros entre 0 y 2.000.000.',
-  invalid_contract:'Revisa los valores del contrato: fechas, tarifas y montos deben ser válidos.'
+  invalid_contract:'Revisa los valores del contrato: fechas, tarifas y montos deben ser válidos.',
+  invalid_line:'Hay un día del informe con fecha o litros que no se pueden leer.',lines_required:'El informe no trae días para cargar.',
+  too_many_lines:'El informe trae demasiados días. Sube un período más corto.'
 };
 
 const pad=n=>String(n).padStart(2,'0');
@@ -28,7 +30,7 @@ function today(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth(
 const dm=iso=>String(iso||'').split('-').reverse().slice(0,2).join('-');
 const dmy=iso=>String(iso||'').split('-').reverse().join('-');
 const now=new Date();
-const S={status:'idle',contract:null,rows:[],year:now.getFullYear(),month:now.getMonth()+1,loading:false,layer:'',busy:false,message:'',showAll:false};
+const S={status:'idle',contract:null,rows:[],year:now.getFullYear(),month:now.getMonth()+1,loading:false,layer:'',busy:false,message:'',showAll:false,imp:null};
 
 function toError(error){
   const raw=String(error?.message||'');
@@ -70,13 +72,16 @@ const summary=()=>Calc().monthSummary(activeContract(),S.rows,{year:S.year,month
 
 /* -------------------------------------------------------------- gráficos */
 const niceMax=(v,step)=>Math.max(step,Math.ceil(v/step)*step);
+// Paso del eje: el menor «redondo» que deja a lo más ~5 marcas.
+const niceStep=max=>[1000,2000,5000,10000,20000,50000,100000,200000,500000,1000000,2000000].find(step=>max/step<=5)||2000000;
 function chartCumulative(s){
   const W=860,H=300,L=62,R=16,T=14,B=34,iw=W-L-R,ih=H-T-B;
   const pivot=s.pivot||0;
-  const ymax=niceMax(Math.max(pivot*1.1,s.projected?s.projected.retail*1.05:0,s.totals.retail),100000);
+  const top=Math.max(pivot*1.1,s.projected?s.projected.retail*1.05:0,s.totals.retail);
+  const step=niceStep(top),ymax=niceMax(top,step);
   const X=d=>L+(d-1)/Math.max(1,s.dim-1)*iw,Y=v=>T+ih-(v/ymax)*ih;
   let g='';
-  for(let t=0;t<=ymax;t+=100000)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-10}" y="${Y(t)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${t/1000} m³</text>`;
+  for(let t=0;t<=ymax;t+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-10}" y="${Y(t)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${t/1000} m³</text>`;
   [1,5,10,15,20,25,s.dim].forEach(d=>{g+=`<text x="${X(d)}" y="${H-10}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`});
   let cum=0;const pts=S.rows.map(r=>{cum+=Number(r.retail_l)||0;return [Number(r.sold_on.slice(8,10)),cum]});
   let body='';
@@ -98,11 +103,11 @@ function chartCumulative(s){
 function chartDaily(s){
   const W=860,H=230,L=62,R=16,T=14,B=34,iw=W-L-R,ih=H-T-B;
   const peak=Math.max(0,...S.rows.map(r=>(Number(r.retail_l)||0)+(Number(r.flota_l)||0)+(Number(r.kerosene_l)||0)));
-  const ymax=niceMax(peak*1.08,5000);
+  const step=niceStep(peak*1.08),ymax=niceMax(peak*1.08,step);
   const X=d=>L+(d-1)/Math.max(1,s.dim-1)*iw,Y=v=>T+ih-(v/ymax)*ih;
   const bw=Math.max(6,iw/s.dim*0.62);
   let g='';
-  for(let t=0;t<=ymax;t+=5000)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-10}" y="${Y(t)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${t/1000} m³</text>`;
+  for(let t=0;t<=ymax;t+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-10}" y="${Y(t)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${t/1000} m³</text>`;
   [1,5,10,15,20,25,s.dim].forEach(d=>{g+=`<text x="${X(d)}" y="${H-10}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`});
   let bars='';
   S.rows.forEach(r=>{
@@ -166,7 +171,7 @@ function render(){
   const head=`<div class="fu-top"><div><h1>Comisiones</h1><p>Litros vendidos y comisión del mes, según el contrato${S.contract?` vigente (${dmy(S.contract.valid_from)} al ${dmy(S.contract.valid_to)})`:''}.</p></div>`+
     `<div class="fu-acts"><select class="fu-sel" data-fu="month" aria-label="Mes">${MONTHS.map((name,i)=>`<option value="${i+1}"${i+1===S.month?' selected':''}>${name}</option>`).join('')}</select>`+
     `<select class="fu-sel" data-fu="year" aria-label="Año">${years.map(y=>`<option${y===S.year?' selected':''}>${y}</option>`).join('')}</select>`+
-    `<button type="button" class="fu-btn" data-fu="contract">Contrato</button><button type="button" class="fu-btn pri" data-fu="load">+ Cargar litros</button></div></div>`;
+    `<button type="button" class="fu-btn" data-fu="contract">Contrato</button><button type="button" class="fu-btn" data-fu="import">Importar informe</button><button type="button" class="fu-btn pri" data-fu="load">+ Cargar litros</button></div></div>`;
   if(S.status==='unavailable'){root.innerHTML=`${head}<div class="fu-card"><div class="fu-note">${esc(S.message)}</div></div>`;return}
   if(S.status==='error'){root.innerHTML=`${head}<div class="fu-card"><div class="fu-err">${esc(S.message)}</div><button type="button" class="fu-btn" data-fu="reload">Reintentar</button></div>`;return}
   if(S.status!=='ready'){root.innerHTML=`${head}<div class="fu-card"><div class="fu-note">${S.loading?'Cargando…':'Sin datos.'}</div></div>`;return}
@@ -194,7 +199,7 @@ function layerShell(inner){
   S.layer='open';
   return layer;
 }
-function closeLayer(){S.layer='';$('fuLayer')?.remove()}
+function closeLayer(){S.layer='';S.imp=null;$('fuLayer')?.remove()}
 function openLoad(date){
   const day=date||today();
   const row=S.rows.find(r=>r.sold_on===day);
@@ -261,6 +266,108 @@ async function saveContract(){
   finally{S.busy=false}
 }
 
+/* -------------------------------------------------------- importar informes */
+const SHEETJS_URL='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+const MAX_BYTES=8*1024*1024;
+let libPromise=null;
+function loadLib(){
+  if(window.XLSX)return Promise.resolve(window.XLSX);
+  if(!libPromise){
+    libPromise=new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src=SHEETJS_URL;
+      script.onload=()=>resolve(window.XLSX);
+      script.onerror=()=>{libPromise=null;reject(new Error('No se pudo cargar el lector de Excel. Revisa tu conexión.'))};
+      document.head.appendChild(script);
+    });
+  }
+  return libPromise;
+}
+const KIND_LABEL={flota:'Tarjeta flota',general:'General (retail y kerosene)'};
+function openImport(){
+  layerShell(`<div class="fu-mod wide" role="dialog" aria-label="Importar informe"><h3>Importar informe</h3><p>Sube el «Resumen de venta combustible» del POS: el de <b>Tarjeta flota</b>, el <b>general</b> (retail y kerosene) o los dos juntos. El general debe sacarse solo con los tipos <b>General</b> y <b>Descuento</b>. Los días que ya existen se reemplazan solo en las columnas que trae cada informe.</p>
+    <label class="fu-drop" id="fuDrop"><input type="file" id="fuFile" accept=".xlsx,.xls" multiple><b>Elegir archivos</b><span>.xlsx del POS · puedes elegir los dos a la vez</span></label>
+    <div id="fuImpBody"></div>
+    <div class="fu-err" id="fuErr"></div>
+    <div class="fu-mf"><button type="button" class="fu-btn" data-fu="cancel">Cancelar</button><button type="button" class="fu-btn pri" data-fu="import-ok" id="fuSave" disabled>Importar</button></div></div>`);
+  S.imp={reports:[],rows:[],existing:[],error:''};
+}
+async function readFiles(fileList){
+  const imp=S.imp;
+  if(!imp)return;
+  imp.error='';imp.reports=[];imp.rows=[];imp.existing=[];
+  const files=[...fileList];
+  const body=$('fuImpBody');
+  if(body)body.innerHTML='<div class="fu-note">Leyendo…</div>';
+  try{
+    const XLSX=await loadLib();
+    const reports=[];
+    for(const file of files){
+      if(file.size>MAX_BYTES)throw new Error(`«${file.name}» pesa demasiado (máximo 8 MB).`);
+      const book=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});
+      const rows=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{header:1,raw:true,defval:null});
+      const report=window.FuelImport.parseReport(rows);
+      if(!report.ok)throw new Error(`«${file.name}»: ${report.error}`);
+      report.name=file.name;
+      reports.push(report);
+    }
+    const merged=window.FuelImport.mergeReports(reports);
+    if(!merged.ok)throw new Error(merged.error);
+    if(merged.rows.some(r=>r.date>today()))throw new Error('El informe trae fechas futuras. Revisa el archivo.');
+    imp.reports=reports;imp.rows=merged.rows;
+    const from=merged.rows[0].date,to=merged.rows[merged.rows.length-1].date;
+    const existing=await client().from('fuel_sales').select('sold_on, retail_l, flota_l, kerosene_l').eq('company_id',companyId()).gte('sold_on',from).lte('sold_on',to);
+    if(existing.error)throw toError(existing.error);
+    imp.existing=existing.data||[];
+  }catch(error){
+    imp.error=error.message;imp.reports=[];imp.rows=[];
+  }
+  renderImport();
+}
+function renderImport(){
+  const imp=S.imp;
+  const body=$('fuImpBody'),btn=$('fuSave'),err=$('fuErr');
+  if(!imp||!body)return;
+  if(err)err.textContent=imp.error||'';
+  if(!imp.rows.length){body.innerHTML='';if(btn){btn.disabled=true;btn.textContent='Importar'}return}
+  const by=new Map(imp.existing.map(r=>[r.sold_on,r]));
+  const cols=[['retail','retail_l','Retail'],['flota','flota_l','Flota'],['kerosene','kerosene_l','Kerosene']];
+  let created=0,changed=0,same=0;
+  const lines=imp.rows.map(row=>{
+    const old=by.get(row.date);
+    let state='new';
+    if(old){state=cols.some(([k,db])=>k in row&&Number(old[db])!==row[k])?'chg':'same'}
+    if(state==='new')created++;else if(state==='chg')changed++;else same++;
+    const cell=([k,db])=>k in row?`<span${old&&Number(old[db])!==row[k]?' class="chg"':''}>${fmt(row[k])}${old&&Number(old[db])!==row[k]?`<em>antes ${fmt(old[db])}</em>`:''}</span>`:'<span class="na">—</span>';
+    return `<div class="fu-r5"><span>${dm(row.date)}</span>${cols.map(cell).join('')}<span class="st ${state}">${state==='new'?'Nuevo':state==='chg'?'Cambia':'Igual'}</span></div>`;
+  }).join('');
+  const sum=k=>imp.rows.reduce((t,r)=>t+(r[k]||0),0);
+  const badges=imp.reports.map(r=>`<span class="fu-pill">${esc(KIND_LABEL[r.kind])} · ${dm(r.from)} al ${dm(r.to)} · ${Object.keys(r.days).length} días</span>`).join(' ');
+  const totals=cols.filter(([k])=>imp.rows.some(r=>k in r)).map(([k,,label])=>`${label} <b>${fmt(sum(k))} L</b>`).join(' · ');
+  const warns=imp.reports.flatMap(r=>r.warnings||[]).map(w=>`<div class="fu-warn">${esc(w)}</div>`).join('');
+  body.innerHTML=`<div class="fu-imp-badges">${badges}</div>${warns}<div class="fu-imp-tot">${totals}</div>`+
+    `<div class="fu-g fu-imp"><div class="fu-r5 h"><span>Día</span><span>Retail</span><span>Flota</span><span>Kerosene</span><span></span></div><div class="fu-imp-rows">${lines}</div></div>`+
+    `<div class="fu-hint">${created} nuevo${created===1?'':'s'} · ${changed} que cambia${changed===1?'':'n'} · ${same} igual${same===1?'':'es'}. Los litros se redondean al litro por día.</div>`;
+  if(btn){btn.disabled=false;btn.textContent=`Importar ${imp.rows.length} día${imp.rows.length===1?'':'s'}`}
+}
+async function applyImport(){
+  const imp=S.imp;
+  if(S.busy||!imp||!imp.rows.length)return;
+  S.busy=true;const btn=$('fuSave'),err=$('fuErr');
+  if(btn)btn.disabled=true;if(err)err.textContent='';
+  try{
+    const payload=imp.rows.map(r=>{const o={date:r.date};['retail','flota','kerosene'].forEach(k=>{if(k in r)o[k]=r[k]});return o});
+    const result=await rpc('fuel_sales_import',{p_company_id:companyId(),p_rows:payload});
+    const last=imp.rows[imp.rows.length-1].date;
+    const [y,m]=last.split('-').map(Number);
+    closeLayer();
+    S.imp=null;S.year=y;S.month=m;S.showAll=false;
+    await load();
+    toast(`${result?.days||payload.length} días importados`);
+  }catch(error){if(err)err.textContent=error.message;if(btn)btn.disabled=false}
+  finally{S.busy=false}
+}
+
 /* --------------------------------------------------------------- eventos */
 function onClick(event){
   const target=event.target.closest('[data-fu]');
@@ -270,6 +377,8 @@ function onClick(event){
   if(action==='load')return openLoad();
   if(action==='edit')return openLoad(target.dataset.date);
   if(action==='contract')return openContract();
+  if(action==='import')return openImport();
+  if(action==='import-ok')return applyImport();
   if(action==='cancel')return closeLayer();
   if(action==='save')return saveLoad();
   if(action==='contract-ok')return saveContract();
@@ -285,6 +394,7 @@ function onChange(event){
     S.month=month;S.year=year;S.showAll=false;load();
     return;
   }
+  if(el.id==='fuFile'){readFiles(el.files);return}
   if(el.id==='fuDate'){
     const row=S.rows.find(r=>r.sold_on===el.value);
     $('fuRetail').value=numberText(row?.retail_l);$('fuFlota').value=numberText(row?.flota_l);$('fuKero').value=numberText(row?.kerosene_l);
