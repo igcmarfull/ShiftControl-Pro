@@ -4,6 +4,8 @@
 .fu-top h1{margin:0;font-size:34px;letter-spacing:-.04em}
 .fu-top p{margin:4px 0 0;color:var(--muted);font-size:14px}
 .fu-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fu-sels,.fu-btns{display:flex;gap:10px;align-items:center}
+.fu-ic{display:none}
 .fu-sel{background:var(--panel);color:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font:inherit;font-weight:650;font-size:14px}
 .fu-btn{background:var(--panel);color:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .fu-btn.pri{background:var(--blue,#0f4c9c);color:#fff;border-color:var(--blue,#0f4c9c)}
@@ -77,6 +79,15 @@ button.fu-r:hover{background:color-mix(in srgb,var(--blue,#0f4c9c) 7%,transparen
 @media(max-width:1000px){
   .fu-kp{grid-template-columns:repeat(2,minmax(0,1fr))}
   .fu-main,.fu-main.two{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:640px){
+  .fu-top{display:block}
+  .fu-acts{display:block;width:100%;margin-top:14px}
+  .fu-sels{display:grid;grid-template-columns:1fr 1fr 48px;gap:10px}
+  .fu-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .fu-sel,.fu-btn{min-height:46px;width:100%;box-sizing:border-box;text-align:center}
+  .fu-contract{padding:0;display:grid;place-items:center}
+  .fu-contract .fu-ic{display:block}.fu-contract .fu-lbl{display:none}
 }
 @media(max-width:560px){
   .fu-top h1{font-size:28px}
