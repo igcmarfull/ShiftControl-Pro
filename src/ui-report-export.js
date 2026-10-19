@@ -36,7 +36,7 @@
       if(!item)return;
       const choice=item.dataset.rx;
       close();
-      if(choice==='xlsx')window.ReportExcel?.download?.();
+      if(choice==='xlsx')window.ReportExcel?.download?.(accounting?'accounting':'operational');
       else if(accounting)window.exportAccountingCSV?.();
       else window.exportMonthlyCSV?.();
     });
