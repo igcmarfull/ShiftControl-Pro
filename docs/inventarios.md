@@ -129,19 +129,3 @@ Estado: **la migración `20261015164843_inventory_product_photos.sql` está apli
 Los códigos del POS que pertenecen a una **máquina de café** no descuentan stock: la importación los registra aparte para cuadrar el numeral. Ver `docs/maquinas-cafe.md` (migración `20261016180000`, no aplicada al escribir esto).
 
 La importación también guarda las unidades y el monto vendidos en `sales_history` para la pantalla «Ventas». Ver `docs/ventas.md`.
-
-## Costos y margen por producto (solo administrador)
-
-Lleva el **costo real por unidad** de cada producto, sin IVA, a partir de las facturas de proveedor, y lo compara con el precio de venta del POS.
-
-- **Estado:** código y migración en el repositorio; la migración `20261020100000_product_costs.sql` debe aplicarse para que funcione. No toca `app_state` ni el estado principal.
-- **Dónde:** botón «Costos» en la cabecera de Tienda, Cigarrillos y Lubricantes (solo administrador). Abre una ventana con dos pestañas: «Costos y margen» y «Cargar factura».
-- **Qué se guarda** (`inv_product_costs`, solo se agregan filas): proveedor, N.º de factura, fecha, cantidad, **neto**, **flete** e **impuesto específico** (ILA, tabaco), todo sin IVA. Los costos por unidad se calculan en la base. Costo real por unidad = (neto + flete + impuesto) ÷ cantidad en unidades de control.
-- **Cantidad:** se puede escribir en la unidad de control o en la unidad de compra (cartón, pack); el servidor la convierte con el factor del producto.
-- **Flete total:** en la carga se puede escribir el flete de toda la factura; se reparte según el neto entre las líneas que no tienen flete propio (la última línea absorbe el redondeo).
-- **Costo vigente:** la compra más reciente no anulada. Se muestra la variación contra la compra anterior. Una carga equivocada se **anula** con motivo (no se edita); anulada, vuelve a regir el costo anterior y se puede volver a cargar la misma factura.
-- **Una factura no carga dos veces el mismo producto** (mismo proveedor y número).
-- **Precio de venta:** promedio ponderado de los últimos 60 días de `sales_history` (monto ÷ unidades, con IVA); se divide por 1,19 para el margen. Margen = precio neto − costo real; el % es sobre el precio neto. Un producto sin ventas en 60 días no muestra margen.
-- **Permisos:** solo el administrador lee y escribe; la jefa de tienda y la de isla no ven costos. La tabla es de solo lectura por RLS; se escribe con `inv_cost_register` y `inv_cost_void`, que dejan `cost.register` y `cost.void` en la auditoría.
-- **Código:** `src/modules/inventory/inventory-costs.js` y `.css`; llamadas en `inventory-api.js` (`costsOverview`, `costHistory`, `registerCosts`, `voidCost`); pruebas SQL en `supabase/tests/costos_local.sql`; reversión en `supabase/rollback/20261020100000_product_costs.rollback.sql`.
-- **No incluido:** el ILA por producto no se calcula solo (depende del detalle del proveedor), la carga se hace a mano, y el costo no alimenta otros módulos. Los productos deben existir antes en el catálogo con su código de POS.
