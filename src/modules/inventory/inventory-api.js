@@ -182,6 +182,11 @@ const Api={
   receipts:(inventoryId,limit)=>rpc('inv_list_receipts',{p_inventory_id:inventoryId,p_limit:limit||50}),
   reportWaste:(inventoryId,from,to)=>rpc('inv_report_waste',{p_inventory_id:inventoryId,p_from:from,p_to:to}),
   reportShortages:inventoryId=>rpc('inv_report_shortages',{p_inventory_id:inventoryId}),
+  // Costos de compra (solo administrador).
+  costsOverview:(companyId,inventoryId)=>rpc('inv_costs_overview',{p_company_id:companyId,p_inventory_id:inventoryId}),
+  costHistory:(companyId,productId)=>rpc('inv_cost_history',{p_company_id:companyId,p_product_id:productId}),
+  registerCosts:(companyId,inventoryId,header,lines)=>rpc('inv_cost_register',{p_company_id:companyId,p_inventory_id:inventoryId,p_header:header,p_lines:lines}),
+  voidCost:(companyId,costId,reason)=>rpc('inv_cost_void',{p_company_id:companyId,p_cost_id:costId,p_reason:reason}),
   async audit(companyId,limit){
     let response;
     try{
