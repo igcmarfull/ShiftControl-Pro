@@ -33,6 +33,21 @@ function footerHtml(company,title){
   return `<div class="dc-foot"><span>${esc(company.name)} · RUT ${esc(company.rut)} · ${esc(company.address)}, ${esc(company.city)}</span><span>${esc(title)}</span></div>`;
 }
 
+// Largo del texto del documento → cuánto aire darle: los cortos (constancia, certificado) con letra y espacios
+// más generosos; los largos (finiquito, contrato) más compactos para que quepan en pocas hojas.
+function textLength(doc){
+  return doc.blocks.reduce((sum,block)=>{
+    if(block.runs)return sum+block.runs.reduce((n,run)=>n+run.text.length,0);
+    if(block.rows)return sum+block.rows.reduce((n,row)=>n+row.label.length+row.amount.length,0);
+    if(block.cols)return sum+block.cols.flat().join('').length;
+    return sum+(block.text?block.text.length:0);
+  },0);
+}
+function density(doc){
+  const n=textLength(doc);
+  return n<1500?'roomy':n<2200?'normal':'compact';
+}
+
 // Contenido de la hoja (membrete + bloques + pie) para la vista previa en pantalla.
 function pageHtml(doc,{company,logoUrl,highlight=true}={}){
   return `${letterheadHtml(company,logoUrl)}<div class="dc-body">${doc.blocks.map(block=>blockHtml(block,highlight)).join('')}</div>${footerHtml(company,doc.title)}`;
@@ -46,9 +61,11 @@ const PAGE_CSS=`
 .dc-p{margin:0 0 8px}.dc-p.in{margin-left:22px}.al-justify{text-align:justify}.al-right{text-align:right}.al-center{text-align:center}
 .dc-amounts{border-collapse:collapse;margin:2px 0 8px 22px;min-width:60%}.dc-amounts td{padding:1px 22px 1px 0}.dc-amounts td:last-child{text-align:right;padding-right:0;white-space:nowrap}.dc-amounts tr.tot td{font-weight:bold;border-top:1px solid #555}
 .dc-sign{display:grid;gap:46px;margin-top:34px;text-align:center;font-size:.92em;page-break-inside:avoid;break-inside:avoid}.dc-sign.cols-1{grid-template-columns:1fr;justify-items:center;width:50%;margin-left:25%}.dc-sign.cols-2{grid-template-columns:1fr 1fr}
-.dc-sign>div{display:grid;gap:1px}.dc-sign .line{display:block;border-top:1px solid #555;margin-bottom:4px}
+.dc-sign>div{display:grid;gap:1px;align-content:start}.dc-sign .line{display:block;border-top:1px solid #555;margin-bottom:4px}
 .dc-foot{margin-top:24px;border-top:1px solid #cfd6e6;padding-top:7px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#7a869c;display:flex;justify-content:space-between;gap:12px}
 .dc-break{page-break-after:always;break-after:page;height:0}
+.dens-roomy .dc-title{margin:18px 0 26px;font-size:16.5px}.dens-roomy .dc-lh{margin-bottom:26px}
+.dens-normal .dc-title{margin:12px 0 20px}.dens-normal .dc-lh{margin-bottom:20px}
 .dc-hl.empty{color:#9aa4b8}`;
 
 // Documento completo listo para imprimir (hoja carta). El navegador ofrece «Guardar como PDF».
@@ -57,13 +74,15 @@ function printHtml(doc,{company,logoUrl}={}){
 @page{size:Letter;margin:15mm 20mm 18mm}
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{font-family:"Times New Roman",Times,serif;font-size:10.8pt;line-height:1.38;color:#111}
+body.dens-roomy{font-size:13pt;line-height:1.85}body.dens-roomy .dc-p{margin-bottom:16px}body.dens-roomy .dc-sign{margin-top:130px}
+body.dens-normal{font-size:11.5pt;line-height:1.55}body.dens-normal .dc-p{margin-bottom:10px}body.dens-normal .dc-sign{margin-top:64px}
 ${PAGE_CSS}
 .dc-foot{position:fixed;left:0;right:0;bottom:0;margin:0;background:#fff}
 .dc-body{padding-bottom:26px}
-</style></head><body>${letterheadHtml(company,logoUrl)}<div class="dc-body">${doc.blocks.map(block=>blockHtml(block,false)).join('')}</div>${footerHtml(company,doc.title)}</body></html>`;
+</style></head><body class="dens-${density(doc)}">${letterheadHtml(company,logoUrl)}<div class="dc-body">${doc.blocks.map(block=>blockHtml(block,false)).join('')}</div>${footerHtml(company,doc.title)}</body></html>`;
 }
 
-const api={pageHtml,printHtml,PAGE_CSS,esc};
+const api={pageHtml,printHtml,density,PAGE_CSS,esc};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else root.DocumentRender=api;
 })(typeof window!=='undefined'?window:globalThis);
