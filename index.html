@@ -4776,6 +4776,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 <link rel="stylesheet" href="src/modules/suppliers/suppliers.css">
 <link rel="stylesheet" href="src/modules/coffee/coffee.css">
 <link rel="stylesheet" href="src/modules/fuel/fuel.css">
+<link rel="stylesheet" href="src/modules/invoice-cost/invoice-cost.css">
 <link rel="stylesheet" href="src/modules/sales/sales.css">
 <link rel="stylesheet" href="src/ui-papel.css">
 <link rel="stylesheet" href="src/report-export.css">
@@ -5889,6 +5890,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
   <div class="nav-group">
     <div class="nav-group-title">Tienda</div>
     <button class="nav-btn role-admin-visible" data-view="invoices"><span>🧾</span>Facturas y compras</button>
+    <button class="nav-btn role-admin-visible" data-view="invcost"><span>🧮</span>Costo de facturas</button>
     <button class="nav-btn role-admin-visible" data-view="suppliers"><span>🚚</span>Proveedores</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="inventory"><span>▦</span>Inventarios</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="coffee"><span>☕</span>Máquinas de café</button>
@@ -6500,6 +6502,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <section id="suppliers" class="view"><div id="suppliersRoot"></div></section>
     <section id="coffee" class="view"><div id="coffeeRoot"></div></section>
     <section id="fuel" class="view"><div id="fuelRoot"></div></section>
+    <section id="invcost" class="view"><div id="invCostRoot"></div></section>
     <section id="sales" class="view"><div id="salesRoot"></div></section>
 
     <section id="invoices" class="view">
@@ -18130,6 +18133,8 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/modules/fuel/fuel-calc.js"></script>
 <script src="src/modules/fuel/fuel-import.js"></script>
 <script src="src/modules/fuel/fuel.js"></script>
+<script src="src/modules/invoice-cost/invoice-cost-calc.js"></script>
+<script src="src/modules/invoice-cost/invoice-cost.js"></script>
 <script src="src/modules/sales/sales.js"></script>
 <script src="src/modules/suppliers/suppliers.js"></script>
 <script src="src/modules/suppliers/suppliers-ui.js"></script>
