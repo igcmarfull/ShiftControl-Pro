@@ -5,7 +5,8 @@ let n=0;
 const ok=(name,fn)=>{fn();n++;console.log('PASS',name)};
 
 const META_FLOTA='Resumen de venta combustible |  Tienda : 9319 - 9319 RD Coltauco Periodo desde : 285 - 1(30/09/26 22:56 >> 01/10/26 22:56) Periodo hasta : 301 - 1(16/10/26 22:59 >> 05/10/26 22:57) Producto : [ Producto | Indistinto] Tipo de venta : Tarjeta flota';
-const META_GENERAL='Resumen de venta combustible |  Tienda : 9319 - 9319 RD Coltauco Periodo desde : 285 - 1(30/09/26 22:56 >> 01/10/26 22:56) Periodo hasta : 301 - 1(16/10/26 22:59 >> 05/10/26 22:57) Producto : [ Producto | Indistinto] Tipo de venta : Prueba surtidor,General,Handling,Descuento';
+const META_GENERAL='Resumen de venta combustible |  Tienda : 9319 - 9319 RD Coltauco Periodo desde : 285 - 1(30/09/26 22:56 >> 01/10/26 22:56) Periodo hasta : 301 - 1(16/10/26 22:59 >> 05/10/26 22:57) Producto : [ Producto | Indistinto] Tipo de venta : General,Descuento';
+const META_TODOS='Resumen de venta combustible |  Tienda : 9319 - 9319 RD Coltauco Periodo desde : 285 - 1(30/09/26 22:56 >> 01/10/26 22:56) Periodo hasta : 301 - 1(16/10/26 22:59 >> 05/10/26 22:57) Producto : [ Producto | Indistinto] Tipo de venta : Prueba surtidor,General,Handling,Descuento';
 const HEAD=['Estacion','Fecha Contable','Nombre Producto','Consignado','Tipo de Venta','Volumen','PPU','PPU Original','Monto','Monto (Teorico sin descuentos)'];
 const L=(date,product,vol)=>['9319 RD Coltauco',date,product,'SI','-',vol,1500,1500,1,1];
 const sheet=(meta,lines)=>[['Resumen de venta combustible 18-10-2026'],[meta],HEAD,...lines,['TOTAL',null,null,null,null,0]];
@@ -45,6 +46,21 @@ ok('un solo informe deja fuera las columnas del otro',()=>{
   assert.deepStrictEqual(Object.keys(m.rows[0]).sort(),['date','flota']);
 });
 ok('rechaza dos informes del mismo tipo',()=>{assert.strictEqual(I.mergeReports([I.parseReport(flota),I.parseReport(flota)]).ok,false)});
+ok('rechaza el informe general si incluye Prueba surtidor y Handling',()=>{
+  const r=I.parseReport(sheet(META_TODOS,[L('01/10/2026','Aramco Gasolina 93',10)]));
+  assert.strictEqual(r.ok,false);assert.ok(r.error.includes('Prueba surtidor')&&r.error.includes('Handling'));assert.ok(r.error.includes('solo «General» y «Descuento»'));
+});
+ok('rechaza el general aunque traiga solo uno de los dos',()=>{
+  assert.strictEqual(I.parseReport(sheet(META_GENERAL.replace('General,Descuento','General,Handling,Descuento'),[L('01/10/2026','Aramco Gasolina 93',10)])).ok,false);
+  const r=I.parseReport(sheet(META_GENERAL.replace('General,Descuento','Prueba surtidor,General'),[L('01/10/2026','Aramco Gasolina 93',10)]));
+  assert.strictEqual(r.ok,false);assert.ok(r.error.includes('Prueba surtidor')&&!r.error.includes('Handling'));
+});
+ok('acepta General y Descuento sin avisos',()=>{const r=I.parseReport(general);assert.strictEqual(r.ok,true);assert.deepStrictEqual(r.warnings,[])});
+ok('avisa si el general no incluye Descuento',()=>{
+  const r=I.parseReport(sheet(META_GENERAL.replace('General,Descuento','General'),[L('01/10/2026','Aramco Gasolina 93',10)]));
+  assert.strictEqual(r.ok,true);assert.strictEqual(r.warnings.length,1);assert.ok(r.warnings[0].includes('Descuento'));
+});
+ok('el informe de flota no lleva avisos',()=>{assert.deepStrictEqual(I.parseReport(flota).warnings,[])});
 ok('rechaza un archivo que no es el informe',()=>{
   assert.strictEqual(I.parseReport([['Informe de Ventas por Articulos'],['Tienda : x'],['Fecha','Codigo']]).ok,false);
   assert.strictEqual(I.parseReport([]).ok,false);

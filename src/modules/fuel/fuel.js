@@ -285,7 +285,7 @@ function loadLib(){
 }
 const KIND_LABEL={flota:'Tarjeta flota',general:'General (retail y kerosene)'};
 function openImport(){
-  layerShell(`<div class="fu-mod wide" role="dialog" aria-label="Importar informe"><h3>Importar informe</h3><p>Sube el «Resumen de venta combustible» del POS: el de <b>Tarjeta flota</b>, el <b>general</b> (retail y kerosene) o los dos juntos. Los días que ya existen se reemplazan solo en las columnas que trae cada informe.</p>
+  layerShell(`<div class="fu-mod wide" role="dialog" aria-label="Importar informe"><h3>Importar informe</h3><p>Sube el «Resumen de venta combustible» del POS: el de <b>Tarjeta flota</b>, el <b>general</b> (retail y kerosene) o los dos juntos. El general debe sacarse solo con los tipos <b>General</b> y <b>Descuento</b>. Los días que ya existen se reemplazan solo en las columnas que trae cada informe.</p>
     <label class="fu-drop" id="fuDrop"><input type="file" id="fuFile" accept=".xlsx,.xls" multiple><b>Elegir archivos</b><span>.xlsx del POS · puedes elegir los dos a la vez</span></label>
     <div id="fuImpBody"></div>
     <div class="fu-err" id="fuErr"></div>
@@ -344,7 +344,8 @@ function renderImport(){
   const sum=k=>imp.rows.reduce((t,r)=>t+(r[k]||0),0);
   const badges=imp.reports.map(r=>`<span class="fu-pill">${esc(KIND_LABEL[r.kind])} · ${dm(r.from)} al ${dm(r.to)} · ${Object.keys(r.days).length} días</span>`).join(' ');
   const totals=cols.filter(([k])=>imp.rows.some(r=>k in r)).map(([k,,label])=>`${label} <b>${fmt(sum(k))} L</b>`).join(' · ');
-  body.innerHTML=`<div class="fu-imp-badges">${badges}</div><div class="fu-imp-tot">${totals}</div>`+
+  const warns=imp.reports.flatMap(r=>r.warnings||[]).map(w=>`<div class="fu-warn">${esc(w)}</div>`).join('');
+  body.innerHTML=`<div class="fu-imp-badges">${badges}</div>${warns}<div class="fu-imp-tot">${totals}</div>`+
     `<div class="fu-g fu-imp"><div class="fu-r5 h"><span>Día</span><span>Retail</span><span>Flota</span><span>Kerosene</span><span></span></div><div class="fu-imp-rows">${lines}</div></div>`+
     `<div class="fu-hint">${created} nuevo${created===1?'':'s'} · ${changed} que cambia${changed===1?'':'n'} · ${same} igual${same===1?'':'es'}. Los litros se redondean al litro por día.</div>`;
   if(btn){btn.disabled=false;btn.textContent=`Importar ${imp.rows.length} día${imp.rows.length===1?'':'s'}`}

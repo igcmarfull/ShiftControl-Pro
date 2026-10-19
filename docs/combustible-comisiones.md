@@ -10,8 +10,9 @@ Módulo `src/modules/fuel/` (`fuel.js`, `fuel-calc.js`, `fuel.css`), vista `fuel
 
 ## Cómo se leen los informes del POS
 - Una línea del informe es un producto, un día y un precio. Se suman por día y se redondean al litro (los litros del POS traen decimales).
-- **General:** Kerosene (por nombre de producto) va a kerosene; todo lo demás (gasolinas 93, 95, 97 y diésel) va a retail. **Flota:** todo el informe va a flota.
-- La columna «Tipo de Venta» trae «-» en todas las líneas, así que **no se pueden separar** «Prueba surtidor», «Handling» ni «Descuento» dentro del informe general: se cuentan completos. En los datos de octubre no hay líneas con monto cero ni con volúmenes chicos, y el 99% de los litros se vende con descuento (precio menor al original): el «Descuento» son ventas normales.
+- **General (solo «General» y «Descuento»):** Kerosene (por nombre de producto) va a kerosene; todo lo demás (gasolinas 93, 95, 97 y diésel) va a retail. **Flota:** todo el informe va a flota.
+- **«Prueba surtidor» y «Handling» no cuentan como retail** (decisión del administrador). La columna «Tipo de Venta» trae «-» en todas las líneas, así que no se pueden separar dentro del archivo. Por eso el informe general **se rechaza** si el filtro «Tipo de venta» de su encabezado incluye cualquiera de los dos, con la instrucción de sacarlo de nuevo en el POS marcando solo **«General» y «Descuento»**. Si el informe no incluye «Descuento», se importa con un aviso. El informe de flota no tiene este problema.
+- «Descuento» son ventas normales con descuento (en octubre, el 99% de los litros se vende con precio menor al original) y sí cuentan.
 - No se aceptan fechas futuras ni archivos que no sean ese informe; dos informes del mismo tipo a la vez se rechazan.
 
 ## Reglas del contrato (addendum C-3602-04, 01-07-2026 al 31-12-2026)
@@ -35,6 +36,6 @@ Al ritmo de los días cargados: `litros / días con datos × días del mes`. Los
 
 ## Verificación
 - SQL local: `supabase/tests/combustible_local.sql` (39 comprobaciones: carga, reemplazo, validaciones, permisos, aislamiento entre empresas, contrato, importación con columnas parciales y auditoría).
-- Lector de informes: `node src/modules/fuel/fuel-import.test.js` (16 comprobaciones). Con los dos informes reales de octubre (01 al 17-10) las 17 filas coinciden con una suma independiente: retail 225.789 L, flota 33.837 L, kerosene 2.632 L.
+- Lector de informes: `node src/modules/fuel/fuel-import.test.js` (21 comprobaciones, incluido el rechazo de «Prueba surtidor» y «Handling»). Con el informe real de flota de octubre (01 al 17-10) las 17 filas coinciden con una suma independiente (33.837 L). El informe general real de ese período incluye «Prueba surtidor» y «Handling», así que la pantalla lo rechaza; el flujo con el general se probó con una copia de ese archivo con el encabezado corregido (retail 225.789 L, kerosene 2.632 L), que NO es un dato válido para cargar.
 - Cálculo: `node src/modules/fuel/fuel-calc.test.js` (21 comprobaciones con los números del contrato, el empalme del pivote, la flota fuera del pivote, proyección, meses terminados y fuera de contrato).
-- Navegador con Supabase simulado: importar los dos informes reales (solo flota, los dos juntos, mismo tipo dos veces, archivo equivocado), abrir la pantalla, cargar un día nuevo, corregirlo, cambiar de fecha en el formulario, editar el contrato, cambiar de mes (fuera de contrato y sin datos), claro/oscuro y celular, y que la jefa no pueda abrirla. No se probó contra Supabase real ni con las cifras reales del administrador.
+- Navegador con Supabase simulado: importar los informes reales (solo flota, los dos juntos con el general corregido, el general original rechazado, mismo tipo dos veces, archivo equivocado), abrir la pantalla, cargar un día nuevo, corregirlo, cambiar de fecha en el formulario, editar el contrato, cambiar de mes (fuera de contrato y sin datos), claro/oscuro y celular, y que la jefa no pueda abrirla. No se probó contra Supabase real ni con las cifras reales del administrador.

@@ -1,8 +1,9 @@
 /* Lector de los informes «Resumen de venta combustible» del POS (Excel), para cargar litros por día.
    Funciones puras sobre las filas de la hoja (arreglo de arreglos), sin DOM ni red: se prueban con node
    (fuel-import.test.js). Hay dos informes: el de «Tarjeta flota» (litros de flota) y el general («Prueba surtidor,
-   General, Handling, Descuento»: retail y kerosene). La columna «Tipo de Venta» no separa esos tipos, así que el
-   informe general se toma completo, con el kerosene aparte por nombre de producto. */
+   Descuento»: retail y kerosene). El informe general debe sacarse solo con «General» y «Descuento»: «Prueba
+   surtidor» y «Handling» no cuentan como retail y la columna «Tipo de Venta» no los separa por línea, así que un
+   informe que los incluya se rechaza. El kerosene se separa del retail por nombre de producto. */
 (function(root){
 'use strict';
 
@@ -40,6 +41,17 @@ function parseReport(rows){
   const typeText=meta.split(/tipo de venta\s*:/i)[1]||'';
   const kind=/flota/i.test(typeText)&&!/general/i.test(typeText)?'flota':/general/i.test(typeText)?'general':null;
   if(!kind)return {ok:false,error:`No reconozco el tipo de venta del informe («${typeText.trim().slice(0,60)}»). Debe ser el de Tarjeta flota o el general.`};
+  // «Prueba surtidor» y «Handling» no cuentan como retail y el informe no los separa por línea: si vienen en el
+  // filtro del informe general, sus litros quedarían sumados al retail. Se rechaza y se pide sacarlo de nuevo.
+  const types=norm(typeText).split(',').map(t=>t.trim()).filter(Boolean);
+  const warnings=[];
+  if(kind==='general'){
+    const excluded=[];
+    if(types.some(t=>t.includes('prueba')))excluded.push('«Prueba surtidor»');
+    if(types.some(t=>t.includes('handling')))excluded.push('«Handling»');
+    if(excluded.length)return {ok:false,error:`Este informe incluye ${excluded.join(' y ')}, que no cuentan como retail y no se pueden separar dentro del archivo. En el POS saca de nuevo el «Resumen de venta combustible» marcando solo «General» y «Descuento».`};
+    if(!types.some(t=>t.includes('descuento')))warnings.push('El informe no incluye el tipo de venta «Descuento»: si vendes con descuento, esos litros no están en estas cifras.');
+  }
   const headerIndex=rows.findIndex(r=>Array.isArray(r)&&r.some(c=>norm(c)==='fecha contable')&&r.some(c=>norm(c)==='volumen'));
   if(headerIndex<0)return {ok:false,error:'No encuentro las columnas «Fecha Contable» y «Volumen».'};
   const header=rows[headerIndex].map(norm);
@@ -73,7 +85,7 @@ function parseReport(rows){
   // Los días del período sin ventas de esa línea cuentan como cero.
   eachDay(from,to).forEach(day=>{if(!days[day])days[day]=kind==='flota'?{flota:0}:{retail:0,kerosene:0}});
   Object.values(days).forEach(entry=>Object.keys(entry).forEach(k=>{entry[k]=Math.round(entry[k])}));
-  return {ok:true,kind,from,to,days,lines,liters};
+  return {ok:true,kind,from,to,days,lines,liters,warnings};
 }
 
 // Une los informes cargados en filas {date, retail?, flota?, kerosene?} ordenadas por fecha.
