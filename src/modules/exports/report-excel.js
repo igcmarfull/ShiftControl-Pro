@@ -1,7 +1,7 @@
-/* Reporte mensual en Excel (.xlsx) con formato Prosercom.
+/* Reportes mensuales en Excel (.xlsx) con formato Prosercom.
    Reutiliza los datos de los reportes de la página Reportes (accountingRows, monthlyOperationalRows y
-   reportPrintContext); no calcula nada propio. Hojas según el permiso del usuario:
-   «Contabilidad» (reports.financial) y «Operativo» (reports.operational; jornadas y monto solo con reports.financial).
+   reportPrintContext); no calcula nada propio. Cada pestaña exporta su propio libro:
+   «Contabilidad» (reports.financial) u «Operativo» (reports.operational; jornadas y monto solo con reports.financial).
    ExcelJS se carga solo al exportar, igual que SheetJS en la importación de ventas. */
 (function(){
 'use strict';
@@ -182,10 +182,12 @@ function operationalSheet(workbook,ctx,subtitle,logoId,financial){
   return rows.length;
 }
 
-async function download(){
+// kind: 'operational' (hoja Operativo) o 'accounting' (hoja Contabilidad), igual que los CSV de cada pestaña.
+async function download(kind){
+  const accounting=kind==='accounting';
   const financial=can('reports.financial');
-  const operational=can('reports.operational');
-  if(!financial&&!operational){say('Tu perfil no puede exportar reportes.');return false}
+  if(accounting&&!financial){say('Solo el administrador exporta el reporte para contabilidad.');return false}
+  if(!accounting&&!can('reports.operational')){say('Tu perfil no puede exportar el reporte operativo.');return false}
   if(typeof window.reportPrintContext!=='function'){say('Los reportes todavía no están disponibles.');return false}
   say('Generando Excel…');
   let ExcelJS;
@@ -197,18 +199,18 @@ async function download(){
     workbook.creator='Prosercom · Operaciones';
     workbook.created=new Date();
     const logoId=await loadLogo(workbook);
-    if(financial)accountingSheet(workbook,ctx,subtitle,logoId);
-    if(operational)operationalSheet(workbook,ctx,subtitle,logoId,financial);
+    if(accounting)accountingSheet(workbook,ctx,subtitle,logoId);
+    else operationalSheet(workbook,ctx,subtitle,logoId,financial);
     const buffer=await workbook.xlsx.writeBuffer();
     const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url=URL.createObjectURL(blob);
     const link=document.createElement('a');
-    const name=`reporte_mensual_${ctx.year}_${ctx.month}.xlsx`;
+    const name=`${accounting?'reporte_contabilidad':'reporte_operativo'}_${ctx.year}_${ctx.month}.xlsx`;
     link.href=url;link.download=name;link.style.display='none';
     document.body.appendChild(link);link.click();
     setTimeout(()=>{URL.revokeObjectURL(url);link.remove()},500);
     if(typeof window.log==='function'){
-      window.log(`Reporte mensual en Excel exportado para ${ctx.year}-${ctx.month}`);
+      window.log(`Reporte ${accounting?'de contabilidad':'operativo'} en Excel exportado para ${ctx.year}-${ctx.month}`);
       if(typeof window.save==='function')window.save();
       if(typeof window.renderAudit==='function')window.renderAudit();
     }
