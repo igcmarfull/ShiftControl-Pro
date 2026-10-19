@@ -4775,6 +4775,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 <link rel="stylesheet" href="src/modules/inventory/inventory-sales.css">
 <link rel="stylesheet" href="src/modules/suppliers/suppliers.css">
 <link rel="stylesheet" href="src/modules/coffee/coffee.css">
+<link rel="stylesheet" href="src/modules/fuel/fuel.css">
 <link rel="stylesheet" href="src/modules/sales/sales.css">
 <link rel="stylesheet" href="src/ui-papel.css">
 <link rel="stylesheet" href="src/report-export.css">
@@ -5878,6 +5879,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <div class="nav-group-title">Administración</div>
     <button class="nav-btn role-admin-visible" data-view="additional"><span>＋</span>Jornadas adicionales</button>
     <button class="nav-btn role-admin-visible" data-view="finance"><span>$</span>Finanzas</button>
+    <button class="nav-btn role-admin-visible" data-view="fuel"><span>%</span>Comisiones</button>
     <button class="nav-btn role-admin-visible" data-view="team"><span>◍</span>Equipo de estación</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="reports"><span>↗</span>Reportes</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="audit"><span>≡</span>Historial de actividad</button>
@@ -6497,6 +6499,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
     <section id="suppliers" class="view"><div id="suppliersRoot"></div></section>
     <section id="coffee" class="view"><div id="coffeeRoot"></div></section>
+    <section id="fuel" class="view"><div id="fuelRoot"></div></section>
     <section id="sales" class="view"><div id="salesRoot"></div></section>
 
     <section id="invoices" class="view">
@@ -18124,6 +18127,8 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/modules/inventory/inventory.js"></script>
 <script src="src/modules/inventory/inventory-sales.js"></script>
 <script src="src/modules/coffee/coffee.js"></script>
+<script src="src/modules/fuel/fuel-calc.js"></script>
+<script src="src/modules/fuel/fuel.js"></script>
 <script src="src/modules/sales/sales.js"></script>
 <script src="src/modules/suppliers/suppliers.js"></script>
 <script src="src/modules/suppliers/suppliers-ui.js"></script>
