@@ -249,5 +249,26 @@ begin
   perform pg_temp.ok('La jefa de isla no registra ventas de máquina', (r->>'no_access')::int = 1, r::text);
 end $$;
 
+-- Anular una lectura (solo administrador)
+do $$
+declare r jsonb; v_msg text; v_n jsonb;
+begin
+  perform pg_temp.reading('adm', 'm1', 5, 'B', 777);
+  v_msg := pg_temp.try('jt', format('select public.coffee_delete_reading(%L, %L, %L, %L)', pg_temp.g('A'), pg_temp.g('m1'), pg_temp.d(5), 'B'));
+  perform pg_temp.ok('La jefa de tienda no anula lecturas', v_msg = 'inv:forbidden', v_msg);
+  v_msg := pg_temp.try('ji', format('select public.coffee_delete_reading(%L, %L, %L, %L)', pg_temp.g('A'), pg_temp.g('m1'), pg_temp.d(5), 'B'));
+  perform pg_temp.ok('La jefa de isla no anula lecturas', v_msg = 'inv:forbidden', v_msg);
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(count(*)) from public.coffee_readings where read_on = %L$q$, pg_temp.d(5)));
+  perform pg_temp.ok('La lectura sigue ahí tras los intentos rechazados', (v_n#>>'{}')::int = 1, v_n::text);
+  r := pg_temp.call('adm', format('select public.coffee_delete_reading(%L, %L, %L, %L)', pg_temp.g('A'), pg_temp.g('m1'), pg_temp.d(5), 'B'));
+  perform pg_temp.ok('El admin anula la lectura', (r->>'numeral')::int = 777, r::text);
+  v_n := pg_temp.call('adm', format($q$select to_jsonb(count(*)) from public.coffee_readings where read_on = %L$q$, pg_temp.d(5)));
+  perform pg_temp.ok('La lectura ya no existe', (v_n#>>'{}')::int = 0, v_n::text);
+  v_msg := pg_temp.try('adm', format('select public.coffee_delete_reading(%L, %L, %L, %L)', pg_temp.g('A'), pg_temp.g('m1'), pg_temp.d(5), 'B'));
+  perform pg_temp.ok('Anular una lectura inexistente avisa', v_msg = 'inv:not_found', v_msg);
+  v_n := pg_temp.call('adm', $q$select to_jsonb(count(*)) from public.inv_audit where action = 'coffee.reading_delete'$q$);
+  perform pg_temp.ok('Queda en la auditoría', (v_n#>>'{}')::int = 1, v_n::text);
+end $$;
+
 do $$ begin raise notice 'MÁQUINAS DE CAFÉ: TODAS LAS PRUEBAS PASARON'; end $$;
 rollback;

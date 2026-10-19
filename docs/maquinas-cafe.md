@@ -38,7 +38,7 @@ Tablas `coffee_machines`, `coffee_machine_codes`, `coffee_readings` y `coffee_sa
 
 - Los códigos de una máquina **no descuentan stock** ni necesitan un producto en Inventarios: la importación de ventas los guarda aparte en `coffee_sales`. Un código no puede pertenecer a dos máquinas.
 - Cada vaso suma 1 en el numeral (configurable por código: 1 a 20).
-- Una lectura por máquina, fecha y turno (se pueden anotar varios turnos el mismo día). La jefa de tienda no anota ni corrige lecturas (`coffee_save_reading` exige administrador).
+- Una lectura por máquina, fecha y turno (se pueden anotar varios turnos el mismo día). La jefa de tienda no anota ni corrige lecturas (`coffee_save_reading` exige administrador). El administrador puede **anular** una lectura (`coffee_delete_reading`, migración `20261019100000_coffee_delete_reading.sql`): la pantalla lista las lecturas guardadas (hasta 30, solo en su vista) con «Anular…» y una confirmación en dos pasos; la lectura se borra, queda en la auditoría (`coffee.reading_delete`, con el valor anulado) y la cuadratura se recalcula con las que quedan. Corregir un valor sigue siendo guardar de nuevo el mismo día y turno.
 - Los productos de café creados en Tienda (por vaso) siguen activos pero la importación los ignora mientras su código pertenezca a una máquina.
 
 ## Verificación realizada
