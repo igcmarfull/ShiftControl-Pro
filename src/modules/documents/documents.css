@@ -1,0 +1,38 @@
+/* Documentos */
+#documentsRoot{padding:4px 2px 40px}
+.dc-head h1{margin:6px 0 0;font-size:34px;letter-spacing:-.04em}
+.dc-head p{margin:6px 0 18px;color:var(--muted);font-size:14px;line-height:1.5;max-width:760px}
+.dc-tools{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.dc-tools input{flex:1;min-width:240px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:11px 14px;font:inherit;font-size:14px}
+.dc-chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:99px;padding:9px 15px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.dc-chip.on{background:var(--text);color:var(--panel);border-color:var(--text)}
+.dc-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.dc-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:8px;align-content:start}
+.dc-ico{width:42px;height:42px;border-radius:12px;background:color-mix(in srgb,var(--blue) 12%,var(--panel));display:grid;place-items:center;color:var(--blue);font-weight:800;font-size:18px}
+.dc-card h3{margin:4px 0 0;font-size:16px}.dc-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5;min-height:58px}
+.dc-tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dc-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:10px}
+.dc-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:11px;padding:9px 15px;font:inherit;font-size:13px;font-weight:650;min-height:40px;cursor:pointer}
+.dc-btn:hover{background:var(--panel2)}.dc-btn[disabled]{opacity:.5;cursor:wait}
+.dc-btn.pri{background:var(--text);color:var(--panel);border-color:var(--text)}
+.dc-note{margin:18px 0 0;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;background:var(--panel2);color:var(--muted);font-size:12.5px;line-height:1.55;max-width:900px}
+.dc-empty{padding:30px;color:var(--muted);text-align:center}
+.dc-err{margin:0 0 12px;padding:10px 13px;border-radius:12px;background:color-mix(in srgb,var(--red) 12%,var(--panel2));color:var(--red);font-size:13px}
+.dc-split{display:grid;grid-template-columns:minmax(380px,440px) minmax(0,1fr);gap:24px;align-items:start}
+.dc-form{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;gap:14px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.dc-form h3{margin:0;font-size:17px}
+.dc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dc-f{display:grid;gap:5px;font-size:12px;font-weight:650;color:var(--muted);align-content:start}.dc-f.full{grid-column:1/-1}
+.dc-f em{font-style:normal;font-size:10.5px;color:var(--blue);float:right;font-weight:700}
+.dc-f small{font-weight:500;font-size:11px;color:var(--muted)}
+.dc-in{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;font-weight:500;min-width:0;width:100%}
+.dc-in.auto{background:color-mix(in srgb,var(--blue) 8%,var(--panel));border-color:color-mix(in srgb,var(--blue) 35%,var(--line))}
+textarea.dc-in{resize:vertical}
+.dc-check{grid-column:1/-1;display:flex;gap:9px;align-items:center;font-size:13px;font-weight:600;color:var(--text)}
+.dc-acts{display:flex;gap:8px;flex-wrap:wrap}
+.dc-sheetwrap{background:#e9edf5;border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;justify-items:center;min-width:0}
+.dc-pv{margin:0 0 10px;font-size:11.5px;color:#667085}
+.dc-page{width:min(640px,100%);background:#fff;color:#1c2333;box-shadow:0 8px 30px rgba(20,33,61,.18);padding:34px 46px 26px;font-family:Georgia,"Times New Roman",serif;font-size:12px;line-height:1.55}
+.dc-hl{background:#fff3c4;border-radius:3px;padding:0 1px}
+@media (max-width:1100px){.dc-cards{grid-template-columns:1fr 1fr}.dc-split{grid-template-columns:1fr}.dc-form{position:static;max-height:none}}
+@media (max-width:640px){.dc-cards{grid-template-columns:1fr}.dc-head h1{font-size:28px}.dc-grid{grid-template-columns:1fr}.dc-page{padding:22px 18px}.dc-sheetwrap{padding:12px}}
