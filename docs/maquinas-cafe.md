@@ -1,6 +1,6 @@
 # Máquinas de café (cuadratura del numeral)
 
-Módulo `src/modules/coffee/` (vista `coffee`, menú Tienda → Máquinas de café). Lo ven y lo anotan el administrador y la jefa de **tienda**; solo el administrador configura máquinas y corrige una lectura ya guardada.
+Módulo `src/modules/coffee/` (vista `coffee`, menú Tienda → Máquinas de café). Lo ve el administrador y la jefa de **tienda**; **solo el administrador anota el numeral**, configura máquinas y corrige lecturas (migración `20261018190000_coffee_reading_admin_only.sql`; antes también lo anotaba la jefa de tienda). La jefa de tienda sigue viendo la cuadratura y las lecturas, e importando las ventas del POS; en su pantalla el formulario del numeral se reemplaza por «El numeral lo anota el administrador».
 
 ## Estado
 
@@ -38,7 +38,7 @@ Tablas `coffee_machines`, `coffee_machine_codes`, `coffee_readings` y `coffee_sa
 
 - Los códigos de una máquina **no descuentan stock** ni necesitan un producto en Inventarios: la importación de ventas los guarda aparte en `coffee_sales`. Un código no puede pertenecer a dos máquinas.
 - Cada vaso suma 1 en el numeral (configurable por código: 1 a 20).
-- Una lectura por máquina, fecha y turno (se pueden anotar varios turnos el mismo día). La jefa no puede corregir una lectura guardada.
+- Una lectura por máquina, fecha y turno (se pueden anotar varios turnos el mismo día). La jefa de tienda no anota ni corrige lecturas (`coffee_save_reading` exige administrador).
 - Los productos de café creados en Tienda (por vaso) siguen activos pero la importación los ignora mientras su código pertenezca a una máquina.
 
 ## Verificación realizada
