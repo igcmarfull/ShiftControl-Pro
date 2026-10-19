@@ -71,18 +71,20 @@ const activeContract=()=>S.contract||{...Calc().DEFAULT_CONTRACT,fromDefault:tru
 const summary=()=>Calc().monthSummary(activeContract(),S.rows,{year:S.year,month:S.month,today:today()});
 
 /* -------------------------------------------------------------- gráficos */
+const compact=()=>window.innerWidth<640;
 const niceMax=(v,step)=>Math.max(step,Math.ceil(v/step)*step);
 // Paso del eje: el menor «redondo» que deja a lo más ~5 marcas.
 const niceStep=max=>[1000,2000,5000,10000,20000,50000,100000,200000,500000,1000000,2000000].find(step=>max/step<=5)||2000000;
 function chartCumulative(s){
-  const W=860,H=300,L=62,R=16,T=14,B=34,iw=W-L-R,ih=H-T-B;
+  const sm=compact();
+  const W=sm?340:860,H=sm?250:300,L=sm?50:62,R=sm?10:16,T=14,B=sm?30:34,iw=W-L-R,ih=H-T-B;
   const pivot=s.pivot||0;
   const top=Math.max(pivot*1.1,s.projected?s.projected.retail*1.05:0,s.totals.retail);
   const step=niceStep(top),ymax=niceMax(top,step);
   const X=d=>L+(d-1)/Math.max(1,s.dim-1)*iw,Y=v=>T+ih-(v/ymax)*ih;
   let g='';
   for(let t=0;t<=ymax;t+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-10}" y="${Y(t)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${t/1000} m³</text>`;
-  [1,5,10,15,20,25,s.dim].forEach(d=>{g+=`<text x="${X(d)}" y="${H-10}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`});
+  (sm?[1,10,20,s.dim]:[1,5,10,15,20,25,s.dim]).forEach(d=>{g+=`<text x="${X(d)}" y="${H-10}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`});
   let cum=0;const pts=S.rows.map(r=>{cum+=Number(r.retail_l)||0;return [Number(r.sold_on.slice(8,10)),cum]});
   let body='';
   if(pivot)body+=`<line x1="${L}" x2="${W-R}" y1="${Y(pivot)}" y2="${Y(pivot)}" stroke="#d9822b" stroke-width="2"/><text x="${L+8}" y="${Y(pivot)-8}" font-size="12" font-weight="700" fill="#d9822b">Pivote ${fmt(pivot/1000)} m³</text>`;
@@ -101,14 +103,15 @@ function chartCumulative(s){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Litros retail acumulados del mes contra el pivote del contrato">${g}${body}</svg>`;
 }
 function chartDaily(s){
-  const W=860,H=230,L=62,R=16,T=14,B=34,iw=W-L-R,ih=H-T-B;
+  const sm=compact();
+  const W=sm?340:860,H=sm?210:230,L=sm?50:62,R=sm?10:16,T=14,B=sm?30:34,iw=W-L-R,ih=H-T-B;
   const peak=Math.max(0,...S.rows.map(r=>(Number(r.retail_l)||0)+(Number(r.flota_l)||0)+(Number(r.kerosene_l)||0)));
   const step=niceStep(peak*1.08),ymax=niceMax(peak*1.08,step);
   const X=d=>L+(d-1)/Math.max(1,s.dim-1)*iw,Y=v=>T+ih-(v/ymax)*ih;
   const bw=Math.max(6,iw/s.dim*0.62);
   let g='';
   for(let t=0;t<=ymax;t+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-10}" y="${Y(t)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${t/1000} m³</text>`;
-  [1,5,10,15,20,25,s.dim].forEach(d=>{g+=`<text x="${X(d)}" y="${H-10}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`});
+  (sm?[1,10,20,s.dim]:[1,5,10,15,20,25,s.dim]).forEach(d=>{g+=`<text x="${X(d)}" y="${H-10}" font-size="11" text-anchor="middle" fill="var(--muted)">${d}</text>`});
   let bars='';
   S.rows.forEach(r=>{
     const d=Number(r.sold_on.slice(8,10)),x=X(d)-bw/2;
@@ -425,6 +428,8 @@ function init(){
       event.preventDefault();$('fuSave')?.click();
     }
   });
+  let lastCompact=compact();
+  window.addEventListener('resize',()=>{const c=compact();if(c!==lastCompact){lastCompact=c;if(section.classList.contains('active')&&S.status==='ready')render()}});
   let was=false;
   const sync=()=>{
     const active=section.classList.contains('active');
