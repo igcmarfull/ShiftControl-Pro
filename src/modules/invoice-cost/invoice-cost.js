@@ -31,14 +31,14 @@ function dropHtml(){
 }
 function kpisHtml(c,parsed){
   return `<div class="ifc-kpis">
-    <div class="ifc-k"><span>Neto de la factura</span><b>${money(c.net)}</b><small>suma de las líneas, ya con descuentos y recargo</small></div>
+    <div class="ifc-k"><span>Neto de la factura</span><b>${money(c.net)}</b><small>${c.freightTotal?'productos + flete, ya con descuentos':'suma de las líneas, ya con descuentos y recargo'}</small></div>
     <div class="ifc-k"><span>${parsed.extraBreakdown.length?`Impuesto adicional (${parsed.extraBreakdown.map(item=>`${item.rate}%`).join(' + ')})`:'Impuesto adicional'}</span><b>${money(c.extraTax)}</b><small>ILA o similar: es costo, no se recupera</small></div>
     <div class="ifc-k strong"><span>Costo real, sin IVA</span><b>${money(c.real)}</b><small>${c.net?`${pct(c.overPct)} sobre el neto`:''}</small></div>
     <div class="ifc-k muted"><span>IVA</span><b>${c.iva!=null?money(c.iva):'—'}</b><small>crédito fiscal: no es costo</small></div></div>`;
 }
 function tableHtml(c){
   const rows=c.lines.map(line=>`<div class="ifc-r">
-      <div class="ifc-p"><b>${esc(line.name)}</b><small>${esc(line.code)} · ${fmt(line.qty)} ${esc(line.unit)}${line.surcharge?` · recargo ${money(line.surcharge)}`:''}</small></div>
+      <div class="ifc-p"><b>${esc(line.name)}</b><small>${esc(line.code)} · ${fmt(line.qty)} ${esc(line.unit)}${line.surcharge?` · recargo ${money(line.surcharge)}`:''}${line.freight?` · flete repartido ${money(line.freight)}`:''}</small></div>
       <div class="ifc-n" data-l="Unid. por pack"><input type="number" min="1" step="1" inputmode="numeric" value="${line.pack}" data-ic-pack="${line.index}" aria-label="Unidades por pack de ${esc(line.name)}"></div>
       <div class="ifc-n" data-l="Neto línea">${money(line.amount)}</div>
       <div class="ifc-n" data-l="Costo por pack">${money(line.packCost)}</div>
@@ -51,13 +51,14 @@ function reconHtml(c,parsed){
   const diff=parsed.net!=null?c.linesSum-parsed.net:0;
   const ivaCalc=Math.round(c.net*0.19);
   return `<div class="ifc-rec"><h4>Conciliación con la factura</h4>
-    <div><span>Suma de las líneas</span><b>${money(c.linesSum)}</b></div>
+    <div><span>Suma de las líneas${c.freightTotal?' (productos + flete)':''}</span><b>${money(c.linesSum)}</b></div>
     <div><span>Monto neto de la factura</span><b>${money(c.net)}</b><em class="${diff?'bad':'ok'}">${diff?`diferencia ${money(diff)}`:'cuadra'}</em></div>
     <div><span>Impuesto adicional</span><b>${money(c.extraTax)}</b></div>
     <div><span>IVA 19% (crédito fiscal)</span><b>${money(c.iva!=null?c.iva:ivaCalc)}</b>${c.iva!=null&&c.iva!==ivaCalc?`<em class="bad">debería ser ${money(ivaCalc)}</em>`:''}</div>
     <div><span>Total de la factura</span><b>${c.total!=null?money(c.total):'—'}</b>${c.total!=null&&c.total!==c.net+c.extraTax+(c.iva||0)?`<em class="bad">neto + impuesto + IVA = ${money(c.net+c.extraTax+(c.iva||0))}</em>`:''}</div>
     <div class="tot"><span>Costo real de esta compra (sin IVA)</span><b>${money(c.real)}</b></div>
-    <div><span>Incluido en el neto: recargo / flete</span><b>${money(c.surchargeSum)}</b></div>
+    ${c.freightTotal?`<div><span>Incluido en el neto: flete facturado aparte (repartido según el neto de cada producto)</span><b>${money(c.freightTotal)}</b></div>`:''}
+    <div><span>Incluido en el neto: recargo de las líneas</span><b>${money(c.surchargeSum)}</b></div>
     <div><span>Incluido en el neto: descuentos aplicados</span><b>−${money(c.discountSum)}</b></div></div>`;
 }
 function render(){
@@ -73,7 +74,7 @@ function render(){
     <div class="ifc-bar"><div class="ifc-who"><b>${esc(parsed.supplierName||'Proveedor')}</b><small>${esc([parsed.rut,parsed.folio?`Factura Nº ${parsed.folio}`:'',parsed.issueDate?`emitida el ${dmy(parsed.issueDate)}`:'',S.fileName].filter(Boolean).join(' · '))}</small></div>
       <div class="ifc-acts"><button type="button" class="ifc-btn" data-ic="again">Subir otra factura</button><button type="button" class="ifc-btn pri" data-ic="excel"${S.busy?' disabled':''}>${S.busy?'Generando…':'Descargar Excel'}</button></div></div>
     ${warnings}${kpisHtml(c,parsed)}${tableHtml(c)}
-    <p class="ifc-note"><b>Cómo leerlo.</b> «Costo unidad sin ILA» es exacto: neto de la línea ÷ unidades (el neto ya trae descuentos y el recargo/flete). La factura trae el impuesto adicional solo como total al pie, sin decir a qué producto corresponde, así que el «costo con ILA» lo reparte en proporción al neto entre las líneas marcadas «Lleva ILA»: es una aproximación. Las unidades por pack salen del nombre (por ejemplo «x 6») y se pueden corregir.</p>
+    <p class="ifc-note"><b>Cómo leerlo.</b> «Costo unidad sin ILA» es exacto: neto de la línea ÷ unidades (el neto ya trae descuentos y el recargo; si la factura cobra el flete en una línea aparte, se reparte entre los productos según su neto). La factura trae el impuesto adicional solo como total al pie, sin decir a qué producto corresponde, así que el «costo con ILA» lo reparte en proporción al neto entre las líneas marcadas «Lleva ILA»: es una aproximación. Las unidades por pack salen del nombre (por ejemplo «x 6») y se pueden corregir.</p>
     ${reconHtml(c,parsed)}`;
 }
 
@@ -126,20 +127,20 @@ async function download(){
     const wb=new ExcelJS.Workbook();
     wb.creator='Prosercom · ShiftControl';
     const ws=wb.addWorksheet('Costo unitario',{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2}},views:[{showGridLines:false}]});
-    const widths=[11,40,8,10,9,13,14,14,13,15];
+    const widths=[13,40,8,10,9,13,13,14,14,13,15];
     widths.forEach((w,i)=>{ws.getColumn(i+1).width=w});
     try{
       const res=await fetch(LOGO_URL);
       if(res.ok){const id=wb.addImage({buffer:await res.arrayBuffer(),extension:'png'});ws.addImage(id,{tl:{col:0.1,row:0.1},ext:{width:62,height:44}})}
     }catch(_error){/* sin logo */}
-    ws.mergeCells('C1:J1');ws.mergeCells('C2:J2');ws.mergeCells('C3:J3');
+    ws.mergeCells('C1:K1');ws.mergeCells('C2:K2');ws.mergeCells('C3:K3');
     ws.getCell('C1').value='Prosercom · Operaciones';ws.getCell('C1').font={name:FONT,size:11,bold:true,color:{argb:GREY}};
     ws.getCell('C2').value=`Costo unitario · ${parsed.supplierName||'Factura'}${parsed.folio?` Nº ${parsed.folio}`:''}`;ws.getCell('C2').font={name:FONT,size:18,bold:true,color:{argb:BLUE}};
     ws.getCell('C3').value=`${parsed.issueDate?`Emitida el ${dmy(parsed.issueDate)} · `:''}Valores en pesos chilenos NETOS (sin IVA) · el costo con ILA es aproximado`;ws.getCell('C3').font={name:FONT,size:10.5,color:{argb:GREY}};
     ws.getRow(2).height=30;
-    for(let col=1;col<=10;col++)ws.getCell(3,col).border={bottom:{style:'medium',color:{argb:BLUE}}};
+    for(let col=1;col<=11;col++)ws.getCell(3,col).border={bottom:{style:'medium',color:{argb:BLUE}}};
 
-    const headers=['Código','Producto','Cant.','Unid. por pack','Unidades','Neto línea','Costo por pack (neto)','Costo unidad sin ILA','ILA asignado (aprox.)','Costo unidad con ILA (aprox.)'];
+    const headers=['Código','Producto','Cant.','Unid. por pack','Unidades','Neto línea','Flete aparte repartido','Costo por pack (neto)','Costo unidad sin ILA','ILA asignado (aprox.)','Costo unidad con ILA (aprox.)'];
     const hr=5;
     ws.getRow(hr).height=42;
     headers.forEach((text,i)=>{
@@ -151,25 +152,25 @@ async function download(){
     const first=hr+1,last=hr+c.lines.length;
     c.lines.forEach((line,index)=>{
       const r=first+index;
-      const values=[line.code,line.name,line.qty,line.pack,{formula:`C${r}*D${r}`},line.amount,{formula:`F${r}/C${r}`},{formula:`F${r}/E${r}`},line.tax,{formula:`(F${r}+I${r})/E${r}`}];
+      const values=[line.code,line.name,line.qty,line.pack,{formula:`C${r}*D${r}`},line.amount,line.freight,{formula:`(F${r}+G${r})/C${r}`},{formula:`(F${r}+G${r})/E${r}`},line.tax,{formula:`(F${r}+G${r}+J${r})/E${r}`}];
       values.forEach((value,i)=>{
         const cell=ws.getCell(r,i+1);cell.value=value;
-        cell.font={name:FONT,size:10,color:{argb:INK},bold:i===7||i===9};
+        cell.font={name:FONT,size:10,color:{argb:INK},bold:i===8||i===10};
         cell.border={bottom:{style:'thin',color:{argb:LINE}}};
         if(index%2)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:ZEBRA}};
-        if(i>=5)cell.numFmt=i===7||i===9?CLP1:CLP;
+        if(i>=5)cell.numFmt=i===8||i===10?CLP1:CLP;
         if(i>=2&&i<=4)cell.alignment={horizontal:'center'};
       });
     });
     const tr=last+1;
     ws.getCell(tr,2).value='Total';
-    [[6,`SUM(F${first}:F${last})`],[9,`SUM(I${first}:I${last})`]].forEach(([col,formula])=>{ws.getCell(tr,col).value={formula};ws.getCell(tr,col).numFmt=CLP});
-    for(let col=1;col<=10;col++){const cell=ws.getCell(tr,col);cell.font={name:FONT,size:10.5,bold:true,color:{argb:BLUE}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:SOFT}};cell.border={top:{style:'thin',color:{argb:BLUE}}}}
+    [[6,`SUM(F${first}:F${last})`],[7,`SUM(G${first}:G${last})`],[10,`SUM(J${first}:J${last})`]].forEach(([col,formula])=>{ws.getCell(tr,col).value={formula};ws.getCell(tr,col).numFmt=CLP});
+    for(let col=1;col<=11;col++){const cell=ws.getCell(tr,col);cell.font={name:FONT,size:10.5,bold:true,color:{argb:BLUE}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:SOFT}};cell.border={top:{style:'thin',color:{argb:BLUE}}}}
 
     let r=tr+2;
     ws.getCell(r,2).value='Conciliación con la factura';ws.getCell(r,2).font={name:FONT,size:12,bold:true,color:{argb:BLUE}};r++;
     const recon=[
-      ['Monto neto de la factura (suma de «Neto línea»)',{formula:`F${tr}`}],
+      ['Monto neto de la factura (productos + flete aparte)',{formula:`F${tr}+G${tr}`}],
       ['Impuesto adicional (ILA o similar)',c.extraTax],
       ['IVA 19% (crédito fiscal: NO es costo)',{formula:`ROUND(F${r}*0.19,0)`}],
       ['Total según la factura',{formula:`F${r}+F${r+1}+F${r+2}`}],
@@ -184,10 +185,10 @@ async function download(){
       for(let col=2;col<=6;col++)ws.getCell(row,col).border={bottom:{style:'thin',color:{argb:LINE}}};
     });
     r+=recon.length+1;
-    ws.mergeCells(r,2,r+2,10);
+    ws.mergeCells(r,2,r+2,11);
     [0,1,2].forEach(offset=>{ws.getRow(r+offset).height=24});
     const note=ws.getCell(r,2);
-    note.value='«Neto línea» = cantidad × precio − descuento + recargo (ya incluye el recargo/flete y es la base del IVA). El impuesto adicional solo viene como total al pie de la factura: aquí se reparte en proporción al neto entre las líneas marcadas, así que el total cuadra pero el valor por producto es una aproximación. El «Costo unidad sin ILA» es exacto.';
+    note.value='«Neto línea» = cantidad × precio − descuento + recargo (ya incluye el recargo y es la base del IVA). Si la factura cobra el flete en una línea aparte, aquí se reparte entre los productos según su neto. El impuesto adicional solo viene como total al pie de la factura: aquí se reparte en proporción al neto entre las líneas marcadas, así que el total cuadra pero el valor por producto es una aproximación. El «Costo unidad sin ILA» es exacto.';
     note.font={name:FONT,size:9.5,italic:true,color:{argb:GREY}};note.alignment={wrapText:true,vertical:'top'};
 
     const buffer=await wb.xlsx.writeBuffer();
