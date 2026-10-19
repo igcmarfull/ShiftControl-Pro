@@ -38,7 +38,7 @@ function kpisHtml(c,parsed){
 }
 function tableHtml(c){
   const rows=c.lines.map(line=>`<div class="ifc-r">
-      <div class="ifc-p"><b>${esc(line.name)}</b><small>${esc(line.code)} · ${fmt(line.qty)} ${esc(line.unit)}${line.surcharge?` · recargo ${money(line.surcharge)}`:''}${line.freight?` · flete repartido ${money(line.freight)}`:''}</small></div>
+      <div class="ifc-p"><b>${esc(line.name)}</b><small>${esc(line.code)} · ${fmt(line.qty)} ${esc(line.unit||'un.')}${line.surcharge?` · recargo ${money(line.surcharge)}`:''}${line.freight?` · flete repartido ${money(line.freight)}`:''}</small></div>
       <div class="ifc-n" data-l="Unid. por pack"><input type="number" min="1" step="1" inputmode="numeric" value="${line.pack}" data-ic-pack="${line.index}" aria-label="Unidades por pack de ${esc(line.name)}"></div>
       <div class="ifc-n" data-l="Neto línea">${money(line.amount)}</div>
       <div class="ifc-n" data-l="Costo por pack">${money(line.packCost)}</div>

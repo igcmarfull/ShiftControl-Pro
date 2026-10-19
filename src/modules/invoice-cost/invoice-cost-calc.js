@@ -5,6 +5,7 @@
 (function(root){
 'use strict';
 
+const CARTON=10;
 const num=text=>{
   const digits=String(text??'').replace(/[^\d]/g,'');
   return digits?parseInt(digits,10):null;
@@ -117,6 +118,14 @@ function parse(text){
     else if(unit||row.qty)out.lines.push(row);
   });
   if(!out.lines.length){out.warnings.push('No encontré líneas de detalle en esta factura.');return out}
+  // Facturas de tabaco: se vende por cartón de 10 cajetillas y el nombre solo trae «20s» (cigarrillos por cajetilla).
+  if(/tabaco|cigarr/i.test(text)){
+    const loose=out.lines.filter(line=>line.packSize===1);
+    if(loose.length){
+      loose.forEach(line=>{line.packSize=CARTON});
+      out.warnings.push(`Factura de tabaco: se asumió 1 cartón = ${CARTON} cajetillas en ${loose.length===out.lines.length?'todas las líneas':`${loose.length} líneas`}. Corrige «Unid. por pack» si algún producto viene distinto.`);
+    }
+  }
   out.freightTotal=out.freightLines.reduce((sum,line)=>sum+line.amount,0);
   out.linesSum=out.lines.reduce((sum,line)=>sum+line.amount,0)+out.freightTotal;
   out.ok=Boolean(out.folio&&out.net!=null&&out.lines.length);

@@ -5,7 +5,8 @@ Pantalla «Costo de facturas» (grupo Tienda, solo administrador). Se sube una f
 ## Comportamiento activo
 - **Lectura:** `InvoicePdf.extractText` (el mismo lector de PDF de «Facturas y compras») entrega el texto y `invoice-cost-calc.js` lo interpreta. Solo PDFs con texto, hasta 8 MB.
 - **Columnas del detalle:** se reconocen por los títulos de la factura (Precio, Descto., Recargo, Monto). Si el formato no se reconoce, la pantalla lo avisa y no inventa datos.
-- **Formatos de factura probados:** Embotelladora Andina (códigos numéricos, recargo por línea) y Comercial CCU (código con letras como `ET8712409`, tipo `INT1`, y el flete como una línea aparte). Los nombres con empaque tipo `4PCX6`, `6PFX4`, `24PF`, `12PC` y `x 12` se leen como unidades por pack.
+- **Formatos de factura probados:** Embotelladora Andina (códigos numéricos, recargo por línea), BAT Chile (tabaco, por cartón) y Comercial CCU (código con letras como `ET8712409`, tipo `INT1`, y el flete como una línea aparte). Los nombres con empaque tipo `4PCX6`, `6PFX4`, `24PF`, `12PC` y `x 12` se leen como unidades por pack.
+- **Tabaco (BAT):** la factura trae la columna «Un.» vacía y vende por cartón; el nombre solo dice «20s» (cigarrillos por cajetilla). Si el texto de la factura menciona tabaco o cigarrillos, las líneas sin pack explícito se toman como 1 cartón = 10 cajetillas (igual que el factor de cartón de Inventarios) y la pantalla lo avisa; se puede corregir por línea.
 - **Flete en línea aparte:** si la factura cobra «Flete de Mercaderías» (o despacho/transporte) como una línea sin unidad, no se trata como producto: se reparte entre los productos en proporción a su neto y entra en el costo por unidad. El impuesto adicional no se calcula sobre ese flete.
 - **Qué calcula**
   - Costo por pack y **costo por unidad sin ILA** = «Monto» de la línea ÷ unidades. El «Monto» ya trae descuentos y recargo (flete), así que es exacto.
@@ -25,4 +26,4 @@ Pantalla «Costo de facturas» (grupo Tienda, solo administrador). Se sube una f
 ## No incluido
 - No guarda facturas ni costos y no alimenta Inventarios.
 - No lee fotos ni escaneos.
-- Solo se probó con facturas de Andina y CCU (columnas Precio / Descto. / Recargo / Monto); otros proveedores pueden requerir ajustes del lector.
+- Solo se probó con facturas de Andina, CCU y BAT (columnas Precio / Descto. / Recargo / Monto); otros proveedores pueden requerir ajustes del lector.
