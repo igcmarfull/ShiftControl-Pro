@@ -153,6 +153,7 @@
   };
   A.savedet = function () {
     var h = FP.S.hero, g = function (id) { return document.getElementById(id).value; };
+    if (!h.av) h.av = UI.avResolve(h);
     h.nm = g('e_nm').trim() || h.nm; h.city = g('e_city').trim(); h.ht = U.clamp(+g('e_ht') || h.ht, 140, 210); h.kg = U.clamp(+g('e_kg') || h.kg, 35, 120); h.foot = g('e_foot');
     FP.S.pl[0].n = h.nm; UI.toast('Datos guardados.', 'ok'); UI.render();
   };
@@ -161,6 +162,11 @@
     UI.toast('Ahora juegas de ' + C.POS_NAME[d.p] + '.', 'ok'); UI.render();
   };
   A.guideoff = function () { FP.S.hero.flags.guideOff = 1; UI.render(); };
+  A.avset = function (d) {
+    var h = FP.S.hero;
+    if (d.k === 'rnd') h.av = UI.avRandom(); else { h.av = UI.avResolve(h); h.av[d.k] = +d.v; }
+    UI.render();
+  };
   A.setinstr = function (d) { FP.S.hero.instr = +d.v; UI.render(); };
   A.retire = function () { UI.confirm('¿Seguro que quieres retirarte? Esta decisión es definitiva y tu carrera terminará.', function () { FP.Events.retire(false); FP.Store.auto(true); UI.render(); UI.go('career'); }); };
 

@@ -67,7 +67,7 @@
     var ovr = C.ovrOf(at, o.pos);
     var pot = o.pot != null ? o.pot : FP.Youth.potFor(ovr, age);
     var h = {
-      nm: o.nm, nat: o.nat, city: o.city || '', b: bornW, ht: o.h, kg: o.kg, pos: o.pos, foot: o.foot, style: o.style,
+      nm: o.nm, nat: o.nat, city: o.city || '', b: bornW, ht: o.h, kg: o.kg, pos: o.pos, foot: o.foot, style: o.style, av: o.av || null,
       at: at, cap: Hero.makeCaps(at, o.pos, pot, o.style), pot: pot, ovr: Math.round(ovr),
       team: null, club: null, tk: 'free', contract: null, loan: null,
       fat: 10, mor: 65, form: 60, inj: null, susp: 0, yc: 0,

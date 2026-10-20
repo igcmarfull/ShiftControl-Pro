@@ -511,3 +511,13 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 
 /* ===== mercado vivo ===== */
 .intel { margin: .5rem 0 .2rem; padding: .5rem .7rem; background: var(--surface2); border-radius: 10px; display: grid; gap: .25rem; }
+
+/* editor de apariencia */
+.av-ed{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start}
+.av-pv{width:120px;height:120px;border-radius:50%;overflow:hidden;flex:none;border:2px solid var(--line,#2a3a44)}
+.av-pv svg{width:100%;height:100%;display:block}
+.av-ctl{flex:1;min-width:230px;display:grid;gap:.6rem}
+.av-row{display:grid;gap:.25rem}.av-row>span{font-size:.78rem;opacity:.7}
+.av-row>div{display:flex;gap:.35rem;flex-wrap:wrap}
+.av-sw{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.av-sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--acc,#28b59a)}

@@ -55,7 +55,7 @@
   // ---------- asistente de nueva carrera ----------
   var form = null;
   A['st-new'] = function () {
-    form = { nm: '', ln: '', nat: 'CHI', city: '', age: 13, ht: 165, kg: 55, pos: 'ST', foot: 'R', style: 'fisico', extra: {}, club: 'amat', amName: '', acId: null, res: null };
+    form = { nm: '', ln: '', nat: 'CHI', city: '', age: 13, ht: 165, kg: 55, pos: 'ST', foot: 'R', style: 'fisico', extra: {}, club: 'amat', amName: '', acId: null, res: null, av: UI.avRandom() };
     Start.wizard();
   };
   Start.wizard = function () {
@@ -74,7 +74,7 @@
       '<label class="f"><span>Pie dominante</span><select id="w_foot"><option value="R" ' + (f.foot === 'R' ? 'selected' : '') + '>Derecho</option><option value="L" ' + (f.foot === 'L' ? 'selected' : '') + '>Izquierdo</option><option value="A" ' + (f.foot === 'A' ? 'selected' : '') + '>Ambidiestro</option></select></label>' +
       '<label class="f"><span>Posición</span><select id="w_pos">' + C.POS.filter(function (p) { return p !== 'GK'; }).map(function (p) { return '<option value="' + p + '" ' + (f.pos === p ? 'selected' : '') + '>' + C.POS_ES[p] + ' · ' + esc(C.POS_NAME[p]) + '</option>'; }).join('') + '</select></label>' +
       '<label class="f"><span>Estilo de juego</span><select id="w_style">' + Object.keys(FP.Hero.STYLES).map(function (k) { return '<option value="' + k + '" ' + (f.style === k ? 'selected' : '') + '>' + esc(FP.Hero.STYLES[k].n) + '</option>'; }).join('') + '</select></label>' +
-      '</div></div>';
+      '</div><h4 style="margin:1rem 0 .4rem">Apariencia</h4>' + UI.avEditor({ nm: f.nm + ' ' + f.ln, nat: f.nat, b: 0, av: f.av }, 'st-av', ['#1f6f7a', '#e9eff4']) + '</div>';
     html += '<div class="card"><div class="hd"><h3>2 · Atributos iniciales</h3><span class="pill ' + (pts < 0 ? 'r' : 'g') + '">Puntos libres: ' + pts + '</span></div><p class="mut sm">El nivel base depende de tu edad, estilo y posición. Reparte hasta 30 puntos extra (máx. +12 por atributo). El potencial es oculto y se sortea en cada carrera.</p><div class="grid g4">' +
       C.ATTRS.map(function (a) { return '<label class="f"><span>' + C.ATTR_NAME[a] + ': <b id="w_v_' + a + '">+' + (f.extra[a] || 0) + '</b></span><input type="range" min="0" max="12" value="' + (f.extra[a] || 0) + '" data-live="st-attr" data-a="' + a + '"></label>'; }).join('') + '</div></div>';
     html += '<div class="card"><h3>3 · Club de inicio</h3><div class="btn-group"><button class="btn ' + (f.club === 'amat' ? 'pri' : '') + '" data-act="st-club" data-v="amat">Club amateur / escuela de fútbol</button><button class="btn ' + (f.club === 'acad' ? 'pri' : '') + '" data-act="st-club" data-v="acad">Inferiores de un club profesional</button></div>';
@@ -95,6 +95,7 @@
     if (g('w_age')) f.age = +g('w_age'); if (g('w_ht')) f.ht = +g('w_ht'); if (g('w_kg')) f.kg = +g('w_kg'); if (g('w_foot')) f.foot = g('w_foot'); if (g('w_pos')) f.pos = g('w_pos'); if (g('w_style')) f.style = g('w_style');
     if (g('w_res')) f.res = g('w_res'); if (g('w_am') != null) f.amName = g('w_am'); if (g('w_ac')) f.acName = g('w_ac');
   }
+  A['st-av'] = function (d) { readForm(); if (d.k === 'rnd') form.av = UI.avRandom(); else form.av[d.k] = +d.v; Start.wizard(); };
   A['st-club'] = function (d) { readForm(); form.club = d.v; Start.wizard(); };
   A['st-attr'] = function (d, t) {
     var v = +t.value, a = d.a, f = form, used = Object.keys(f.extra).reduce(function (s, k) { return s + (k === a ? 0 : f.extra[k]); }, 0);
@@ -113,7 +114,7 @@
     loading('Preparando el mundo…', 0.02);
     var seed = Math.floor(Math.random() * 2e9);
     FP.Game.buildWorld(seed, progress, Start.y0).then(function () {
-      var opts = { res: f.res, nm: nm, nat: f.nat, city: f.city, age: f.age, h: f.ht, kg: f.kg, pos: f.pos, foot: f.foot, style: f.style, extra: f.extra };
+      var opts = { res: f.res, nm: nm, nat: f.nat, city: f.city, age: f.age, h: f.ht, kg: f.kg, pos: f.pos, foot: f.foot, style: f.style, extra: f.extra, av: f.av };
       if (f.club === 'amat') opts.club = { kind: 'amat', name: f.amName.trim() };
       else { var c = FP.S.clubs.filter(function (c) { return c.nm === f.acName; })[0] || FP.S.clubs.filter(function (c) { return c.nm === 'Colo-Colo'; })[0]; opts.club = { kind: 'academy', id: c.id }; }
       FP.Game.startCareer(opts); UI.scr = 'home'; UI.mt = null;

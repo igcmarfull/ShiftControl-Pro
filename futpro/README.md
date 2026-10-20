@@ -187,3 +187,7 @@ Ver también Configuración → Datos y pendientes dentro del juego.
 ## Verificación realizada
 
 No hay suite de pruebas automatizada en este proyecto. Se comprobó manualmente con Node (motor, 24 temporadas de una carrera completa, empaquetado/restauración del estado) y con Chromium headless abriendo `index.html` por `file://` (16 pantallas, todas las competiciones activas, partida preconfigurada, nueva carrera, minuto a minuto, guardar/cargar, exportar/importar, vista móvil). Ver el historial de commits para el detalle.
+
+## Avatar editable
+
+El avatar ya no es solo aleatorio: se puede elegir tono de piel (6), color de pelo (7), peinado (corto, fade, rizado, largo lateral, melena, rapado, calvo) y barba (ninguna, corta, completa, bigote). Se elige al crear la carrera (paso 1, con vista previa) y se cambia luego en **Mi jugador → Gestión → Apariencia**; "Aleatorio" sortea uno nuevo. Se guarda en `hero.av`; las carreras antiguas conservan su aspecto sorteado hasta que lo cambies.

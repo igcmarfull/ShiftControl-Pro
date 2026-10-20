@@ -169,21 +169,55 @@
   var SKIN = ['#f3cdae', '#e6b48f', '#d19a73', '#b27850', '#8a5a3b', '#63402a'], HAIR = ['#14100c', '#2a1b10', '#4a2f1b', '#7a5230', '#b58a4a', '#d8c07a', '#8d8d8d'];
   UI.avatar = function (h, cls, colors) {
     var seed = U.hash(h.nm, h.nat, h.b), r = U.mulberry(seed);
-    var skin = SKIN[Math.floor(r() * SKIN.length)], hair = HAIR[Math.floor(r() * HAIR.length)], style = Math.floor(r() * 5);
+    var skin = SKIN[Math.floor(r() * SKIN.length)], hair = HAIR[Math.floor(r() * HAIR.length)], style = Math.floor(r() * 5), beard = 0, av = h.av;
+    if (av) {
+      if (av.skin != null && SKIN[av.skin]) skin = SKIN[av.skin];
+      if (av.hair != null && HAIR[av.hair]) hair = HAIR[av.hair];
+      if (av.style != null && av.style >= 0 && av.style <= 6) style = av.style;
+      beard = av.beard || 0;
+    }
     var c = colors || UI.heroColors(), id = 'av' + (seed % 99999);
     var skinD = skin, hairS = {
       0: '<path d="M30 42C27 22 41 13 50 13c10 0 23 9 20 29-4-9-11-13-20-13s-16 4-20 13z" fill="' + hair + '"/>',
       1: '<path d="M32 40c0-14 9-21 18-21s18 7 18 21c-4-7-10-10-18-10s-14 3-18 10z" fill="' + hair + '"/>',
       2: '<g fill="' + hair + '"><circle cx="34" cy="30" r="9"/><circle cx="45" cy="22" r="10"/><circle cx="57" cy="22" r="10"/><circle cx="67" cy="31" r="9"/><circle cx="50" cy="30" r="12"/></g>',
       3: '<path d="M28 44C24 20 43 11 54 13c14 3 21 16 18 31-3-10-10-16-22-16-9 0-17 5-22 16z" fill="' + hair + '"/><path d="M30 38c8-4 17-8 26-9-6 4-14 7-26 9z" fill="' + hair + '"/>',
-      4: '<path d="M28 46C23 20 41 10 51 10c12 0 26 9 21 36-1 6-3 12-5 14l-3-18c-4-6-10-9-16-9s-12 3-16 9l-3 18c-2-2-4-8-1-14z" fill="' + hair + '"/>'
+      4: '<path d="M28 46C23 20 41 10 51 10c12 0 26 9 21 36-1 6-3 12-5 14l-3-18c-4-6-10-9-16-9s-12 3-16 9l-3 18c-2-2-4-8-1-14z" fill="' + hair + '"/>',
+      5: '<path d="M31 38c1-13 9-19 19-19s18 6 19 19c-5-6-11-9-19-9s-14 3-19 9z" fill="' + hair + '" opacity=".55"/>',
+      6: ''
     }[style];
+    var bd = '<path d="M31 46c0 14 8 22 19 22s19-8 19-22c-3 6-7 8-11 8h-16c-4 0-8-2-11-8z" fill="' + hair + '" opacity="BO"/>';
+    var beardS = [
+      '',
+      bd.replace('BO', '.35'),
+      '<path d="M30 44c0 18 9 27 20 27s20-9 20-27c-3 6-6 9-10 9h-20c-4 0-7-3-10-9z" fill="' + hair + '"/>',
+      '<path d="M41 52q9-4 18 0q-9 3-18 0z" fill="' + hair + '"/>'
+    ][beard] || '';
     return '<svg viewBox="0 0 100 100" role="img" aria-label="Avatar de ' + esc(h.nm) + '"><defs><linearGradient id="bg' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + c[0] + '" stop-opacity=".95"/><stop offset="1" stop-color="#0c1418"/></linearGradient><radialGradient id="sh' + id + '" cx=".5" cy=".4" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>' +
       '<rect width="100" height="100" fill="url(#bg' + id + ')"/><rect width="100" height="100" fill="url(#sh' + id + ')"/>' +
       '<path d="M8 100c2-20 16-27 31-30h22c15 3 29 10 31 30z" fill="' + c[0] + '"/><path d="M8 100c2-20 16-27 31-30h22c15 3 29 10 31 30z" fill="rgba(0,0,0,.18)"/><path d="M39 70l11 14 11-14z" fill="' + c[1] + '"/>' +
       '<rect x="43" y="56" width="14" height="18" rx="6" fill="' + skinD + '"/><rect x="43" y="56" width="14" height="8" fill="rgba(0,0,0,.14)"/>' +
-      '<ellipse cx="50" cy="42" rx="19" ry="22" fill="' + skin + '"/><ellipse cx="31" cy="44" rx="3.2" ry="5" fill="' + skin + '"/><ellipse cx="69" cy="44" rx="3.2" ry="5" fill="' + skin + '"/>' + hairS +
+      '<ellipse cx="50" cy="42" rx="19" ry="22" fill="' + skin + '"/><ellipse cx="31" cy="44" rx="3.2" ry="5" fill="' + skin + '"/><ellipse cx="69" cy="44" rx="3.2" ry="5" fill="' + skin + '"/>' + hairS + beardS +
       '<ellipse cx="43" cy="44" rx="1.9" ry="2.3" fill="#1a1410"/><ellipse cx="57" cy="44" rx="1.9" ry="2.3" fill="#1a1410"/><path d="M39 39.5q4-2.4 8 0M53 39.5q4-2.4 8 0" stroke="rgba(20,14,10,.55)" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M46 56q4 2.6 8 0" stroke="rgba(60,25,15,.6)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
+  };
+  // valores efectivos del avatar (sorteo por semilla + ajustes del jugador)
+  UI.avResolve = function (h) {
+    var r = U.mulberry(U.hash(h.nm, h.nat, h.b)), o = { skin: Math.floor(r() * SKIN.length), hair: Math.floor(r() * HAIR.length), style: Math.floor(r() * 5), beard: 0 }, a = h.av || {};
+    ['skin', 'hair', 'style', 'beard'].forEach(function (k) { if (a[k] != null) o[k] = a[k]; });
+    return o;
+  };
+  UI.avRandom = function () { return { skin: Math.floor(Math.random() * SKIN.length), hair: Math.floor(Math.random() * HAIR.length), style: Math.floor(Math.random() * 7), beard: Math.random() < .25 ? 1 + Math.floor(Math.random() * 3) : 0 }; };
+  // editor de apariencia: act = acción que recibe data-k / data-v
+  UI.avEditor = function (h, act, colors) {
+    var c = UI.avResolve(h), st = ['Corto', 'Fade', 'Rizado', 'Largo lateral', 'Melena', 'Rapado', 'Calvo'], bd = ['Sin barba', 'Barba corta', 'Barba completa', 'Bigote'];
+    function sw(k, arr) { return arr.map(function (col, i) { return '<button type="button" class="av-sw' + (c[k] === i ? ' on' : '') + '" style="background:' + col + '" data-act="' + act + '" data-k="' + k + '" data-v="' + i + '" aria-label="' + k + ' ' + (i + 1) + '"></button>'; }).join(''); }
+    function ch(k, arr) { return arr.map(function (n, i) { return '<button type="button" class="btn sm' + (c[k] === i ? ' pri' : '') + '" data-act="' + act + '" data-k="' + k + '" data-v="' + i + '">' + n + '</button>'; }).join(''); }
+    return '<div class="av-ed"><div class="av-pv">' + UI.avatar(h, '', colors) + '</div><div class="av-ctl">' +
+      '<div class="av-row"><span>Tono de piel</span><div>' + sw('skin', SKIN) + '</div></div>' +
+      '<div class="av-row"><span>Color de pelo</span><div>' + sw('hair', HAIR) + '</div></div>' +
+      '<div class="av-row"><span>Peinado</span><div class="btn-group">' + ch('style', st) + '</div></div>' +
+      '<div class="av-row"><span>Barba</span><div class="btn-group">' + ch('beard', bd) + '</div></div>' +
+      '<div class="av-row"><button type="button" class="btn sm" data-act="' + act + '" data-k="rnd">Aleatorio</button></div></div></div>';
   };
   UI.heroColors = function () {
     var h = FP.S.hero, nm = h.club != null ? C.tname(h.club) : (h.team != null ? C.tname(h.team) : null);
