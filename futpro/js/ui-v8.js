@@ -81,12 +81,33 @@
     }
     return html;
   }
+  function protTab(p) {
+    var S = FP.S, h = S.hero, M = FP.Mentor, pr = M.get(), html = UI.decCards(['protegido']);
+    if (!h.retired) return html + '<div class="card"><p class="mut">Disponible cuando te retires: podrás formar a tu hijo o apadrinar a una promesa.</p></div>';
+    if (!pr) {
+      var cands = M.candidates();
+      html += '<div class="grid g2"><div class="card"><div class="hd"><h3>' + I('user') + 'Tu hijo</h3></div><p class="mut sm">Un hijo con tu apellido empieza a jugar a los 12 años. Hereda parte de tu nivel y de tu posición; tú decides cómo lo acompañas.</p>' + (M.canSon() ? '<button class="btn pri" data-act="mtson">Formar a mi hijo</button>' : '<p class="mut sm">Ya tuviste esta experiencia.</p>') + '</div>' +
+        '<div class="card"><div class="hd"><h3>' + I('star') + 'Apadrinar a una promesa</h3></div>' + (cands.length ? cands.map(function (q) { return '<div class="row sp" style="padding:.35rem 0"><span><b>' + esc(q.n) + '</b> <span class="mut sm">' + C.POS_ES[q.p] + ' · ' + C.age(q) + ' años · nivel ' + q.o + '</span></span><button class="btn sm" data-act="mtadopt" data-id="' + q.i + '">Apadrinar</button></div>'; }).join('') : '<p class="mut sm">No hay promesas disponibles ahora.</p>') + '</div></div>';
+      var hist = p.protHist || []; if (hist.length) html += '<div class="card"><div class="hd"><h3>' + I('history') + 'Protegidos anteriores</h3></div>' + hist.map(function (x) { var q = S.pl[x.pid]; return '<div class="row sp sm"><span>' + (q ? esc(q.n) : '—') + '</span><span class="mut">nivel máximo ' + x.max + '</span></div>'; }).join('') + '</div>';
+      return html;
+    }
+    var q = M.player(); if (!q) return html;
+    var age = C.age(q), est = [Math.max(q.o, Math.round(q.pt - 6)), Math.min(99, Math.round(q.pt + 6))];
+    html += '<div class="grid g2"><div class="card"><div class="hd"><h3>' + I('user') + esc(q.n) + '</h3>' + (q.son ? pill('Tu hijo', 'g') : pill('Apadrinado', 'b')) + '</div><div class="terms" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"><div><span>Edad</span><b>' + age + '</b></div><div><span>Posición</span><b>' + C.POS_ES[q.p] + '</b></div><div><span>Nivel</span><b>' + q.o + '</b></div><div><span>Potencial est.</span><b>' + est[0] + '–' + est[1] + '</b></div><div><span>Club</span><b>' + (q.c >= 0 ? esc(C.tname(q.c)) : 'Reserva nacional') + '</b></div></div><div class="mut sm" style="margin-top:.6rem">Vínculo contigo</div>' + bar(pr.bond, pr.bond < 30 ? 'r' : pr.bond < 55 ? 'y' : '') + '</div>' +
+      '<div class="card"><div class="hd"><h3>' + I('train') + 'Plan de formación</h3></div>' + Object.keys(M.PLANS).map(function (k) { return '<div class="card opt ' + (pr.plan === k ? 'sel' : '') + '" style="margin:0 0 .5rem" data-act="mtplan" data-k="' + k + '"><b>' + esc(M.PLANS[k].nm) + '</b><div class="mut sm">' + esc(M.PLANS[k].d) + '</div></div>'; }).join('') + '<button class="btn sm" data-act="mtleave">Dejar de acompañarlo</button></div></div>';
+    if (pr.hist.length) html += '<div class="card"><div class="hd"><h3>' + I('history') + 'Su camino</h3></div>' + pr.hist.slice().reverse().map(function (x) { return '<div class="row sp sm"><span>' + x.y + ' · ' + x.age + ' años' + (x.club != null ? ' · ' + esc(C.tname(x.club)) : '') + '</span><b>' + x.o + '</b></div>'; }).join('') + '</div>';
+    return html;
+  }
+  A.mtson = function () { var q = FP.Mentor.createSon(); UI.toast('Empiezas a formar a ' + esc(q.n) + '.', 'ok'); UI.render(); };
+  A.mtadopt = function (d) { var r = FP.Mentor.adopt(+d.id); UI.toast(esc(r.msg), r.ok ? 'ok' : 'warn'); UI.render(); };
+  A.mtplan = function (d) { var r = FP.Mentor.setPlan(d.k); UI.toast(esc(r.msg), r.ok ? 'ok' : 'warn'); UI.render(); };
+  A.mtleave = function () { UI.confirm('¿Dejar de acompañar a tu protegido? Seguirá su carrera, pero sin tu guía.', function () { FP.Mentor.release(); UI.render(); }); };
   SC.post = function () {
     var S = FP.S, h = S.hero, p = P.ensure(), tab = UI.tab.post || 'legacy';
-    var html = hdr('medal', 'Después del fútbol', h.retired ? 'Tu legado y lo que viene' : 'Tu legado proyectado y los caminos posteriores', seg('post', [['legacy', 'Legado', 'medal'], ['path', 'Qué haces después', 'target']], tab) + (h.retired ? '<div class="btn-group"><button class="btn" data-act="postadv" data-w="4">' + I('fwd') + '4 semanas</button><button class="btn pri" data-act="postadv" data-w="52">' + I('fwd') + '1 año</button></div>' : ''));
+    var html = hdr('medal', 'Después del fútbol', h.retired ? 'Tu legado y lo que viene' : 'Tu legado proyectado y los caminos posteriores', seg('post', [['legacy', 'Legado', 'medal'], ['path', 'Qué haces después', 'target'], ['prot', 'Protegido', 'star']], tab) + (h.retired ? '<div class="btn-group"><button class="btn" data-act="postadv" data-w="4">' + I('fwd') + '4 semanas</button><button class="btn pri" data-act="postadv" data-w="52">' + I('fwd') + '1 año</button></div>' : ''));
     if (!h.retired) html += '<div class="notice">Todavía estás en actividad. Cuando te retires podrás despedirte con un homenaje y elegir cómo seguir: entrenador, comentarista o representante. Esta es una proyección con tu carrera hasta hoy.</div>';
     if (tab === 'path' && !h.retired) return html + '<div class="card"><p class="mut">Disponible cuando te retires.</p></div>';
-    return html + (tab === 'path' ? pathTab(p) : legacyTab(p));
+    return html + (tab === 'path' ? pathTab(p) : tab === 'prot' ? protTab(p) : legacyTab(p));
   };
   // avanza semanas del mundo; se detiene cuando aparece una decisión nueva para que no caduque sin verla
   A.postadv = function (d) {

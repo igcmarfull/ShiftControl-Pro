@@ -67,7 +67,7 @@
     for (var i = 1; i < S.pl.length; i++) {
       var p = S.pl[i]; if (!p || p.c !== -3) continue;
       var age = C.age(p);
-      if (age >= 24 || (age >= 18 && R() < 0.10)) { S.pl[i] = 0; gone++; continue; }
+      if (!p.prot && (age >= 24 || (age >= 18 && R() < 0.10))) { S.pl[i] = 0; gone++; continue; }      // los protegidos del jugador retirado no se descartan
       Sim.progressPlayer(p, age);
       p.pm = Math.round(U.clamp(p.pm + U.norm() * 0.08, 0.2, 1) * 100) / 100;
     }
