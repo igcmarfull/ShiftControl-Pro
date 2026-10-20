@@ -26,7 +26,7 @@
   };
   Med.TYPES = T;
   // Frecuencia base de lesiones del jugador: calibrada para ≈ 2 por temporada y una grave cada ~3 temporadas (referencia: estudios de la UEFA sobre clubes de élite, ver README).
-  Med.BASE = 1.7;
+  Med.BASE = 2.1;
   var CAUSE_W = {
     match: { golpe: 30, muscular: 24, ligamento: 26, hueso: 5, sobrecarga: 8 },
     train: { muscular: 40, sobrecarga: 34, ligamento: 14, golpe: 5, hueso: 2 }
