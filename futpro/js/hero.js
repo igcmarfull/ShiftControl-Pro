@@ -127,7 +127,7 @@
   // ≈ 85 % del techo a los 13, 95 % a los 17, 99 % a los 21 y el 100 % hacia los 24-25 (picos físicos medidos ≈ 25-26 años; ver README).
   var CLOSE = { 12: 0.22, 13: 0.22, 14: 0.22, 15: 0.25, 16: 0.27, 17: 0.29, 18: 0.31, 19: 0.34, 20: 0.37, 21: 0.45, 22: 0.6, 23: 0.6, 24: 0.5, 25: 0.35, 26: 0.25, 27: 0.15, 28: 0.08 };
   Hero.closeRate = function (age) { return age < 12 ? CLOSE[12] : age > 28 ? 0 : CLOSE[age]; };
-  Hero.GROWTH_K = 3.2;       // en cada semana solo se entrenan ~5 de los 16 atributos: se compensa para que la tasa anual sea la de CLOSE
+  Hero.GROWTH_K = 2.8;       // en cada semana solo se entrenan ~5 de los 16 atributos: se compensa para que la tasa anual sea la de CLOSE
   Hero.ageRate = function (age) { return age < 12 ? 1 : age > 28 ? 0 : AGE_RATE[age]; };
   Hero.facility = function () {
     var h = FP.S.hero;
@@ -481,7 +481,7 @@
     var oppSt = C.strOf(prep.opp), d = oppSt - h.ovr;
     var lvl = U.clamp(1 + d * 0.03, 0.5, 1.6);
     var q = U.clamp((hm.rating - 5) / 2.5, 0.3, 1.6);
-    var amt = 0.09 * (hm.min / 90) * lvl * q * Hero.ageRate(age) * 1.0;
+    var amt = 0.06 * (hm.min / 90) * lvl * q * (Hero.closeRate(age) / 0.25);
     var attrs = Hero.focusAttrs('pos');
     attrs.forEach(function (a) { var gap = h.cap[a] - h.at[a]; if (gap > 0) h.at[a] = Math.min(h.cap[a], h.at[a] + amt * Math.min(gap, 20) / 12); });
     if (hm.g) h.at.fin = Math.min(h.cap.fin, h.at.fin + 0.03 * Hero.ageRate(age));
