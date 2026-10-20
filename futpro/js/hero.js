@@ -123,6 +123,11 @@
 
   // ---------- entrenamiento ----------
   var AGE_RATE = { 12: 1.0, 13: 1.05, 14: 1.15, 15: 1.2, 16: 1.15, 17: 1.05, 18: 0.95, 19: 0.85, 20: 0.75, 21: 0.65, 22: 0.55, 23: 0.48, 24: 0.4, 25: 0.32, 26: 0.25, 27: 0.18, 28: 0.1 };
+  // Fracción de la brecha restante (techo − nivel actual) que se cierra por año, según la edad. Calibrada para que el nivel alcance
+  // ≈ 85 % del techo a los 13, 95 % a los 17, 99 % a los 21 y el 100 % hacia los 24-25 (picos físicos medidos ≈ 25-26 años; ver README).
+  var CLOSE = { 12: 0.22, 13: 0.22, 14: 0.22, 15: 0.25, 16: 0.27, 17: 0.29, 18: 0.31, 19: 0.34, 20: 0.37, 21: 0.45, 22: 0.6, 23: 0.6, 24: 0.5, 25: 0.35, 26: 0.25, 27: 0.15, 28: 0.08 };
+  Hero.closeRate = function (age) { return age < 12 ? CLOSE[12] : age > 28 ? 0 : CLOSE[age]; };
+  Hero.GROWTH_K = 3.2;       // en cada semana solo se entrenan ~5 de los 16 atributos: se compensa para que la tasa anual sea la de CLOSE
   Hero.ageRate = function (age) { return age < 12 ? 1 : age > 28 ? 0 : AGE_RATE[age]; };
   Hero.facility = function () {
     var h = FP.S.hero;
@@ -159,7 +164,7 @@
       var ar = Hero.ageRate(age);
       attrs.forEach(function (a) {
         var gap = h.cap[a] - h.at[a]; if (gap <= 0) return;
-        var g = 0.14 * ar * mult * fac * coach * fatM * Math.min(1.7, 0.3 + Math.min(gap, 20) / 12) * (0.85 + R() * 0.3);
+        var g = gap * (Hero.closeRate(age) / 52) * Hero.GROWTH_K * mult * fac * coach * fatM * (0.85 + R() * 0.3);
         h.at[a] = Math.min(h.cap[a], h.at[a] + g); res.gains[a] = g;
       });
       h.fat = U.clamp(h.fat + (intn === 1 ? -2 : intn === 2 ? 6 : 14) - (8 + h.at.res / 14), 0, 100);
