@@ -52,6 +52,9 @@
     }).filter(Boolean);
     var best = { rate: null, goals: null }, br = 0, bg = 0;
     list.forEach(function (s) { var t = ST.sum(s.rows); if (t.p >= 10 && t.rn && t.rs / t.rn > br && !ST.isNT(s.rows[0].k)) { br = t.rs / t.rn; best.rate = s; } var g = s.tot.g; if (g > bg) { bg = g; best.goals = s; } });
+    var mode = UI.tab.stv || 'cards';
+    if (UI.stViewBar) html += UI.stViewBar(mode);
+    if (list.length && mode !== 'cards' && UI.stViews && UI.stViews[mode]) return html + UI.stViews[mode](list, best);
     html += list.length ? list.map(function (s) { return seasonCard(s, best); }).join('') : '<div class="card"><p class="mut">Sin registros con este filtro.</p></div>';
     return html;
   }

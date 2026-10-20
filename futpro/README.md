@@ -208,3 +208,7 @@ La pantalla **Redes** ahora tiene cuatro pestañas: Feed, Marca, Comunidad y Pan
 - **Panel:** seguidores en el tiempo, mejor publicación, polémicas y marca.
 
 Todo se guarda en `hero.rd`; tests: `node tests/redes.js`. Calibración pendiente: los ingresos de marca no están contrastados con datos reales.
+
+## Estadísticas: vistas de "Por temporada" (`js/ui-v15.js`)
+
+Selector **Vista** bajo los filtros: Tarjetas (la original), Tabla (una fila por temporada y club, con barras y total de carrera), Línea de tiempo (una tarjeta por temporada con sus cifras y competiciones) y Panorama (gráfico de goles, asistencias y nota por año + resumen por club). Respetan los filtros de clubes/selecciones/amistosos.
