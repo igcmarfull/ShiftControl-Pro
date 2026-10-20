@@ -144,10 +144,14 @@
     var fn = UI.screens[UI.scr] || UI.screens.home;
     var m = document.getElementById('main');
     try { m.innerHTML = fn(); } catch (e) { m.innerHTML = '<div class="card"><h3>Error al mostrar la pantalla</h3><pre class="bad">' + esc(e.stack || e.message) + '</pre></div>'; console.error(e); }
+    UI.fitBar();
     if (UI.after && UI.after[UI.scr]) UI.after[UI.scr]();
     if (UI.scr === 'news') { var h = S.hero; S.cfg.seenMsg = h.inbox.length ? h.inbox[0].id : 0; }
   };
   UI.after = {};
+  // la altura real de la barra superior (cambia si se ajusta en pantallas angostas)
+  UI.fitBar = function () { var t = document.querySelector('.topbar'); if (t) document.documentElement.style.setProperty('--tb', Math.round(t.getBoundingClientRect().height) + 'px'); };
+  window.addEventListener('resize', function () { UI.fitBar(); });
 
   // ---------- avance del tiempo ----------
   UI.overlay = function (msg) {
