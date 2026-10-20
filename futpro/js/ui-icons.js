@@ -173,7 +173,7 @@
     if (av) {
       if (av.skin != null && SKIN[av.skin]) skin = SKIN[av.skin];
       if (av.hair != null && HAIR[av.hair]) hair = HAIR[av.hair];
-      if (av.style != null && av.style >= 0 && av.style <= 6) style = av.style;
+      if (av.style != null && av.style >= 0 && av.style <= 15) style = av.style;
       beard = av.beard || 0;
     }
     var c = colors || UI.heroColors(), id = 'av' + (seed % 99999);
@@ -184,7 +184,16 @@
       3: '<path d="M28 44C24 20 43 11 54 13c14 3 21 16 18 31-3-10-10-16-22-16-9 0-17 5-22 16z" fill="' + hair + '"/><path d="M30 38c8-4 17-8 26-9-6 4-14 7-26 9z" fill="' + hair + '"/>',
       4: '<path d="M28 46C23 20 41 10 51 10c12 0 26 9 21 36-1 6-3 12-5 14l-3-18c-4-6-10-9-16-9s-12 3-16 9l-3 18c-2-2-4-8-1-14z" fill="' + hair + '"/>',
       5: '<path d="M31 38c1-13 9-19 19-19s18 6 19 19c-5-6-11-9-19-9s-14 3-19 9z" fill="' + hair + '" opacity=".55"/>',
-      6: ''
+      6: '',
+      7: '<g fill="' + hair + '"><circle cx="50" cy="20" r="17"/><circle cx="31" cy="30" r="9"/><circle cx="69" cy="30" r="9"/><circle cx="37" cy="17" r="12"/><circle cx="63" cy="17" r="12"/></g>',
+      8: '<path d="M44 27C43 9 47 3 50 3s7 6 6 24z" fill="' + hair + '"/><path d="M31 38c1-13 9-19 19-19s18 6 19 19c-5-6-11-9-19-9s-14 3-19 9z" fill="' + hair + '" opacity=".45"/>',
+      9: '<path d="M30 42C27 22 41 13 50 13c10 0 23 9 20 29-4-9-11-13-20-13s-16 4-20 13z" fill="' + hair + '"/><path d="M31 32v26M36 28v24M64 28v24M69 32v26" stroke="' + hair + '" stroke-width="4.2" stroke-linecap="round" fill="none"/>',
+      10: '<path d="M32 40c0-14 9-21 18-21s18 7 18 21c-4-7-10-10-18-10s-14 3-18 10z" fill="' + hair + '"/><circle cx="50" cy="12" r="7.5" fill="' + hair + '"/>',
+      11: '<path d="M30 42c-3-18 8-27 20-27s23 9 20 27c-2-7-5-12-8-15-8 3-24 3-24 3-5 3-6 8-8 12z" fill="' + hair + '"/><path d="M38 22q12-6 24 0" stroke="rgba(255,255,255,.18)" stroke-width="1.6" fill="none"/>',
+      12: '<path d="M29 44C26 22 38 13 50 13s24 9 21 31c-1-8-2-13-4-15-10 5-24 5-34 0-2 2-3 7-4 15z" fill="' + hair + '"/>',
+      13: '<path d="M30 42C27 22 41 13 50 13c10 0 23 9 20 29-4-9-11-13-20-13s-16 4-20 13z" fill="' + hair + '"/><path d="M68 28c11 2 15 15 8 31-1-9-3-13-8-17z" fill="' + hair + '"/>',
+      14: '<path d="M32 40c0-14 9-21 18-21s18 7 18 21c-4-7-10-10-18-10s-14 3-18 10z" fill="' + hair + '"/><path d="M30 40c-5 8-5 20 0 27 2-8 3-17 3-25zM70 40c5 8 5 20 0 27-2-8-3-17-3-25z" fill="' + hair + '"/>',
+      15: '<path d="M32 38c1-10 8-16 18-16s17 6 18 16c-3-5-6-8-10-9l-3 5-5-6-5 6-3-5c-4 1-7 4-10 9z" fill="' + hair + '"/>'
     }[style];
     var bd = '<path d="M31 46c0 14 8 22 19 22s19-8 19-22c-3 6-7 8-11 8h-16c-4 0-8-2-11-8z" fill="' + hair + '" opacity="BO"/>';
     var beardS = [
@@ -206,10 +215,10 @@
     ['skin', 'hair', 'style', 'beard'].forEach(function (k) { if (a[k] != null) o[k] = a[k]; });
     return o;
   };
-  UI.avRandom = function () { return { skin: Math.floor(Math.random() * SKIN.length), hair: Math.floor(Math.random() * HAIR.length), style: Math.floor(Math.random() * 7), beard: Math.random() < .25 ? 1 + Math.floor(Math.random() * 3) : 0 }; };
+  UI.avRandom = function () { return { skin: Math.floor(Math.random() * SKIN.length), hair: Math.floor(Math.random() * HAIR.length), style: Math.floor(Math.random() * 16), beard: Math.random() < .25 ? 1 + Math.floor(Math.random() * 3) : 0 }; };
   // editor de apariencia: act = acción que recibe data-k / data-v
   UI.avEditor = function (h, act, colors) {
-    var c = UI.avResolve(h), st = ['Corto', 'Fade', 'Rizado', 'Largo lateral', 'Melena', 'Rapado', 'Calvo'], bd = ['Sin barba', 'Barba corta', 'Barba completa', 'Bigote'];
+    var c = UI.avResolve(h), st = ['Corto', 'Fade', 'Rizado', 'Largo lateral', 'Melena', 'Rapado', 'Calvo', 'Afro', 'Mohicano', 'Trenzas', 'Moño', 'Engominado', 'Flequillo', 'Coleta', 'Mullet', 'Entradas'], bd = ['Sin barba', 'Barba corta', 'Barba completa', 'Bigote'];
     function sw(k, arr) { return arr.map(function (col, i) { return '<button type="button" class="av-sw' + (c[k] === i ? ' on' : '') + '" style="background:' + col + '" data-act="' + act + '" data-k="' + k + '" data-v="' + i + '" aria-label="' + k + ' ' + (i + 1) + '"></button>'; }).join(''); }
     function ch(k, arr) { return arr.map(function (n, i) { return '<button type="button" class="btn sm' + (c[k] === i ? ' pri' : '') + '" data-act="' + act + '" data-k="' + k + '" data-v="' + i + '">' + n + '</button>'; }).join(''); }
     return '<div class="av-ed"><div class="av-pv">' + UI.avatar(h, '', colors) + '</div><div class="av-ctl">' +
