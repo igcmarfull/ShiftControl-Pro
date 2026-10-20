@@ -14,6 +14,12 @@
   };
   T.eligible = function () { var h = FP.S.hero; return !!h && !h.retired && (h.tk === 'free' || h.tk === 'amat') && Hero.age() >= 12; };
   function tier(c) { return FP.LGDEF[c.lg].t; }
+  // Clubes a los que tiene sentido ir a probarse: ligas bajas o equipos de un nivel parecido al tuyo (no se prueba un jugador mediocre en un grande)
+  T.reach = function (c, age) {
+    var h = FP.S.hero, a = age != null ? age : Hero.age(), eff = h.ovr - FP.Youth.adultPenalty(a);
+    if (a >= 20) return c.st <= eff + 3;
+    return M.trialDifficulty(c.id).p >= 0.12;
+  };
   function monthKey(w) { var y = D.ymd(w); return y[0] * 12 + y[1]; }
 
   // Genera las convocatorias del mes (jornadas abiertas de clubes y showcases)
@@ -27,7 +33,7 @@
     var pool = dom.filter(function (c) { return Rep.foreignOK(c, h.nat, age); }).slice(0, 8);
     if (pool.length >= 4) items.push({ kind: 'show', clubs: pool.slice(0, U.int(4, 8)).map(function (c) { return c.id; }), w: w + U.int(2, 5), n: U.int(180, 420), cost: age >= 18 ? 1 : 0, cc: cc });
     if (age >= 18 && R() < 0.5) {
-      var fx = S.clubs.filter(function (c) { return c.c !== cc && tier(c) <= 3 && Rep.foreignOK(c, h.nat, age) && Rep.permit(c); }).sort(function () { return R() - 0.5; }).slice(0, U.int(4, 7));
+      var fx = S.clubs.filter(function (c) { return c.c !== cc && tier(c) <= 4 && T.reach(c, age) && Rep.foreignOK(c, h.nat, age) && Rep.permit(c); }).sort(function () { return R() - 0.5; }).slice(0, U.int(4, 7));
       if (fx.length >= 4) items.push({ kind: 'show', clubs: fx.map(function (c) { return c.id; }), w: w + U.int(3, 6), n: U.int(250, 500), cost: 3, intl: 1 });
     }
     items.forEach(function (x) { x.id = S.ty.nid++; S.ty.items.push(x); });
@@ -118,13 +124,13 @@
     return out.sort(function (a, b) { return FP.DATA.countries[a].n.localeCompare(FP.DATA.countries[b].n, 'es'); });
   };
   T.tripClubs = function (cc) {
-    var S = FP.S, h = Rep.ensure(), age = Hero.age(), maxT = age < 18 ? 2 : 3;
-    return S.clubs.filter(function (c) { return c.c === cc && tier(c) <= maxT; }).map(function (c) {
+    var S = FP.S, h = Rep.ensure(), age = Hero.age(), maxT = age < 18 ? 3 : 4;
+    return S.clubs.filter(function (c) { return c.c === cc && tier(c) <= maxT && T.reach(c, age); }).map(function (c) {
       var ok = Rep.foreignOK(c, h.nat, age), perm = Rep.permit(c), p;
       if (age >= 20) { var f = Rep.fit(c); p = U.clamp(0.25 + f.gap * 0.07 + f.need * 0.2, 0.05, 0.85); } else p = M.trialDifficulty(c.id).p;
       if ((h.cd[c.id] || 0) > S.week) p = Math.min(p, 0.05);
       return { c: c, p: p, ok: ok && perm, why: !ok ? 'cupo de extranjeros completo' : !perm ? 'sin permiso de trabajo' : '', kind: age >= 20 ? 'primer equipo' : 'cantera', cool: (h.cd[c.id] || 0) > S.week };
-    }).sort(function (a, b) { return tier(b.c) < tier(a.c) ? 1 : tier(b.c) > tier(a.c) ? -1 : b.p - a.p; });
+    }).sort(function (a, b) { return b.p - a.p; });
   };
   T.tripCost = function (cc, n) {
     var home = M.heroCountry(), same = FP.DATA.countries[cc].conf === FP.DATA.countries[home].conf, age = Hero.age();
