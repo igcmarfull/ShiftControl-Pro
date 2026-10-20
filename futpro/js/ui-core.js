@@ -226,6 +226,8 @@
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-act]');
     if (!t) return;
+    // desplegables, campos y casillas reaccionan al evento 'change'/'input': un clic no debe redibujar la pantalla (cerraría la lista)
+    if (/^(SELECT|INPUT|TEXTAREA|OPTION)$/.test(t.tagName) || /^(SELECT|OPTION)$/.test(e.target.tagName)) return;
     var act = t.getAttribute('data-act');
     if (act === 'ovclose') { if (e.target === t) UI.closeModal(); return; }
     var fn = UI.acts[act];
