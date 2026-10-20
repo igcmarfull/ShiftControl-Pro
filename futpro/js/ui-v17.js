@@ -109,11 +109,57 @@
     return '<div class="tw"><table class="wk"><thead><tr><th rowspan="2">Año</th><th rowspan="2" class="n">Edad</th><th rowspan="2">Cantera / amateur <i class="mut">(PJ · G)</i></th><th rowspan="2">Profesional <i class="mut">(PJ · G)</i></th><th rowspan="2" class="n lb">Selección <i class="mut">(PJ · G)</i></th><th colspan="3" class="lb">Total en clubes</th></tr><tr><th class="n lb">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead><tbody>' + rows + '<tr class="wk-tot"><td colspan="5">Total de carrera</td><td class="n lb tt">' + tot.p + '</td><td class="n tt">' + tot.g + '</td><td class="n tt">' + tot.a + '</td></tr></tbody></table></div>';
   }
 
+  // ---------- estilo Wikipedia ("wikitable"): sin etiquetas de nivel ni tarjetas de resumen ----------
+  function wcols(list) { var t = agg([].concat.apply([], list.map(function (e) { return e.rows; }))); return { copa: t.copa.p > 0, cont: t.cont.p > 0 }; }
+  function wcells(o, cols) {
+    return '<td class="n">' + cell(o.liga.p) + '</td><td class="n">' + cell(o.liga.g) + '</td>' + (cols.copa ? '<td class="n">' + cell(o.copa.p) + '</td><td class="n">' + cell(o.copa.g) + '</td>' : '') + (cols.cont ? '<td class="n">' + cell(o.cont.p) + '</td><td class="n">' + cell(o.cont.g) + '</td>' : '') +
+      '<td class="n tt">' + cell(o.tot.p) + '</td><td class="n tt">' + cell(o.tot.g) + '</td><td class="n tt">' + cell(o.tot.a) + '</td>';
+  }
+  function whead(cols) {
+    return '<thead><tr><th rowspan="2">Club</th><th rowspan="2">Temporada</th><th colspan="3">Liga</th>' + (cols.copa ? '<th colspan="2">Copa nacional</th>' : '') + (cols.cont ? '<th colspan="2">Continental</th>' : '') + '<th colspan="3">Total</th></tr><tr><th>División</th><th class="n">PJ</th><th class="n">G</th>' + (cols.copa ? '<th class="n">PJ</th><th class="n">G</th>' : '') + (cols.cont ? '<th class="n">PJ</th><th class="n">G</th>' : '') + '<th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead>';
+  }
+  // etiqueta de club: el equipo juvenil se escribe "Club (juv.)" como en un artículo
+  function label(e, youthLabel) { var b = base(e.t), n = b != null && b < 5000 ? C.tname(b) : e.tn; return n + (youthLabel && e.lv === 'juv' ? ' (juv.)' : ''); }
+  function wtable(list, opts) {
+    opts = opts || {};
+    var vis = list.filter(function (e) { return agg(e.rows).tot.p > 0; });
+    if (!vis.length) return '<p class="mut sm">Sin partidos oficiales.</p>';
+    var cols = wcols(vis), body = '', all = z(), nc = 2 + 3 + (cols.copa ? 2 : 0) + (cols.cont ? 2 : 0);
+    var groups = [];
+    vis.forEach(function (e) { var k = label(e, opts.youthLabel), g = groups[groups.length - 1]; if (!opts.flat && g && g.k === k) g.list.push(e); else groups.push({ k: k, e: e, list: [e] }); });
+    groups.forEach(function (g) {
+      g.list = opts.flat ? g.list : mergeSeasons(g.list);
+      var rowsAll = [].concat.apply([], g.list.map(function (s) { return s.rows; })), many = g.list.length > 1 && !opts.flat;
+      g.list.forEach(function (s, i) {
+        body += '<tr>' + (opts.flat ? '<td>' + esc(g.k) + '</td>' : (i === 0 ? '<td class="wt-c" rowspan="' + (g.list.length + (many ? 1 : 0)) + '">' + esc(g.k) + '</td>' : '')) + '<td>' + esc(s.s) + '</td><td class="wt-d">' + esc(mainDiv(s)) + '</td>' + wcells(agg(s.rows), cols) + '</tr>';
+      });
+      if (many) body += '<tr class="wt-s"><td colspan="2">Total en el club</td>' + wcells(agg(rowsAll), cols) + '</tr>';
+      add(all, agg(rowsAll).tot);
+    });
+    var tot = agg([].concat.apply([], vis.map(function (e) { return e.rows; })));
+    body += '<tr class="wt-t"><td colspan="3">' + esc(opts.totalLabel || 'Total carrera') + '</td>' + wcells(tot, cols).replace(/^/, '') + '</tr>';
+    // la fila de total ocupa 3 columnas de texto en tablas con club agrupado y 3 en las planas
+    return '<table class="wt">' + whead(cols) + '<tbody>' + body + '</tbody></table>';
+  }
+  function careerLine(list) { var t = agg([].concat.apply([], list.map(function (e) { return e.rows; }))).tot; return '<p class="wt-n"><b>Total en clubes:</b> ' + t.p + ' partidos, ' + t.g + ' goles y ' + t.a + ' asistencias.</p>'; }
+
+  // ---- A · una sola tabla, con subtotales por club ----
+  function viewAll(list) { return wtable(list, { youthLabel: true }); }
+  // ---- B · dos tablas: clubes y categorías inferiores ----
+  function viewTwo(list) {
+    var pro = list.filter(function (e) { return e.lv === 'pro'; }), low = list.filter(function (e) { return e.lv !== 'pro'; }), h = '';
+    if (pro.length) h += '<h4 class="wt-h">Clubes profesionales</h4>' + wtable(pro, { totalLabel: 'Total profesional' });
+    if (low.length) h += '<h4 class="wt-h">Categorías inferiores y fútbol amateur</h4>' + wtable(low, { totalLabel: 'Total categorías inferiores' });
+    return h + careerLine(list);
+  }
+  // ---- C · plana: una fila por temporada y club, sin subtotales ----
+  function viewFlat(list) { return wtable(list, { flat: true, youthLabel: true }); }
+
   function clubsTable() {
     var list = entries(); if (!list.length) return '<div class="card"><p class="mut">Todavía no hay partidos de club registrados.</p></div>';
-    var view = UI.tab.bwv || 'split';
-    var bar = '<div class="fbar" style="margin:0 0 .6rem"><span class="mut sm" style="margin-right:.4rem">Vista</span><div class="seg">' + VIEWS.map(function (v) { return '<button class="' + (view === v[0] ? 'on' : '') + '" data-act="tabset" data-s="bwv" data-t="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div></div>';
-    return '<div class="card wk-card">' + bar + (view === 'level' ? viewLevel(list) : view === 'season' ? viewSeason(list) : viewSplit(list)) + '<p class="mut sm" style="margin:.6rem .2rem 0">«Liga» incluye competiciones juveniles y amateur. PJ: partidos · G: goles · A: asistencias. Solo se listan temporadas con partidos oficiales; los amistosos suman en su propia columna.</p></div>';
+    var view = UI.tab.bwv || 'all', VW = [['all', 'Todo junto'], ['two', 'Dos tablas'], ['flat', 'Plana']];
+    var bar = '<div class="wt-v">Vista: ' + VW.map(function (v) { return v[0] === view ? '<b>' + v[1] + '</b>' : '<a data-act="tabset" data-s="bwv" data-t="' + v[0] + '">' + v[1] + '</a>'; }).join(' · ') + '</div>';
+    return bar + (view === 'two' ? viewTwo(list) : view === 'flat' ? viewFlat(list) : viewAll(list)) + '<p class="wt-n">PJ: partidos jugados · G: goles · A: asistencias. «Liga» incluye competiciones juveniles y amateur. No se incluyen amistosos.</p>';
   }
 
   var CATS = [['u15', 'Selección Sub-15'], ['u17', 'Selección Sub-17'], ['u20', 'Selección Sub-20'], ['u23', 'Selección Sub-23'], ['abs', 'Selección absoluta']];
@@ -121,16 +167,16 @@
     var by = ST.byClass(), body = '', all = z(), any = false;
     CATS.forEach(function (c) {
       var d = by[c[0]]; if (!d) return;
-      var rows = d.rows.filter(function (r) { return r.p > 0; }).sort(function (a, b) { return a.o - b.o; }), sub = z(); if (!rows.length) return; any = true;
+      var rows = d.rows.filter(function (r) { return r.p > 0 && !/Amistoso/i.test(r.c); }).sort(function (a, b) { return a.o - b.o; }), sub = z(); if (!rows.length) return; any = true;
       rows.forEach(function (r, i) {
         add(sub, r); add(all, r);
-        body += '<tr>' + (i === 0 ? '<th class="wk-cl" rowspan="' + (rows.length + (rows.length > 1 ? 1 : 0)) + '"><div><b>' + esc(c[1]) + '</b></div></th>' : '') + '<td>' + esc(r.s) + '</td><td class="ell">' + esc(r.c) + '</td><td class="n">' + cell(r.p) + '</td><td class="n">' + cell(r.g) + '</td><td class="n">' + cell(r.a) + '</td></tr>';
+        body += '<tr>' + (i === 0 ? '<td class="wt-c" rowspan="' + (rows.length + (rows.length > 1 ? 1 : 0)) + '">' + esc(c[1]) + '</td>' : '') + '<td>' + esc(r.s) + '</td><td class="wt-d">' + esc(r.c) + '</td><td class="n">' + cell(r.p) + '</td><td class="n">' + cell(r.g) + '</td><td class="n">' + cell(r.a) + '</td></tr>';
       });
-      if (rows.length > 1) body += '<tr class="wk-sub"><td colspan="2">Total ' + esc(c[1].replace('Selección ', '').toLowerCase()) + '</td><td class="n">' + cell(sub.p) + '</td><td class="n">' + cell(sub.g) + '</td><td class="n">' + cell(sub.a) + '</td></tr>';
+      if (rows.length > 1) body += '<tr class="wt-s"><td colspan="2">Total ' + esc(c[1].replace('Selección ', '').toLowerCase()) + '</td><td class="n">' + cell(sub.p) + '</td><td class="n">' + cell(sub.g) + '</td><td class="n">' + cell(sub.a) + '</td></tr>';
     });
-    if (!any) return '<div class="card"><p class="mut">Todavía no hay partidos con la selección.</p></div>';
-    body += '<tr class="wk-tot"><td colspan="3">Total con la selección</td><td class="n">' + cell(all.p) + '</td><td class="n">' + cell(all.g) + '</td><td class="n">' + cell(all.a) + '</td></tr>';
-    return '<div class="card wk-card"><div class="tw"><table class="wk"><thead><tr><th>Categoría</th><th>Año</th><th>Competición</th><th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    if (!any) return '<p class="mut">Todavía no hay partidos oficiales con la selección.</p>';
+    body += '<tr class="wt-t"><td colspan="3">Total con la selección</td><td class="n">' + cell(all.p) + '</td><td class="n">' + cell(all.g) + '</td><td class="n">' + cell(all.a) + '</td></tr>';
+    return '<table class="wt"><thead><tr><th>Selección</th><th>Año</th><th>Competición</th><th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead><tbody>' + body + '</tbody></table><p class="wt-n">No se incluyen amistosos.</p>';
   }
 
   UI.bioTables = { clubs: clubsTable, nat: natTable };
