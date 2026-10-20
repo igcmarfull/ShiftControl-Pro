@@ -13,11 +13,17 @@ function runHtml(run,highlight){
 }
 const runsHtml=(runs,highlight)=>(runs||[]).map(run=>runHtml(run,highlight)).join('');
 
+// El párrafo que antecede a las firmas se mantiene junto a ellas (no queda la firma sola en una hoja).
+function withKeep(blocks){
+  return blocks.map((block,i)=>block.t==='p'&&blocks[i+1]&&blocks[i+1].t==='sign'?{...block,keep:true}:block);
+}
+
 function blockHtml(block,highlight){
   switch(block.t){
     case 'title':return `<h2 class="dc-title">${esc(block.text)}</h2>`;
     case 'heading':return `<h3 class="dc-heading">${esc(block.text)}</h3>`;
-    case 'p':return `<p class="dc-p${block.align?` al-${block.align}`:''}${block.indent?' in':''}"${block.after!==undefined?` style="margin-bottom:${block.after}px"`:''}>${runsHtml(block.runs,highlight)}</p>`;
+    case 'p':return `<p class="dc-p${block.align?` al-${block.align}`:''}${block.indent?' in':''}${block.keep?' keep':''}"${block.after!==undefined?` style="margin-bottom:${block.after}px"`:''}>${runsHtml(block.runs,highlight)}</p>`;
+    case 'table':return `<table class="dc-table"><thead><tr>${block.head.map(cell=>`<th>${esc(cell)}</th>`).join('')}</tr></thead><tbody>${block.body.map(row=>`<tr>${row.map(cell=>`<td>${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     case 'amounts':return `<table class="dc-amounts"><tbody>${block.rows.map(row=>`<tr class="${row.bold?'tot':''}"><td>${esc(row.label)}</td><td>${esc(row.amount)}</td></tr>`).join('')}</tbody></table>`;
     case 'sign':return `<div class="dc-sign cols-${block.cols.length}">${block.cols.map(col=>`<div><span class="line"></span>${col.filter(Boolean).map((line,i)=>i===0?`<b>${esc(line)}</b>`:`<span>${esc(line)}</span>`).join('')}</div>`).join('')}</div>`;
     case 'spacer':return `<div style="height:${block.h||10}px"></div>`;
@@ -38,6 +44,7 @@ function footerHtml(company,title){
 function textLength(doc){
   return doc.blocks.reduce((sum,block)=>{
     if(block.runs)return sum+block.runs.reduce((n,run)=>n+run.text.length,0);
+    if(block.body)return sum+block.body.reduce((n,row)=>n+row.join('').length+30,0);
     if(block.rows)return sum+block.rows.reduce((n,row)=>n+row.label.length+row.amount.length,0);
     if(block.cols)return sum+block.cols.flat().join('').length;
     return sum+(block.text?block.text.length:0);
@@ -50,7 +57,7 @@ function density(doc){
 
 // Contenido de la hoja (membrete + bloques + pie) para la vista previa en pantalla.
 function pageHtml(doc,{company,logoUrl,highlight=true}={}){
-  return `${letterheadHtml(company,logoUrl)}<div class="dc-body">${doc.blocks.map(block=>blockHtml(block,highlight)).join('')}</div>${footerHtml(company,doc.title)}`;
+  return `${letterheadHtml(company,logoUrl)}<div class="dc-body">${withKeep(doc.blocks).map(block=>blockHtml(block,highlight)).join('')}</div>${footerHtml(company,doc.title)}`;
 }
 
 const PAGE_CSS=`
@@ -58,8 +65,9 @@ const PAGE_CSS=`
 .dc-lh img{width:64px;height:auto}.dc-co{text-align:right;font-size:10.5px;color:#52607a;line-height:1.5;display:grid}.dc-co b{color:#0f4c9c;font-size:13px}
 .dc-title{text-align:center;letter-spacing:.14em;font-size:14.5px;margin:6px 0 14px;font-family:Arial,Helvetica,sans-serif;color:#0f4c9c}
 .dc-heading{text-align:center;letter-spacing:.14em;font-size:14px;margin:4px 0 12px;font-family:Arial,Helvetica,sans-serif;color:#0f4c9c}
-.dc-p{margin:0 0 8px}.dc-p.in{margin-left:22px}.al-justify{text-align:justify}.al-right{text-align:right}.al-center{text-align:center}
+.dc-p{margin:0 0 8px}.dc-p.keep{break-after:avoid;page-break-after:avoid}.dc-p.in{margin-left:22px}.al-justify{text-align:justify}.al-right{text-align:right}.al-center{text-align:center}
 .dc-amounts{border-collapse:collapse;margin:2px 0 8px 22px;min-width:60%}.dc-amounts td{padding:1px 22px 1px 0}.dc-amounts td:last-child{text-align:right;padding-right:0;white-space:nowrap}.dc-amounts tr.tot td{font-weight:bold;border-top:1px solid #555}
+.dc-table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:.95em}.dc-table th,.dc-table td{border:1px solid #8a93a6;padding:3px 8px;text-align:left}.dc-table th{background:#e8effb;font-family:Arial,Helvetica,sans-serif;font-size:.85em}.dc-table td:nth-child(n+2),.dc-table th:nth-child(n+2){width:90px;text-align:center}.dc-table tr{break-inside:avoid;page-break-inside:avoid}
 .dc-sign{display:grid;gap:46px;margin-top:34px;text-align:center;font-size:.92em;page-break-inside:avoid;break-inside:avoid}.dc-sign.cols-1{grid-template-columns:1fr;justify-items:center;width:50%;margin-left:25%}.dc-sign.cols-2{grid-template-columns:1fr 1fr}
 .dc-sign>div{display:grid;gap:1px;align-content:start}.dc-sign .line{display:block;border-top:1px solid #555;margin-bottom:4px}
 .dc-foot{margin-top:24px;border-top:1px solid #cfd6e6;padding-top:7px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#7a869c;display:flex;justify-content:space-between;gap:12px}
@@ -79,10 +87,10 @@ body.dens-normal{font-size:11.5pt;line-height:1.55}body.dens-normal .dc-p{margin
 ${PAGE_CSS}
 .dc-foot{position:fixed;left:0;right:0;bottom:0;margin:0;background:#fff}
 .dc-body{padding-bottom:26px}
-</style></head><body class="dens-${density(doc)}">${letterheadHtml(company,logoUrl)}<div class="dc-body">${doc.blocks.map(block=>blockHtml(block,false)).join('')}</div>${footerHtml(company,doc.title)}</body></html>`;
+</style></head><body class="dens-${density(doc)}">${letterheadHtml(company,logoUrl)}<div class="dc-body">${withKeep(doc.blocks).map(block=>blockHtml(block,false)).join('')}</div>${footerHtml(company,doc.title)}</body></html>`;
 }
 
-const api={pageHtml,printHtml,density,PAGE_CSS,esc};
+const api={pageHtml,printHtml,density,withKeep,PAGE_CSS,esc};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else root.DocumentRender=api;
 })(typeof window!=='undefined'?window:globalThis);
