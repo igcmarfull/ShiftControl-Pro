@@ -59,6 +59,7 @@
     TUR: 'B:e30a17|c:11,10,5,ffffff|c:12.5,10,4,e30a17|s:17.5,10,2,ffffff', GRE: 'h:0d5eaf,ffffff,0d5eaf,ffffff,0d5eaf,ffffff,0d5eaf,ffffff,0d5eaf|r:0,0,11,11,0d5eaf|r:4.5,0,2,11,ffffff|r:0,4.5,11,2,ffffff',
     SUI: 'B:d52b1e|r:12.5,4,5,12,ffffff|r:9,7.5,12,5,ffffff', AUT: 'h:ed2939,ffffff,ed2939', DEN: 'B:c8102e|N:ffffff,3,10', SWE: 'B:006aa7|N:fecc00,3,10', NOR: 'B:ba0c2f|N:ffffff,5,10|N:00205b,2.4,10',
     POL: 'h:ffffff,dc143c', CZE: 'h:ffffff,d7141a|p:0,0,13,10,0,20,11457e', HRV: 'h:ff0000,ffffff,171796', SRB: 'h:c6363c,0c4076,ffffff', UKR: 'h:0057b7,ffd700', HUN: 'h:ce2939,ffffff,477050',
+    BUL: 'h:ffffff,00966e,d62612', RUS: 'h:ffffff,0039a6,d52b1e', ISR: 'B:ffffff|r:0,2,30,2.6,0038b8|r:0,15.4,30,2.6,0038b8|s:15,10,3,0038b8', CYP: 'B:ffffff|c:15,9,5,d57800|r:7,14.5,16,1.4,4e8f3f', FIN: 'B:ffffff|N:003580,3,10', ISL: 'B:02529c|N:ffffff,4,10|N:dc1e35,2,10', GUA: 'v:4997d0,ffffff,4997d0',
     SVK: 'h:ffffff,0b4ea2,ee1c25', ROU: 'v:002b7f,fcd116,ce1126', IRL: 'v:169b62,ffffff,ff883e',
     USA: 'h:b22234,ffffff,b22234,ffffff,b22234,ffffff,b22234|r:0,0,13,10.5,3c3b6e', MEX: 'v:006847,ffffff,ce1126|c:15,10,2.3,8a6b2e', CAN: 'v:d52b1e,ffffff*2,d52b1e|c:15,10,3.2,d52b1e',
     CRC: 'h:002b7f,ffffff,ce1126*2,ffffff,002b7f', PAN: 'B:ffffff|r:15,0,15,10,d21034|r:0,10,15,10,005293|s:7.5,5,2.6,005293|s:22.5,15,2.6,d21034', JAM: 'B:009b3a|p:0,0,15,10,0,20,000000|p:30,0,15,10,30,20,000000|X:fed100,2',

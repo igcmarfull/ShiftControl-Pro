@@ -127,7 +127,7 @@
     BRA: 'pt', POR: 'pt', ENG: 'en', SCO: 'en', AUS: 'en', CAN: 'en', USA: 'en2', ITA: 'it', GER: 'de', AUT: 'de', SUI: 'de',
     FRA: 'fr', BEL: 'fr', NED: 'nl', DEN: 'nd', SWE: 'nd', NOR: 'nd', POL: 'sl', CZE: 'sl', TUR: 'tr', GRE: 'gr',
     JPN: 'ja', KOR: 'ko', CHN: 'zh', KSA: 'ar', EGY: 'ar', MAR: 'ar', TUN: 'ar', ALG: 'ar', RSA: 'af',
-    HRV: 'sl', SRB: 'sl', UKR: 'sl', HUN: 'sl', SVK: 'sl', ROU: 'sl', WAL: 'en', IRL: 'en', PAN: 'es', HON: 'es', SLV: 'es', HAI: 'fr', JAM: 'en', CUW: 'nl',
+    BUL: 'sl', RUS: 'sl', ISR: 'en', CYP: 'gr', FIN: 'nd', ISL: 'nd', GUA: 'es', HRV: 'sl', SRB: 'sl', UKR: 'sl', HUN: 'sl', SVK: 'sl', ROU: 'sl', WAL: 'en', IRL: 'en', PAN: 'es', HON: 'es', SLV: 'es', HAI: 'fr', JAM: 'en', CUW: 'nl',
     IRN: 'ar', QAT: 'ar', UAE: 'ar', IRQ: 'ar', JOR: 'ar', UZB: 'tr', NGA: 'af', GHA: 'af', CIV: 'af', SEN: 'af', CMR: 'af', MLI: 'af', COD: 'af', BFA: 'af', CPV: 'pt', NZL: 'en', FIJ: 'en', NCL: 'fr'
   };
   FP.Names = {

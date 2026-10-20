@@ -298,3 +298,12 @@ Se corrigió un error: los goles del jugador se acumulaban de toda la carrera (l
 (Ajustado después: ver el párrafo siguiente.) Desde los 20 años, las jornadas abiertas, los showcases y el viaje de prueba al extranjero solo incluyen clubes de segunda división o inferior (y de fuerza no mayor a tu nivel +3). Las invitaciones a entrenar con un primer equipo (`seniorTrials`) ya exigían segunda división o menor. Los menores de 20 conservan las pruebas de cantera de clubes grandes.
 
 Ajuste: desde los 20 años las pruebas abiertas (jornadas, showcases y viaje al extranjero) son desde la **3.ª división** hacia abajo (`Tryouts.minTier`); en países con 3 niveles o menos, desde la 2.ª. A los clubes de nivel superior se llega por **invitación a entrenar con el primer equipo**: ya llegaba al azar a quien está libre (`seniorTrials`) y ahora además hay un 35% de que un club del nivel inmediato superior te invite tras destacar en una prueba abierta.
+
+## Más ligas (37 nuevas; 119 ligas en 60 países)
+
+- **Europa:** Croacia, Serbia, Rumanía, Hungría, Bulgaria, Ucrania, Rusia, Israel (primera y segunda), Chipre, Gales (solo primera), Irlanda, Finlandia e Islandia (primera y segunda). **Rusia no tiene cupos europeos** (sanción de la UEFA); los demás entran en la Champions, Europa y Conference según un cupo pequeño y se recortan por fuerza hasta el tamaño del torneo.
+- **CONCACAF:** Honduras, Panamá, Guatemala, El Salvador y Jamaica (primera división con liguilla y 1-2 cupos para la Copa de Campeones).
+- **Divisiones inferiores:** Argentina (Primera B Metropolitana), Escocia (League One), Suiza (Promotion League), Dinamarca (2. Division), Polonia (II liga), Grecia (Super League 2), Inglaterra (National League) y EE. UU. (USL Championship, sin ascenso). Se ajustaron los descensos de las divisiones superiores para enlazarlas.
+- Se añadieron las selecciones que faltaban (Rusia, Bulgaria, Israel, Chipre, Finlandia, Islandia, Guatemala), sus banderas, la región de nombres y los ajustes de residencia para menores (UE/EEE).
+- Los clubes son reales, composición probable de la temporada 2025/26 (`v: 'k'` = conocimiento previo, `v: 'p'` = lista parcial). El nivel (`q`) de cada liga y su dispersión son estimaciones mías.
+- Quedan fuera las ligas de formato por grupos (ESP3/4, ITA3, BRA4, ARG2 parcial) y Ecuador Serie B.
