@@ -550,3 +550,28 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .vt-c .crest, .vp-ch .crest, .vtl-dot .crest, .vt-c .flag, .vp-ch .flag { width: 1.7rem; height: 1.7rem; flex: none; } .vt-c .crest img, .vp-ch .crest img, .vtl-dot .crest img { width: 100%; height: 100%; object-fit: contain; }
 .vtl-dot .vt-ini { width: 100%; height: 100%; }
 .vtl-n .rate, .vp-cs .rate { align-self: flex-start; display: inline-block; }
+
+/* resumen de temporada (ui-v16) */
+.rv-top { padding: 1rem 1.2rem; } .rv-tl { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.rv-k { font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; color: var(--dim); margin-bottom: .4rem; }
+.rv-tn { display: flex; gap: 1.2rem; flex-wrap: wrap; color: var(--mut); } .rv-tn b { font-family: var(--disp); font-size: 1.5rem; color: var(--tx); margin-right: .25rem; }
+.rv-spw { flex: 1; min-width: 220px; max-width: 420px; } .rv-sp { width: 100%; height: 56px; }
+.rv-c { padding: 0; overflow: hidden; }
+.rv-hd { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; padding: 1rem 1.2rem; background: linear-gradient(100deg, var(--petrol2), transparent 70%); border-bottom: 1px solid var(--line); }
+.rv-id { display: flex; align-items: center; gap: .8rem; min-width: 0; } .rv-id .crest { width: 2.6rem; height: 2.6rem; flex: none; } .rv-id .crest img { width: 100%; height: 100%; object-fit: contain; }
+.rv-y { font-family: var(--disp); font-size: 1.8rem; line-height: 1; } .rv-cl { color: var(--mut); margin-top: .2rem; }
+.rv-bd { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; } .rv-rk { background: var(--surface3); border-radius: 999px; padding: .2rem .7rem; font-size: .8rem; font-weight: 650; display: inline-flex; align-items: center; gap: .3rem; } .rv-rk.gold { background: rgba(217, 180, 74, .18); color: var(--gold); }
+.rv-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: .6rem; padding: 1rem 1.2rem .4rem; }
+.rv-t { background: var(--surface2); border-radius: 12px; padding: .55rem .7rem; display: flex; flex-direction: column; gap: .05rem; min-width: 0; }
+.rv-t span { font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); } .rv-t b { font-family: var(--disp); font-size: 1.45rem; line-height: 1.15; } .rv-t i { font-style: normal; font-size: .72rem; color: var(--mut); }
+.rv-t .rd, .rd { color: var(--bad); }
+.rv-hg { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .6rem; padding: .6rem 1.2rem; }
+.rv-h { display: flex; gap: .7rem; align-items: flex-start; background: var(--surface2); border-radius: 12px; padding: .65rem .8rem; border-left: 3px solid var(--ac); }
+.rv-h.gold { border-color: var(--gold); } .rv-h.r { border-color: var(--bad); } .rv-h.b { border-color: var(--blue); } .rv-h.y { border-color: var(--warn); }
+.rv-hi { width: 1.6rem; height: 1.6rem; color: var(--mut); flex: none; } .rv-hi svg { width: 100%; height: 100%; } .rv-h.gold .rv-hi { color: var(--gold); } .rv-h.r .rv-hi { color: var(--bad); }
+.rv-ht { font-weight: 650; font-size: .85rem; } .rv-hb { font-size: .8rem; color: var(--mut); line-height: 1.4; }
+.rv-goals { padding: .4rem 1.2rem .6rem; } .rv-gh { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
+.rv-gl { display: flex; flex-wrap: wrap; gap: .4rem; } .rv-gc { font-size: .78rem; background: var(--surface3); color: var(--mut); border-radius: 8px; padding: .25rem .6rem; display: inline-flex; align-items: center; gap: .3rem; } .rv-gc.ok { background: var(--ac-soft); color: var(--ac); } .rv-gc svg { width: .9rem; height: .9rem; }
+.rv-story { padding: 0 1.2rem 1rem; } .rv-story summary { cursor: pointer; color: var(--ac2); font-size: .82rem; padding: .3rem 0; } .rv-story p { margin: .3rem 0; color: var(--mut); font-size: .85rem; }
+@media (max-width: 760px) { .rv-tiles { grid-template-columns: repeat(3, 1fr); } }
+.rv-t .rate { font-size: 1.15rem; padding: .1rem .55rem; }

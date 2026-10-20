@@ -220,3 +220,13 @@ Selector **Vista** bajo los filtros (por defecto Tabla): Tarjetas (la original),
 - Una oferta de "primer contrato profesional" a un jugador de 16 años o más produce un contrato **profesional** (antes, a los 16-17 se convertía en contrato juvenil y la cantera seguía ofreciéndolo). El contrato juvenil/de formación corresponde al ingreso a la cantera. Con contrato profesional vigente la cantera no lo desvincula.
 - Edad mínima de contrato profesional en el juego: 16 años (supuesto de diseño; no se pudo confirmar una norma chilena concreta). El ascenso al primer equipo (`promoteCheck`) exige contrato profesional, 17 años y nivel cercano al del plantel; el contrato juvenil no da acceso al primer equipo.
 - Pruebas: `node tests/ofertas.js`. La probabilidad anual de desvinculación de la cantera (`Youth.releaseProb`) se calibró con el comportamiento anterior (varias tiradas por temporada); queda pendiente recalibrarla.
+
+## Convocatorias al primer equipo (`js/callups.js`)
+
+Un juvenil de la cantera (15 años o más, con contrato juvenil o profesional) que está a menos de 14 puntos del nivel del club puede ser **citado a entrenar con el primer equipo** durante 1-2 semanas: +12% de desarrollo en el entrenamiento y +4 de moral. Mientras dura la citación, los partidos oficiales del primer equipo entran en su cola: con 30% de probabilidad no queda en la lista y, si queda, entra como suplente con 5-40% de probabilidad de jugar según la distancia al mejor de su puesto. Rinde menos que su media (madurez física). Los minutos se registran con el club (no "(juv.)"), el primer partido genera el **debut** (mensaje, noticia e historial). Lo ve en **Mi club** (tarjeta "Primer equipo"). El ascenso definitivo sigue siendo `Market.promoteCheck`.
+
+Los umbrales son supuestos de diseño (no datos reales). Calibración en `tests/callups.js` y simulaciones aparte: un juvenil unos 6 puntos por debajo del club tiene ~2 citaciones y ~0,5 partidos al año; a unos 3 puntos, ~5 citaciones; si está muy lejos no recibe ninguna. `Sim.heroTeams` incluye el club solo mientras dura la citación (las selecciones usan `h.extraTeams`, que se reinicia cada semana).
+
+## Resumen de temporada rediseñado (`js/ui-v16.js`)
+
+Resumen de carrera arriba (temporadas, partidos, goles, asistencias, títulos, gráfico de la media). Cada temporada: cabecera con escudo, club, edad, puesto final y titular; indicadores (PJ, goles, asistencias, nota, minutos, media con variación); momentos destacados con icono (títulos, premios, mejor partido, hat-trick, selección, lesiones, movimientos, decisiones); metas como etiquetas; el relato queda en "Leer el relato".
