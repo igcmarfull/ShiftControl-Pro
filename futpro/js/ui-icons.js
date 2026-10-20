@@ -173,7 +173,7 @@
     if (av) {
       if (av.skin != null && SKIN[av.skin]) skin = SKIN[av.skin];
       if (av.hair != null && HAIR[av.hair]) hair = HAIR[av.hair];
-      if (av.style != null && av.style >= 0 && av.style <= 15) style = av.style;
+      if (av.style != null && av.style >= 0 && av.style <= 17) style = av.style;
       beard = av.beard || 0;
     }
     var c = colors || UI.heroColors(), id = 'av' + (seed % 99999);
@@ -193,6 +193,8 @@
       12: '<path d="M29 44C26 22 38 13 50 13s24 9 21 31c-1-8-2-13-4-15-10 5-24 5-34 0-2 2-3 7-4 15z" fill="' + hair + '"/>',
       13: '<path d="M30 42C27 22 41 13 50 13c10 0 23 9 20 29-4-9-11-13-20-13s-16 4-20 13z" fill="' + hair + '"/><path d="M68 28c11 2 15 15 8 31-1-9-3-13-8-17z" fill="' + hair + '"/>',
       14: '<path d="M32 40c0-14 9-21 18-21s18 7 18 21c-4-7-10-10-18-10s-14 3-18 10z" fill="' + hair + '"/><path d="M30 40c-5 8-5 20 0 27 2-8 3-17 3-25zM70 40c5 8 5 20 0 27-2-8-3-17-3-25z" fill="' + hair + '"/>',
+      16: '<path d="M30 43C25 24 37 11 52 11c14 0 23 11 18 32-2-6-4-10-7-13-9 1-19 1-27 6-3 2-4 4-6 7z" fill="' + hair + '"/><path d="M42 17q11-5 22 1M38 24q9-4 18-2" stroke="rgba(255,255,255,.16)" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+      17: '<path d="M30 43C24 22 36 7 53 8c15 1 24 13 17 35-2-6-4-10-7-13-9 0-19 1-27 7-3 2-4 4-6 6z" fill="' + hair + '"/><path d="M40 15q12-7 25 0M36 23q10-5 20-3" stroke="rgba(255,255,255,.16)" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
       15: '<path d="M32 38c1-10 8-16 18-16s17 6 18 16c-3-5-6-8-10-9l-3 5-5-6-5 6-3-5c-4 1-7 4-10 9z" fill="' + hair + '"/>'
     }[style];
     var bd = '<path d="M31 46c0 14 8 22 19 22s19-8 19-22c-3 6-7 8-11 8h-16c-4 0-8-2-11-8z" fill="' + hair + '" opacity="BO"/>';
@@ -215,10 +217,10 @@
     ['skin', 'hair', 'style', 'beard'].forEach(function (k) { if (a[k] != null) o[k] = a[k]; });
     return o;
   };
-  UI.avRandom = function () { return { skin: Math.floor(Math.random() * SKIN.length), hair: Math.floor(Math.random() * HAIR.length), style: Math.floor(Math.random() * 16), beard: Math.random() < .25 ? 1 + Math.floor(Math.random() * 3) : 0 }; };
+  UI.avRandom = function () { return { skin: Math.floor(Math.random() * SKIN.length), hair: Math.floor(Math.random() * HAIR.length), style: Math.floor(Math.random() * 18), beard: Math.random() < .25 ? 1 + Math.floor(Math.random() * 3) : 0 }; };
   // editor de apariencia: act = acción que recibe data-k / data-v
   UI.avEditor = function (h, act, colors) {
-    var c = UI.avResolve(h), st = ['Corto', 'Fade', 'Rizado', 'Largo lateral', 'Melena', 'Rapado', 'Calvo', 'Afro', 'Mohicano', 'Trenzas', 'Moño', 'Engominado', 'Flequillo', 'Coleta', 'Mullet', 'Entradas'], bd = ['Sin barba', 'Barba corta', 'Barba completa', 'Bigote'];
+    var c = UI.avResolve(h), st = ['Corto', 'Fade', 'Rizado', 'Largo lateral', 'Melena', 'Rapado', 'Calvo', 'Afro', 'Mohicano', 'Trenzas', 'Moño', 'Engominado', 'Flequillo', 'Coleta', 'Mullet', 'Entradas', 'Clásico', 'Clásico alto'], bd = ['Sin barba', 'Barba corta', 'Barba completa', 'Bigote'];
     function sw(k, arr) { return arr.map(function (col, i) { return '<button type="button" class="av-sw' + (c[k] === i ? ' on' : '') + '" style="background:' + col + '" data-act="' + act + '" data-k="' + k + '" data-v="' + i + '" aria-label="' + k + ' ' + (i + 1) + '"></button>'; }).join(''); }
     function ch(k, arr) { return arr.map(function (n, i) { return '<button type="button" class="btn sm' + (c[k] === i ? ' pri' : '') + '" data-act="' + act + '" data-k="' + k + '" data-v="' + i + '">' + n + '</button>'; }).join(''); }
     return '<div class="av-ed"><div class="av-pv">' + UI.avatar(h, '', colors) + '</div><div class="av-ctl">' +
