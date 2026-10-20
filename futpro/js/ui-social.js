@@ -59,12 +59,19 @@
   };
 
   // ---------- temas ----------
-  UI.skins = { estadio: 'Estadio (oscuro)', claro: 'Informe táctico (claro)' };
+  UI.skins = { oscuro: 'Oscuro (estadio de noche)', claro: 'Claro (informe táctico)', auto: 'Automático (según el sistema)' };
   UI.setSkin = function (name) {
-    var l = document.getElementById('skinclaro'); if (l) l.disabled = name !== 'claro';
+    if (name === 'estadio') name = 'oscuro';
+    if (!UI.skins[name]) name = 'oscuro';
+    var eff = name === 'auto' ? (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro') : name;
+    document.documentElement.setAttribute('data-skin', eff);
+    var m = document.querySelector('meta[name=theme-color]'); if (m) m.content = eff === 'claro' ? '#eef2f6' : '#0e1317';
     try { localStorage.setItem('futpro.skin', name); } catch (e) { }
     UI.skin = name;
   };
-  UI.initSkin = function () { var v = 'estadio'; try { v = localStorage.getItem('futpro.skin') || 'estadio'; } catch (e) { } UI.setSkin(v); };
+  UI.initSkin = function () { var v = 'oscuro'; try { v = localStorage.getItem('futpro.skin') || 'oscuro'; } catch (e) { } UI.setSkin(v); };
+  UI.toggleSkin = function () { UI.setSkin(document.documentElement.getAttribute('data-skin') === 'claro' ? 'oscuro' : 'claro'); UI.render(); };
+  if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: light)').addEventListener('change', function () { if (UI.skin === 'auto') UI.setSkin('auto'); }); } catch (e) { } }
   A.skin = function (d, t) { UI.setSkin(t.value); UI.render(); };
+  A.themetoggle = function () { UI.toggleSkin(); };
 })();

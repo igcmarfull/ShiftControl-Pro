@@ -37,6 +37,7 @@
       '<span class="date-chip">' + I('calendar') + D.fmt(S.week) + '</span>' +
       '<div class="search">' + I('search') + '<input type="text" id="gsearch" placeholder="Buscar club o jugador…" autocomplete="off"></div>' +
       '<div class="grow"></div>' +
+      '<button class="iconbtn themebtn" data-act="themetoggle" title="Cambiar tema claro/oscuro" aria-label="Tema"><span class="i-sun">' + I('sun') + '</span><span class="i-moon">' + I('moon') + '</span></button>' +
       '<button class="iconbtn" data-act="nav" data-s="contracts" title="Ofertas y decisiones pendientes" aria-label="Ofertas">' + I('bell') + (h.offers.length ? '<span class="dot">' + h.offers.length + '</span>' : '') + '</button>' + cta + '</div>';
     var bn = [['home', 'Inicio', 'home'], ['player', 'Jugador', 'user'], ['match', 'Partido', 'ball'], ['market', 'Mercado', 'transfer']].map(function (n) { var b = bd[n[0]]; return '<button class="bn ' + (UI.scr === n[0] ? 'on' : '') + '" data-act="nav" data-s="' + n[0] + '">' + I(n[2]) + n[1] + (b ? '<span class="bd">' + b + '</span>' : '') + '</button>'; }).join('') + '<button class="bn" data-act="menu">' + I('menu') + 'Más</button>';
     return top + '<aside class="sidebar ' + (UI.sidebarOpen ? 'open' : '') + '">' + nav + '</aside><main class="main" id="main"></main><nav class="bottom-nav">' + bn + '</nav>';

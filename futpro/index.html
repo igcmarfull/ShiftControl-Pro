@@ -6,7 +6,8 @@
 <title>FUTPRO — La carrera del futbolista</title>
 <meta name="description" content="Simulador de carrera de futbolista con clubes y ligas reales. Se juega abriendo este archivo en el navegador, sin instalar nada.">
 <link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/skin-claro.css" id="skinclaro" disabled>
+<meta name="theme-color" content="#0e1317">
+<script>try{var k=localStorage.getItem("futpro.skin");if(k==="auto")k=matchMedia("(prefers-color-scheme: light)").matches?"claro":"oscuro";document.documentElement.setAttribute("data-skin",k==="claro"?"claro":"oscuro")}catch(e){}</script>
 </head>
 <body>
 <div id="app" class="app">
@@ -36,6 +37,8 @@
 <script src="js/ui-social.js"></script>
 <script src="js/ui-icons.js"></script>
 <script src="js/ui-v2.js"></script>
+<script src="js/ui-v3.js"></script>
+<script src="js/ui-v3b.js"></script>
 <script src="js/ui-start.js"></script>
 <script src="js/main.js"></script>
 </body>

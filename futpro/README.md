@@ -26,7 +26,7 @@ Las partidas se guardan solas en IndexedDB del navegador y se pueden **exportar/
 | Carrera: amateur/regional, pruebas, cantera, contrato juvenil y profesional, cesiones, traspasos nacionales/internacionales, representantes, renovaciones, agente libre, convocatorias a selecciones juveniles y absoluta, trofeos, premios (Bota de Oro, equipo ideal, mejor joven, Balón de Oro), retiro | `js/market.js`, `js/events.js` | Activo |
 | Mundo independiente: fichajes de la IA por ventanas, cantera nueva cada año, retiros, cambios de entrenador, ascensos y descensos, noticias | `js/market.js`, `js/sim.js` | Activo |
 | Guardado: IndexedDB con varias partidas, autoguardado, exportar/importar, versión de formato con migraciones, sincronización de datos nuevos | `js/storage.js` | Activo |
-| Interfaz con tema “Estadio de noche” (y tema claro opcional), las 16 secciones pedidas, selector de ligas con buscador, escudos de iniciales, radar de atributos | `js/ui-*.js`, `css/*.css` | Activo |
+| Interfaz v2/v3: tema oscuro “Estadio de noche” y **modo claro** (botón sol/luna o Configuración; también automático según el sistema), inicio compacto con confianza del míster, momentos importantes (debut, convocatoria, fichaje, lesión grave, títulos), las 16 secciones, escudos y banderas dibujados, radar de atributos | `js/ui-*.js`, `css/style.css` | Activo (solo presentación) |
 | Redes sociales simuladas del jugador (hinchas, prensa, club) y hitos de carrera | `js/social.js`, `js/ui-social.js` | Activo (contenido ficticio) |
 
 ## Arquitectura
@@ -48,7 +48,7 @@ js/events.js         FP.Events premios, cierres de torneos del jugador, retiro
 js/tournaments.js    FP.Cont / FP.Nat torneos continentales y de selecciones
 js/game.js           FP.Game  nueva carrera, preset, semana
 js/storage.js        FP.Store guardado
-js/ui-*.js, main.js  interfaz
+js/ui-*.js, main.js  interfaz (ui-v2: inicio/jugador/partido; ui-v3: inicio compacto y momentos; ui-v3b: pantallas de la fase 2)
 ```
 
 ### Tiempo y calendario
