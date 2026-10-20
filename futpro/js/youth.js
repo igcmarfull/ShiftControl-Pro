@@ -241,11 +241,13 @@
     h.hist = h.hist || []; h.hist.push({ y: M.seasonLabel(), z: Math.round(ev.z * 100) / 100 });
     // contrato profesional: edad mínima 16, destacarse en la generación y acercarse al nivel del primer equipo
     var wantPro = age >= 16 && ev.z >= 0.6 && eff >= club.st - 9 - (age >= 18 ? 0 : 0) && !(h.contract && h.contract.type === 'prof');
-    if (wantPro || (age >= 17 && ev.z >= 1.1 && potEst >= club.st + 3)) {
+    var hasPro = h.contract && h.contract.type === 'prof';
+    if (!hasPro && (wantPro || (age >= 17 && ev.z >= 1.1 && potEst >= club.st + 3))) {
       var wage = Math.round(M.wageFor(club, 0.35));
       M.addOffer({ type: 'pro', club: club.id, years: age < 18 ? 3 : 4, wage: wage, role: 'Juvenil / primer equipo', text: club.nm + ' te ofrece tu primer contrato profesional: ' + (age < 18 ? 3 : 4) + ' años, ' + FP.fmt.money(wage) + ' al año.', exp: S.week + 14 });
       return;
     }
+    if (hasPro) return;                                           // con contrato profesional vigente no hay desvinculación por la cantera
     var role = h.season.ap < 6 ? 'out' : 'x';
     var pr = Youth.releaseProb(age, ev, role);
     if (age >= 19) pr = Math.max(pr, ev.z >= 0.3 ? 0.35 : 0.85);

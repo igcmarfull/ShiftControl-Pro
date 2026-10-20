@@ -64,6 +64,8 @@
   Events.heroSeasonEnd = function (src) {
     var S = FP.S, h = hero(); if (!h || h.retired) return;
     var m = FP.Market, label = m.seasonLabel();
+    h.flags = h.flags || {};
+    if (src === 'academy') { if (h.flags.heAw != null && S.week - h.flags.heAw < 40) return; h.flags.heAw = S.week; }   // varios torneos juveniles cierran en semanas distintas: el cierre de temporada ocurre una sola vez
     var cn = h.club != null ? C.tname(h.club) : (h.team != null && h.team >= 20000 ? C.tname(h.team) : '—');
     if (h.tk === 'loan') cn += ' (cedido)';
     FP.Hero.endSeasonStats(label, cn);

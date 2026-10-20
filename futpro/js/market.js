@@ -110,7 +110,12 @@
 
   // ---------- Jugador: ofertas ----------
   Market.addOffer = function (o) {
-    var h = FP.S.hero; o.id = h.nextId++; o.w = FP.S.week; if (o.exp == null) o.exp = FP.S.week + 4;
+    var h = FP.S.hero;
+    if (o.club != null && !o.name) {
+      var dup = h.offers.filter(function (x) { return x.type === o.type && x.club === o.club; })[0];
+      if (dup) { if (o.exp != null && dup.exp != null && o.exp > dup.exp) dup.exp = o.exp; return dup; }
+    }
+    o.id = h.nextId++; o.w = FP.S.week; if (o.exp == null) o.exp = FP.S.week + 4;
     h.offers.push(o);
     FP.Hero.msg(o.text, 'offer', { oid: o.id });
     return o;
@@ -132,6 +137,7 @@
   Market.heroWeekly = function (w) {
     var S = FP.S, h = S.hero; if (!h || h.retired) return;
     // caducan ofertas
+    h.offers = h.offers.filter(function (o) { return !((o.type === 'pro' && h.contract && h.contract.type === 'prof' && h.club === o.club) || (o.type === 'academy' && h.tk === 'academy' && h.club === o.club)); });
     h.offers = h.offers.filter(function (o) { if (o.exp != null && o.exp < w) { FP.Hero.msg('La oferta de ' + (o.club != null ? C.tname(o.club) : 'un club') + ' ha caducado.', 'i'); return false; } return true; });
     var age = FP.Hero.age();
     // pruebas programadas
@@ -418,6 +424,7 @@
     if (toAcademy) { h.tk = 'academy'; h.team = 30000 + clubId; } else { h.tk = 'pro'; h.team = clubId; }
     h.contract = { type: 'prof', wage: wage, end: Market.endYearOf(FP.LGDEF[club.lg].cal, years), clause: null, role: role };
     if (fee) h.contract.fee = fee;
+    h.offers = h.offers.filter(function (x) { return x.type !== 'pro'; });
     Market.leaveComps(); FP.Hero.ensureInRoster(); FP.Hero.ensureComps();
     h.mor = U.clamp(h.mor + 10, 0, 100);
     if (!wasAcademy || fee) FP.Sim.news(h.nm + ' ficha por ' + club.nm + (fromName ? ' (desde ' + fromName + ')' : '') + (fee ? ' por ' + FP.fmt.money(fee) + '.' : '.'), 'hero', 2);

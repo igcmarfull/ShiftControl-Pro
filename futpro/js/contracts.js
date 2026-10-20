@@ -108,6 +108,7 @@
     if (big && ri > 3 && R() < 0.3) ri = Math.max(2, ri - 1);       // un club grande ofrece más dinero pero menos protagonismo
     var kind = o.type === 'semi' ? 'semi' : age < 16 ? 'formacion' : age < 18 ? 'juvenil' : 'prof';
     if (o.type === 'academy') kind = age < 16 ? 'formacion' : 'juvenil';
+    if (o.type === 'pro' && age >= 16) kind = 'prof';                  // la oferta de "primer contrato profesional" (edad mínima 16) es un contrato profesional, no juvenil
     if (o.type === 'loan') kind = 'cesion';
     if (kind === 'formacion') ri = 0;                                  // los niños son "promesa": nunca estrellas ni titulares prometidos
     else if (kind === 'juvenil') ri = Math.max(0, Math.min(ri, 2));

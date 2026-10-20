@@ -212,3 +212,11 @@ Todo se guarda en `hero.rd`; tests: `node tests/redes.js`. Calibración pendient
 ## Estadísticas: vistas de "Por temporada" (`js/ui-v15.js`)
 
 Selector **Vista** bajo los filtros (por defecto Tabla): Tarjetas (la original), Tabla (una fila por temporada y club, con barras y total de carrera), Línea de tiempo (una tarjeta por temporada con sus cifras y competiciones) y Panorama (gráfico de goles, asistencias y nota por año + resumen por club). Respetan los filtros de clubes/selecciones/amistosos.
+
+## Corrección: ofertas de contrato repetidas en la cantera
+
+- El cierre de temporada juvenil (`Events.heroSeasonEnd('academy')`) se ejecutaba una vez por cada torneo juvenil que terminaba, a lo largo de ~9 semanas: la evaluación de la cantera repetía la oferta de contrato profesional (y la tirada de desvinculación). Ahora ocurre una sola vez por temporada.
+- `Market.addOffer` no crea una oferta igual (mismo tipo y club) si ya hay una abierta, y al firmar contrato profesional se retiran las demás ofertas profesionales.
+- Una oferta de "primer contrato profesional" a un jugador de 16 años o más produce un contrato **profesional** (antes, a los 16-17 se convertía en contrato juvenil y la cantera seguía ofreciéndolo). El contrato juvenil/de formación corresponde al ingreso a la cantera. Con contrato profesional vigente la cantera no lo desvincula.
+- Edad mínima de contrato profesional en el juego: 16 años (supuesto de diseño; no se pudo confirmar una norma chilena concreta). El ascenso al primer equipo (`promoteCheck`) exige contrato profesional, 17 años y nivel cercano al del plantel; el contrato juvenil no da acceso al primer equipo.
+- Pruebas: `node tests/ofertas.js`. La probabilidad anual de desvinculación de la cantera (`Youth.releaseProb`) se calibró con el comportamiento anterior (varias tiradas por temporada); queda pendiente recalibrarla.
