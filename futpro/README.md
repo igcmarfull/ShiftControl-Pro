@@ -99,6 +99,11 @@ Se simularon carreras largas con `tests/careers.js` (24 carreras × 15 y 18 temp
 
 Límites: la curva de desarrollo del jugador llega más tarde que antes, pero el techo de cada jugador sigue siendo poco superior a su nivel a los 13 años, por lo que el pico mediano queda en 22 y no en 25-26. La proporción de carreras que llegan a profesional (83 %) corresponde a jugadores creados por un usuario con puntos extra y no es comparable con la tasa real de canteranos. Las ofertas, la carga y el legado siguen siendo parámetros de diseño.
 
+## Pruebas masivas y más divisiones
+
+- **Pruebas masivas** (`js/tryouts.js`, pantalla *Pruebas masivas*): sin club (o en un club amateur) se anuncian cada mes jornadas abiertas de clubes de tu país y showcases con ojeadores de varios clubes (internacionales solo para mayores de 18). Compites contra 90-500 aspirantes: destacar entre los primeros puestos genera propuestas (cantera hasta los 19 años, prueba con el primer equipo desde los 20) e interés de otros clubes. Las probabilidades salen del nivel del jugador frente a la media de los asistentes (parámetros de diseño, no calibrados con datos reales).
+- **Divisiones nuevas** (10): TFF 1. Lig (Turquía), Challenge League (Suiza), 2. Liga (Austria), National (Francia), Liga 3 (Portugal), Superettan (Suecia), OBOS-ligaen (Noruega), 1. Division (Dinamarca), I liga (Polonia) y Chance Národní liga (Chequia), con ascensos y descensos con la división superior. Las listas de clubes salen de composiciones 2025/26 consultadas en la web; las marcadas "parcial" no incluyen a todos los clubes reales y el nivel de cada liga es una estimación. Argentina (tercera categoría) no se agregó por falta de una lista verificable.
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**

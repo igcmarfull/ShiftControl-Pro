@@ -53,6 +53,15 @@ for (var w3 = 0; w3 < 52 * 3; w3++) { FP.Sim.step(); FP.Dec.open().forEach(funct
 t('protegido progresa', !!FP.Mentor.get() && FP.Mentor.get().hist.length > 0);
 ['dir', 'pres', 'sel'].forEach(function (k) { FP.Post.choose(k); h.money = 2000; for (var w4 = 0; w4 < 52 * 2; w4++) { FP.Sim.step(); FP.Dec.open().forEach(function (d) { FP.Dec.resolve(d.id, d.opts[0].k); }); } t('camino ' + k + ' con cargo', !!h.post.path.job, k); });
 t('epílogo generado', FP.Epilogue.story().length >= 5 && FP.Epilogue.text().length > 200);
+// prueba masiva (jugador sin club) en una partida aparte
+(function () {
+  var snapT = H.buildWorld(902), ST = H.restore(snapT), hh = FP.Game.startPreset();
+  for (var q = 0; q < 70; q++) { FP.Game.beginWeek(); var g3 = 0; while (FP.Game.hasPending() && g3++ < 20) FP.Game.playPending(); FP.Game.endWeek(); }
+  hh.tk = 'free'; hh.club = null; hh.team = null; hh.contract = null;
+  for (var q2 = 0; q2 < 12; q2++) { FP.Game.beginWeek(); var g4 = 0; while (FP.Game.hasPending() && g4++ < 20) FP.Game.playPending(); FP.Game.endWeek(); if (ST.ty && ST.ty.items.length && !hh.ty.reg) FP.Tryouts.register(ST.ty.items[0].id); }
+  t('se anuncian pruebas masivas a un jugador sin club', ST.ty && ST.ty.items.length > 0);
+  t('se resuelve una prueba masiva con ranking', hh.ty.hist.length > 0 && hh.ty.hist[0].rank >= 1);
+})();
 // guardado: ida y vuelta conserva todo
 var snap = JSON.stringify(FP.Store.pack()), ver = JSON.parse(snap).ver; FP.Store.unpack(JSON.parse(snap));
 t('versión de guardado', ver === FP.Store.VERSION, ver);
