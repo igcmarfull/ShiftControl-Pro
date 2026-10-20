@@ -201,7 +201,7 @@
   // ---------- copas nacionales ----------
   Comp.newCup = function (cc, y) {
     var S = FP.S, cdef = FP.DATA.countries[cc], leagues = FP.DATA.leagues.filter(function (l) { return l.c === cc; });
-    var maxT = cc === 'ENG' ? 4 : cc === 'ESP' ? 2 : cc === 'ITA' ? 2 : cc === 'GER' ? 3 : 2;
+    var maxT = cc === 'ENG' ? 4 : cc === 'ESP' ? 3 : cc === 'ITA' ? 2 : cc === 'GER' ? 3 : 2;
     var teams = [];
     leagues.forEach(function (l) { if (l.t <= maxT) teams = teams.concat(S.lgs[l.id].teams); });
     if (teams.length < 4) return null;

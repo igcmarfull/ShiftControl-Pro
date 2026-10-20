@@ -121,8 +121,13 @@
 
     { id: 'ESP1', c: 'ESP', n: 'La Liga (Primera División)', t: 1, q: 73, sp: 9, cal: 'euro', rr: 2, dn: 3, v: 'k', qual: { CL: 4, EL: 2, ECL: 2 },
       clubs: 'Real Madrid;FC Barcelona;Atlético de Madrid;Athletic Club;Villarreal;Real Sociedad;Real Betis;Sevilla;Valencia;Girona;Celta de Vigo;Osasuna;Rayo Vallecano;Getafe;Mallorca;Alavés;Espanyol;Elche;Levante;Real Oviedo' },
-    { id: 'ESP2', c: 'ESP', n: 'Segunda División', t: 2, q: 62, sp: 4, cal: 'euro', rr: 2, up: 2, poUp: [3, 6], dn: 0, v: 'k',
+    { id: 'ESP2', c: 'ESP', n: 'Segunda División', t: 2, q: 62, sp: 4, cal: 'euro', rr: 2, up: 2, poUp: [3, 6], dn: 4, v: 'k',
       clubs: 'Almería;Racing de Santander;Deportivo de La Coruña;Málaga;Castellón;Las Palmas;Burgos;Sporting de Gijón;Eibar;Albacete;Granada;Cádiz;Real Zaragoza;Córdoba;Mirandés;Real Sociedad B;Huesca;Cultural Leonesa;Andorra;Leganés;Real Valladolid;AD Ceuta' },
+
+    { id: 'ESP3', c: 'ESP', n: 'Primera Federación', t: 3, q: 49, sp: 4, cal: 'euro', rr: 2, up: 3, poUp: [4, 7], dn: 4, v: 'p',
+      clubs: 'CD Tenerife;Real Madrid Castilla;Racing de Ferrol;Celta Fortuna;CD Lugo;SD Ponferradina;Ourense CF;Pontevedra CF;CP Cacereño;AD Mérida;CD Eldense;Hércules CF;Real Murcia;Sevilla Atlético;Atlético de Madrid B;FC Cartagena;Gimnàstic de Tarragona;CE Sabadell;AD Alcorcón;Algeciras CF' },
+    { id: 'ESP4', c: 'ESP', n: 'Segunda Federación', t: 4, q: 43, sp: 3, cal: 'euro', rr: 2, up: 3, poUp: [4, 7], dn: 0, v: 'p',
+      clubs: 'CD Alcoyano;Atlético Baleares;Lleida Esportiu;Reus FC Reddis;Terrassa FC;UE Sant Andreu;FC Barcelona Atlètic;Real Unión;SD Amorebieta;Sestao River;CD Tudelano;Real Jaén;UCAM Murcia;Águilas FC;CD Extremadura;CF Fuenlabrada;CF Rayo Majadahonda;CDA Navalcarnero;CF Intercity;UD Melilla' },
 
     { id: 'ITA1', c: 'ITA', n: 'Serie A', t: 1, q: 72, sp: 8, cal: 'euro', rr: 2, dn: 3, v: 'k', qual: { CL: 4, EL: 2, ECL: 2 },
       clubs: 'Inter;Napoli;Juventus;Milan;Atalanta;Roma;Lazio;Fiorentina;Bologna;Torino;Genoa;Udinese;Como;Cagliari;Parma;Lecce;Hellas Verona;Sassuolo;Pisa;Cremonese' },

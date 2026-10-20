@@ -16,7 +16,7 @@ Las partidas se guardan solas en IndexedDB del navegador y se pueden **exportar/
 
 | Módulo | Archivo | Estado |
 |---|---|---|
-| Base de datos de países, ligas y clubes reales (70 divisiones, ~1.200 clubes) | `data/world.js` | Activo. Ver “Estado de los datos”. |
+| Base de datos de países, ligas y clubes reales (72 divisiones, ~1.240 clubes) | `data/world.js` | Activo. Ver “Estado de los datos”. |
 | Calendarios (todos contra todos, ida/vuelta, partidos por equipo), tablas, liguillas, ascensos/descensos | `js/comp.js`, `js/sim.js` | Activo |
 | Copas nacionales (eliminación directa con exentos) de los 40 países | `js/comp.js` | Activo |
 | Torneos continentales de clubes: Champions, Europa y Conference (fase liga de 36 equipos + repechaje + eliminatorias), Libertadores, Sudamericana (con repechaje vs terceros de Libertadores), Copa de Campeones CONCACAF, AFC Champions League, CAF Champions League, Mundial de Clubes (desde 2029, 32 equipos) | `js/tournaments.js` | Activo |
@@ -118,6 +118,7 @@ La unidad de tiempo es la **semana** (semana 0 = lunes 18‑mayo‑2026). Cada l
 ### Pendientes conocidos
 Ver también Configuración → Datos y pendientes dentro del juego.
 - Tercera B de Chile, ligas inferiores de Argentina, Série D (96 clubes) y Serie C italiana (60) completas.
+- España: Primera Federación (ESP3) y Segunda Federación (ESP4) con 20 clubes cada una, **parciales** (en la realidad son 2 grupos de 20 y 5 grupos de 18, modelados como tabla única); los nombres salen de las composiciones 2025/26 publicadas por la RFEF y prensa. La Segunda División desciende 4 y la Copa del Rey incluye hasta la 3.ª categoría. El nivel de cada liga y la fuerza de cada club son estimaciones propias.
 - Segunda categoría de Suiza, Austria, Dinamarca, Suecia, Noruega, Polonia, Chequia, Grecia y Turquía.
 - Ligas de Europa del Este, Balcanes, Chipre, Israel, Medio Oriente fuera de Arabia Saudita, Centroamérica (salvo Costa Rica) y África subsahariana.
 - Formatos Apertura/Clausura de varias ligas sudamericanas, simplificados a tabla única; MLS y Liga MX con calendario equilibrado simplificado y liguilla final.
