@@ -45,7 +45,7 @@
     var html = '<div class="prof"><div class="prof-bg"></div><div class="prof-in"><span class="av xl" style="--h:' + (U.hash(h.nm) % 360) + '">' + esc(h.nm[0]) + '</span><div><div class="pname">' + esc(h.nm) + '</div><div class="mut">' + handle + ' · ' + UI.pos(h.pos) + ' · ' + esc(UI.heroTeamLabel()) + '</div></div><div class="grow"></div><div class="right"><b style="font-size:1.4rem">' + FP.fmt.num(s.fol || FP.Social.followers()) + '</b><div class="mut sm">seguidores</div></div></div></div>';
     html += '<div class="notice">Contenido simulado: cuentas y comentarios son ficticios y los genera el juego según tu rendimiento.</div>';
     html += '<div class="grid g21"><div><div class="tabs">' + [['all', 'Todo'], ['media', 'Prensa'], ['fan', 'Hinchas'], ['club', 'Club y tú']].map(function (t) { return '<button class="' + (tab === t[0] ? 'on' : '') + '" data-act="tabset" data-s="social" data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><div class="card tw">' + (feed.length ? feed.slice(0, 60).map(UI.tweet).join('') : '<p class="mut">Todavía no hay publicaciones. Juega, marca goles y la gente empezará a hablar de ti.</p>') + '</div></div>';
-    html += '<div><div class="card"><h3>Publicar</h3><p class="mut sm">Una publicación por semana.</p>' + FP.Social.actions.map(function (a) { return '<button class="btn" style="width:100%;margin-bottom:.4rem;text-align:left" data-act="soc-act" data-id="' + a.id + '">' + esc(a.t) + '<br><span class="mut sm">' + esc(a.d) + '</span></button>'; }).join('') + '</div>' +
+    html += '<div>' + (UI.postCard ? UI.postCard() : '') +
       '<div class="card"><h3>Hitos</h3>' + UI.milestoneList(FP.Social.milestones(), 8) + '</div></div></div>';
     return html;
   };

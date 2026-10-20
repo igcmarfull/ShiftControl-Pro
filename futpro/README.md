@@ -195,3 +195,16 @@ El avatar ya no es solo aleatorio: se puede elegir tono de piel (6), color de pe
 ## Atributos iniciales automáticos
 
 Al crear la carrera, los 30 puntos extra se reparten solos entre los 7 atributos clave de la posición (según los pesos de la media) y se rehacen al cambiar de posición. Cada atributo se puede subir hasta +12 o bajar hasta −8; los puntos quitados quedan libres. Botones: "Reparto automático de la posición" y "Poner todo en 0".
+
+## Redes y marca (`js/redes.js`, `js/ui-v14.js`)
+
+La pantalla **Redes** ahora tiene cuatro pestañas: Feed, Marca, Comunidad y Panel.
+
+- **Publicar:** hasta 3 publicaciones por semana (cada una cansa un poco) con 12 acciones (celebrar, familia, historia, acción solidaria, preguntas en vivo, video de jugadas, contenido de patrocinador…). Las buenas pueden hacerse virales (probabilidad según tu fama).
+- **Polémicas** (decisión `redes`): tuit antiguo, provocación de un rival, foto discutiendo con el DT, hinchas críticos y noticia falsa. Cada respuesta tiene riesgo/recompensa y mueve imagen pública, moral, fama y reputación de marca. El agente puede resolverlas sin riesgo.
+- **Patrocinios:** desde ~1.500 seguidores y 15 años llegan ofertas de marcas ficticias (máx. 3, una por categoría). Cláusulas de publicar y de conducta (una polémica mal resuelta puede rescindir el contrato), prima de firma, pago semanal (`patrocinio` en Finanzas) y renovaciones. Dependen de seguidores, nivel y reputación de marca.
+- **Rumores de fichaje:** la prensa filtra interés de clubes superiores; puedes desmentir, dejar correr (puede convertirse en oferta real), declarar amor al club o mover el rumor con tu agente.
+- **Comunidad:** club de fans con niveles (da moral semanal), cuenta parodia con memes y mensajes directos (leyenda, niño hincha, excompañero).
+- **Panel:** seguidores en el tiempo, mejor publicación, polémicas y marca.
+
+Todo se guarda en `hero.rd`; tests: `node tests/redes.js`. Calibración pendiente: los ingresos de marca no están contrastados con datos reales.

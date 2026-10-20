@@ -48,7 +48,7 @@
     S.pending = []; S.weekOpen = false;
     FP.Core.rebuildRoster(); FP.Match.cache = {};
     if (FP.Youth) FP.Youth.ensure(); if (FP.NT) { FP.NT.ensure(); FP.NT.invalidate(); } if (FP.Stats) FP.Stats.migrate(); if (FP.Contracts) FP.Contracts.migrate();
-    ['Dec', 'Med', 'Staff', 'Tac', 'Life', 'Post', 'Tryouts', 'Season', 'Clubs'].forEach(function (k) { var m = FP[k]; if (m && (m.migrate || m.ensure) && S.hero) { try { (m.migrate || m.ensure).call(m); } catch (e) { if (window.console) console.warn('migrar ' + k, e); } } });
+    ['Dec', 'Med', 'Staff', 'Tac', 'Life', 'Post', 'Tryouts', 'Season', 'Clubs', 'Redes'].forEach(function (k) { var m = FP[k]; if (m && (m.migrate || m.ensure) && S.hero) { try { (m.migrate || m.ensure).call(m); } catch (e) { if (window.console) console.warn('migrar ' + k, e); } } });
     Store.syncData();
     // reindexa cada ko (los índices t.f no se guardan fiables tras ordenar)
     Object.keys(S.comps).forEach(function (id) { var c = S.comps[id]; if (c.ko) FP.Comp.reindex(c); });
