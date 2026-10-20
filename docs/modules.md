@@ -202,7 +202,7 @@ Módulo nuevo, **fuera de `state`**: no usa `app_state` ni `save()`. Los datos v
 
 Los módulos son propietarios de las mutaciones runtime de estas colecciones.
 Las lecturas y la coordinación entre dominios continúan en `index.html`. El
-bootstrap/demo conserva asignaciones directas limitadas de empleados y planes.
+bootstrap conserva asignaciones directas limitadas de empleados y planes (ya no crea datos de demostración).
 
 ## Almacenamiento
 

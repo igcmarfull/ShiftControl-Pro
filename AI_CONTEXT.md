@@ -58,8 +58,8 @@ Antes del bloque monolítico se cargan:
 10. `src/modules/month-closures/month-closures.js`
 11. `src/modules/attendance/attendance.js`
 
-Estos archivos están disponibles para la inicialización, normalización y datos
-demo del estado.
+Estos archivos están disponibles para la inicialización y normalización del
+estado.
 
 Al final del documento se cargan, en orden relevante:
 

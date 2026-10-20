@@ -88,7 +88,7 @@ Antes del bloque monolítico se cargan `ShiftControlState`, `EmployeeModule`,
 `AuditModule`, `DailyClosureModule`, `PlanningModule`, `MonthClosureModule`,
 `AttendanceModule`, `ShortageModule`, `IncidentModule`, `EvaluationModule` y
 `ChecklistModule`. Así, los módulos de estado requeridos existen antes de la
-normalización, los datos demo y cualquier renderizado.
+normalización y cualquier renderizado.
 
 ### 3. Creación del estado legacy
 
@@ -338,8 +338,11 @@ Además:
 - Las diez colecciones principales tienen módulo propietario para sus
   mutaciones runtime. `index.html` conserva lecturas, reglas, coordinación y
   renderizado.
-- El bootstrap/demo conserva asignaciones mecánicas directas sobre
-  `employees`, `plans` y la marca de datos demo.
+- El bootstrap conserva asignaciones mecánicas directas sobre `employees` y
+  `plans` (normalización). Desde el 20-10-2026 ya no crea datos de
+  demostración: ni trabajadores, ni los turnos de junio de 2026 (marca
+  `demoRealistaJunio2026`), ni la incidencia de ejemplo; una app sin datos
+  parte vacía.
 - Las redefiniciones tardías pueden reemplazar implementaciones anteriores.
 - No toda persistencia se sincroniza remotamente.
 - No hay pruebas automatizadas de la aplicación que protejan la migración. Las
