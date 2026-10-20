@@ -121,7 +121,7 @@
           id: S.clubs.length, nm: nm, c: l.c, lg: l.id, ra: Math.round((z * (l.sp || 6) + U.norm() * 1.2) * 10) / 10,
           ac: U.clamp(Math.round(1 + (l.q - 42) / 11 + z * 0.9 + U.norm() * 0.5), 1, 5),
           fin: U.clamp(Math.round(4 + (l.q - 52) / 6 + z * 2.2 + U.norm()), 1, 10),
-          co: FP.Names.gen(l.c), cs: -U.int(5, 200), st: 0, pt: 0
+          co: FP.Names.gen(l.c), cs: -U.int(5, 200), st: 0, pt: 0, fm: U.wpick(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'], function (f) { return f === '4-3-3' ? 3 : f === '4-4-2' ? 3 : f === '4-2-3-1' ? 2.5 : 1; })
         };
         S.clubs.push(club); S.lgs[l.id].teams.push(club.id); made.push(club);
       });

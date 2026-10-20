@@ -215,7 +215,7 @@
     var S = FP.S, lg = FP.LGDEF[club.lg], pos = U.wpick(C.POS, function (p) { return p === 'GK' ? 0.5 : 1; });
     var age = U.int(16, 17);
     var o = Math.round((lg.q + club.ra) * 0.78 - 4 + U.norm() * 3.5);
-    var pt = Math.min(96, Math.round(o + 8 + R() * 16 + club.ac * 1.6 + (R() < 0.04 ? 14 : 0)));
+    var pt = Math.min(96, Math.round(o + 5 + R() * 12 + club.ac * 1.2 + (R() < 0.03 ? 12 : 0)));
     var nat = R() < C.foreignP(club.c) * 0.4 ? C.foreignNat(club) : club.c;
     var p = { i: S.pl.length, n: FP.Names.gen(nat), b: Math.round(S.week - (age + R()) * 52.1775), p: pos, o: U.clamp(o, 25, 80), pt: pt, c: club.id, ce: FP.Date.year(S.week) + U.int(2, 4), nat: nat };
     S.pl.push(p);
@@ -245,7 +245,7 @@
       for (var k = 0; k < n; k++) { var y = Sim.genYouth(club); S.ro[cid].push(y); }
       // entrenador
       if (R() < 0.12) {
-        var old = club.co; club.co = FP.Names.gen(club.c); club.cs = S.week;
+        var old = club.co; club.co = FP.Names.gen(club.c); club.cs = S.week; if (R() < 0.6) club.fm = U.pick(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2']);
         if (lg.t === 1 && lg.q >= 58 && R() < 0.6) Sim.news(club.nm + ' cambia de entrenador: llega ' + club.co + ' en lugar de ' + old + '.', 'coach', 1);
       }
     });
@@ -273,6 +273,28 @@
       S.ro[cid] = rr;
       delete FP.Match.cache[cid];
       C.calcStr(club);
+    });
+    // anclaje de nivel: evita que la media de cada liga se infle o desinfle a lo largo de 25 temporadas
+    var seenLg = {};
+    teamIds.forEach(function (cid) { seenLg[S.clubs[cid].lg] = 1; });
+    Object.keys(seenLg).forEach(function (lgId) {
+      var def = FP.LGDEF[lgId], tot = 0, n = 0;
+      S.lgs[lgId].teams.forEach(function (cid) {
+        var top = (S.ro[cid] || []).slice().sort(function (a, b) { return b.o - a.o; }).slice(0, 14);
+        top.forEach(function (p) { tot += p.o; n++; });
+      });
+      if (!n) return;
+      var drift = tot / n - (def.q + 1.8);
+      if (Math.abs(drift) < 0.5) return;
+      var adj = (drift - Math.sign(drift) * 0.3) * 0.7;
+      S.lgs[lgId].teams.forEach(function (cid) {
+        (S.ro[cid] || []).forEach(function (p) {
+          if (p.i === 0) return;
+          var d = adj, fl = Math.floor(Math.abs(d)), fr = Math.abs(d) - fl, q = (fl + (R() < fr ? 1 : 0)) * Math.sign(d);
+          p.o = U.clamp(p.o - q, 25, 96); if (p.pt < p.o) p.pt = p.o;
+        });
+        C.calcStr(S.clubs[cid]);
+      });
     });
     // libres: retiro de los muy veteranos / muy bajos
     for (var i = 1; i < S.pl.length; i++) {

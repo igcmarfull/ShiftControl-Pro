@@ -179,7 +179,7 @@
     }).catch(function (e) { UI.busy = false; UI.overlay(false); console.error(e); UI.toast('Error al avanzar: ' + esc(e.message), 'bad'); });
   };
   UI.afterWeeks = function (skipRender) {
-    FP.Store.auto();
+    FP.Store.auto().then(function () { if (FP.Store.lastError && !UI._warnedSave) { UI._warnedSave = true; UI.toast('El navegador no permite guardar localmente. Usa Configuración → Exportar a archivo para no perder tu partida.', 'bad'); } });
     if (!skipRender) UI.render();
   };
   UI.advMenu = function () {

@@ -118,9 +118,16 @@
   Match.lineup = function (clubId, opts) {
     opts = opts || {};
     var all = (FP.S.ro[clubId] || []).filter(function (p) { return !(p.inj > 0) && !(p.su > 0) && !(opts.excludeIds && opts.excludeIds[p.i]); });
-    var form = opts.form || '4-3-3', slots = FORMS[form], used = {}, xi = [];
+    var club = FP.S.clubs[clubId];
+    var form = opts.form || (club && club.fm) || '4-3-3', slots = FORMS[form] || FORMS['4-3-3'], used = {}, xi = [];
     var forced = opts.forced; // {p, slot}
-    if (forced) { used[forced.p.i] = 1; }
+    if (forced) {
+      used[forced.p.i] = 1;
+      if (slots.indexOf(forced.slot) < 0) { // la formación no tiene su posición: se ubica en el puesto más parecido
+        var bs = null, bv = 99; slots.forEach(function (sl) { var v = fitPen(forced.p.p, sl); if (v < bv) { bv = v; bs = sl; } });
+        forced.slot = bs;
+      }
+    }
     slots.forEach(function (sl) {
       if (forced && forced.slot === sl && !forced.done) { xi.push({ p: forced.p, slot: sl }); forced.done = 1; return; }
       var best = null, bv = -1;
@@ -434,6 +441,7 @@
       E(120, 'end', null, 'Final de la prórroga: ' + tname('h') + ' ' + out.hs + ' - ' + out.as + ' ' + tname('a') + '.');
     }
     out.ev = ev; out.xi = xi0;
+    out.form = { h: lu.h.form, a: lu.a.form };
     out.bench = { h: bench.h.map(function (p) { return { n: nameOf(p), pos: p.p, id: p.i }; }), a: bench.a.map(function (p) { return { n: nameOf(p), pos: p.p, id: p.i }; }) };
     out.stam = heroStam;
     // rating del héroe

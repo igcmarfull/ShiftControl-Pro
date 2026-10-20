@@ -224,32 +224,34 @@
     if (freeAgent) lambda += 0.8;
     var n = Math.min(3, U.poisson(Math.max(0.1, lambda)));
     if (age < 17) n = 0;
-    var tries = 0, made = 0, used = {};
-    while (made < n && tries++ < 120) {
-      var club = S.clubs[Math.floor(R() * S.clubs.length)];
-      if (club === cur || used[club.id]) continue;
-      if (age < 18 && club.c !== cc) continue;
-      var lvl = Market.clubLevel(club), st = club.st;
-      var gap = h.ovr - (st - 4), prospect = potEst - st;
-      var kind = null;
-      if (gap >= -2) kind = 'transfer';
-      else if (age <= 22 && prospect >= 3 && gap >= -10) kind = 'transfer';
-      if (!kind) continue;
-      // evita saltos de fantasía: no más de ~12 puntos sobre el nivel actual salvo talento extraordinario
-      if (club.st > h.ovr + 10 + Math.max(0, (potEst - h.ovr) * 0.4)) continue;
-      // escalera de ligas: el salto de nivel de liga es limitado según tu media
-      var curQ = cur ? FP.LGDEF[cur.lg].q : 42, newQ = FP.LGDEF[club.lg].q;
-      if (newQ - curQ > 6 + Math.max(0, h.ovr - 62) * 0.6 + (age <= 21 ? 2 : 0)) continue;
-      // ofertas más probables de ligas cercanas
-      if (club.c !== cc && R() < 0.5) continue;
-      used[club.id] = 1; made++;
-      var role = gap >= 3 ? 'Titular' : gap >= -2 ? 'Rotación' : 'Proyecto / suplente';
-      var wage = Market.wageFor(club, role === 'Titular' ? 1.15 : role === 'Rotación' ? 1 : 0.75);
+    var made = 0, roleNow = (h.tk === 'pro' || h.tk === 'loan') ? FP.Hero.roleLabel() : 'Titular';
+    var target = h.ovr + 1 + Math.max(0, (potEst - h.ovr)) * 0.3;
+    var curQ = cur ? FP.LGDEF[cur.lg].q : 42;
+    var pool = [];
+    S.clubs.forEach(function (club) {
+      if (club === cur) return;
+      if (age < 18 && club.c !== cc) return;
+      var st = club.st, gap = h.ovr - (st - 4), prospect = potEst - st;
+      var ok = gap >= -2 || (age <= 22 && prospect >= 3 && gap >= -10);
+      if (!ok) return;
+      if (club.st > h.ovr + 10 + Math.max(0, (potEst - h.ovr) * 0.4)) return;
+      if (cur && club.st < cur.st - 4 && roleNow !== 'Suplente' && roleNow !== 'Rotación') return;
+      var newQ = FP.LGDEF[club.lg].q;
+      if (newQ - curQ > 6 + Math.max(0, h.ovr - 62) * 0.6 + (age <= 21 ? 2 : 0)) return;
+      var w = Math.exp(-Math.abs(club.st - target) / 5) * (club.c === cc ? 1.6 : 1) * (club.c !== cc && !freeAgent && R() < 0.3 ? 0.5 : 1);
+      pool.push({ club: club, w: w, gap: gap });
+    });
+    while (made < n && pool.length) {
+      var pk = U.wpick(pool, function (x) { return x.w; });
+      pool.splice(pool.indexOf(pk), 1);
+      var club2 = pk.club, gap2 = pk.gap; made++;
+      var role = gap2 >= 3 ? 'Titular' : gap2 >= -2 ? 'Rotación' : 'Proyecto / suplente';
+      var wage = Market.wageFor(club2, role === 'Titular' ? 1.15 : role === 'Rotación' ? 1 : 0.75);
       var years = age < 20 ? U.int(3, 5) : age < 30 ? U.int(2, 4) : U.int(1, 2);
       var fee = Math.round(val * (0.8 + R() * 0.45));
       if (freeAgent || (h.contract && D.of(h.contract.end, 5, 30) < S.week + 20)) fee = 0;
-      var text = club.nm + ' (' + C.cname(club.c) + ', ' + FP.LGDEF[club.lg].n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + FP.fmt.money(wage) + ' al año' + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).');
-      Market.addOffer({ type: 'transfer', club: club.id, fee: fee, wage: wage, years: years, role: role, text: text, exp: S.week + (freeAgent ? 6 : 5) });
+      var text = club2.nm + ' (' + C.cname(club2.c) + ', ' + FP.LGDEF[club2.lg].n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + FP.fmt.money(wage) + ' al año' + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).');
+      Market.addOffer({ type: 'transfer', club: club2.id, fee: fee, wage: wage, years: years, role: role, text: text, exp: S.week + (freeAgent ? 6 : 5) });
     }
     // cesiones: jugadores profesionales de club grande sin minutos
     if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur) {

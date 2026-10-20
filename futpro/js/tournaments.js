@@ -236,7 +236,7 @@
     // comodines hasta 32
     var extra = stOrder(S.clubs.filter(function (c) { return teams.indexOf(c.id) < 0 && FP.LGDEF[c.lg].t === 1 && (c.c === 'BRA' || c.c === 'ENG' || c.c === 'ESP' || c.c === 'ARG'); }).map(function (c) { return c.id; }));
     while (teams.length < 32 && extra.length) teams.push(extra.shift());
-    var comp = Comp.create({ id: 'X:CWC:' + y, kind: 'X', nm: CWC.nm + ' ' + y, y: y, teams: teams, c: null, cont: 'CWC' });
+    var comp = Comp.create({ id: 'X:CWC:' + y, kind: 'X', nm: CWC.nm, y: y, teams: teams, c: null, cont: 'CWC' });
     comp.spec = 'CWC'; comp.label = String(y); comp.stage = 'lp'; comp.st = 0;
     var s0 = D.of(y, 5, 14);
     var gp = potsOf(teams, 4), groups = []; for (var g = 0; g < 8; g++) groups.push([]);
@@ -304,7 +304,7 @@
     if (key === 'WC') teams = Nat.qualifiedWC(y);
     else if (key === 'COPA') { teams = Nat.pickByRating('CONMEBOL', 10); teams = teams.concat(Nat.pickByRating('CONCACAF', 6)); }
     else teams = Nat.pickByRating(T.conf, T.size);
-    var comp = Comp.create({ id: 'X:' + key + ':' + y, kind: 'X', nm: T.nm + ' ' + y, y: y, teams: teams, c: null, cont: key });
+    var comp = Comp.create({ id: 'X:' + key + ':' + y, kind: 'X', nm: T.nm, y: y, teams: teams, c: null, cont: key });
     comp.spec = key; comp.label = String(y); comp.stage = 'lp'; comp.st = 0; comp.nat = true;
     var s0 = D.of(y, T.start[0], T.start[1]); comp.s0 = s0;
     var ord = natRank(teams.map(function (id) { return S.nat[id - 5000]; })).map(function (n) { return n.id; });

@@ -153,7 +153,7 @@
       var ar = Hero.ageRate(age);
       attrs.forEach(function (a) {
         var gap = h.cap[a] - h.at[a]; if (gap <= 0) return;
-        var g = 0.155 * ar * mult * fac * coach * fatM * Math.min(1.7, 0.3 + Math.min(gap, 20) / 12) * (0.85 + R() * 0.3);
+        var g = 0.14 * ar * mult * fac * coach * fatM * Math.min(1.7, 0.3 + Math.min(gap, 20) / 12) * (0.85 + R() * 0.3);
         h.at[a] = Math.min(h.cap[a], h.at[a] + g); res.gains[a] = g;
       });
       h.fat = U.clamp(h.fat + (intn === 1 ? -2 : intn === 2 ? 6 : 14) - (8 + h.at.res / 14), 0, 100);
@@ -454,7 +454,7 @@
     var oppSt = C.strOf(prep.opp), d = oppSt - h.ovr;
     var lvl = U.clamp(1 + d * 0.03, 0.5, 1.6);
     var q = U.clamp((hm.rating - 5) / 2.5, 0.3, 1.6);
-    var amt = 0.09 * (hm.min / 90) * lvl * q * Hero.ageRate(age) * 1.5;
+    var amt = 0.09 * (hm.min / 90) * lvl * q * Hero.ageRate(age) * 1.0;
     var attrs = Hero.focusAttrs('pos');
     attrs.forEach(function (a) { var gap = h.cap[a] - h.at[a]; if (gap > 0) h.at[a] = Math.min(h.cap[a], h.at[a] + amt * Math.min(gap, 20) / 12); });
     if (hm.g) h.at.fin = Math.min(h.cap.fin, h.at.fin + 0.03 * Hero.ageRate(age));
