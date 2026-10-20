@@ -204,7 +204,7 @@
   var badges0 = UI.badges;
   UI.badges = function () {
     var b = badges0.apply(this, arguments);
-    if (FP.S && FP.S.hero) { b.health = (Dec.open('lesion').length + Dec.open('alta').length + Dec.open('molestias').length) || undefined; b.locker = Dec.open('vestuario').length || undefined; b.life = Dec.open('vida').length + Dec.open('prensa').length || undefined; }
+    if (FP.S && FP.S.hero) { b.health = (Dec.open('lesion').length + Dec.open('alta').length + Dec.open('molestias').length) || undefined; b.locker = Dec.open('vestuario').length || undefined; b.life = Dec.open('vida').length + Dec.open('prensa').length || undefined; b.post = (Dec.open('post').length + Dec.open('agente').length + Dec.open('retiro').length) || undefined; }
     return b;
   };
 })();

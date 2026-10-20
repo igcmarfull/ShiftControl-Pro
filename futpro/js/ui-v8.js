@@ -60,7 +60,7 @@
     return html + '</div></div>';
   }
   function pathTab(p) {
-    var S = FP.S, h = S.hero, pa = p.path, html = UI.decCards(['post']);
+    var S = FP.S, h = S.hero, pa = p.path, html = UI.decCards(['post', 'agente']);
     if (!pa) {
       html += '<div class="grid g2">' + Object.keys(P.PATHS).map(function (k) { return '<div class="card"><div class="hd"><h3>' + esc(P.PATHS[k].nm) + '</h3></div><p class="mut sm">' + esc(P.PATHS[k].d) + '</p><button class="btn pri" data-act="postpath" data-k="' + k + '">Elegir</button></div>'; }).join('') + '</div>';
       return html;
@@ -77,7 +77,7 @@
       if (pa.seasons.length) html += '<div class="card"><div class="hd"><h3>Temporadas</h3></div>' + pa.seasons.slice().reverse().map(function (s) { return '<div class="row sp sm"><span>' + esc(s.y) + ' · ' + NM[s.lvl] + '</span><b>Audiencia ' + s.aud + '</b></div>'; }).join('') + '</div>';
     } else if (pa.k === 'agent') {
       html += '<div class="grid g2"><div class="card"><div class="hd"><h3>' + I('contract') + 'Licencia</h3></div><p>' + (p.agentLic ? 'Licencia de agente vigente.' : 'Aún no tienes la licencia.') + '</p>' + (!p.agentLic && !pa.course ? '<button class="btn pri" data-act="postcourse" data-k="agent">Sacar la licencia (' + money(5) + ')</button>' : '') + '<p class="mut sm">Reputación como agente: ' + Math.round(pa.rep || 0) + '. Más reputación permite más representados (máx. ' + (3 + Math.floor((pa.rep || 0) / 25)) + ').</p></div>';
-      html += '<div class="card"><div class="hd"><h3>' + I('user') + 'Representados</h3></div>' + (pa.clients.length ? pa.clients.map(function (c) { var q = S.pl[c.pid]; return q ? '<div class="row sp"><span><b>' + esc(q.n) + '</b> <span class="mut sm">' + C.POS_ES[q.p] + ' · ' + C.age(q) + ' años · ' + (q.c >= 0 && q.c < 5000 ? esc(C.tname(q.c)) : '—') + '</span></span><b>' + Math.round(q.o) + '</b></div>' : ''; }).join('') : '<p class="mut">Sin representados todavía.</p>') + '</div></div>';
+      html += '<div class="card"><div class="hd"><h3>' + I('user') + 'Representados</h3></div>' + (pa.clients.length ? pa.clients.map(function (c) { var q = S.pl[c.pid]; if (!q) return ''; var loy = c.loy == null ? 60 : c.loy; return '<div class="person"><div class="row sp"><span><b>' + esc(q.n) + '</b> ' + (c.star ? pill('Figura', 'g') : '') + '<div class="mut sm">' + C.POS_ES[q.p] + ' · ' + C.age(q) + ' años · ' + (q.c >= 0 && q.c < 5000 ? esc(C.tname(q.c)) : 'sin club') + ' · comisiones ' + money(Math.round(c.com || 0)) + '</div></span><b style="font-size:1.2rem">' + Math.round(q.o) + '</b></div><div class="mut sm">Lealtad</div>' + bar(loy, loy < 35 ? 'r' : loy < 55 ? 'y' : '') + '</div>'; }).join('') : '<p class="mut">Sin representados todavía.</p>') + '</div></div>';
     }
     return html;
   }

@@ -3,7 +3,7 @@
    con un "jugador automático" que responde a ofertas con reglas simples. */
 global.window = global;
 var path = require('path'), root = path.join(__dirname, '..');
-['js/util.js', 'data/world.js', 'js/core.js', 'js/comp.js', 'js/match.js', 'js/sim.js', 'js/hero.js', 'js/market.js', 'js/events.js', 'js/tournaments.js', 'js/social.js', 'js/youth.js', 'js/scouting.js', 'js/decisions.js', 'js/medical.js', 'js/staff.js', 'js/tactics.js', 'js/life.js', 'js/postcareer.js', 'js/coaching.js', 'js/contracts.js', 'js/nteams.js', 'js/stats.js', 'js/game.js', 'js/storage.js'].forEach(function (f) {
+['js/util.js', 'data/world.js', 'js/core.js', 'js/comp.js', 'js/match.js', 'js/sim.js', 'js/hero.js', 'js/market.js', 'js/events.js', 'js/tournaments.js', 'js/social.js', 'js/youth.js', 'js/scouting.js', 'js/decisions.js', 'js/medical.js', 'js/staff.js', 'js/tactics.js', 'js/life.js', 'js/postcareer.js', 'js/coaching.js', 'js/agency.js', 'js/contracts.js', 'js/nteams.js', 'js/stats.js', 'js/game.js', 'js/storage.js'].forEach(function (f) {
   try { require(path.join(root, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND' || String(e.message).indexOf(f) < 0) throw e; }
 });
 var FP = global.FP, D = FP.Date;
