@@ -575,3 +575,15 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .rv-story { padding: 0 1.2rem 1rem; } .rv-story summary { cursor: pointer; color: var(--ac2); font-size: .82rem; padding: .3rem 0; } .rv-story p { margin: .3rem 0; color: var(--mut); font-size: .85rem; }
 @media (max-width: 760px) { .rv-tiles { grid-template-columns: repeat(3, 1fr); } }
 .rv-t .rate { font-size: 1.15rem; padding: .1rem .55rem; }
+
+/* estadísticas de carrera en formato enciclopédico (ui-v17) */
+.wk-card { padding: .4rem .5rem .6rem; } .wk { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.wk th, .wk td { padding: .38rem .55rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; white-space: nowrap; }
+.wk thead th { background: var(--surface2); font-size: .66rem; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); text-align: left; font-weight: 650; }
+.wk thead th[colspan] { text-align: center; } .wk thead th[rowspan] { vertical-align: bottom; }
+.wk .n { text-align: right; font-variant-numeric: tabular-nums; } .wk thead .n { text-align: right; }
+.wk .lb { border-left: 1px solid var(--line2); } .wk .tt { font-weight: 650; } .wk .mut { color: var(--dim); }
+.wk-cl { background: var(--surface); border-right: 1px solid var(--line2); min-width: 11rem; } .wk-cl div { display: flex; align-items: center; gap: .5rem; } .wk-cl .crest { width: 1.5rem; height: 1.5rem; flex: none; } .wk-cl .crest img { width: 100%; height: 100%; object-fit: contain; }
+.wk-dv { max-width: 18rem; color: var(--mut); }
+.wk-sub td { background: var(--surface2); font-weight: 650; } .wk-tot td { background: var(--petrol2); font-weight: 700; border-top: 2px solid var(--line2); }
+.wk tbody tr:not(.wk-sub):not(.wk-tot):hover td { background: var(--hov); }
