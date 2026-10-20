@@ -255,4 +255,4 @@ Se unió el banner de resultado y el marcador en una sola tarjeta (tira de VICTO
 
 ## Calendario: vistas de "Próximos" (`js/ui-v21.js`)
 
-Selector **Vista**: **Agenda** (tarjeta del próximo partido con fuerza de ambos equipos y lista por mes con color por tipo de competición y fuerza del rival), **Semanas** (una casilla por semana, incluidas las libres) y **Por competición** (barra de avance, balance y próximos partidos de cada competición).
+Selector **Vista** (por defecto Agenda): **Agenda** (tarjeta del próximo partido con fuerza de ambos equipos y lista por mes con color por tipo de competición y fuerza del rival), **Semanas** (una casilla por semana, incluidas las libres) y **Por competición** (barra de avance, balance y próximos partidos de cada competición).
