@@ -16,7 +16,7 @@ Las partidas se guardan solas en IndexedDB del navegador y se pueden **exportar/
 
 | Módulo | Archivo | Estado |
 |---|---|---|
-| Base de datos de países, ligas y clubes reales (72 divisiones, ~1.240 clubes) | `data/world.js` | Activo. Ver “Estado de los datos”. |
+| Base de datos de países, ligas y clubes reales (82 divisiones, ~1.400 clubes) | `data/world.js` | Activo. Ver “Estado de los datos”. |
 | Calendarios (todos contra todos, ida/vuelta, partidos por equipo), tablas, liguillas, ascensos/descensos | `js/comp.js`, `js/sim.js` | Activo |
 | Copas nacionales (eliminación directa con exentos) de los 40 países | `js/comp.js` | Activo |
 | Torneos continentales de clubes: Champions, Europa y Conference (fase liga de 36 equipos + repechaje + eliminatorias), Libertadores, Sudamericana (con repechaje vs terceros de Libertadores), Copa de Campeones CONCACAF, AFC Champions League, CAF Champions League, Mundial de Clubes (desde 2029, 32 equipos) | `js/tournaments.js` | Activo |
