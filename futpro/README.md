@@ -272,3 +272,7 @@ Se quitaron las franjas de color en el borde de las tarjetas y filas nuevas (res
 ## Partidos de primera división siendo juvenil
 
 Los partidos del primer equipo que juega un juvenil citado (`js/callups.js`) se registran con el equipo profesional del club, por lo que en Biografía → Estadísticas aparecen en la tabla "Primer equipo y clubes profesionales" (y en el total profesional), separados de las competiciones juveniles del mismo club y temporada. Ambos suman en el total oficial de carrera.
+
+## Biografía: campeonato juvenil y primer equipo separados
+
+En las tablas de Biografía el equipo juvenil aparece como "Club (juv.)" con el nombre de su campeonato ("Campeonato Juvenil Sub-17"), sin añadir la liga profesional del club, y los partidos del primer equipo van en filas aparte bajo el club con su división ("Primera División"). Los grupos se arman por nombre aunque la carrera alterne entre juvenil y primer equipo. En la cronología el título juvenil se nombra "Campeón juvenil".

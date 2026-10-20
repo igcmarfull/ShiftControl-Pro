@@ -18,6 +18,7 @@
   function yEnd(s) { s = String(s); return s.indexOf('/') > 0 ? 2000 + parseInt(s.split('/')[1], 10) : y4(s); }
   function plural(n, a, b) { return n + ' ' + (n === 1 ? a : b); }
   function list(a) { return a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1]; }
+  function tname(nm) { return String(nm).replace(/^(Campeón|Subcampeón) Juvenil · .*$/i, '$1 juvenil'); }   // el campeonato juvenil se nombra solo, sin la liga profesional del club
   function baseName(n) { return String(n || '').replace(/\s*\((juv\.|cedido)\)\s*$/i, '').trim(); }
   function pron(h) { return DEM[h.nat] || null; }
   function countryName(code) { try { return C.cname(code); } catch (e) { return code; } }
@@ -91,7 +92,7 @@
       if (senior.length <= 3) out.push(senior.map(function (r) { return 'en la temporada ' + esc(r.y) + ' jugó ' + plural(r.ap, 'partido', 'partidos') + ' y marcó ' + plural(r.g, 'gol', 'goles') + (r.a ? ' (' + plural(r.a, 'asistencia', 'asistencias') + ')' : ''); }).join('; ').replace(/^e/, 'E') + '.');
       else { var S2 = sumRows(senior), best = senior.slice().sort(function (a, b) { return b.g - a.g; })[0]; out.push('En ' + senior.length + ' temporadas (' + range(senior) + ') disputó ' + plural(S2.ap, 'partido', 'partidos') + ' y anotó ' + plural(S2.g, 'gol', 'goles') + '; su mejor año fue ' + esc(best.y) + ', con ' + plural(best.g, 'gol', 'goles') + '.'); }
     }
-    var tt = titlesAt(h, s.nm); if (tt.length) out.push('Con el club se proclamó ' + esc(list(tt.map(function (t) { return t.nm.charAt(0).toLowerCase() + t.nm.slice(1) + ' (' + t.y + ')'; }))) + '.');
+    var tt = titlesAt(h, s.nm); if (tt.length) out.push('Con el club se proclamó ' + esc(list(tt.map(function (t) { return tname(t.nm).charAt(0).toLowerCase() + tname(t.nm).slice(1) + ' (' + t.y + ')'; }))) + '.');
     var aw = awardsIn(h, rows).filter(function (a) { return !(s.rows.length && false); }); if (aw.length) out.push('A título individual recibió ' + esc(list(aw.slice(0, 3).map(function (a) { return a.nm + ' (' + a.y + ')'; }))) + '.');
     if (!out.length) out.push('Disputó ' + plural(T.ap, 'partido', 'partidos') + ' en ' + range(rows) + '.');
     return out;
@@ -161,7 +162,7 @@
     var ev = [];
     (h.history || []).forEach(function (e) { if (/^(Firma|Debut)/.test(e.t)) ev.push({ w: e.w, t: e.t }); });
     (B.ensure().ev || []).forEach(function (e) { ev.push({ w: e.w, t: e.t.replace(/^¡/, '').replace(/!$/, '').replace(/^Convocado/, 'Convocado') }); });
-    (h.trophies || []).forEach(function (t) { if (t.w != null && !t.preset) ev.push({ w: t.w, t: (t.sub ? 'Subcampeón: ' : 'Campeón: ') + t.nm.replace(/^(Campeón|Subcampeón) (de )?/i, '') + (t.club ? ' con ' + baseName(t.club) : '') }); });
+    (h.trophies || []).forEach(function (t) { if (t.w != null && !t.preset) ev.push({ w: t.w, t: (t.sub ? 'Subcampeón: ' : 'Campeón: ') + tname(t.nm).replace(/^(Campeón|Subcampeón) (de )?/i, '') + (t.club ? ' con ' + baseName(t.club) : '') }); });
     (h.awards || []).forEach(function (a) { if (a.w != null) ev.push({ w: a.w, t: 'Distinción: ' + a.nm }); });
     ((h.med && h.med.hist) || []).forEach(function (e) { if (e.n >= 8) ev.push({ w: e.w, t: 'Lesión grave: ' + e.nm.toLowerCase() + ' (' + e.n + ' semanas)' }); });
     milestones(h).forEach(function (e) { ev.push({ w: e.w, t: e.t }); });

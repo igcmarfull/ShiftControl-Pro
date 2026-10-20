@@ -24,7 +24,9 @@
   function mainDiv(e) {
     var best = null; e.rows.forEach(function (r) { if (LEAGUE[r.k] && (!best || r.p > best.p)) best = r; });
     if (!best) best = e.rows.filter(function (r) { return r.k !== 'amis'; })[0] || e.rows[0];
-    return best ? best.c.replace(/\s*\(.*\)\s*$/, '') : '';
+    if (!best) return '';
+    var n = best.c.replace(/\s*\(.*\)\s*$/, '');
+    return best.k === 'juv' && n.indexOf(' · ') > 0 ? n.split(' · ')[0] : n;   // el campeonato juvenil se muestra solo (sin la liga profesional del club)
   }
   function entries() {
     return ST.seasons().map(function (s) { return { s: s.s, t: s.t, tn: s.tn, o: s.o, lv: level(s.t), rows: s.rows.filter(function (r) { return !ST.isNT(r.k); }) }; })
@@ -126,7 +128,7 @@
     if (!vis.length) return '<p class="mut sm">Sin partidos oficiales.</p>';
     var cols = wcols(vis), body = '', all = z(), nc = 2 + 3 + (cols.copa ? 2 : 0) + (cols.cont ? 2 : 0);
     var groups = [];
-    vis.forEach(function (e) { var k = label(e, opts.youthLabel), g = groups[groups.length - 1]; if (!opts.flat && g && g.k === k) g.list.push(e); else groups.push({ k: k, e: e, list: [e] }); });
+    vis.forEach(function (e) { var k = label(e, opts.youthLabel), g = opts.flat ? null : groups.filter(function (x) { return x.k === k; })[0]; if (g) g.list.push(e); else groups.push({ k: k, e: e, list: [e] }); });
     groups.forEach(function (g) {
       g.list = opts.flat ? g.list : mergeSeasons(g.list);
       var rowsAll = [].concat.apply([], g.list.map(function (s) { return s.rows; })), many = g.list.length > 1 && !opts.flat;
