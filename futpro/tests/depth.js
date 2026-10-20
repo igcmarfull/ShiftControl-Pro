@@ -9,6 +9,8 @@ for (var i = 0; i < 52 * 7; i++) {
   week(); if (h.lk) maxPeople = Math.max(maxPeople, h.lk.people.length);
   FP.Dec.open().forEach(function (d) { seenDec[d.kind] = (seenDec[d.kind] || 0) + 1; FP.Dec.resolve(d.id, d.opts[i % d.opts.length].k); });
 }
+t('resúmenes de temporada generados', h.rv && h.rv.list.length > 0 && h.rv.list[0].text.length >= 3);
+t('metas y logros', h.gl && h.gl.season && h.gl.season.items.length >= 3 && Object.keys(h.gl.ach).length > 0);
 t('lesiones tipificadas', h.med.hist.length > 0 && h.med.hist.every(function (e) { return e.nm && e.zone; }));
 t('carga de partidos acotada', h.med.load >= 0 && h.med.load < 80, h.med.load);
 t('decisiones sin pendientes eternas', FP.Dec.open().length < 5);
