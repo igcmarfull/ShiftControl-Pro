@@ -17,7 +17,7 @@
   // Clubes a los que tiene sentido ir a probarse: ligas bajas o equipos de un nivel parecido al tuyo (no se prueba un jugador mediocre en un grande)
   T.reach = function (c, age) {
     var h = FP.S.hero, a = age != null ? age : Hero.age(), eff = h.ovr - FP.Youth.adultPenalty(a);
-    if (a >= 20) return c.st <= eff + 3;
+    if (a >= 20) return tier(c) >= 2 && c.st <= eff + 3;     // los adultos se prueban en divisiones inferiores: los clubes de primera no hacen pruebas abiertas
     return M.trialDifficulty(c.id).p >= 0.12;
   };
   function monthKey(w) { var y = D.ymd(w); return y[0] * 12 + y[1]; }
@@ -28,7 +28,7 @@
     var k = monthKey(w); if (S.ty.k === k) return; S.ty.k = k;
     S.ty.items = S.ty.items.filter(function (x) { return x.w >= w; });
     var age = Hero.age(), cc = M.heroCountry(), items = [];
-    var dom = S.clubs.filter(function (c) { return c.c === cc && tier(c) <= 4; }).sort(function () { return R() - 0.5; });
+    var dom = S.clubs.filter(function (c) { return c.c === cc && tier(c) <= 4 && (age < 20 || tier(c) >= 2); }).sort(function () { return R() - 0.5; });
     dom.slice(0, 3).forEach(function (c) { items.push({ kind: 'club', club: c.id, w: w + U.int(1, 4), n: U.int(90, 320), cost: 0 }); });
     var pool = dom.filter(function (c) { return Rep.foreignOK(c, h.nat, age); }).slice(0, 8);
     if (pool.length >= 4) items.push({ kind: 'show', clubs: pool.slice(0, U.int(4, 8)).map(function (c) { return c.id; }), w: w + U.int(2, 5), n: U.int(180, 420), cost: age >= 18 ? 1 : 0, cc: cc });
