@@ -252,3 +252,7 @@ Indicadores arriba (títulos, subcampeonatos, premios, Balones de Oro) y selecto
 ## Resultado del partido rediseñado (`js/ui-v2.js`)
 
 Se unió el banner de resultado y el marcador en una sola tarjeta (tira de VICTORIA/EMPATE/DERROTA con tu nota); la línea de tiempo muestra el minuto de cada evento (local arriba, visitante abajo); el relato va por tiempos con filtro **Resumen / Completo** y el marcador destacado en los goles; las estadísticas usan los colores de cada equipo (con color de contraste si son parecidos); "Tu rendimiento" suma "Tus jugadas"; y las alineaciones muestran posición, nombre y media con tu jugador resaltado. El modo minuto a minuto y las dos pieles (oscura y clara) se mantienen.
+
+## Calendario: vistas de "Próximos" (`js/ui-v21.js`)
+
+Selector **Vista**: **Agenda** (tarjeta del próximo partido con fuerza de ambos equipos y lista por mes con color por tipo de competición y fuerza del rival), **Semanas** (una casilla por semana, incluidas las libres) y **Por competición** (barra de avance, balance y próximos partidos de cada competición).
