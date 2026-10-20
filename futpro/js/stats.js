@@ -15,7 +15,8 @@
   Stats.classOf = function (comp) {
     if (comp.cat) return { U15: 'u15', U17: 'u17', U20: 'u20', U23: 'u23', ABS: 'abs' }[comp.cat];
     switch (comp.kind) {
-      case 'L': case 'K': return 'liga';
+      case 'K': return /^FIN:/.test(comp.id) ? 'amat' : 'liga';
+      case 'L': return 'liga';
       case 'C': return 'copa';
       case 'X': case 'Q': return comp.nat ? 'abs' : 'cont';
       case 'Y': return 'juv';

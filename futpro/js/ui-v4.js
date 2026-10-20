@@ -31,7 +31,7 @@
       var tot = byCls[CLS_OF[cat]] ? byCls[CLS_OF[cat]].tot : null;
       var tour = S.nt.tours.filter(function (t) { return t.cat === (cat === 'ABS' ? 'ABS' : cat) && (NT.TD[t.key].conf === nat.conf || NT.TD[t.key].world); }).sort(function (a, b) { return a.s0 - b.s0; })[0];
       var why = '';
-      if (!elig) why = cat === 'ABS' ? (age < 17 ? 'Disponible desde los 17 años.' : 'Necesitas jugar en un club profesional.') : 'Ya no eres elegible para esta categoría (límite: nacidos en ' + (D.year(h.b) <= y - lim ? (y - lim) + ' o después' : '') + ').';
+      if (!elig) why = cat === 'ABS' ? (age < 17 ? 'Disponible desde los 17 años.' : 'Necesitas jugar en un club profesional.') : 'Ya no eres elegible para esta categoría (en ' + y + ' pueden jugar los nacidos en ' + (y - lim) + ' o después).';
       else if (hs.st === 'none') why = 'Aún no estás en el radar del cuerpo técnico. Los ojeadores siguen a jugadores con rendimiento y visibilidad.';
       else if (hs.st === 'obs') why = 'Los ojeadores te siguen. Puedes ser citado a un microciclo antes del próximo torneo.';
       else if (hs.st === 'micro') why = 'Participas de los microciclos: compites por un cupo con otros jugadores de tu puesto.';
