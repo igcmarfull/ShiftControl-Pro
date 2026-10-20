@@ -264,3 +264,11 @@ Arriba, tarjetas de **pendientes** (decisiones abiertas y ofertas) con acceso di
 ## Biografía: tablas de clubes por nivel (`js/ui-v17.js`)
 
 La tabla de clubes de Biografía → Estadísticas tiene tres vistas: **Cantera y profesional** (dos tablas separadas con su total y resumen por nivel), **Una tabla con filtro** (columna Nivel y filtro Todo / Profesional / Juvenil / Amateur) y **Por temporada** (una fila por año con edad, clubes de cantera/amateur, profesionales, selección y total). Solo se listan temporadas con partidos oficiales (los amistosos suman en su columna) y la fila de total es legible en la piel clara.
+
+## Sin franjas de color laterales
+
+Se quitaron las franjas de color en el borde de las tarjetas y filas nuevas (resumen por nivel de Biografía, agenda del calendario, competiciones, noticias nuevas, momentos del resumen de temporada, goles del relato); la categoría se distingue por el texto o la etiqueta.
+
+## Partidos de primera división siendo juvenil
+
+Los partidos del primer equipo que juega un juvenil citado (`js/callups.js`) se registran con el equipo profesional del club, por lo que en Biografía → Estadísticas aparecen en la tabla "Primer equipo y clubes profesionales" (y en el total profesional), separados de las competiciones juveniles del mismo club y temporada. Ambos suman en el total oficial de carrera.
