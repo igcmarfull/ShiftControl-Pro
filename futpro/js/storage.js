@@ -36,6 +36,7 @@
   Store.unpack = function (d) {
     d = Store.migrate(d);
     var S = FP.S = d;
+    FP.Date.setStart(S.y0 || 2026);
     Object.keys(S.comps).forEach(function (id) {
       var c = S.comps[id]; c.fx = c.fx.map(unpackFx);
       c.cp = 0; while (c.cp < c.fx.length && c.fx[c.cp].d) c.cp++; // un partido pendiente del jugador al guardar a mitad de semana vuelve a jugarse

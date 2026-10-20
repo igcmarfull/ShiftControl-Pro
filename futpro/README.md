@@ -70,6 +70,10 @@ Notas honestas: los efectos de rol/presión, carga, nostalgia, legado e ingresos
 
 Pruebas: `node tests/depth.js` (salud, vestuario, táctica con pausas, vida, retiro, guardado), además de `tests/invariants.js` y `tests/contracts.js`.
 
+## Año de inicio
+
+La pantalla de inicio permite elegir el año (1995–2026). Cambia **solo el calendario**: fechas, edades y el ciclo de torneos (Eurocopa y Copa América en años ≡ 0 mod 4, Mundial en años ≡ 2, etc.). Los clubes, ligas y selecciones siguen siendo los de 2026 y los jugadores son generados, por lo que un inicio en 2007 no reproduce plantillas ni divisiones de esa época. El año se guarda en la partida (`S.y0`) y se restaura al cargar; los guardados anteriores se leen como 2026. El Mundial mantiene su formato actual de 48 selecciones en cualquier año.
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**

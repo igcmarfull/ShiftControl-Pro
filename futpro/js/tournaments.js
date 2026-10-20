@@ -438,10 +438,10 @@
     var S = FP.S;
     S.cont = { made: {} };
     Object.keys(DEF).forEach(function (key) {
-      var d = DEF[key], y = d.cal === 'euro' ? 2025 : 2026;
+      var d = DEF[key], y = d.cal === 'euro' ? D.y0 - 1 : D.y0;
       Cont.create(key, y, true); S.cont.made[key + y] = 1;
     });
-    Nat.createTournament('WC', 2026); S.cont.made['WC2026'] = 1;
+    if (D.y0 % 4 === 2) { Nat.createTournament('WC', D.y0); S.cont.made['WC' + D.y0] = 1; }     // el Mundial solo existe en años ≡ 2 (mod 4)
     S.natq = {}; S.natqComps = {};
   };
   Sim.weeklyExtra = function (w) {
@@ -456,7 +456,7 @@
     // enero: Mundial de Clubes y torneos de selecciones del año
     if (m === 0 && d <= 14) {
       if (Cont.cwcYear(y)) once('CWC' + y, function () { Cont.createCWC(y); });
-      if (y % 4 === 2 && y > 2026) once('WC' + y, function () { Nat.createTournament('WC', y); });
+      if (y % 4 === 2 && y >= D.y0) once('WC' + y, function () { Nat.createTournament('WC', y); });
       if (y % 4 === 3) { once('AFCON' + y, function () { Nat.createTournament('AFCON', y); }); once('ASIA' + y, function () { Nat.createTournament('ASIA', y); }); once('GOLD' + y, function () { Nat.createTournament('GOLD', y); }); }
       if (y % 4 === 0) { once('EURO' + y, function () { Nat.createTournament('EURO', y); }); once('COPA' + y, function () { Nat.createTournament('COPA', y); }); }
       // clasificatorias de la próxima Copa del Mundo (ciclo que parte en septiembre)

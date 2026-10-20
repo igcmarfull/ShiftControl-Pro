@@ -14,8 +14,10 @@
     if (UI.mt && UI.mt.timer) clearInterval(UI.mt.timer);
     UI.mt = null;
     var html = '<div class="start" style="grid-column:1/-1"><div class="hero-banner"><div class="logo-big">FUT<b>PRO</b></div><h2 style="font-weight:500;color:var(--mut)">El Brasfoot de los futbolistas</h2><p class="mut">Vive la carrera de un solo jugador, de los 12 años al retiro, en un mundo con clubes reales que juega independientemente de ti.</p></div>';
+    var yrs = ''; for (var yy = 2026; yy >= 1995; yy--) yrs += '<option value="' + yy + '"' + (yy === Start.y0 ? ' selected' : '') + '>' + yy + '</option>';
+    html += '<div class="card" style="margin-bottom:.8rem"><div class="row sp"><div><h3 style="margin:0">Año de inicio</h3><p class="mut sm" style="margin:.2rem 0 0">Cambia solo el calendario (fechas, edades y torneos como la Eurocopa o el Mundial según el año). Los clubes, ligas y selecciones son los actuales (2026) y los jugadores son generados.</p></div><select data-act="st-year" style="min-width:6rem">' + yrs + '</select></div></div>';
     html += '<div class="grid g2">' +
-      '<div class="card opt" data-act="st-preset"><h3>⚽ Partida preconfigurada: Ignacio</h3><p class="mut">13 años · delantero centro físico y potente · media 58 · Deportivo Los Aromos · 14 partidos, 9 goles y 3 asistencias · subcampeón regional. Mayo de 2026, con una oportunidad pendiente en San Fernando.</p><span class="btn pri">Jugar</span></div>' +
+      '<div class="card opt" data-act="st-preset"><h3>⚽ Partida preconfigurada: Ignacio</h3><p class="mut">13 años · delantero centro físico y potente · media 58 · Deportivo Los Aromos · 14 partidos, 9 goles y 3 asistencias · subcampeón regional. Mayo del año de inicio elegido, con una oportunidad pendiente en San Fernando.</p><span class="btn pri">Jugar</span></div>' +
       '<div class="card opt" data-act="st-new"><h3>✚ Nueva carrera</h3><p class="mut">Crea tu futbolista: nombre, país, edad (12–17), posición, estilo, atributos y club de inicio (amateur o inferiores de un club profesional).</p><span class="btn">Crear jugador</span></div>' +
       '</div><div id="st-saves"></div>';
     html += '<div class="card" style="margin-top:1rem"><h3>Sobre los datos</h3><p class="mut sm">Clubes, ligas y países son reales (temporada ' + esc(FP.DATA.seasonLabel) + '); <b>los futbolistas se generan automáticamente</b> y no corresponden a personas reales. Algunas composiciones de liga están marcadas “por verificar”. Consulta Configuración → Datos y pendientes dentro del juego.</p><p class="mut sm">Se juega sin conexión: todo se guarda en este navegador (y puedes exportar tu partida a un archivo).</p>' +
@@ -37,10 +39,12 @@
     loading('Importando partida…', 0.4);
     FP.Store.import(f).then(function () { return FP.Store.save(); }).then(function () { UI.scr = 'home'; UI.render(); UI.toast('Partida importada.', 'ok'); }).catch(function (e) { UI.toast('No se pudo importar: ' + esc(e.message), 'bad'); Start.menu(); });
   };
+  Start.y0 = 2026;
+  A['st-year'] = function (d, t) { Start.y0 = +(t && t.value || d.v) || 2026; };
   A['st-preset'] = function () {
     loading('Preparando el mundo…', 0.02);
     var seed = Math.floor(Math.random() * 2e9);
-    FP.Game.buildWorld(seed, progress).then(function () {
+    FP.Game.buildWorld(seed, progress, Start.y0).then(function () {
       FP.Game.startPreset(); UI.scr = 'home'; UI.mt = null;
       return FP.Store.save().catch(function () { });
     }).then(function () { UI.render(); }).catch(Start.fail);
@@ -108,7 +112,7 @@
     if (used > 30) { UI.toast('Te pasaste de los 30 puntos.', 'warn'); return; }
     loading('Preparando el mundo…', 0.02);
     var seed = Math.floor(Math.random() * 2e9);
-    FP.Game.buildWorld(seed, progress).then(function () {
+    FP.Game.buildWorld(seed, progress, Start.y0).then(function () {
       var opts = { res: f.res, nm: nm, nat: f.nat, city: f.city, age: f.age, h: f.ht, kg: f.kg, pos: f.pos, foot: f.foot, style: f.style, extra: f.extra };
       if (f.club === 'amat') opts.club = { kind: 'amat', name: f.amName.trim() };
       else { var c = FP.S.clubs.filter(function (c) { return c.nm === f.acName; })[0] || FP.S.clubs.filter(function (c) { return c.nm === 'Colo-Colo'; })[0]; opts.club = { kind: 'academy', id: c.id }; }

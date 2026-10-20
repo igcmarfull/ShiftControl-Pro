@@ -97,7 +97,7 @@
     // ---------- creación del mundo ----------
     newWorld: function (seed) {
       var D = FP.DATA, S = FP.S = {
-        ver: 1, seed: seed, rs: seed | 0, week: 0, clubs: [], pl: [0], lgs: {}, nat: [], amat: [], comps: {}, news: [], hist: { champs: [], awards: [] },
+        ver: 1, y0: FP.Date.y0, seed: seed, rs: seed | 0, week: 0, clubs: [], pl: [0], lgs: {}, nat: [], amat: [], comps: {}, news: [], hist: { champs: [], awards: [] },
         cfg: { activeAll: true, off: {} }, log: []
       };
       FP.LGDEF = {}; D.leagues.forEach(function (l) { FP.LGDEF[l.id] = l; });

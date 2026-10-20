@@ -7,8 +7,9 @@
   var tick = function () { return new Promise(function (r) { setTimeout(r, 0); }); };
 
   // Construye el mundo y lo avanza hasta la fecha de inicio (semana 0 = 18-may-2026)
-  Game.buildWorld = function (seed, progress) {
+  Game.buildWorld = function (seed, progress, y0) {
     progress = progress || function () { };
+    FP.Date.setStart(y0 || 2026);
     return new Promise(function (resolve) {
       progress('Generando clubes, plantillas y ligas…', 0.05);
       setTimeout(function () {
@@ -20,7 +21,7 @@
           (function loop() {
             var t0 = Date.now();
             while (S.week < 0 && Date.now() - t0 < 60) { Sim.step(); done++; }
-            progress('Simulando el fútbol mundial hasta mayo de 2026…', 0.25 + 0.7 * Math.min(1, done / Math.max(1, total)));
+            progress('Simulando el fútbol mundial hasta mayo de ' + FP.Date.y0 + '…', 0.25 + 0.7 * Math.min(1, done / Math.max(1, total)));
             if (S.week < 0) setTimeout(loop, 0);
             else resolve(S);
           })();
@@ -65,17 +66,17 @@
       pot: null
     });
     // fecha de nacimiento: 13 años en mayo de 2026
-    h.b = D.of(2012, 8, 14); S.pl[0].b = h.b;
+    h.b = D.of(D.y0 - 14, 8, 14); S.pl[0].b = h.b;
     h.pot = Math.min(96, FP.Youth.potFor(h.ovr, 13) + 2); h.cap = FP.Hero.makeCaps(h.at, h.pos, h.pot, h.style); S.pl[0].pt = h.pot;
     var id = FP.Market.newAmateurClub('Deportivo Los Aromos', 'CHI', 50);
     h.tk = 'amat'; h.team = id; h.club = null;
     // progreso incorporado por el usuario
     h.tot.ap = 14; h.tot.g = 9; h.tot.a = 3; h.tot.min = 14 * 70;
     h.season = { ap: 14, st: 14, min: 14 * 70, g: 9, a: 3, yc: 0, rc: 0, rs: 0, rn: 0 };
-    h.trophies.push({ y: '2026', nm: 'Subcampeón regional', club: 'Deportivo Los Aromos', w: 0, sub: 1, preset: 1 });
+    h.trophies.push({ y: String(D.y0), nm: 'Subcampeón regional', club: 'Deportivo Los Aromos', w: 0, sub: 1, preset: 1 });
     h.history = [{ w: 0, t: 'Inicio de partida preconfigurada: Ignacio (13 años, DC) en Deportivo Los Aromos.', club: null }];
     h.flags.preset = 1;
-    FP.Hero.msg('Partida preconfigurada: Ignacio, 13 años, delantero centro de Deportivo Los Aromos. 14 partidos, 9 goles y 3 asistencias. Subcampeón regional (mayo de 2026).', 'ok');
+    FP.Hero.msg('Partida preconfigurada: Ignacio, 13 años, delantero centro de Deportivo Los Aromos. 14 partidos, 9 goles y 3 asistencias. Subcampeón regional (mayo de ' + D.y0 + ').', 'ok');
     // oportunidad pendiente en San Fernando (prueba abierta con clubes de la zona)
     var near = [FP.Game.clubByName("O'Higgins"), FP.Game.clubByName('Deportes Santa Cruz')].filter(Boolean).map(function (c) { return c.id; });
     FP.Market.addOffer({ type: 'event', trialOpen: true, place: 'San Fernando', clubs: near, club: near[0], text: 'Oportunidad pendiente en San Fernando: prueba abierta con veedores de clubes de la zona (O\'Higgins y Deportes Santa Cruz).', exp: 14 });

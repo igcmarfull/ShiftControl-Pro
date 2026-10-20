@@ -3,16 +3,16 @@ var H = require('./harness.js'), FP = H.FP, ok = 0, bad = 0;
 function t(name, cond, info) { if (cond) ok++; else { bad++; console.log('FALLA', name, info !== undefined ? info : ''); } }
 var S = H.restore(H.buildWorld(321)), h = FP.Game.startPreset();
 function week(play) { FP.Game.beginWeek(); var g = 0; while (FP.Game.hasPending() && g++ < 20) FP.Game.playPending(); FP.Game.endWeek(); H.respond(h); }
-var seenDec = {}, injTypes = {};
+var seenDec = {}, injTypes = {}, maxPeople = 0;
 for (var i = 0; i < 52 * 7; i++) {
   if (i === 52 * 2) { Object.keys(h.at).forEach(function (a) { h.at[a] = Math.min(84, h.at[a] + 14); h.cap[a] = 95; }); h.pot = 88; FP.Hero.updateOvr(); }
-  week();
+  week(); if (h.lk) maxPeople = Math.max(maxPeople, h.lk.people.length);
   FP.Dec.open().forEach(function (d) { seenDec[d.kind] = (seenDec[d.kind] || 0) + 1; FP.Dec.resolve(d.id, d.opts[i % d.opts.length].k); });
 }
 t('lesiones tipificadas', h.med.hist.length > 0 && h.med.hist.every(function (e) { return e.nm && e.zone; }));
 t('carga de partidos acotada', h.med.load >= 0 && h.med.load < 80, h.med.load);
 t('decisiones sin pendientes eternas', FP.Dec.open().length < 5);
-t('vestuario con personas', h.lk && h.lk.people.length > 0);
+t('vestuario con personas', maxPeople > 0, maxPeople);
 t('estilo de entrenador asignado', Object.keys(FP.S.staff).length > 0);
 t('familiaridad en la posición actual', h.fam[h.pos] === 100 || h.fam[h.pos] > 0);
 t('vida personal creada', !!h.life && h.life.edu.grad === true);

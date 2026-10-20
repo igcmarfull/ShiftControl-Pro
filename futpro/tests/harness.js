@@ -9,7 +9,8 @@ var path = require('path'), root = path.join(__dirname, '..');
 var FP = global.FP, D = FP.Date;
 
 exports.FP = FP;
-exports.buildWorld = function (seed) {
+exports.buildWorld = function (seed, y0) {
+  FP.Date.setStart(y0 || 2026);
   var S = FP.Core.newWorld(seed); FP.Sim.startSeasons();
   var g = 0; while (S.week < 0 && g++ < 800) FP.Sim.step();
   return JSON.stringify(FP.Store.pack());

@@ -51,11 +51,17 @@
   };
 
   // ---------- Fechas: semana 0 = lunes 18-may-2026 ----------
-  var START = Date.UTC(2026, 4, 18), DAY = 86400000;
+  var START = Date.UTC(2026, 4, 18), DAY = 86400000, Y0 = 2026;
   var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   var MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   FP.Date = {
-    START: START, MESES: MESES,
+    START: START, MESES: MESES, y0: Y0,
+    // año de inicio de la partida: la semana 0 cae en el lunes más cercano al 18 de mayo de ese año
+    setStart: function (y) {
+      y = Math.max(1990, Math.min(2060, Math.round(+y) || 2026));
+      var t = Date.UTC(y, 4, 18), dow = new Date(t).getUTCDay(), back = (dow + 6) % 7;
+      START = t - (back > 3 ? back - 7 : back) * DAY; Y0 = y; FP.Date.y0 = y; FP.Date.START = START;
+    },
     d: function (w) { return new Date(START + w * 7 * DAY); },
     year: function (w) { return new Date(START + w * 7 * DAY).getUTCFullYear(); },
     month: function (w) { return new Date(START + w * 7 * DAY).getUTCMonth(); }, // 0-11

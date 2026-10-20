@@ -16,12 +16,12 @@
   Sim.startSeasons = function () {
     var S = FP.S;
     FP.DATA.leagues.forEach(function (l) {
-      var y = l.cal === 'euro' ? 2025 : 2026;
+      var y = l.cal === 'euro' ? FP.Date.y0 - 1 : FP.Date.y0;
       Comp.newLeague(l.id, y);
     });
     Object.keys(FP.DATA.countries).forEach(function (cc) {
       var l = FP.DATA.leagues.filter(function (x) { return x.c === cc; })[0];
-      Comp.newCup(cc, l.cal === 'euro' ? 2025 : 2026);
+      Comp.newCup(cc, l.cal === 'euro' ? FP.Date.y0 - 1 : FP.Date.y0);
     });
     if (Sim.startContinental) Sim.startContinental(true);
     S.pending = [];
