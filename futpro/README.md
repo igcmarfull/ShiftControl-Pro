@@ -280,3 +280,7 @@ En las tablas de Biografía el equipo juvenil aparece como "Club (juv.)" con el 
 ## Biografía: cesiones
 
 El juego registra cada cesión (`hero.bio.loans`: club de origen, club de destino, fechas, opción de compra y desenlace: regreso o compra). La biografía la cuenta en la trayectoria ("En enero de 2027 fue cedido a X por Y durante 6 meses. El préstamo incluía una opción de compra de … Terminada la cesión, regresó a Y."), en la introducción, en la cronología y en las tablas como "Club (cedido)". La trayectoria ahora se arma con el registro de partidos (equipo real de cada temporada: club, juvenil o cedido). Las cesiones de partidas anteriores a este cambio solo se reconocen por el nombre de la temporada.
+
+## Biografía: actuaciones destacadas
+
+`hero.bio.moments` guarda, mientras se juega, pocos partidos oficiales notables: goles en una final, tripletes o más, un gol en el minuto 85 o después que decidió el partido y el primer gol con la selección (máximo 2 por año y por clase, priorizando finales). La biografía los cuenta en cada club ("Entre sus actuaciones destacadas figuran: …") y en Selección nacional, con rival, marcador, competición, fecha y minutos; los más importantes entran también en la cronología. Los títulos y las distinciones ya se contaban en cada club. Las partidas anteriores a este cambio no tienen estos momentos.

@@ -46,6 +46,39 @@
     } catch (e) { }
     return r;
   };
+  // actuaciones destacadas: se guardan pocas (máx. 2 por año y por clase) para contarlas en la biografía
+  var am0 = Hero.afterMatch;
+  Hero.afterMatch = function (prep, res) {
+    var r = am0.apply(this, arguments);
+    try { B.moment(prep, res); } catch (e) { }
+    return r;
+  };
+  B.moment = function (prep, res) {
+    var h = FP.S.hero, hm = res && res.hero, comp = prep.comp, f = prep.f; if (!hm || !hm.played || !hm.g) return;
+    if (comp.kind === 'F' || f.fr) return;                                   // solo partidos oficiales
+    var mins = (res.ev || []).filter(function (e) { return e.hero && e.t === 'goal'; }).map(function (e) { return e.m; });
+    var mg = prep.home ? res.hs : res.as, og = prep.home ? res.as : res.hs, win = mg > og, nat = prep.mine >= 5000 && prep.mine < 20000;
+    var ro = String(f.ro || ''), fin = /^Final$/i.test(ro) || /\bfinal\b/i.test(ro) && !/semi|cuartos|octavos|dieciseis/i.test(ro);
+    var late = win && mg - og === 1 && mins.some(function (m) { return m >= 85; });
+    var k = fin ? 'fin' : hm.g >= 3 ? 'hat' : late ? 'late' : (nat && h.nt && h.nt.goals === hm.g) ? 'nt1' : null; if (!k) return;
+    var sc = (fin ? 8 : 0) + (hm.g >= 3 ? 4 : 0) + (hm.g >= 4 ? 1 : 0) + (late ? 3 : 0) + (k === 'nt1' ? 3 : 0) + (win ? 1 : 0);
+    var b = B.ensure(); b.moments = b.moments || [];
+    var m = { w: FP.S.week, k: k, g: hm.g, m: mins, s: mg + '-' + og, r: win ? 'V' : mg < og ? 'D' : 'E', c: FP.Stats.compName(comp), ro: ro, o: C.tname(prep.opp), club: C.tname(prep.mine), nat: nat, sc: sc };
+    b.moments.push(m);
+    var yr = D.year(m.w), same = b.moments.filter(function (x) { return D.year(x.w) === yr && x.nat === nat; });
+    if (same.length > 2) { same.sort(function (a, c2) { return c2.sc - a.sc || c2.w - a.w; }); var drop = same[same.length - 1]; b.moments.splice(b.moments.indexOf(drop), 1); }
+    if (b.moments.length > 80) b.moments.shift();
+  };
+  function momentText(m) {
+    var d = dlong(m.w), vs = ' ante ' + m.o + ' (' + m.s + ')', cp = m.c + (m.ro ? ', ' + m.ro.toLowerCase() : '');
+    var gn = m.g >= 4 ? plural(m.g, 'gol', 'goles') : m.g === 3 ? 'un triplete' : m.g === 2 ? 'un doblete' : 'un gol', min = m.m && m.m.length === m.g ? ' (min. ' + m.m.join(', ') + ')' : '';
+    if (m.k === 'fin') return 'marcó ' + gn + min + ' en la final de ' + m.c + vs + (m.r === 'V' ? ', en la que su equipo se impuso' : '') + ', el ' + d;
+    if (m.k === 'hat') return 'anotó ' + (m.g === 3 ? 'un triplete' : plural(m.g, 'gol', 'goles')) + min + vs + ' por ' + cp + ', el ' + d;
+    if (m.k === 'late') return 'marcó en el minuto ' + m.m[m.m.length - 1] + vs + ' por ' + cp + ', el gol que decidió el partido (' + d + ')';
+    return 'convirtió su primer gol con la selección' + vs + ', el ' + d;
+  }
+  B.moments = function () { var h = FP.S && FP.S.hero; return (h && h.bio && h.bio.moments) || []; };
+
   B.loans = function () { var h = FP.S && FP.S.hero; return (h && h.bio && h.bio.loans) || []; };
   // ¿ese equipo, en esa semana, fue una cesión?
   B.isLoan = function (t, w) {
@@ -109,6 +142,7 @@
     return p;
   }
 
+  var usedM = [];
   function stintText(h, s, i, all) {
     var out = [], rows = s.rows, T = sumRows(rows), hist = historyFor(h, s.nm), senior = rows.filter(function (r) { return !/\(juv\.\)/i.test(r.club); }), young = rows.filter(function (r) { return /\(juv\.\)/i.test(r.club); });
     var arr = hist.filter(function (e) { return /^Firma con/.test(e.t); })[0], debut = hist.filter(function (e) { return /^Debut con el primer equipo/.test(e.t); })[0];
@@ -125,6 +159,10 @@
       if (senior.length <= 3) out.push(senior.map(function (r) { return 'en la temporada ' + esc(r.y) + ' jugó ' + plural(r.ap, 'partido', 'partidos') + ' y marcó ' + plural(r.g, 'gol', 'goles') + (r.a ? ' (' + plural(r.a, 'asistencia', 'asistencias') + ')' : ''); }).join('; ').replace(/^e/, 'E') + '.');
       else { var S2 = sumRows(senior), best = senior.slice().sort(function (a, b) { return b.g - a.g; })[0]; out.push('En ' + senior.length + ' temporadas (' + range(senior) + ') disputó ' + plural(S2.ap, 'partido', 'partidos') + ' y anotó ' + plural(S2.g, 'gol', 'goles') + '; su mejor año fue ' + esc(best.y) + ', con ' + plural(best.g, 'gol', 'goles') + '.'); }
     }
+    var ya = y4(rows[0].y), yb = yEnd(rows[rows.length - 1].y);
+    var mo = B.moments().filter(function (m) { var yy = D.year(m.w); return !m.nat && baseName(m.club) === s.nm && yy >= ya && yy <= yb && usedM.indexOf(m) < 0; }).sort(function (a, b2) { return b2.sc - a.sc; }).slice(0, 2).sort(function (a, b2) { return a.w - b2.w; });
+    mo.forEach(function (m) { usedM.push(m); });
+    if (mo.length) out.push('Entre sus actuaciones destacadas figuran: ' + esc(mo.map(momentText).join('; ')) + '.');
     var tt = titlesAt(h, s.nm); if (tt.length) out.push('Con el club se proclamó ' + esc(list(tt.map(function (t) { return tname(t.nm).charAt(0).toLowerCase() + tname(t.nm).slice(1) + ' (' + t.y + ')'; }))) + '.');
     var aw = awardsIn(h, rows).filter(function (a) { return !(s.rows.length && false); }); if (aw.length) out.push('A título individual recibió ' + esc(list(aw.slice(0, 3).map(function (a) { return a.nm + ' (' + a.y + ')'; }))) + '.');
     if (s.loan) { var ln2 = B.loans().filter(function (l) { return C.tname(l.to) === s.nm; })[0]; if (ln2 && ln2.res === 'compra') out.push('El club ejerció la opción de compra y el jugador pasó a ser propiedad de ' + esc(s.nm) + '.'); else if (ln2 && ln2.res === 'regreso') out.push('Terminada la cesión, regresó a ' + esc(C.tname(ln2.from)) + '.'); else if (all[i + 1] && all[i + 1].nm === (all[i - 1] && all[i - 1].nm)) out.push('Terminada la cesión, regresó a ' + esc(all[i + 1].nm) + '.'); }
@@ -141,6 +179,8 @@
       var cl = Object.keys(comps).sort(function (x, y) { return comps[y] - comps[x]; }).slice(0, 2);
       out.push({ k: k, t: 'Selección ' + CATN[k] + (k === 'abs' ? '' : ''), p: (k === 'abs' ? 'Con la selección absoluta de ' : 'Con la selección ' + CATN[k] + ' de ') + esc(cn) + ' ' + (a === b ? 'en ' + a : 'entre ' + a + ' y ' + b) + ' disputó ' + plural(T.p, 'partido', 'partidos') + ' y marcó ' + plural(T.g, 'gol', 'goles') + (cl.length ? ', con presencia en ' + esc(list(cl)) : '') + '.' });
     });
+    var nmo = B.moments().filter(function (m) { return m.nat; }).sort(function (a, b2) { return b2.sc - a.sc; }).slice(0, 3).sort(function (a, b2) { return a.w - b2.w; });
+    if (nmo.length) out.push({ k: 'dest', t: 'Actuaciones destacadas', p: 'Entre sus actuaciones destacadas figuran: ' + esc(nmo.map(momentText).join('; ')) + '.' });
     var first = (B.ensure().ev || []).filter(function (e) { return /Convocado a la selección absoluta/.test(e.t); })[0];
     if (first) out.push({ k: 'conv', t: 'Primera convocatoria', p: 'Fue convocado por primera vez a la selección absoluta el ' + dlong(first.w) + '.' });
     return any ? out : [];
@@ -199,6 +239,7 @@
     (h.trophies || []).forEach(function (t) { if (t.w != null && !t.preset) ev.push({ w: t.w, t: (t.sub ? 'Subcampeón: ' : 'Campeón: ') + tname(t.nm).replace(/^(Campeón|Subcampeón) (de )?/i, '') + (t.club ? ' con ' + baseName(t.club) : '') }); });
     (h.awards || []).forEach(function (a) { if (a.w != null) ev.push({ w: a.w, t: 'Distinción: ' + a.nm }); });
     ((h.med && h.med.hist) || []).forEach(function (e) { if (e.n >= 8) ev.push({ w: e.w, t: 'Lesión grave: ' + e.nm.toLowerCase() + ' (' + e.n + ' semanas)' }); });
+    B.moments().forEach(function (m) { if (m.sc >= 5) ev.push({ w: m.w, t: (m.k === 'fin' ? 'Final de ' + m.c : m.k === 'hat' ? (m.g === 3 ? 'Triplete' : m.g + ' goles') + ' ante ' + m.o : m.k === 'late' ? 'Gol decisivo ante ' + m.o : 'Primer gol con la selección') + ' (' + m.s + ')' }); });
     B.loans().forEach(function (l) { ev.push({ w: l.w0, t: 'Cedido a ' + C.tname(l.to) + ' por ' + C.tname(l.from) }); if (l.w1 != null) ev.push({ w: l.w1, t: l.res === 'compra' ? 'Se hace efectiva la compra por ' + C.tname(l.to) : 'Fin de la cesión en ' + C.tname(l.to) + (l.res === 'regreso' ? ': regresa a ' + C.tname(l.from) : '') }); });
     milestones(h).forEach(function (e) { ev.push({ w: e.w, t: e.t }); });
     ev.sort(function (a, b) { return a.w - b.w; });
@@ -209,6 +250,7 @@
   B.build = function () {
     var S = FP.S, h = S.hero, ST = FP.Stats; B.ensure();
     var st = stints(h), tot = sumRows(h.seasons || []), by = ST.byClass(), nt = by.abs || by.u23 || by.u20 || by.u17 || by.u15 ? ST.sum([].concat.apply([], CATS.filter(function (k) { return by[k]; }).map(function (k) { return by[k].rows; }))) : null;
+    usedM = [];
     var secs = [], lock = [];
     var ey = earlyYears(h, st); secs.push({ id: 'infancia', t: 'Primeros años', p: ey });
     if (st.length) secs.push({ id: 'trayectoria', t: 'Trayectoria', sub: st.map(function (s, i) { return { t: s.nm + (s.loan ? ' (cedido)' : '') + ' · ' + range(s.rows), p: stintText(h, s, i, st) }; }) });
