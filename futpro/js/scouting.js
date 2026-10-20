@@ -202,12 +202,18 @@
       M.addOffer({ type: 'transfer', club: club.id, fee: fee, wage: wage, years: years, role: role, text: txt, exp: w + (freeAgent ? 6 : 5), why: e.why, lower: lower ? 1 : 0, urgent: f.need >= 1 ? 1 : 0 });
       e.v = Math.max(20, e.v - 25);
     });
-    // cesiones: jugadores sin minutos en clubes de mayor nivel
-    if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur && !Rep.coolOn(w) && (roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'academy' && age >= 17 || age <= 20 && cur.st >= h.ovr + 3) && M.isWindow(w) && R() < 0.3) {
-      var cc = M.heroCountry(), opts = S.clubs.filter(function (c) { return c.c === cc && c !== cur && c.st <= h.ovr + 4 && c.st >= h.ovr - 14 && clubTier(c).t >= clubTier(cur).t && Rep.exposure(c).ok; });
+    // cesiones: jugadores jóvenes sin minutos en clubes de mayor nivel (del país o del extranjero cuando es legal)
+    var few = h.season && h.season.ap < 8 && w - (h.startW || 0) > 30;
+    if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur && !Rep.coolOn(w) && (roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'academy' && age >= 17 || age <= 21 && few || age <= 20 && cur.st >= h.ovr + 3) && M.isWindow(w) && R() < 0.3) {
+      var cc = M.heroCountry(), eff = h.ovr - FP.Youth.adultPenalty(age);
+      var opts = S.clubs.filter(function (c) {
+        if (c === cur || !Rep.exposure(c).ok) return false;
+        if (c.c === cc) return c.st <= h.ovr + 4 && c.st >= h.ovr - 14 && clubTier(c).t >= clubTier(cur).t;
+        return age >= 18 && clubTier(c).t <= 2 && c.st <= eff + 2 && c.st >= eff - 10 && Rep.foreignOK(c, h.nat, age) && Rep.permit(c);
+      });
       if (opts.length && !h.offers.some(function (o) { return o.type === 'loan'; })) {
         var lc = U.pick(opts);
-        M.addOffer({ type: 'loan', club: lc.id, years: 1, wage: 0, role: 'Con minutos', text: lc.nm + ' solicita tu cesión por una temporada para darte minutos. Regresas a ' + cur.nm + ' al terminar.', exp: w + 5 });
+        M.addOffer({ type: 'loan', club: lc.id, years: 1, wage: 0, role: 'Con minutos', text: lc.nm + (lc.c !== cc ? ' (' + C.cname(lc.c) + ')' : '') + ' solicita tu cesión por una temporada para darte minutos. Regresas a ' + cur.nm + ' al terminar.', exp: w + 5 });
       }
     }
     return made;
