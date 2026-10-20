@@ -99,4 +99,12 @@ const html=R.printHtml(doc,{company:COMPANY,logoUrl:'x.png'});
 assert.ok(!html.includes('<script>alert')&&!html.includes('<img src=x>'));
 assert.ok(html.includes('@page')&&html.includes('Letter'));
 console.log('ok  HTML escapado y hoja carta');
+
+// ---- densidad: los textos cortos llevan más aire, los largos van compactos
+const dens=id=>R.density(D.get(id).build(D.defaults(D.get(id))));
+assert.deepStrictEqual(['constancia_vehiculo','certificado','vacaciones','amonestacion','anexo'].map(dens),Array(5).fill('roomy'));
+assert.strictEqual(dens('carta_aviso'),'normal');
+assert.strictEqual(dens('finiquito'),'compact');assert.strictEqual(dens('contrato'),'compact');
+assert.ok(R.printHtml(D.get('certificado').build(D.defaults(D.get('certificado'))),{company:COMPANY}).includes('class="dens-roomy"'));
+console.log('ok  densidad según el largo del documento');
 console.log('\nTODAS LAS PRUEBAS PASARON');

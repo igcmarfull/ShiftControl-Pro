@@ -83,12 +83,16 @@ function formHtml(){
     ${S.message?`<p class="dc-err">${esc(S.message)}</p>`:''}
     <div class="dc-split"><div class="dc-form"><h3>Datos del documento</h3><div class="dc-grid" id="dcFields">${picker}${formFieldsHtml()}</div>
       <div class="dc-acts"><button type="button" class="dc-btn pri" data-dc="pdf">Imprimir / guardar PDF</button><button type="button" class="dc-btn" data-dc="docx"${S.busy?' disabled':''}>${S.busy?'Generando…':'Descargar Word'}</button></div></div>
-      <div class="dc-sheetwrap"><p class="dc-pv">Vista previa · hoja carta</p><div class="dc-page" id="dcPage"></div></div></div>`;
+      <div class="dc-sheetwrap"><p class="dc-pv">Vista previa · hoja carta</p><div class="dc-page" id="dcPage"></div><p class="dc-pages" id="dcPages"></p></div></div>`;
 }
 function renderPreview(){
   const holder=$('dcPage');
   if(!holder||!S.tpl)return;
-  holder.innerHTML=Render().pageHtml(currentDoc(),{company:company(),logoUrl:LOGO_URL,highlight:true});
+  const doc=currentDoc();
+  holder.className=`dc-page dens-${Render().density(doc)}`;
+  holder.innerHTML=Render().pageHtml(doc,{company:company(),logoUrl:LOGO_URL,highlight:true});
+  const note=$('dcPages');
+  if(note)note.textContent=doc.blocks.some(block=>block.t==='break')||Render().density(doc)==='compact'&&doc.blocks.length>40?'Este documento ocupa varias hojas al imprimirlo o descargarlo en Word: aquí se ve seguido.':'';
 }
 function render(){
   const root=$('documentsRoot');
@@ -192,7 +196,12 @@ async function logoData(){
 }
 function buildDocx(lib,doc,logo){
   const {Document,Paragraph,TextRun,AlignmentType,Table,TableRow,TableCell,WidthType,BorderStyle,Header,Footer,ImageRun,PageNumber,PageBreak,VerticalAlign}=lib;
-  const FONT='Times New Roman',SIZE=22,BLUE='0F4C9C',GREY='667085';
+  const dens=Render().density(doc);
+  const FONT='Times New Roman',BLUE='0F4C9C',GREY='667085';
+  const SIZE={roomy:26,normal:23,compact:22}[dens];
+  const LINE={roomy:360,normal:300,compact:276}[dens];
+  const AFTER={roomy:240,normal:170,compact:140}[dens];
+  const SIGN_BEFORE={roomy:2200,normal:1100,compact:420}[dens];
   const co=company();
   const none={style:BorderStyle.NONE,size:0,color:'FFFFFF'};
   const noBorders={top:none,bottom:none,left:none,right:none};
@@ -200,13 +209,13 @@ function buildDocx(lib,doc,logo){
   const runs=list=>list.map(run=>new TextRun({text:run.text,bold:!!run.b,font:FONT,size:SIZE}));
   const children=[];
   doc.blocks.forEach(block=>{
-    if(block.t==='title'||block.t==='heading')children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:120,after:240},children:[new TextRun({text:block.text,bold:true,color:BLUE,font:'Arial',size:27,characterSpacing:20})]}));
-    else if(block.t==='p')children.push(new Paragraph({alignment:align[block.align]||AlignmentType.LEFT,indent:block.indent?{left:440}:undefined,spacing:{after:block.after!==undefined?block.after*15:140,line:276},children:runs(block.runs)}));
+    if(block.t==='title'||block.t==='heading')children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:dens==='roomy'?360:120,after:dens==='roomy'?420:240},children:[new TextRun({text:block.text,bold:true,color:BLUE,font:'Arial',size:27,characterSpacing:20})]}));
+    else if(block.t==='p')children.push(new Paragraph({alignment:align[block.align]||AlignmentType.LEFT,indent:block.indent?{left:440}:undefined,spacing:{after:block.after!==undefined?block.after*15:AFTER,line:LINE},children:runs(block.runs)}));
     else if(block.t==='amounts')children.push(new Table({width:{size:82,type:WidthType.PERCENTAGE},indent:{size:440,type:WidthType.DXA},borders:{...noBorders,insideHorizontal:none,insideVertical:none},rows:block.rows.map(row=>new TableRow({children:[
       new TableCell({borders:{...noBorders,top:row.bold?{style:BorderStyle.SINGLE,size:6,color:'555555'}:none},width:{size:72,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:row.label,bold:!!row.bold,font:FONT,size:SIZE})]})]}),
       new TableCell({borders:{...noBorders,top:row.bold?{style:BorderStyle.SINGLE,size:6,color:'555555'}:none},width:{size:28,type:WidthType.PERCENTAGE},children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[new TextRun({text:row.amount,bold:!!row.bold,font:FONT,size:SIZE})]})]})]}))}));
     else if(block.t==='sign'){
-      children.push(new Paragraph({spacing:{before:420,after:0},children:[]}));
+      children.push(new Paragraph({spacing:{before:SIGN_BEFORE,after:0},children:[]}));
       const n=block.cols.length;
       children.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:{...noBorders,insideHorizontal:none,insideVertical:none},rows:[new TableRow({cantSplit:true,children:block.cols.map(col=>new TableCell({borders:noBorders,width:{size:Math.floor(100/n),type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.TOP,
         children:[new Paragraph({alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:6,color:'555555',space:4}},spacing:{before:0,after:40},children:[new TextRun({text:'',font:FONT,size:SIZE})]}),
