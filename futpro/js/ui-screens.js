@@ -71,6 +71,9 @@
       '<div style="margin:.35rem 0">' + UI.statusPills() + '</div>' +
       '<div class="row gap"><span class="sm mut">Rol: <b style="color:var(--tx)">' + esc(FP.Hero.roleLabel()) + '</b></span><span class="sm mut">Valor: <b style="color:var(--tx)">' + UI.money(FP.Market.heroValue()) + '</b></span>' + (h.contract ? '<span class="sm mut">Contrato: <b style="color:var(--tx)">hasta ' + h.contract.end + '</b></span>' : '') + '</div></div></div>' +
       '<div class="grid g3" style="margin-top:.8rem"><div><div class="sm mut">Forma</div>' + UI.bar(h.form, 100, h.form > 60 ? '' : 'y') + '</div><div><div class="sm mut">Moral</div>' + UI.bar(h.mor, 100, h.mor > 45 ? 'b' : 'r') + '</div><div><div class="sm mut">Fatiga</div>' + UI.bar(h.fat, 100, h.fat > 70 ? 'r' : h.fat > 45 ? 'y' : '') + '</div></div></div>';
+    if (!h.flags.guideOff && S.week - h.startW < 16) {
+      html += '<div class="card" style="border-color:var(--ac2)"><div class="hd"><h3>Primeros pasos</h3><button class="btn sm" data-act="guideoff">Ocultar</button></div><ol class="mut" style="margin:.2rem 0 0 1.1rem;padding:0"><li>Elige tu <a class="lk" data-act="nav" data-s="training">entrenamiento</a> semanal (el plan automático rota por todos los atributos).</li><li>Pulsa <b>▶ Semana</b>: cuando haya partido podrás verlo minuto a minuto o simularlo.</li><li>Rinde bien: los clubes te invitarán a pruebas, o pídelas tú en el <a class="lk" data-act="nav" data-s="market">mercado de fichajes</a>.</li><li>Revisa <a class="lk" data-act="nav" data-s="contracts">Contratos</a> para aceptar o rechazar ofertas.</li></ol></div>';
+    }
     // pendientes
     var pend = [];
     if (S.pending && S.pending.length) pend.push('<button class="btn pri" data-act="nav" data-s="match">⚽ Tienes ' + S.pending.length + ' partido(s) esta semana</button>');
@@ -154,6 +157,7 @@
     var h = FP.S.hero; h.pos = d.p; FP.Hero.updateOvr(); h.cap = FP.Hero.makeCaps(h.at, h.pos, Math.max(h.pot, h.ovr + 1), h.style);
     UI.toast('Ahora juegas de ' + C.POS_NAME[d.p] + '.', 'ok'); UI.render();
   };
+  A.guideoff = function () { FP.S.hero.flags.guideOff = 1; UI.render(); };
   A.setinstr = function (d) { FP.S.hero.instr = +d.v; UI.render(); };
   A.retire = function () { UI.confirm('¿Seguro que quieres retirarte? Esta decisión es definitiva y tu carrera terminará.', function () { FP.Events.retire(false); FP.Store.auto(true); UI.render(); UI.go('career'); }); };
 

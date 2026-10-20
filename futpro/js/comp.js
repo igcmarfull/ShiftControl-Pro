@@ -141,9 +141,14 @@
   // reconstruye t.f tras reordenar comp.fx (índices por ronda/empate)
   Comp.reindex = function (comp) {
     if (!comp.ko) return;
-    comp.ko.rounds.forEach(function (rd) { rd.ties.forEach(function (t) { t.f = []; }); });
+    var all = (comp.kh || []).concat([comp.ko]);
+    all.forEach(function (ko) { ko.rounds.forEach(function (rd) { rd.ties.forEach(function (t) { t.f = []; }); }); });
     comp.fx.forEach(function (f, i) {
-      if (f.k && f.x != null && comp.ko.rounds[f.x] && comp.ko.rounds[f.x].ties[f.y] && f.st === comp.ko.stage) comp.ko.rounds[f.x].ties[f.y].f.push(i);
+      if (!f.k || f.x == null) return;
+      for (var k = 0; k < all.length; k++) {
+        var ko = all[k];
+        if (ko.stage === f.st && ko.rounds[f.x] && ko.rounds[f.x].ties[f.y]) { ko.rounds[f.x].ties[f.y].f.push(i); break; }
+      }
     });
     comp.cp = 0;
     while (comp.cp < comp.fx.length && comp.fx[comp.cp].d) comp.cp++;

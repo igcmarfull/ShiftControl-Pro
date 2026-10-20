@@ -63,16 +63,29 @@
       Sim.progress(c, w);
     }
     // limpieza de torneos terminados hace mucho
-    // lesiones y sanciones
-    for (i = 1; i < S.pl.length; i++) {
-      var p = S.pl[i]; if (!p) continue;
-      if (p.inj > 0) { p.inj--; if (p.inj === 0) delete p.inj; if (p.c >= 0) delete FP.Match.cache[p.c]; }
+    // lesiones y sanciones (solo se recorre el conjunto de jugadores afectados)
+    var hurt = Sim.hurtSet();
+    hurt.forEach(function (idx) {
+      var p = S.pl[idx];
+      if (!p) { hurt.delete(idx); return; }
+      if (p.inj > 0) { p.inj--; if (p.inj === 0) { delete p.inj; if (p.c >= 0) delete FP.Match.cache[p.c]; } }
       if (p.su > 0) { p.su--; if (p.su === 0) delete p.su; }
-    }
+      if (!(p.inj > 0) && !(p.su > 0)) hurt.delete(idx);
+    });
     if (FP.Market && FP.Market.weekly) FP.Market.weekly(w);
     if (Sim.weeklyExtra) Sim.weeklyExtra(w);
     S.week++;
   };
+  // conjunto de índices con lesión o sanción (se reconstruye tras cargar una partida)
+  Sim.hurtSet = function () {
+    var S = FP.S;
+    if (!Sim._hurt || Sim._hurtS !== S) {
+      Sim._hurt = new Set(); Sim._hurtS = S;
+      for (var i = 1; i < S.pl.length; i++) { var p = S.pl[i]; if (p && (p.inj > 0 || p.su > 0)) Sim._hurt.add(i); }
+    }
+    return Sim._hurt;
+  };
+  Sim.hurt = function (p) { Sim.hurtSet().add(p.i); };
   Sim.step = function () { Sim.playWeek(); Sim.endWeek(); };
 
   // ---------- progreso por tipo de competición ----------
@@ -318,9 +331,9 @@
   };
   Sim.faPool = function () {
     var S = FP.S;
-    if (Sim._fa && Sim._faW === S.week && Sim._faN === S.pl.length) return Sim._fa;
+    if (Sim._fa && Sim._faW === S.week && Sim._faS === S) return Sim._fa;
     var a = []; for (var i = 1; i < S.pl.length; i++) { var p = S.pl[i]; if (p && p.c === -1) a.push(p); }
-    U.shuffle(a); Sim._fa = a; Sim._faW = S.week; Sim._faN = S.pl.length;
+    U.shuffle(a); Sim._fa = a; Sim._faW = S.week; Sim._faS = S;
     return a;
   };
 })();

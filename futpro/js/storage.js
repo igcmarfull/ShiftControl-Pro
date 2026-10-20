@@ -38,6 +38,7 @@
     var S = FP.S = d;
     Object.keys(S.comps).forEach(function (id) {
       var c = S.comps[id]; c.fx = c.fx.map(unpackFx);
+      c.cp = 0; while (c.cp < c.fx.length && c.fx[c.cp].d) c.cp++; // un partido pendiente del jugador al guardar a mitad de semana vuelve a jugarse
       if (c.ko) Store.fixRo(c);
     });
     FP.LGDEF = {}; FP.DATA.leagues.forEach(function (l) { FP.LGDEF[l.id] = l; });

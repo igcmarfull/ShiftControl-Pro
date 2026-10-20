@@ -158,7 +158,16 @@
   UI.advance = function (weeks, untilMatch) {
     var S = FP.S, h = S.hero;
     if (UI.busy) return;
-    if (h.retired) { UI.toast('Tu carrera ha terminado. Puedes revisarla en "Historial de carrera".', 'warn'); return; }
+    if (h.retired) {
+      UI.busy = true; UI.overlay('Avanzando el mundo…');
+      var left = Math.max(1, weeks || 4);
+      (function loop() {
+        var t0 = Date.now();
+        while (left > 0 && Date.now() - t0 < 40) { FP.Sim.step(); left--; }
+        if (left > 0) setTimeout(loop, 0); else { UI.busy = false; UI.overlay(false); FP.Store.auto(true); UI.render(); }
+      })();
+      return;
+    }
     if (S.weekOpen && FP.Game.hasPending()) { UI.go('match'); return; }
     if (weeks === 1 && !untilMatch) {
       FP.Game.beginWeek();

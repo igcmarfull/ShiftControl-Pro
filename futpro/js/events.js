@@ -101,7 +101,6 @@
       if (c.c === cc && c.done && (c.kind === 'L' || c.kind === 'K' || c.kind === 'C')) delete S.comps[id];
     });
     FP.Match.cache = {};
-    C.rebuildRoster();
     if (h && !h.retired) {
       // la liga juvenil se recrea para la nueva temporada si sigue en la cantera
       if (h.tk === 'academy' && S.clubs[h.club].c === cc) {

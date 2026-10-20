@@ -94,7 +94,7 @@
     var p = r[Math.floor(R() * r.length)];
     if (p.i === 0 || p.inj > 0) return;
     p.inj = R() < 0.7 ? U.int(1, 4) : R() < 0.8 ? U.int(5, 10) : U.int(11, 30);
-    delete Match.cache[clubId];
+    FP.Sim.hurt(p); delete Match.cache[clubId];
   }
 
   // ----- alineaciones -----
@@ -319,7 +319,7 @@
       var p = e.p, id = p.i, isH = id === 0;
       var pRed = 0.035 * (isH ? (100 - hero.at.dis) / 45 : 1);
       var rr = R();
-      if (rr < pRed) { sent[sd][id] = 1; E(m, 'red', sd, tx(T.red, { p: nameOf(p), t: tname(sd) }), { hero: isH ? 1 : 0, pid: id }); if (isH) { hm.rc++; hm.out = true; hm.min = m; } p.su = (p.su || 0) + (isH ? 0 : U.int(1, 3)); rt = recalc(); return; }
+      if (rr < pRed) { sent[sd][id] = 1; E(m, 'red', sd, tx(T.red, { p: nameOf(p), t: tname(sd) }), { hero: isH ? 1 : 0, pid: id }); if (isH) { hm.rc++; hm.out = true; hm.min = m; } p.su = (p.su || 0) + (isH ? 0 : U.int(1, 3)); if (!isH) FP.Sim.hurt(p); rt = recalc(); return; }
       if (rr < 0.55) {
         if (cards[sd][id]) {
           sent[sd][id] = 1; E(m, 'yellow', sd, 'Segunda amarilla para ' + nameOf(p) + ' ('+ tname(sd) + '): ¡expulsado!', { hero: isH ? 1 : 0, pid: id, red2: 1 });
@@ -339,7 +339,7 @@
         E(m, 'inj', sd, tx(T.inj, { p: nameOf(p), t: tname(sd) }), { hero: isH ? 1 : 0 });
         sent[sd][p.i] = 1; // sale del campo
         if (isH) { hm.inj = 1; hm.out = true; hm.min = m; }
-        else p.inj = R() < 0.7 ? U.int(1, 4) : U.int(5, 14);
+        else { p.inj = R() < 0.7 ? U.int(1, 4) : U.int(5, 14); FP.Sim.hurt(p); }
         rt = recalc();
         doSub(m, sd, e, true);
       });
