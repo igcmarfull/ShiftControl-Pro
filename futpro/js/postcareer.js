@@ -107,7 +107,7 @@
   Dec.handlers.post = function (k, d) {
     var S = FP.S, h = S.hero, p = P.ensure(), pa = p.path; if (!pa) return { ok: true, msg: '' };
     if (/^j\d/.test(k)) { var c = d.data.cand[+k.slice(1)]; pa.job = { club: c.club, role: c.role, since: S.week }; P.takeOver(pa.job); h.history.push({ w: S.week, t: 'Firma como ' + ROLEN[c.role].toLowerCase() + ' de ' + C.tname(c.club) + '.' }); return { ok: true, msg: 'Aceptas ser ' + ROLEN[c.role].toLowerCase() + ' de ' + C.tname(c.club) + '.' }; }
-    if (/^c\d/.test(k)) { var pid = +k.slice(1), q = S.pl[pid]; if (q) { pa.clients.push({ pid: pid, since: S.week }); h.history.push({ w: S.week, t: 'Pasas a representar a ' + q.n + '.' }); return { ok: true, msg: 'Representas a ' + q.n + '.' }; } }
+    if (/^c\d/.test(k)) { var pid = +k.slice(1), q = S.pl[pid]; if (q) { pa.clients.push({ pid: pid, since: S.week, loy: 60, com: 0, star: false, nm: q.n }); h.history.push({ w: S.week, t: 'Pasas a representar a ' + q.n + '.' }); return { ok: true, msg: 'Representas a ' + q.n + '.' }; } }
     if (k === 'disculparse') { pa.aud = Math.max(0, pa.aud - 1); return { ok: true, msg: 'Pides disculpas en el programa: el asunto se enfría.' }; }
     if (k === 'sostener') { var up = R() < 0.5; pa.aud = U.clamp(pa.aud + (up ? 6 : -7), 0, 100); return { ok: true, msg: up ? 'Tu postura divide, pero sube la audiencia.' : 'Tu postura cae mal: baja la audiencia.' }; }
     return { ok: true, msg: '' };

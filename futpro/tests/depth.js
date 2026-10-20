@@ -37,6 +37,22 @@ var c1 = FP.Post.startCourse('coach'); t('curso iniciado', c1.ok, c1.msg);
 for (var w = 0; w < 52 * 4; w++) { FP.Sim.step(); FP.Dec.open('post').forEach(function (d) { FP.Dec.resolve(d.id, d.opts[0].k); }); if (!h.post.path.course && h.post.lic < 3 && h.post.exp >= h.post.lic - 1) FP.Post.startCourse('coach'); }
 t('licencia obtenida', h.post.lic >= 1, h.post.lic);
 t('ingresos posteriores', h.post.income > 0, h.post.income);
+// director técnico con partidos reales
+FP.Post.choose('coach'); h.post.lic = 3; h.post.exp = 3;
+var ccl = FP.S.clubs.filter(function (c) { return c.c === h.nat && FP.LGDEF[c.lg].t === 2; })[2]; h.post.path.job = { club: ccl.id, role: 'head', since: FP.S.week }; FP.Post.takeOver(h.post.path.job);
+var played = 0, seas0 = h.post.path.seasons.length, gd = 0;
+while (h.post.path.seasons.length === seas0 && gd++ < 52 * 2) { var mm = FP.Coach.stepWeek(); while (mm && FP.Coach.next()) { var pr2 = FP.Coach.next(); if (played % 2) { var cm = FP.Coach.begin(pr2, '4-4-2', 1), fin2 = false, nn = 0; while (!fin2 && nn++ < 5) fin2 = FP.Coach.resume(cm); } else FP.Coach.quick(pr2, '4-3-3', 0); played++; } if (mm) FP.Game.endWeek(); }
+t('partidos dirigidos con el motor', played > 10, played);
+t('resultado real de temporada del técnico', h.post.path.seasons.length > seas0 && h.post.path.seasons[h.post.path.seasons.length - 1].rank > 0);
+// representante, protegido, nuevos caminos y epílogo
+FP.Post.choose('agent'); h.post.agentLic = true;
+for (var w2 = 0; w2 < 52 * 4; w2++) { FP.Sim.step(); FP.Dec.open().forEach(function (d) { FP.Dec.resolve(d.id, d.opts[0].k); }); }
+t('representante gestiona clientes con lealtad', h.post.path.clients.length > 0 && h.post.path.clients.every(function (c) { return c.loy != null; }));
+var son = FP.Mentor.createSon(); t('hijo creado', !!son && FP.Mentor.get().kind === 'hijo');
+for (var w3 = 0; w3 < 52 * 3; w3++) { FP.Sim.step(); FP.Dec.open().forEach(function (d) { FP.Dec.resolve(d.id, d.opts[0].k); }); }
+t('protegido progresa', !!FP.Mentor.get() && FP.Mentor.get().hist.length > 0);
+['dir', 'pres', 'sel'].forEach(function (k) { FP.Post.choose(k); h.money = 2000; for (var w4 = 0; w4 < 52 * 2; w4++) { FP.Sim.step(); FP.Dec.open().forEach(function (d) { FP.Dec.resolve(d.id, d.opts[0].k); }); } t('camino ' + k + ' con cargo', !!h.post.path.job, k); });
+t('epílogo generado', FP.Epilogue.story().length >= 5 && FP.Epilogue.text().length > 200);
 // guardado: ida y vuelta conserva todo
 var snap = JSON.stringify(FP.Store.pack()), ver = JSON.parse(snap).ver; FP.Store.unpack(JSON.parse(snap));
 t('versión de guardado', ver === FP.Store.VERSION, ver);

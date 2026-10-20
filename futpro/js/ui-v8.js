@@ -85,6 +85,21 @@
     }
     return html;
   }
+  function epiTab(p) {
+    var S = FP.S, h = S.hero, E = FP.Epilogue, lg = p.legacy || P.legacy(), r = E.records(), hf = E.hof(), gen = E.generation();
+    function rec(l, v, sub) { return '<div class="kpi-c"><span class="kl">' + l + '</span><b class="kv">' + v + '</b>' + (sub ? '<span class="ks">' + sub + '</span>' : '') + '</div>'; }
+    var html = '<div class="card" style="border-color:var(--gold,var(--ac))"><div class="hd"><h3>' + I('medal') + esc(h.nm) + '</h3>' + pill(esc(lg.label), 'g') + (hf.tier === 'hof' ? pill(hf.done ? 'Salón de la Fama' : 'Candidato al Salón de la Fama', 'y') : hf.tier === 'mencion' ? pill('Mención de honor', 'b') : '') + '</div>' + E.story().map(function (t) { return '<p style="margin:.4rem 0">' + esc(t) + '</p>'; }).join('') + '<div style="margin-top:.8rem"><button class="btn" data-act="epidl">' + I('arrow') + 'Descargar epílogo (.txt)</button></div></div>';
+    html += '<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">' +
+      (r.goals ? rec('Más goles en un año', r.goals.g, esc(r.goals.y) + (r.goals.t < 5000 ? ' · ' + esc(C.tname(r.goals.t)) : '')) : '') + (r.rating ? rec('Mejor nota media', (r.rating.rs / r.rating.rn).toFixed(2), esc(r.rating.y)) : '') + (r.assists ? rec('Más asistencias', r.assists.a, esc(r.assists.y)) : '') + (r.apps ? rec('Más partidos', r.apps.p, esc(r.apps.y)) : '') +
+      (r.peak ? rec('Nivel máximo', r.peak.o, 'a los ' + r.peak.age + ' años') : '') + rec('Clubes', r.clubs, r.countries + (r.countries === 1 ? ' país' : ' países')) + rec('Títulos', r.trophies, r.balon ? r.balon + ' Balón(es) de Oro' : r.awards + ' premios') + (r.caps ? rec('Selección', r.caps, r.ntGoals + ' goles') : '') + '</div>';
+    if (r.trophyNames.length) html += '<div class="card"><div class="hd"><h3>' + I('trophy') + 'Vitrina</h3></div>' + r.trophyNames.map(function (x) { return '<div class="row sp"><span>' + esc(x.nm) + '</span><b>' + x.n + '</b></div>'; }).join('') + '</div>';
+    if (gen.length) html += '<div class="card"><div class="hd"><h3>' + I('star') + 'Tu generación</h3></div><p class="mut sm">Ganadores del Balón de Oro durante tu carrera.</p>' + gen.map(function (g) { return '<div class="row sp sm"><span>' + esc(g.n) + ' <span class="mut">(' + esc(g.y) + ' · ' + (g.club != null ? esc(C.tname(g.club)) : '') + ')</span></span><b>' + g.ovr + '</b></div>'; }).join('') + '</div>';
+    return html;
+  }
+  A.epidl = function () {
+    var txt = FP.Epilogue.text(), a = document.createElement('a'), url = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
+    a.href = url; a.download = 'epilogo-' + String(FP.S.hero.nm).replace(/\s+/g, '-').toLowerCase() + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+  };
   function protTab(p) {
     var S = FP.S, h = S.hero, M = FP.Mentor, pr = M.get(), html = UI.decCards(['protegido']);
     if (!h.retired) return html + '<div class="card"><p class="mut">Disponible cuando te retires: podrás formar a tu hijo o apadrinar a una promesa.</p></div>';
@@ -108,10 +123,10 @@
   A.mtleave = function () { UI.confirm('¿Dejar de acompañar a tu protegido? Seguirá su carrera, pero sin tu guía.', function () { FP.Mentor.release(); UI.render(); }); };
   SC.post = function () {
     var S = FP.S, h = S.hero, p = P.ensure(), tab = UI.tab.post || 'legacy';
-    var html = hdr('medal', 'Después del fútbol', h.retired ? 'Tu legado y lo que viene' : 'Tu legado proyectado y los caminos posteriores', seg('post', [['legacy', 'Legado', 'medal'], ['path', 'Qué haces después', 'target'], ['prot', 'Protegido', 'star']], tab) + (h.retired ? '<div class="btn-group"><button class="btn" data-act="postadv" data-w="4">' + I('fwd') + '4 semanas</button><button class="btn pri" data-act="postadv" data-w="52">' + I('fwd') + '1 año</button></div>' : ''));
+    var html = hdr('medal', 'Después del fútbol', h.retired ? 'Tu legado y lo que viene' : 'Tu legado proyectado y los caminos posteriores', seg('post', [['legacy', 'Legado', 'medal'], ['path', 'Qué haces después', 'target'], ['prot', 'Protegido', 'star'], ['epi', 'Epílogo', 'history']], tab) + (h.retired ? '<div class="btn-group"><button class="btn" data-act="postadv" data-w="4">' + I('fwd') + '4 semanas</button><button class="btn pri" data-act="postadv" data-w="52">' + I('fwd') + '1 año</button></div>' : ''));
     if (!h.retired) html += '<div class="notice">Todavía estás en actividad. Cuando te retires podrás despedirte con un homenaje y elegir cómo seguir: entrenador, comentarista o representante. Esta es una proyección con tu carrera hasta hoy.</div>';
     if (tab === 'path' && !h.retired) return html + '<div class="card"><p class="mut">Disponible cuando te retires.</p></div>';
-    return html + (tab === 'path' ? pathTab(p) : tab === 'prot' ? protTab(p) : legacyTab(p));
+    return html + (tab === 'path' ? pathTab(p) : tab === 'prot' ? protTab(p) : tab === 'epi' ? (h.retired ? epiTab(p) : '<div class="card"><p class="mut">El epílogo se escribe cuando te retiras.</p></div>') : legacyTab(p));
   };
   // avanza semanas del mundo; se detiene cuando aparece una decisión nueva para que no caduque sin verla
   A.postadv = function (d) {

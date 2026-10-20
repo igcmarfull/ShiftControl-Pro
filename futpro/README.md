@@ -74,6 +74,16 @@ Pruebas: `node tests/depth.js` (salud, vestuario, táctica con pausas, vida, ret
 
 La pantalla de inicio permite elegir el año (1995–2026). Cambia **solo el calendario**: fechas, edades y el ciclo de torneos (Eurocopa y Copa América en años ≡ 0 mod 4, Mundial en años ≡ 2, etc.). Los clubes, ligas y selecciones siguen siendo los de 2026 y los jugadores son generados, por lo que un inicio en 2007 no reproduce plantillas ni divisiones de esa época. El año se guarda en la partida (`S.y0`) y se restaura al cargar; los guardados anteriores se leen como 2026. El Mundial mantiene su formato actual de 48 selecciones en cualquier año.
 
+### Después del fútbol (ampliado)
+
+- **Banquillo** (`js/coaching.js`): como director técnico, los partidos de tu club se juegan con el motor real (formación, mentalidad y pausas en el descanso y el minuto 70). El resultado de la temporada sale de la tabla real y puede terminar en despido. Los puestos de asistente y juveniles siguen simulados por temporada.
+- **Representante** (`js/agency.js`): cada cliente tiene lealtad, comisiones y una carrera real: ofertas de traspaso (aceptar, pedir más, rechazar), renovaciones, ganas de irse y patrocinios. Los traspasos mueven al jugador real entre clubes.
+- **Protegido** (`js/mentor.js`): un hijo con tu apellido o una promesa apadrinada. Eliges su plan de formación (intensivo, equilibrado, tranquilo), el club de su debut y cómo lo aconsejas; el vínculo puede romperse.
+- **Más caminos** (`js/paths2.js`): director deportivo, presidente de club (con tu dinero) y seleccionador juvenil. La decisión anual cambia el plantel, la cantera o las finanzas del club.
+- **Epílogo** (`js/epilogue.js`): historia final, récords personales, tu generación y Salón de la Fama (legado ≥ 62, cinco años después del retiro); se puede descargar como texto.
+
+Los efectos y probabilidades de estos módulos son parámetros de diseño del juego, no valores calibrados.
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**
