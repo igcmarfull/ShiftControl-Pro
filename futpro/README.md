@@ -288,3 +288,7 @@ El juego registra cada cesión (`hero.bio.loans`: club de origen, club de destin
 ## Biografía: artículo aparte de la cronología
 
 Biografía tiene dos pestañas: **Artículo** (solo secciones de enciclopedia: primeros años, trayectoria, selección, estilo, lesiones, vida personal, palmarés y estadísticas, retiro) y **Cronología y hitos** (hitos y récords y cronología completa, sin duplicados). Estas dos ya no aparecen dentro del artículo.
+
+## Balón de Oro más difícil (`Events.worldAward`)
+
+Se corrigió un error: los goles del jugador se acumulaban de toda la carrera (los de los demás se reinician cada año), así que su puntaje crecía sin límite. Ahora cuenta solo los goles y asistencias del año. Además la calidad de la liga pesa: los goles valen ×0,6 en Chile y ×1,1 en Inglaterra o España, y la liga suma `calidad × 0,35`. Con un jugador de media ~89 forzado durante 8 años (dos carreras en Chile y dos en España): antes ganaba 12 y 11 veces en 16 años; ahora 4 y 3. Valores calibrados con pocas carreras; sin contrastar con datos reales.

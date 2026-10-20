@@ -124,11 +124,15 @@
     S.hist.champs.forEach(function (x) { if ((x.k === 'cont' && /UCL|LIB/.test(x.key)) && String(x.y).indexOf(String(y)) >= 0) champ[x.ch] = 1; });
     var scored = best.map(function (p) {
       var club = S.clubs[p.c], lgd = FP.LGDEF[club.lg];
-      var s = p.o * 0.55 + (p.g || 0) * 0.8 + (p.as || 0) * 0.35 + (lgd.t === 1 ? lgd.q * 0.08 : 0) + (champ[p.c] ? 4 : 0) + U.norm() * 2.2;
+      // el jugador acumula goles de toda la carrera (los demás se reinician cada año): se usa solo lo de este año
+      var g = p.i === 0 ? Math.max(0, (p.g || 0) - (S.hero.bdG || 0)) : (p.g || 0), as = p.i === 0 ? Math.max(0, (p.as || 0) - (S.hero.bdA || 0)) : (p.as || 0);
+      // la calidad de la liga pesa: los mismos goles valen menos en una liga débil (Chile ≈ 0,6; Inglaterra o España ≈ 1,1)
+      var lf = U.clamp((lgd.q - 40) / 30, 0.35, 1.15);
+      var s = p.o * 0.55 + (g * 0.8 + as * 0.35) * lf + (lgd.t === 1 ? lgd.q * 0.35 : lgd.q * 0.2) + (champ[p.c] ? 4 : 0) + U.norm() * 2.2;
       return { p: p, s: s };
     }).sort(function (a, b) { return b.s - a.s; });
     if (!scored.length) return;
-    var w = scored[0].p, h = S.hero;
+    var w = scored[0].p, h = S.hero; if (h) { h.bdG = S.pl[0].g || 0; h.bdA = S.pl[0].as || 0; }
     var rec = { y: label, id: w.i, n: w.i === 0 ? h.nm : w.n, club: w.c, ovr: w.o };
     S.hist.awards.push(rec);
     Sim.news((w.i === 0 ? h.nm : w.n) + ' (' + C.tname(w.c) + ') gana el Balón de Oro ' + label + '.', 'title', 3);
