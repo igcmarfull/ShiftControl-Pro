@@ -60,7 +60,7 @@
   SC.honors = function () {
     var tab = UI.tab.honors || 'me';
     if (tab !== 'me') return honors0.apply(this, arguments);
-    var d = data(), view = UI.tab.phv || 'vit';
+    var d = data(), view = UI.tab.phv || 'comp';
     var html = hdr('trophy', 'Palmarés', 'Trofeos y premios', seg('honors', [['me', 'Mis trofeos', 'medal'], ['clubs', 'Campeones del mundo', 'globe']], tab));
     if (!d.tr.length && !d.aw.length) return html + empty();
     html += kpis(d) + '<div class="fbar" style="margin:.4rem 0 .8rem"><span class="mut sm" style="margin-right:.4rem">Vista</span><div class="seg">' + VIEWS.map(function (v) { return '<button class="' + (view === v[0] ? 'on' : '') + '" data-act="tabset" data-s="phv" data-t="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div></div>';

@@ -247,4 +247,4 @@ Cada frase sale de un dato registrado (no se inventan hechos). Además `Hero.msg
 
 ## Palmarés: vistas de "Mis trofeos" (`js/ui-v19.js`)
 
-Indicadores arriba (títulos, subcampeonatos, premios, Balones de Oro) y selector **Vista**: **Vitrina** (estantes con copas doradas, subcampeonatos en plata y medallas), **Cronología** (un nodo por año con el club y chips de títulos y premios) y **Por competición** (tablas con conteo y temporadas de títulos, subcampeonatos y distinciones por tipo).
+Indicadores arriba (títulos, subcampeonatos, premios, Balones de Oro) y selector **Vista** (por defecto Por competición): **Vitrina** (estantes con copas doradas, subcampeonatos en plata y medallas), **Cronología** (un nodo por año con el club y chips de títulos y premios) y **Por competición** (tablas con conteo y temporadas de títulos, subcampeonatos y distinciones por tipo).
