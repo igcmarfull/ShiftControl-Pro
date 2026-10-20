@@ -307,3 +307,9 @@ Ajuste: desde los 20 años las pruebas abiertas (jornadas, showcases y viaje al 
 - Se añadieron las selecciones que faltaban (Rusia, Bulgaria, Israel, Chipre, Finlandia, Islandia, Guatemala), sus banderas, la región de nombres y los ajustes de residencia para menores (UE/EEE).
 - Los clubes son reales, composición probable de la temporada 2025/26 (`v: 'k'` = conocimiento previo, `v: 'p'` = lista parcial). El nivel (`q`) de cada liga y su dispersión son estimaciones mías.
 - Quedan fuera las ligas de formato por grupos (ESP3/4, ITA3, BRA4, ARG2 parcial) y Ecuador Serie B.
+
+## Asia y Medio Oriente (+13 ligas; 132 ligas en 66 países)
+
+Catar (primera y segunda), Emiratos Árabes (primera y segunda), Irán (Persian Gulf Pro League y Azadegan), Uzbekistán (Super Liga y Pro Liga), India (Indian Super League e I-League, sin ascenso) y Tailandia (Thai League 1 y 2), con cupos para la Liga de Campeones de la AFC, y Argentina suma la **Primera C** (4.ª división; la Primera B Metropolitana ya era la 3.ª). Se agregaron las selecciones India y Tailandia, banderas y listas de nombres indios y tailandeses.
+
+**Retiro dorado:** desde los 30 años, la liga del Golfo (Arabia, Catar, Emiratos) y China pagan un 55% más de sueldo en primera. Y de los 31 años en adelante, con media 66 o más, los clubes de esos países se interesan al azar (cada ~10 semanas con 10% de probabilidad, ~42-58 puntos de interés), con menos exigencia de exposición internacional (-18). Los valores son supuestos de diseño.

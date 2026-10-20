@@ -118,6 +118,10 @@
       l: 'Hassan Ibrahim Mansour Saleh Farouk Said Mahfouz Benali Bouzid Haddad Mansouri Tounsi Ben Salah Amrani Belhadj Cherif Zerrouki Mokhtar Ghanem Nasser Darwish Khalil Sabri Fadel Rahmani'.split(' ') },
     af: { f: 'Thabo Sipho Lungelo Bongani Themba Kagiso Siyabonga Mpho Tshepo Lebo Sibusiso Kwame Kofi Yaw Emeka Chidi Ousmane Moussa Idrissa Cheikh Mamadou Seydou Sadio Samuel Tendai'.split(' '),
       l: 'Nkosi Dlamini Mokoena Khumalo Zulu Mahlangu Ndlovu Mthembu Sithole Molefe Mensah Owusu Boateng Adeyemi Okafor Eze Diallo Traoré Diop Konaté Sow Ndiaye Camara Keita Sissoko'.split(' ') },
+    hi: { f: 'Rahul Arjun Rohan Aditya Vikram Sandeep Amit Rajesh Karan Suresh Anil Vijay Ravi Manish Nikhil Pranav Siddharth Harsh Kunal Deepak'.split(' '),
+      l: 'Sharma Singh Kumar Patel Gupta Verma Reddy Nair Chhetri Das Banerjee Mukherjee Yadav Chauhan Joshi Mehta Iyer Pillai Rao Thapa'.split(' ') },
+    th: { f: 'Somchai Anan Kittisak Teerasil Chanathip Supachai Narong Weerachai Prasert Surachai Adisak Piyapong Sarawut Kritsada Tanawat Jakkrit Natthaphong Worachit Pichit Nattawut'.split(' '),
+      l: 'Srisuk Chaiyasit Dangda Songkrasin Boonmee Saetang Wongsa Phromma Chantaruk Kaewmala Thongchai Rattanakul Sirichai Yoovidhya Pholsri Nilsri Sukhum Jaidee Wattana Pongsiri'.split(' ') },
     en2: { f: 'Jackson Tyler Mason Liam Noah Connor Brandon Cody Austin Kyle Ryan Jordan Alex Zach Evan Chase Trevor Dylan Hunter Logan'.split(' '),
       l: 'Johnson Miller Davis Anderson Thomas Jackson Martin Lee Thompson White Harris Clark Lewis Robinson Walker Young Allen Scott Adams Baker Nelson Carter Mitchell Roberts'.split(' ') }
   };
@@ -127,7 +131,7 @@
     BRA: 'pt', POR: 'pt', ENG: 'en', SCO: 'en', AUS: 'en', CAN: 'en', USA: 'en2', ITA: 'it', GER: 'de', AUT: 'de', SUI: 'de',
     FRA: 'fr', BEL: 'fr', NED: 'nl', DEN: 'nd', SWE: 'nd', NOR: 'nd', POL: 'sl', CZE: 'sl', TUR: 'tr', GRE: 'gr',
     JPN: 'ja', KOR: 'ko', CHN: 'zh', KSA: 'ar', EGY: 'ar', MAR: 'ar', TUN: 'ar', ALG: 'ar', RSA: 'af',
-    BUL: 'sl', RUS: 'sl', ISR: 'en', CYP: 'gr', FIN: 'nd', ISL: 'nd', GUA: 'es', HRV: 'sl', SRB: 'sl', UKR: 'sl', HUN: 'sl', SVK: 'sl', ROU: 'sl', WAL: 'en', IRL: 'en', PAN: 'es', HON: 'es', SLV: 'es', HAI: 'fr', JAM: 'en', CUW: 'nl',
+    IND: 'hi', THA: 'th', BUL: 'sl', RUS: 'sl', ISR: 'en', CYP: 'gr', FIN: 'nd', ISL: 'nd', GUA: 'es', HRV: 'sl', SRB: 'sl', UKR: 'sl', HUN: 'sl', SVK: 'sl', ROU: 'sl', WAL: 'en', IRL: 'en', PAN: 'es', HON: 'es', SLV: 'es', HAI: 'fr', JAM: 'en', CUW: 'nl',
     IRN: 'ar', QAT: 'ar', UAE: 'ar', IRQ: 'ar', JOR: 'ar', UZB: 'tr', NGA: 'af', GHA: 'af', CIV: 'af', SEN: 'af', CMR: 'af', MLI: 'af', COD: 'af', BFA: 'af', CPV: 'pt', NZL: 'en', FIJ: 'en', NCL: 'fr'
   };
   FP.Names = {

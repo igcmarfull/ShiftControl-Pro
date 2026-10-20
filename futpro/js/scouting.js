@@ -10,7 +10,7 @@
   var EU = { ESP: 1, ITA: 1, FRA: 1, GER: 1, POR: 1, NED: 1, BEL: 1, DEN: 1, AUT: 1, POL: 1, SWE: 1, CZE: 1, GRE: 1, HRV: 1, SVK: 1, ROU: 1, HUN: 1, IRL: 1, BUL: 1, CYP: 1, FIN: 1 };
   var EEA = { NOR: 1, SUI: 1, ENG: 1, SCO: 1, WAL: 1, ISL: 1 };                      // espacio europeo / acuerdos: pueden fichar menores de 16-17 entre ellos
   var NONEU_QUOTA = { ESP: 3, ITA: 3, FRA: 4, POR: 5, GER: 6, NED: 6, BEL: 6, DEN: 6, AUT: 6, GRE: 5 };
-  var FQ = { CHI: 5, ARG: 5, URU: 4, COL: 5, PER: 5, ECU: 5, PAR: 4, BOL: 5, VEN: 5, MEX: 9, USA: 8, CAN: 7, JPN: 5, KOR: 5, CHN: 5, AUS: 5, KSA: 8, TUR: 14, SCO: 17, ENG: 17, BRA: 99 };
+  var FQ = { CHI: 5, ARG: 5, URU: 4, COL: 5, PER: 5, ECU: 5, PAR: 4, BOL: 5, VEN: 5, MEX: 9, USA: 8, CAN: 7, JPN: 5, KOR: 5, CHN: 5, AUS: 5, KSA: 8, QAT: 8, UAE: 8, IND: 6, THA: 6, IRN: 4, UZB: 5, TUR: 14, SCO: 17, ENG: 17, BRA: 99 };
   function isEU(c) { return !!EU[c]; }
   function isEUish(c) { return !!(EU[c] || EEA[c]); }
 
@@ -80,6 +80,7 @@
       return { ok: have >= need, need: need, have: have };
     }
     var need2 = 24 + (lg.q - 48) * 1.25;
+    if ({ KSA: 1, QAT: 1, UAE: 1, CHN: 1 }[club.c] && FP.Hero.age() >= 31) need2 -= 18;       // los veteranos con nombre les interesan aunque no sean estrellas internacionales
     return { ok: r.int >= need2, need: need2, have: r.int };
   };
 
@@ -164,7 +165,8 @@
   Rep.coolOn = function (w) { return (FP.S.hero.coolUntil || 0) > w; };
   Rep.wage = function (club, factor) {
     var h = FP.S.hero, val = M.heroValue(), cw = FP.DATA.countries[club.c].w, lg = clubTier(club);
-    var base = C.wage(val, cw), tierF = lg.t === 1 ? 1 : lg.t === 2 ? 0.78 : 0.58, finF = 0.62 + club.fin * 0.06;
+    var gulf = { KSA: 1, QAT: 1, UAE: 1, CHN: 1 }[club.c] && lg.t === 1 && FP.Hero.age() >= 30 ? 1.55 : 1;   // el "retiro dorado": los veteranos cobran mucho más en la liga del Golfo y China
+    var base = C.wage(val, cw) * gulf, tierF = lg.t === 1 ? 1 : lg.t === 2 ? 0.78 : 0.58, finF = 0.62 + club.fin * 0.06;
     return Math.max(2, Math.round(base * tierF * finF * (factor || 1) * M.agentMult()));
   };
   Rep.offers = function (freeAgent, cap) {
@@ -393,6 +395,19 @@
     var d = M.trialDifficulty(c.id); if (d.fit < -6) return;
     h.lastScout = w;
     M.addOffer({ type: 'trial', club: c.id, text: c.nm + ' te invita a una prueba en sus divisiones inferiores.', exp: w + 6 });
+  };
+
+  // Veteranos (31+) con buen nivel: los clubes del Golfo y China se interesan (más sueldo, menos exigencia deportiva)
+  var hw1 = M.heroWeekly;
+  M.heroWeekly = function (w) {
+    var r = hw1.apply(this, arguments), S = FP.S, h = S.hero;
+    try {
+      if (h && !h.retired && (h.tk === 'pro' || h.tk === 'free') && FP.Hero.age() >= 31 && h.ovr >= 66 && w % 4 === 0 && R() < 0.10) {
+        var cl = S.clubs.filter(function (c) { return { KSA: 1, QAT: 1, UAE: 1, CHN: 1 }[c.c] && clubTier(c).t === 1 && (h.cd[c.id] || 0) <= w && Rep.foreignOK(c, h.nat, FP.Hero.age()) && c.st <= h.ovr + 4; });
+        if (cl.length) { var c2 = U.pick(cl); Rep.addInterest(c2, U.int(42, 58), 'por su experiencia y nombre'); }
+      }
+    } catch (e) { }
+    return r;
   };
 
   // mantiene la comisión del representante solo si hay sueldo; el contrato semiprofesional también cobra

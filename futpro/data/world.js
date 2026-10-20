@@ -67,6 +67,12 @@
     SLV: { n: 'El Salvador', conf: 'CONCACAF', cup: 'Copa de El Salvador', w: 0.2 },
     JAM: { n: 'Jamaica', conf: 'CONCACAF', cup: 'Copa de Jamaica', w: 0.15 },
     KSA: { n: 'Arabia Saudita', conf: 'AFC', cup: 'Copa del Rey de Campeones', w: 1.3 },
+    QAT: { n: 'Catar', conf: 'AFC', cup: 'Copa del Emir de Catar', w: 1.2 },
+    UAE: { n: 'Emiratos Árabes', conf: 'AFC', cup: 'Copa del Presidente de EAU', w: 1.1 },
+    IRN: { n: 'Irán', conf: 'AFC', cup: 'Copa Hazfi', w: 0.45 },
+    UZB: { n: 'Uzbekistán', conf: 'AFC', cup: 'Copa de Uzbekistán', w: 0.35 },
+    IND: { n: 'India', conf: 'AFC', cup: 'Super Copa de India', w: 0.4 },
+    THA: { n: 'Tailandia', conf: 'AFC', cup: 'Copa FA de Tailandia', w: 0.45 },
     JPN: { n: 'Japón', conf: 'AFC', cup: 'Copa del Emperador', w: 0.7 },
     KOR: { n: 'Corea del Sur', conf: 'AFC', cup: 'Copa de Corea', w: 0.55 },
     CHN: { n: 'China', conf: 'AFC', cup: 'Copa de China', w: 0.7 },
@@ -322,7 +328,7 @@
       clubs: 'Alianza;FAS;Águila;Municipal Limeño;Isidro Metapán;Firpo;Cacahuatique;Hércules;Fuerte San Francisco;Santa Tecla;Jocoro;Atlético Marte' },
     { id: 'JAM1', c: 'JAM', n: 'Liga Premier de Jamaica', t: 1, q: 38, sp: 4, cal: 'year', rr: 2, dn: 0, po: { n: 4 }, qual: { CCC: 1 }, v: 'k',
       clubs: 'Cavalier;Mount Pleasant;Harbour View;Waterhouse;Portmore United;Dunbeholden;Molynes United;Tivoli Gardens;Vere United;Arnett Gardens;Montego Bay United;Chapelton Maroons' },
-    { id: 'ARG3', c: 'ARG', n: 'Primera B Metropolitana', t: 3, q: 47, sp: 4, cal: 'year', rr: 1, up: 2, dn: 0, v: 'p',
+    { id: 'ARG3', c: 'ARG', n: 'Primera B Metropolitana', t: 3, q: 47, sp: 4, cal: 'year', rr: 1, up: 2, dn: 2, v: 'p',
       clubs: 'Argentino de Quilmes;Armenio;Cañuelas;Colegiales;Comunicaciones;Defensores Unidos;Deportivo Merlo;Deportivo Español;Dock Sud;Excursionistas;Flandria;Italiano;Justo José de Urquiza;Laferrere;Lamadrid;Villa San Carlos' },
     { id: 'SCO3', c: 'SCO', n: 'Scottish League One', t: 3, q: 42, sp: 3, cal: 'euro', rr: 2, up: 1, dn: 0, v: 'k',
       clubs: 'Queen of the South;Cove Rangers;Stenhousemuir;East Fife;Alloa Athletic;Kelty Hearts;Peterhead;Montrose;Dumbarton;Stirling Albion' },
@@ -338,6 +344,34 @@
       clubs: 'Southend United;Rochdale;York City;Altrincham;Aldershot Town;Boston United;Eastleigh;Sutton United;Halifax Town;Solihull Moors;Forest Green Rovers;Gateshead;Tamworth;Braintree Town;Woking;Yeovil Town;Hartlepool United;Wealdstone;Truro City;Morecambe;Maidenhead United;Brackley Town;Scunthorpe United;Carlisle United' },
     { id: 'USA2', c: 'USA', n: 'USL Championship', t: 2, q: 52, sp: 4, cal: 'year', rr: 2, mp: 30, dn: 0, po: { n: 8 }, v: 'k',
       clubs: 'Louisville City;Charleston Battery;Phoenix Rising;Colorado Springs Switchbacks;Tampa Bay Rowdies;Pittsburgh Riverhounds;Sacramento Republic;San Antonio FC;Birmingham Legion;Hartford Athletic;Detroit City;Indy Eleven;Memphis 901;Miami FC;Lexington SC;New Mexico United;Oakland Roots;Orange County SC;Rhode Island FC;Loudoun United;Las Vegas Lights;El Paso Locomotive;Monterey Bay;North Carolina FC' },
+
+    // ================= ASIA Y MEDIO ORIENTE (ampliación) =================
+    { id: 'QAT1', c: 'QAT', n: 'Qatar Stars League', t: 1, q: 56, sp: 6, cal: 'euro', rr: 2, dn: 2, qual: { ACL: 2 }, v: 'k',
+      clubs: 'Al Sadd;Al Duhail;Al Rayyan;Al Gharafa;Al Arabi;Qatar SC;Al Wakrah;Al Ahli Doha;Umm Salal;Al Shamal;Al Shahaniya;Al Markhiya' },
+    { id: 'QAT2', c: 'QAT', n: 'Segunda División de Catar', t: 2, q: 48, sp: 4, cal: 'euro', rr: 2, up: 2, dn: 0, v: 'p',
+      clubs: 'Muaither;Al Sailiya;Al Khor;Al Kharaitiyat;Al Bidda;Lusail SC;Mesaimeer;Al Mesaimeer B' },
+    { id: 'UAE1', c: 'UAE', n: 'UAE Pro League', t: 1, q: 54, sp: 6, cal: 'euro', rr: 2, dn: 2, qual: { ACL: 3 }, v: 'k',
+      clubs: 'Al Ain;Shabab Al Ahli;Al Wasl;Sharjah;Al Wahda;Al Jazira;Bani Yas;Al Nasr;Ajman;Khor Fakkan;Al Bataeh;Dibba Al Fujairah;Kalba;Emirates Club' },
+    { id: 'UAE2', c: 'UAE', n: 'UAE Division One', t: 2, q: 46, sp: 4, cal: 'euro', rr: 2, up: 2, dn: 0, v: 'p',
+      clubs: 'Al Dhafra;Al Orooba;Hatta;Masafi;Al Hamriyah;Fujairah;Dubai United;Al Taawon;Gulf United;Al Thaid' },
+    { id: 'IRN1', c: 'IRN', n: 'Persian Gulf Pro League', t: 1, q: 56, sp: 6, cal: 'euro', rr: 2, dn: 2, qual: { ACL: 3 }, v: 'k',
+      clubs: 'Persepolis;Esteghlal;Sepahan;Tractor;Foolad;Gol Gohar;Nassaji Mazandaran;Malavan;Zob Ahan;Aluminium Arak;Havadar;Chadormalou;Shams Azar;Mes Rafsanjan;Kheybar Khorramabad;Paykan' },
+    { id: 'IRN2', c: 'IRN', n: 'Azadegan League', t: 2, q: 47, sp: 4, cal: 'euro', rr: 2, up: 2, dn: 0, v: 'p',
+      clubs: 'Esteghlal Khuzestan;Naft Masjed Soleyman;Fajr Sepasi;Sanat Naft Abadan;Shahin Bushehr;Pars Jonoubi Jam;Mes Kerman;Khooshe Talaei Saveh;Gostaresh Foulad;Nirooye Zamini;Iranjavan Bushehr;Arman Gohar Sirjan;Ario Eslamshahr;Naft Va Gaz Gachsaran;Chooka Talesh;Shahrdari Astara' },
+    { id: 'UZB1', c: 'UZB', n: 'Super Liga de Uzbekistán', t: 1, q: 50, sp: 5, cal: 'year', rr: 2, dn: 2, qual: { ACL: 2 }, v: 'k',
+      clubs: 'Pakhtakor;Bunyodkor;Nasaf;Navbahor;AGMK;Lokomotiv Tashkent;Neftchi Fergana;Surkhon;Dinamo Samarqand;Sogdiana;Qizilqum;Andijon;Mash\'al;Buxoro' },
+    { id: 'UZB2', c: 'UZB', n: 'Pro Liga de Uzbekistán', t: 2, q: 42, sp: 4, cal: 'year', rr: 2, up: 2, dn: 0, v: 'p',
+      clubs: 'Shurtan Guzar;Yangiyer;Sirdaryo;Xorazm;Zomin;Kokand 1912;Metallurg Bekabad;Turon Yaypan;Aral Nukus;Namangan;Termez Surkhon;Olimpik Toshkent' },
+    { id: 'IND1', c: 'IND', n: 'Indian Super League', t: 1, q: 44, sp: 5, cal: 'euro', rr: 2, dn: 0, qual: { ACL: 1 }, v: 'k',
+      clubs: 'Mohun Bagan SG;East Bengal;Mumbai City;Bengaluru FC;FC Goa;Kerala Blasters;Odisha FC;Jamshedpur;NorthEast United;Chennaiyin;Punjab FC;Mohammedan;Hyderabad FC;Inter Kashi' },
+    { id: 'IND2', c: 'IND', n: 'I-League', t: 2, q: 38, sp: 4, cal: 'euro', rr: 2, up: 0, dn: 0, v: 'p',
+      clubs: 'Churchill Brothers;Rajasthan United;Gokulam Kerala;Sreenidi Deccan;Real Kashmir;Aizawl;Dempo;Namdhari;Shillong Lajong;TRAU;NEROCA;Delhi FC' },
+    { id: 'THA1', c: 'THA', n: 'Thai League 1', t: 1, q: 47, sp: 5, cal: 'euro', rr: 2, dn: 2, qual: { ACL: 1 }, v: 'k',
+      clubs: 'Buriram United;Bangkok United;Port;BG Pathum United;Muangthong United;Chonburi;Lamphun Warrior;Ratchaburi;Nakhon Ratchasima;Sukhothai;Prachuap;Uthai Thani;Rayong;Chiangrai United;Kanchanaburi Power;Police Tero' },
+    { id: 'THA2', c: 'THA', n: 'Thai League 2', t: 2, q: 40, sp: 4, cal: 'euro', rr: 2, up: 2, dn: 0, v: 'p',
+      clubs: 'Trat;Samut Prakan City;Ayutthaya United;Lampang;Nakhon Si United;Phrae United;Suphanburi;Customs Ladkrabang;Phitsanulok;Udon United;Songkhla;Krabi;Sisaket;Kasetsart;Ranong United;Pattaya Dolphins;Nakhon Pathom United;Phuket City' },
+    { id: 'ARG4', c: 'ARG', n: 'Primera C', t: 4, q: 42, sp: 3, cal: 'year', rr: 1, up: 2, dn: 0, v: 'p',
+      clubs: 'Argentino de Merlo;Club Atlético Atlas;Berazategui;Centro Español;Claypole;Estudiantes de Buenos Aires;Sportivo Barracas;Victoriano Arenas;Yupanqui;Defensores de Cambaceres;Liniers;Luján;Puerto Nuevo;Real Pilar;San Martín de Burzaco;Talleres de Remedios de Escalada;Muñiz;Deportivo Paraguayo' },
   ];
 
   // Selecciones nacionales: código:nombre:confederación:rating-previo(estimación del autor, no ranking FIFA oficial)
@@ -345,7 +379,7 @@
     'ARG:Argentina:CONMEBOL:90,BRA:Brasil:CONMEBOL:87,URU:Uruguay:CONMEBOL:82,COL:Colombia:CONMEBOL:81,ECU:Ecuador:CONMEBOL:75,PAR:Paraguay:CONMEBOL:71,CHI:Chile:CONMEBOL:66,PER:Perú:CONMEBOL:65,VEN:Venezuela:CONMEBOL:64,BOL:Bolivia:CONMEBOL:58,' +
     'FRA:Francia:UEFA:90,ESP:España:UEFA:90,ENG:Inglaterra:UEFA:88,POR:Portugal:UEFA:87,NED:Países Bajos:UEFA:85,GER:Alemania:UEFA:85,BEL:Bélgica:UEFA:82,ITA:Italia:UEFA:82,HRV:Croacia:UEFA:80,RUS:Rusia:UEFA:72,BUL:Bulgaria:UEFA:62,ISR:Israel:UEFA:63,CYP:Chipre:UEFA:52,FIN:Finlandia:UEFA:60,ISL:Islandia:UEFA:56,SUI:Suiza:UEFA:76,DEN:Dinamarca:UEFA:76,AUT:Austria:UEFA:75,TUR:Turquía:UEFA:75,SRB:Serbia:UEFA:73,POL:Polonia:UEFA:72,UKR:Ucrania:UEFA:72,NOR:Noruega:UEFA:73,SWE:Suecia:UEFA:72,SCO:Escocia:UEFA:71,CZE:República Checa:UEFA:70,GRE:Grecia:UEFA:68,WAL:Gales:UEFA:66,IRL:Irlanda:UEFA:62,HUN:Hungría:UEFA:68,SVK:Eslovaquia:UEFA:64,ROU:Rumanía:UEFA:66,' +
     'USA:Estados Unidos:CONCACAF:77,MEX:México:CONCACAF:76,CAN:Canadá:CONCACAF:70,CRC:Costa Rica:CONCACAF:60,PAN:Panamá:CONCACAF:64,JAM:Jamaica:CONCACAF:60,HON:Honduras:CONCACAF:55,GUA:Guatemala:CONCACAF:52,HAI:Haití:CONCACAF:52,SLV:El Salvador:CONCACAF:50,CUW:Curazao:CONCACAF:50,' +
-    'JPN:Japón:AFC:78,KOR:Corea del Sur:AFC:74,IRN:Irán:AFC:74,AUS:Australia:AFC:70,KSA:Arabia Saudita:AFC:66,QAT:Catar:AFC:62,UZB:Uzbekistán:AFC:64,IRQ:Irak:AFC:58,JOR:Jordania:AFC:60,UAE:Emiratos Árabes:AFC:56,CHN:China:AFC:56,' +
+    'JPN:Japón:AFC:78,KOR:Corea del Sur:AFC:74,IRN:Irán:AFC:74,AUS:Australia:AFC:70,IND:India:AFC:48,THA:Tailandia:AFC:56,KSA:Arabia Saudita:AFC:66,QAT:Catar:AFC:62,UZB:Uzbekistán:AFC:64,IRQ:Irak:AFC:58,JOR:Jordania:AFC:60,UAE:Emiratos Árabes:AFC:56,CHN:China:AFC:56,' +
     'MAR:Marruecos:CAF:81,SEN:Senegal:CAF:77,EGY:Egipto:CAF:70,NGA:Nigeria:CAF:72,CIV:Costa de Marfil:CAF:72,ALG:Argelia:CAF:70,TUN:Túnez:CAF:66,CMR:Camerún:CAF:68,GHA:Ghana:CAF:66,RSA:Sudáfrica:CAF:60,MLI:Malí:CAF:64,COD:RD del Congo:CAF:62,BFA:Burkina Faso:CAF:60,CPV:Cabo Verde:CAF:58,' +
     'NZL:Nueva Zelanda:OFC:55,FIJ:Fiyi:OFC:34,NCL:Nueva Caledonia:OFC:32'
   ).split(',').map(function (s) { var p = s.split(':'); return { c: p[0], n: p[1], conf: p[2], r: +p[3] }; });
