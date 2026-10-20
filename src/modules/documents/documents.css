@@ -34,7 +34,7 @@ textarea.dc-in{resize:vertical}
 .dc-pv{margin:0 0 10px;font-size:11.5px;color:#667085}
 .dc-page{width:min(780px,100%);aspect-ratio:8.5/11;display:flex;flex-direction:column;background:#fff;color:#1c2333;box-shadow:0 8px 30px rgba(20,33,61,.18);padding:56px 66px 34px;font-family:Georgia,"Times New Roman",serif;font-size:13px;line-height:1.5}
 .dc-page .dc-body{flex:1}.dc-page .dc-foot{margin-top:auto}
-.dc-page.dens-roomy{font-size:15.5px;line-height:1.85}.dc-page.dens-roomy .dc-p{margin-bottom:17px}.dc-page.dens-roomy .dc-sign{margin-top:220px}
+.dc-page.dens-roomy{font-size:15.5px;line-height:1.85}.dc-page.dens-roomy .dc-p{margin-bottom:17px}.dc-page.dens-roomy .dc-sign{margin-top:170px}
 .dc-page.dens-normal{font-size:14px;line-height:1.6}.dc-page.dens-normal .dc-p{margin-bottom:11px}.dc-page.dens-normal .dc-sign{margin-top:90px}
 .dc-page.dens-compact{font-size:12.6px;line-height:1.45}
 .dc-pages{margin:10px 0 0;font-size:11.5px;color:#667085;font-family:Inter,system-ui,sans-serif}
