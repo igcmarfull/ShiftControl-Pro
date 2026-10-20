@@ -295,4 +295,6 @@ Se corrigió un error: los goles del jugador se acumulaban de toda la carrera (l
 
 ## Pruebas de adultos: sin clubes de primera
 
-Desde los 20 años, las jornadas abiertas, los showcases y el viaje de prueba al extranjero solo incluyen clubes de segunda división o inferior (y de fuerza no mayor a tu nivel +3). Las invitaciones a entrenar con un primer equipo (`seniorTrials`) ya exigían segunda división o menor. Los menores de 20 conservan las pruebas de cantera de clubes grandes.
+(Ajustado después: ver el párrafo siguiente.) Desde los 20 años, las jornadas abiertas, los showcases y el viaje de prueba al extranjero solo incluyen clubes de segunda división o inferior (y de fuerza no mayor a tu nivel +3). Las invitaciones a entrenar con un primer equipo (`seniorTrials`) ya exigían segunda división o menor. Los menores de 20 conservan las pruebas de cantera de clubes grandes.
+
+Ajuste: desde los 20 años las pruebas abiertas (jornadas, showcases y viaje al extranjero) son desde la **3.ª división** hacia abajo (`Tryouts.minTier`); en países con 3 niveles o menos, desde la 2.ª. A los clubes de nivel superior se llega por **invitación a entrenar con el primer equipo**: ya llegaba al azar a quien está libre (`seniorTrials`) y ahora además hay un 35% de que un club del nivel inmediato superior te invite tras destacar en una prueba abierta.

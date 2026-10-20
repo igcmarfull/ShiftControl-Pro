@@ -15,9 +15,11 @@
   T.eligible = function () { var h = FP.S.hero; return !!h && !h.retired && (h.tk === 'free' || h.tk === 'amat') && Hero.age() >= 12; };
   function tier(c) { return FP.LGDEF[c.lg].t; }
   // Clubes a los que tiene sentido ir a probarse: ligas bajas o equipos de un nivel parecido al tuyo (no se prueba un jugador mediocre en un grande)
+  // nivel mínimo con pruebas abiertas para adultos: 3.ª división o inferior; en países con 3 niveles o menos, la 2.ª
+  T.minTier = function (cc) { var mx = 0; FP.S.clubs.forEach(function (c) { if (c.c === cc) mx = Math.max(mx, FP.LGDEF[c.lg].t); }); return mx <= 3 ? 2 : 3; };
   T.reach = function (c, age) {
     var h = FP.S.hero, a = age != null ? age : Hero.age(), eff = h.ovr - FP.Youth.adultPenalty(a);
-    if (a >= 20) return tier(c) >= 2 && c.st <= eff + 3;     // los adultos se prueban en divisiones inferiores: los clubes de primera no hacen pruebas abiertas
+    if (a >= 20) return tier(c) >= T.minTier(c.c) && c.st <= eff + 3;     // los adultos se prueban en divisiones bajas; a los clubes de arriba se llega por invitación
     return M.trialDifficulty(c.id).p >= 0.12;
   };
   function monthKey(w) { var y = D.ymd(w); return y[0] * 12 + y[1]; }
@@ -28,7 +30,7 @@
     var k = monthKey(w); if (S.ty.k === k) return; S.ty.k = k;
     S.ty.items = S.ty.items.filter(function (x) { return x.w >= w; });
     var age = Hero.age(), cc = M.heroCountry(), items = [];
-    var dom = S.clubs.filter(function (c) { return c.c === cc && tier(c) <= 4 && (age < 20 || tier(c) >= 2); }).sort(function () { return R() - 0.5; });
+    var dom = S.clubs.filter(function (c) { return c.c === cc && tier(c) <= 4 && (age < 20 || tier(c) >= T.minTier(cc)); }).sort(function () { return R() - 0.5; });
     dom.slice(0, 3).forEach(function (c) { items.push({ kind: 'club', club: c.id, w: w + U.int(1, 4), n: U.int(90, 320), cost: 0 }); });
     var pool = dom.filter(function (c) { return Rep.foreignOK(c, h.nat, age); }).slice(0, 8);
     if (pool.length >= 4) items.push({ kind: 'show', clubs: pool.slice(0, U.int(4, 8)).map(function (c) { return c.id; }), w: w + U.int(2, 5), n: U.int(180, 420), cost: age >= 18 ? 1 : 0, cc: cc });
@@ -89,6 +91,10 @@
       order.forEach(function (cid) { if (made < k && offerFrom(cid)) made++; });
       order.slice(0, 4).forEach(function (cid) { var c = S.clubs[cid]; if (c && Rep.foreignOK(c, h.nat, age)) Rep.addInterest(c, U.int(20, 40), 'tras tu actuación en la prueba masiva'); });
       h.mor = U.clamp(h.mor + 8, 0, 100);
+      if (age >= 20 && R() < 0.35) {       // un club de nivel superior te invita a entrenar unos días
+        var hi = S.clubs.filter(function (c) { return c.c === M.heroCountry() && tier(c) === T.minTier(c.c) - 1 && Rep.foreignOK(c, h.nat, age) && !h.offers.some(function (o) { return o.club === c.id; }) && (h.cd[c.id] || 0) <= S.week && c.st <= h.ovr + 6; });
+        if (hi.length) { var hc = U.pick(hi); M.addOffer({ type: 'trial_pro', club: hc.id, text: hc.nm + ' supo de tu buena actuación y te invita a entrenar con su primer equipo durante dos semanas.', exp: S.week + 6 }); names.push(hc.nm); }
+      }
     } else if (level === 'sel') {
       var cid = U.pick(clubs); if (offerFrom(cid)) made++;
       clubs.slice(0, 2).forEach(function (id2) { var c = S.clubs[id2]; if (c && Rep.foreignOK(c, h.nat, age)) Rep.addInterest(c, U.int(8, 20), 'tras la prueba masiva'); });
