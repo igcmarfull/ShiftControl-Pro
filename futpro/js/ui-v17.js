@@ -1,4 +1,4 @@
-/* FUTPRO — Historial de carrera: estadísticas de carrera en formato enciclopédico (clubes y selección), de la temporada
+/* FUTPRO — tablas de estadísticas de carrera en formato enciclopédico (se muestran en Biografía) (clubes y selección), de la temporada
    más antigua a la más reciente, con subtotales por club o categoría y total de carrera. Solo presentación sobre FP.Stats. */
 (function () {
   'use strict';
@@ -68,11 +68,5 @@
     return '<div class="card wk-card"><div class="tw"><table class="wk"><thead><tr><th>Categoría</th><th>Año</th><th>Competición</th><th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
   }
 
-  var career0 = SC.career;
-  SC.career = function () {
-    var html = career0.apply(this, arguments);
-    if (!ST.seasons().length) return html;
-    var tab = UI.tab.crw || 'clubs';
-    return html + '<div class="hd" style="margin:1.2rem 0 .5rem"><h3>' + I('list') + 'Estadísticas de carrera</h3></div><div style="margin-bottom:.7rem">' + seg('crw', [['clubs', 'Clubes', 'shield'], ['nat', 'Selección', 'flag']], tab) + '</div>' + (tab === 'nat' ? natTable() : clubsTable());
-  };
+  UI.bioTables = { clubs: clubsTable, nat: natTable };
 })();
