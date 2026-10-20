@@ -110,6 +110,17 @@ Límites: la curva de desarrollo del jugador llega más tarde que antes, pero el
 - **Metas de la temporada** (pantalla *Metas*): tres objetivos por año (goles, partidos, nota media, o no sufrir lesiones largas) calculados según tu posición, tu rol y tu temporada anterior. Cada meta cumplida da moral y fama.
 - **Logros de carrera**: 21 hitos (debut, triplete, 10/20 goles, títulos, media 70/80/90, selección, Mundial, Balón de Oro…) con progreso y recompensa pequeña. Los objetivos y recompensas son parámetros de diseño.
 
+## Mercado vivo
+
+- **Perfil y caja de cada club** (`js/clubs.js`): comprador, vendedor, formador o equilibrado, con un presupuesto que sube y baja con las operaciones y con los resultados de la temporada (ascensos, títulos y descensos lo mueven). El perfil cambia quién compra, a quién busca y quién vende.
+- **Rumores y operaciones frustradas**: las operaciones grandes pasan primero por un rumor de 1 a 3 semanas; alrededor de un tercio se cae. Los clubes vendedores sin caja se desprenden de su figura.
+- **Cierre de ventana**: el último día hay más operaciones de la IA y pueden llegarte ofertas de último minuto.
+- **Cláusulas de rescisión**: si tu cláusula es razonable frente a tu valor, un club con caja puede pagarla y abrirte una oferta (aceptas o negocias tu contrato).
+- **Efectos en cadena**: cuando fichas por otro club, el que dejas busca un reemplazo, el titular que desplazas puede negociar su salida y parte de la afición puede molestarse.
+- **Ayuda para decidir**: cada oferta muestra el nivel del club frente al tuyo, su perfil y su caja, el estilo del técnico y quién compite contigo en tu puesto. El panel "Mercado vivo" del Mercado lista los rumores y las últimas operaciones.
+
+Las probabilidades de rumores, ventas y cláusulas son parámetros de diseño, no calibrados con datos reales.
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**

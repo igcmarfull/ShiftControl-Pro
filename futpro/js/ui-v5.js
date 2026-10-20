@@ -108,7 +108,7 @@
     var quick = '';
     if (t && K.TYPES[o.type] && o.state !== 'tramite' && o.state !== 'pensando' && (o.neg || 0) < 3) quick = '<div class="chips" style="margin-top:.45rem"><span class="mut sm" style="align-self:center">Rápido:</span><button class="chip" data-act="negot" data-id="' + o.id + '" data-w="0.1">+10% sueldo</button><button class="chip" data-act="negot" data-id="' + o.id + '" data-w="0.2">+20% sueldo</button><button class="chip" data-act="negot" data-id="' + o.id + '" data-y="1">+1 año</button><button class="chip" data-act="negot" data-id="' + o.id + '" data-y="-1">−1 año</button></div>';
     if ((o.neg || 0) >= 3) quick = '<div class="mut sm" style="margin-top:.4rem">Última propuesta del club: acepta o rechaza.</div>';
-    return '<div class="prop" style="grid-template-columns:auto minmax(0,1fr)"><div>' + (club ? UI.crest(club.id, 'lg') : '<span class="nic">' + I('contract') + '</span>') + '</div><div style="min-width:0"><h3>' + head + '</h3><div class="pm">' + meta.join(' ') + '</div>' + txt + body + quick + '<div class="btn-group" style="margin-top:.6rem;flex-wrap:wrap">' + acts + '</div></div></div>';
+    return '<div class="prop" style="grid-template-columns:auto minmax(0,1fr)"><div>' + (club ? UI.crest(club.id, 'lg') : '<span class="nic">' + I('contract') + '</span>') + '</div><div style="min-width:0"><h3>' + head + '</h3><div class="pm">' + meta.join(' ') + '</div>' + txt + body + (UI.offerIntel ? UI.offerIntel(o) : '') + quick + '<div class="btn-group" style="margin-top:.6rem;flex-wrap:wrap">' + acts + '</div></div></div>';
   }
   function proposalsCard() {
     var h = FP.S.hero, cx = K.ensure();

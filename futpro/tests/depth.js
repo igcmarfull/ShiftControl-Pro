@@ -11,6 +11,7 @@ for (var i = 0; i < 52 * 7; i++) {
 }
 t('resúmenes de temporada generados', h.rv && h.rv.list.length > 0 && h.rv.list[0].text.length >= 3);
 t('metas y logros', h.gl && h.gl.season && h.gl.season.items.length >= 3 && Object.keys(h.gl.ach).length > 0);
+t('mercado vivo: perfiles y rumores', FP.S.mk && FP.S.mk.rum.length > 0 && FP.S.clubs.every(function (c) { return !c.sg || c.sg.role; }), FP.S.mk && FP.S.mk.rum.length);
 t('lesiones tipificadas', h.med.hist.length > 0 && h.med.hist.every(function (e) { return e.nm && e.zone; }));
 t('carga de partidos acotada', h.med.load >= 0 && h.med.load < 80, h.med.load);
 t('decisiones sin pendientes eternas', FP.Dec.open().length < 5);
@@ -19,7 +20,7 @@ t('estilo de entrenador asignado', Object.keys(FP.S.staff).length > 0);
 t('familiaridad en la posición actual', h.fam[h.pos] === 100 || h.fam[h.pos] > 0);
 t('vida personal creada', !!h.life && h.life.edu.grad === true);
 // cambio de posición con costo y adaptación
-var pos0 = h.pos, np = pos0 === 'CM' ? 'DM' : 'CM', r = FP.Tac.setPos(np);
+h.inj = null; var pos0 = h.pos, np = pos0 === 'CM' ? 'DM' : 'CM', r = FP.Tac.setPos(np);
 t('cambio de posición ok', r.ok && h.pos === np);
 var pen0 = FP.Tac.pen(); t('costo de adaptación', pen0 > 0, pen0);
 for (var k = 0; k < 40; k++) week();
