@@ -169,7 +169,7 @@
   function heroEntry(noise) {
     var h = FP.S.hero, tr = ((h.ct == null ? 50 : h.ct) - 50) * 0.04;
     var fat = h.fat > 75 ? (h.fat - 75) * 0.08 : 0;
-    return { p: { i: 0, p: h.pos, o: h.ovr, n: h.nm }, sc: h.ovr + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 + tr - fat + noise };
+    return { p: { i: 0, p: h.pos, o: h.ovr, n: h.nm }, sc: h.ovr + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 + tr - fat + noise + (FP.Staff && h.tk === 'academy' ? FP.Staff.statusAdj() : 0) };
   }
   // Estatus semanal del jugador en su equipo juvenil/amateur: titular, suplente o fuera de la lista
   Youth.heroStatus = function () {

@@ -153,7 +153,7 @@
         res.autoFocus = foc;
       }
       var attrs = Hero.focusAttrs(foc), mult = intn === 1 ? 0.6 : intn === 2 ? 1 : 1.4;
-      var coach = 1 + (h.pcoach || 0) * 0.1;
+      var coach = 1 + (h.pcoach || 0) * 0.1 + (FP.Staff ? FP.Staff.mentorBonus() : 0);
       var fatM = h.fat > 80 ? 0.5 : h.fat > 65 ? 0.8 : 1;
       var ar = Hero.ageRate(age);
       attrs.forEach(function (a) {
@@ -163,7 +163,7 @@
       });
       h.fat = U.clamp(h.fat + (intn === 1 ? -2 : intn === 2 ? 6 : 14) - (8 + h.at.res / 14), 0, 100);
       // riesgo de lesión por entrenamiento
-      var pInj = 0.0035 * (1 + h.fat / 55) * (intn === 3 ? 1.6 : intn === 1 ? 0.6 : 1);
+      var pInj = 0.0035 * (1 + h.fat / 55) * (intn === 3 ? 1.6 : intn === 1 ? 0.6 : 1) * (FP.Med ? FP.Med.riskMult() : 1);
       if (R() < pInj) Hero.injure('train');
     }
     // descenso físico con la edad
@@ -199,7 +199,7 @@
     var tk = h.tk;
     var base = C.ovrOf(h.at, h.pos);
     var fatPen = h.fat > 75 ? (h.fat - 75) * 0.08 : 0;
-    var score = base + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 - fatPen + ((h.ct == null ? 50 : h.ct) - 50) * 0.03;
+    var score = base + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 - fatPen + ((h.ct == null ? 50 : h.ct) - 50) * 0.03 + (FP.Staff ? FP.Staff.statusAdj() : 0);
     if (tk === 'amat' || tk === 'academy') {
       if (h.fat > 92 && R() < 0.5) return { role: 'bench', why: 'descanso', p: 0.9 };
       return FP.Youth.heroStatus();
@@ -443,6 +443,7 @@
       }
     }
     if (hm && hm.played && isNT) { h.nt.caps++; h.nt.goals += hm.g; }
+    if (FP.Med && hm && hm.played) { FP.Med.addMinutes(hm.min); if (!hm.inj) FP.Med.relapseCheck('match'); }
     if (FP.Youth && hm && !isNT) FP.Youth.heroTrustUpdate(hm.rating || 6, !!hm.played);
     if (FP.Rep && hm && !isNT) FP.Rep.spark(hm);
     // morale, forma, fatiga

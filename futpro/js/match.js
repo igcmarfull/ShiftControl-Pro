@@ -189,7 +189,7 @@
 
   // ----- simulación detallada -----
   // ctx: { comp, f, role: 'starter'|'bench'|'out', formH/formA, tactic:{mentality:-1..1}, hero (FP.S.hero) }
-  Match.full = function (ctx) {
+  Match.fullSession = function (ctx) {
     var S = FP.S, comp = ctx.comp, f = ctx.f, hero = ctx.hero;
     HV = hero;
     var heroSide = hero && (f.h === hero.team ? 'h' : f.a === hero.team ? 'a' : null);
@@ -343,7 +343,7 @@
     }
     function injCheck(m) {
       ['h', 'a'].forEach(function (sd) {
-        if (R() > 0.0011) return;
+        if (R() > 0.0011 * ((hero && sd === heroSide && hm.in && !hm.out && FP.Med) ? FP.Med.riskMult() : 1)) return;
         var arr = xi[sd].filter(function (e) { return !sent[sd][e.p.i]; });
         var e = U.wpick(arr, function (e) { return e.p.i === 0 ? 1 + hero.fat / 60 : 1; });
         var p = e.p, isH = p.i === 0;
@@ -382,9 +382,10 @@
     var ref = { h: [], a: [] };
 
     E(0, 'start', null, 'Comienza el partido: ' + tname('h') + ' vs ' + tname('a') + '.');
-    var total = 90 + U.int(2, 5), half = false, m;
+    var total = 90 + U.int(2, 5), half = false, m = 1;
     var tempo = 0.22 * (1 + (imp - 1) * 0.6);
-    for (m = 1; m <= total; m++) {
+    function runTo(limit) {
+    for (; m <= total && m <= limit; m++) {
       if (m === 46 && !half) { half = true; E(45, 'ht', null, 'Descanso: ' + tname('h') + ' ' + goals.h + ' - ' + goals.a + ' ' + tname('a') + '.'); }
       // fatiga del héroe
       if (hm.in && !hm.out) {
@@ -441,6 +442,8 @@
       if (m % 4 === 0) cardCheck(m);
       injCheck(m);
     }
+    }
+    function finish() {
     var finalMin = total;
     E(finalMin, 'end', null, 'Final del partido: ' + tname('h') + ' ' + goals.h + ' - ' + goals.a + ' ' + tname('a') + '.');
     // prórroga y penales
@@ -488,7 +491,10 @@
       out.hero = hm;
     }
     return out;
+    }
+    return { runTo: runTo, finish: finish, setMent: function (v) { if (heroSide === 'h') mentH = v; else if (heroSide === 'a') mentA = v; }, minute: function () { return m - 1; }, events: ev, ctx: ctx, hm: hm, setTempo: function (f) { tempo = f; } };
   };
+  Match.full = function (ctx) { var s = Match.fullSession(ctx); s.runTo(1e9); return s.finish(); };
 
   // equipo genérico (selección, amateur, juvenil): 11 jugadores inventados con la fuerza del equipo
   Match.genericLineup = function (id, comp) {
