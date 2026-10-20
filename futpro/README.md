@@ -84,6 +84,21 @@ La pantalla de inicio permite elegir el año (1995–2026). Cambia **solo el cal
 
 Los efectos y probabilidades de estos módulos son parámetros de diseño del juego, no valores calibrados.
 
+## Calibración (lo medido y sus límites)
+
+Se simularon carreras largas con `tests/careers.js` (24 carreras × 15 y 18 temporadas, más 8 × 25) y se compararon con referencias publicadas. Donde no hay una referencia fiable, el valor sigue siendo una decisión de diseño.
+
+| Aspecto | Referencia | Antes | Ahora |
+|---|---|---|---|
+| Lesiones por temporada (profesional) | ≈ 2 por jugador y una grave cada ~3 temporadas (estudios de la UEFA sobre clubes de élite) | 1,2 y 0,05 graves | 2,1 y 0,31 graves; 10,8 semanas perdidas al año |
+| Edad del techo de rendimiento | ≈ 25-26 años en capacidad física; 28-30 en producción (estudios con datos de seguimiento y OPTA) | 17 años y plano después | mediana 22 y se sigue creciendo hasta ≈ 25 |
+| Ofertas de traspaso (profesional destacado) | sin referencia | 0 por año | 1-2 por año |
+| Cesiones (joven suplente en club grande) | sin referencia | ≈ 0 | ≈ 1 por año |
+| Edad media de debut en las 5 grandes ligas | 21,7 años (CIES, 2020) | no medido | contrato profesional a los 17 (mediana); el debut real no se midió |
+| Edad media de retiro | 32,7 años en una muestra portuguesa | jugadores de IA se retiran a los ~34-35 | sin cambios |
+
+Límites: la curva de desarrollo del jugador llega más tarde que antes, pero el techo de cada jugador sigue siendo poco superior a su nivel a los 13 años, por lo que el pico mediano queda en 22 y no en 25-26. La proporción de carreras que llegan a profesional (83 %) corresponde a jugadores creados por un usuario con puntos extra y no es comparable con la tasa real de canteranos. Las ofertas, la carga y el legado siguen siendo parámetros de diseño.
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**
