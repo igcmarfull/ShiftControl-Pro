@@ -30,7 +30,7 @@ h.inj = { n: 20, nm: 'x' };
 var origR = Math.random; var fails0 = 0;
 // forzamos fracaso del examen médico con lesión larga (probabilidad alta): se repite hasta que ocurra
 var tries = 0, failed = false;
-while (tries++ < 40 && !failed) { h.offers = []; K.ensure().pend = null; a = mk(club(0), 'transfer'); b = mk(club(1), 'transfer'); h.tk = 'free'; h.contract = null; var rr = M.respond(a.id, true); if (!rr.ok) { failed = true; check(h.offers.some(function (x) { return x.id === b.id; }), 'tras un fracaso la otra oferta sigue disponible'); } else { h.inj = { n: 20, nm: 'x' }; } }
+while (tries++ < 40 && !failed) { h.offers = []; K.ensure().pend = null; a = mk(club(0), 'transfer'); b = mk(club(1), 'transfer'); h.tk = 'free'; h.club = null; h.team = null; h.contract = null; var rr = M.respond(a.id, true); if (!rr.ok) { failed = true; check(h.offers.some(function (x) { return x.id === b.id; }), 'tras un fracaso la otra oferta sigue disponible'); } else { h.inj = { n: 20, nm: 'x' }; } }
 check(failed, 'con lesión larga el examen médico debe fracasar alguna vez');
 h.inj = null;
 // 4) precontrato: continúa en su club
