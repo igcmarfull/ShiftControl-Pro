@@ -284,3 +284,7 @@ El juego registra cada cesión (`hero.bio.loans`: club de origen, club de destin
 ## Biografía: actuaciones destacadas
 
 `hero.bio.moments` guarda, mientras se juega, pocos partidos oficiales notables: goles en una final, tripletes o más, un gol en el minuto 85 o después que decidió el partido y el primer gol con la selección (máximo 2 por año y por clase, priorizando finales). La biografía los cuenta en cada club ("Entre sus actuaciones destacadas figuran: …") y en Selección nacional, con rival, marcador, competición, fecha y minutos; los más importantes entran también en la cronología. Los títulos y las distinciones ya se contaban en cada club. Las partidas anteriores a este cambio no tienen estos momentos.
+
+## Biografía: artículo aparte de la cronología
+
+Biografía tiene dos pestañas: **Artículo** (solo secciones de enciclopedia: primeros años, trayectoria, selección, estilo, lesiones, vida personal, palmarés y estadísticas, retiro) y **Cronología y hitos** (hitos y récords y cronología completa, sin duplicados). Estas dos ya no aparecen dentro del artículo.

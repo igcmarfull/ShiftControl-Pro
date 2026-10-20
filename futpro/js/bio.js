@@ -125,7 +125,7 @@
     if (tot.ap) p += ' Suma ' + plural(tot.ap, 'partido', 'partidos') + ' y ' + plural(tot.g, 'gol', 'goles') + ' en clubes.';
     if (ntTot && ntTot.p) p += ' Ha sido internacional con ' + esc(countryName(h.nat)) + ' en ' + plural(ntTot.p, 'partido', 'partidos') + (ntTot.g ? ' (' + plural(ntTot.g, 'gol', 'goles') + ')' : '') + '.';
     var champ = (h.trophies || []).filter(function (t) { return !t.sub; });
-    if (champ.length) p += ' Ha ganado ' + plural(champ.length, 'título', 'títulos') + (champ.length >= 2 ? ', entre ellos ' + esc(list(champ.slice(-2).map(function (t) { return t.nm; }))) : ', el de ' + esc(champ[0].nm)) + '.';
+    if (champ.length) p += ' Ha ganado ' + plural(champ.length, 'título', 'títulos') + (champ.length >= 2 ? ', entre ellos ' + esc(list(champ.slice(-2).map(function (t) { return tname(t.nm); }))) : ', el de ' + esc(champ[0].nm)) + '.';
     var top = (h.awards || []).filter(function (a) { return /Balón de Oro|Mejor jugador/i.test(a.nm); });
     if (top.length) p += ' Fue distinguido con el ' + esc(top[0].nm) + (top.length > 1 ? ' en ' + top.length + ' ocasiones' : ' en ' + y4(top[0].y)) + '.';
     return p;
@@ -229,7 +229,7 @@
     if (FP.Social) FP.Social.milestones().forEach(function (m) { if (ms[m.id]) out.push({ w: ms[m.id], t: m.n }); });
     var ach = (h.gl && h.gl.ach) || {};
     if (FP.Season) FP.Season.ACH.forEach(function (a) { if (ach[a.id]) out.push({ w: ach[a.id], t: a.nm }); });
-    return out;
+    var seen = {}; return out.filter(function (e) { var k = String(e.t).toLowerCase().replace(/[^a-z0-9áéíóúñ ]/g, ''); if (seen[k]) return false; seen[k] = 1; return true; });
   }
 
   function timeline(h) {
@@ -260,17 +260,18 @@
     secs.push({ id: 'estilo', t: 'Estilo de juego', p: styleText(h) });
     var inj = injuryText(h); if (inj.length) secs.push({ id: 'lesiones', t: 'Lesiones', p: inj }); else lock.push(['Lesiones', 'aparece si sufres lesiones']);
     var per = personalText(h); if (per.length) secs.push({ id: 'vida', t: 'Vida personal', p: per }); else lock.push(['Vida personal', 'se completa con estudios, familia y vida fuera de la cancha']);
-    var ms = milestones(h); if (ms.length) secs.push({ id: 'hitos', t: 'Hitos y récords', items: ms.sort(function (a, b) { return a.w - b.w; }).map(function (e) { return dlong(e.w) + ' — ' + e.t; }) }); else lock.push(['Hitos y récords', 'se llena al lograr tus primeros hitos']);
+    var extra = [], ms = milestones(h);
+    if (ms.length) extra.push({ id: 'hitos', t: 'Hitos y récords', items: ms.sort(function (a, b) { return a.w - b.w; }).map(function (e) { return dlong(e.w) + ' — ' + e.t; }) });
     var tr = (h.trophies || []).filter(function (t) { return !t.preset || true; }), aw = h.awards || [];
     if (tr.length || aw.length) secs.push({ id: 'palmares', t: 'Palmarés', trophies: tr, awards: aw }); else lock.push(['Palmarés', 'se completa al ganar títulos o premios']);
     if (st.length) secs.push({ id: 'estadisticas', t: 'Estadísticas', tables: nt ? ['clubs', 'nat'] : ['clubs'] });
-    var tl = timeline(h); if (tl.length >= 3) secs.push({ id: 'cronologia', t: 'Cronología', items: tl.map(function (e) { return dlong(e.w) + ' — ' + e.t; }) });
+    var tl = timeline(h); if (tl.length >= 3) extra.push({ id: 'cronologia', t: 'Cronología', items: tl.map(function (e) { return dlong(e.w) + ' — ' + e.t; }) });
     if (h.retired) secs.push({ id: 'retiro', t: 'Retiro', p: ['Se retiró del fútbol profesional el ' + dlong(h.retiredW != null ? h.retiredW : S.week) + ', a los ' + (h.retiredAge || Hero.age()) + ' años, tras ' + (h.retiredAge ? h.retiredAge - h.startAge : 0) + ' años de carrera, con ' + plural(h.tot.ap, 'partido', 'partidos') + ' y ' + plural(h.tot.g, 'gol', 'goles') + ' en clubes.'] });
     else lock.push(['Retiro', 'se escribe cuando termine tu carrera']);
     var nSec = secs.length, seasons = st.reduce(function (n, s) { return n + s.rows.length; }, 0);
-    var grade = h.retired && seasons >= 10 ? ['Artículo destacado', 'g'] : nSec >= 8 && seasons >= 5 ? ['Artículo bueno', 'b'] : nSec >= 5 ? ['En construcción', 'y'] : ['Esbozo', ''];
+    var grade = h.retired && seasons >= 10 ? ['Artículo destacado', 'g'] : nSec >= 7 && seasons >= 5 ? ['Artículo bueno', 'b'] : nSec >= 4 ? ['En construcción', 'y'] : ['Esbozo', ''];
     var box = [['Nombre completo', h.nm], ['Nacimiento', (h.city ? h.city + ', ' : '') + dlong(h.b)], ['Nacionalidad', countryName(h.nat)], ['Altura · peso', h.ht + ' cm · ' + h.kg + ' kg'], ['Posición', C.POS_NAME[h.pos]], ['Pie hábil', h.foot === 'L' ? 'Zurdo' : h.foot === 'A' ? 'Ambidiestro' : 'Diestro']];
     if (!h.retired && h.club != null) box.push(['Club actual', C.tname(h.club)]);
-    return { name: h.nm, lead: leadText(h, st, tot, nt), box: box, secs: secs, lock: lock, grade: grade, stints: st.map(function (s) { return { nm: s.nm, yrs: range(s.rows), loan: s.loan }; }), nt: nt ? { p: nt.p, g: nt.g } : null, titles: (h.trophies || []).filter(function (t) { return !t.sub; }).length, seasons: seasons };
+    return { name: h.nm, lead: leadText(h, st, tot, nt), box: box, secs: secs, extra: extra, lock: lock, grade: grade, stints: st.map(function (s) { return { nm: s.nm, yrs: range(s.rows), loan: s.loan }; }), nt: nt ? { p: nt.p, g: nt.g } : null, titles: (h.trophies || []).filter(function (t) { return !t.sub; }).length, seasons: seasons };
   };
 })();

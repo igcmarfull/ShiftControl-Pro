@@ -29,7 +29,13 @@
 
   SC.bio = function () {
     var h = FP.S.hero, d = B.build();
-    var html = hdr('book', 'Biografía', 'Tu historia, escrita con lo que haces en la cancha');
+    var tab = UI.tab.bio || 'art';
+    var html = hdr('book', 'Biografía', 'Tu historia, escrita con lo que haces en la cancha', UI.seg('bio', [['art', 'Artículo', 'book'], ['extra', 'Cronología y hitos', 'history']], tab));
+    if (tab === 'extra') {
+      html += '<div class="notice">La biografía es un artículo de enciclopedia; aquí queda aparte el registro de hitos, récords y la cronología completa de tu carrera.</div>';
+      if (!d.extra.length) return html + '<div class="card"><p class="mut">Todavía no hay hitos ni cronología: se irán llenando mientras juegas.</p></div>';
+      return html + d.extra.map(function (sec) { return '<div class="card"><div class="hd"><h3>' + esc(sec.t) + '</h3></div><ul class="bx-ul" style="font-size:.9rem">' + sec.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>'; }).join('');
+    }
     var stub = d.grade[0] === 'Esbozo' ? 'Este artículo es un <b>esbozo</b>: se irá ampliando a medida que juegues temporadas, ganes títulos y vivas tu carrera.' : d.grade[0] === 'En construcción' ? 'Este artículo está <b>en construcción</b>: faltan secciones por completar (ver al final).' : '';
     html += '<article class="bio">' + (stub ? '<div class="bio-stub">' + I('info') + '<span>' + stub + '</span></div>' : '') +
       '<div class="bio-hd"><h1>' + esc(d.name) + '</h1><span class="pill ' + d.grade[1] + '">' + esc(d.grade[0]) + '</span></div><div class="bio-sub">De Wikifútbol, la enciclopedia de tu carrera</div>' +
