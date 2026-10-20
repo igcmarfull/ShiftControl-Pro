@@ -632,3 +632,22 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .ph-n { display: inline-grid; place-items: center; min-width: 1.8rem; height: 1.8rem; border-radius: 50%; font-weight: 700; } .ph-n.gold { background: rgba(217, 180, 74, .2); color: var(--gold); } .ph-n.silver { background: rgba(185, 196, 207, .16); color: #b9c4cf; } .ph-n.vio { background: rgba(157, 140, 240, .18); color: var(--vio); }
 .ph-yc { display: inline-block; background: rgba(217, 180, 74, .12); color: var(--gold); border-radius: 7px; padding: .1rem .5rem; margin: .1rem .2rem .1rem 0; font-size: .75rem; } .ph-yc.sub { background: rgba(185, 196, 207, .12); color: #b9c4cf; } .ph-yc.aw { background: rgba(157, 140, 240, .14); color: var(--vio); }
 @media (max-width: 760px) { .ph-kpis { grid-template-columns: repeat(2, 1fr); } .ph-shelf { grid-template-columns: repeat(2, 1fr); } }
+
+/* resultado del partido (ui-v2): tira de resultado, línea de tiempo, relato por tiempos, estadísticas y alineaciones */
+.mc-res { --rc: rgba(154, 169, 182, .2); margin: -1.2rem -1.5rem 1rem; padding: .8rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line2); background: linear-gradient(100deg, var(--rc), transparent 80%); }
+.mc-res.V { --rc: rgba(47, 191, 113, .3); } .mc-res.D { --rc: rgba(229, 84, 90, .3); } .mc-res.E { --rc: rgba(154, 169, 182, .24); }
+.mr-t { font-family: var(--disp); font-size: 2rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; line-height: 1; display: block; } .mc-res.V .mr-t { color: var(--ac); } .mc-res.D .mr-t { color: var(--bad); } .mc-res.E .mr-t { color: var(--mut); }
+.mr-s { display: block; color: var(--mut); font-size: .8rem; margin-top: .2rem; } .mr-r { display: flex; align-items: center; gap: .6rem; color: var(--mut); font-size: .78rem; } .mr-r .rate-ring { width: 64px; height: 64px; }
+.tl { height: 100px; margin-top: 1.8rem; } .tl-ev { width: 28px; height: 28px; } .tl-ev.h { top: 8px; } .tl-ev.a { bottom: 8px; }
+.tl-ev em { position: absolute; font-style: normal; font-size: .62rem; font-weight: 700; color: var(--mut); white-space: nowrap; } .tl-ev.h em { top: -15px; } .tl-ev.a em { bottom: -15px; }
+.tl-lab { top: calc(50% + 7px); }
+.mev-sep { display: flex; align-items: center; gap: .6rem; margin: .5rem 0 .2rem; color: var(--dim); font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; } .mev-sep::before, .mev-sep::after { content: ""; flex: 1; height: 1px; background: var(--line2); }
+.mev-sc { display: inline-block; background: var(--ac); color: #04180d; border-radius: 8px; padding: .02rem .5rem; margin-left: .4rem; font-family: var(--disp); } .mev.goal { box-shadow: inset 3px 0 0 var(--ac); padding-left: .6rem; }
+.hp { display: flex; gap: .6rem; font-size: .82rem; padding: .25rem 0; border-top: 1px solid var(--line); } .hp b { color: var(--gold); min-width: 2rem; text-align: right; }
+.seg.sm button { padding: .2rem .6rem; font-size: .75rem; }
+.mst-leg { display: flex; align-items: center; gap: .35rem; font-size: .72rem; color: var(--mut); } .mst-leg i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: .4rem; }
+.sbar .tr .hh { background: var(--hc, var(--ac2)); } .sbar .tr .aa { background: var(--ac2c, #6c7a88); }
+.lu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; } .lu { min-width: 0; }
+.lu-h { --tc: #46aabd; display: flex; align-items: center; gap: .5rem; padding: .4rem .5rem; border-radius: 10px; margin-bottom: .3rem; background: linear-gradient(90deg, color-mix(in srgb, var(--tc) 30%, transparent), transparent); } .lu-h .crest { width: 1.4rem; height: 1.4rem; flex: none; } .lu-h .crest img { width: 100%; height: 100%; object-fit: contain; } .lu-h b { font-size: .85rem; flex: 1; min-width: 0; }
+.lu-p { display: grid; grid-template-columns: 2.7rem 1fr 2rem; align-items: center; gap: .4rem; padding: .17rem .3rem; font-size: .8rem; border-radius: 8px; } .lu-p.me { background: var(--ac-soft); color: var(--ac); font-weight: 700; } .lu-p i { font-style: normal; text-align: right; color: var(--mut); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .mc-res { margin: -1rem -.8rem .8rem; padding: .7rem .8rem; } .mr-t { font-size: 1.5rem; } .lu-grid { grid-template-columns: 1fr; } }

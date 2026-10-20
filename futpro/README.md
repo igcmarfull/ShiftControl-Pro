@@ -248,3 +248,7 @@ Cada frase sale de un dato registrado (no se inventan hechos). Además `Hero.msg
 ## Palmarés: vistas de "Mis trofeos" (`js/ui-v19.js`)
 
 Indicadores arriba (títulos, subcampeonatos, premios, Balones de Oro) y selector **Vista** (por defecto Por competición): **Vitrina** (estantes con copas doradas, subcampeonatos en plata y medallas), **Cronología** (un nodo por año con el club y chips de títulos y premios) y **Por competición** (tablas con conteo y temporadas de títulos, subcampeonatos y distinciones por tipo).
+
+## Resultado del partido rediseñado (`js/ui-v2.js`)
+
+Se unió el banner de resultado y el marcador en una sola tarjeta (tira de VICTORIA/EMPATE/DERROTA con tu nota); la línea de tiempo muestra el minuto de cada evento (local arriba, visitante abajo); el relato va por tiempos con filtro **Resumen / Completo** y el marcador destacado en los goles; las estadísticas usan los colores de cada equipo (con color de contraste si son parecidos); "Tu rendimiento" suma "Tus jugadas"; y las alineaciones muestran posición, nombre y media con tu jugador resaltado. El modo minuto a minuto y las dos pieles (oscura y clara) se mantienen.

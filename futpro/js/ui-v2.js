@@ -229,13 +229,39 @@
   UI.mevRow = function (e) {
     var dimEv = !MAJOR[e.t] && !e.hero, ic = EVI[e.t] || 'ball';
     var cls = 'mev ' + (e.t === 'goal' ? 'goal ' : '') + (e.hero ? 'hero ' : '') + (dimEv ? 'dim-ev' : '');
-    return '<div class="' + cls + '"><span class="mm">' + (e.m ? e.m + "'" : '') + '</span><span class="mi t-' + (e.red2 ? 'red' : e.t) + '">' + I(ic) + '</span><span>' + esc(e.x) + (e.t === 'goal' ? ' <b class="nowrap">(' + e.hs + '-' + e.as_ + ')</b>' : '') + '</span></div>';
+    return '<div class="' + cls + '"><span class="mm">' + (e.m ? e.m + "'" : '') + '</span><span class="mi t-' + (e.red2 ? 'red' : e.t) + '">' + I(ic) + '</span><span>' + esc(e.x) + (e.t === 'goal' ? ' <b class="mev-sc">' + e.hs + ' - ' + e.as_ + '</b>' : '') + '</span></div>';
+  };
+  // relato por tiempos, con filtro de resumen (goles, tarjetas, cambios, lesiones y tus jugadas)
+  UI.mevList = function (evs, mode) {
+    var out = '', half = 0;
+    evs.forEach(function (e) {
+      if (mode !== 'all' && !MAJOR[e.t] && !e.hero) return;
+      var hv = e.m > 90 ? 3 : e.m > 45 ? 2 : 1;
+      if (hv !== half) { half = hv; out += '<div class="mev-sep"><span>' + (hv === 1 ? 'Primer tiempo' : hv === 2 ? 'Segundo tiempo' : 'Tiempo extra') + '</span></div>'; }
+      out += UI.mevRow(e);
+    });
+    return out || '<p class="mut sm" style="padding:.6rem">Sin acciones destacadas.</p>';
+  };
+  UI.heroPlays = function (evs) {
+    var l = evs.filter(function (e) { return e.hero; }); if (!l.length) return '';
+    return '<h4 style="margin:.8rem 0 .3rem">Tus jugadas</h4>' + l.slice(0, 8).map(function (e) { return '<div class="hp"><b>' + (e.m || 0) + "'" + '</b><span>' + esc(e.x) + '</span></div>'; }).join('');
+  };
+  // colores de las barras: si ambos equipos son parecidos, el visitante usa un color de contraste
+  UI.statColors = function (h, a) {
+    var ch = UI.clubColors(h)[0], ca = UI.clubColors(a)[0];
+    function rgb(x) { x = String(x).replace('#', ''); if (x.length === 3) x = x.replace(/(.)/g, '$1$1'); return [0, 2, 4].map(function (i) { return parseInt(x.substr(i, 2), 16) || 0; }); }
+    var u = rgb(ch), v = rgb(ca), d = Math.sqrt(Math.pow(u[0] - v[0], 2) + Math.pow(u[1] - v[1], 2) + Math.pow(u[2] - v[2], 2));
+    return [ch, d < 90 ? '#e2a93b' : ca];
+  };
+  UI.lineupCol = function (id, xi, form) {
+    var cl = UI.clubColors(C.tname(id));
+    return '<div class="lu"><div class="lu-h" style="--tc:' + cl[0] + '">' + UI.crest(id, 'sm') + '<b class="ell">' + esc(C.tname(id)) + '</b>' + (form ? '<span class="pill">' + esc(form) + '</span>' : '') + '</div>' + xi.map(function (p) { return '<div class="lu-p' + (p.id === 0 ? ' me' : '') + '">' + UI.posb(p.pos) + '<span class="ell">' + esc(p.n) + '</span><i>' + Math.round(p.o) + '</i></div>'; }).join('') + '</div>';
   };
   UI.tlEvent = function (e, total) {
     if (!MAJOR[e.t] && !e.hero) return '';
     var ic = e.t === 'goal' ? 'ball' : e.t === 'sub' ? 'sub' : e.t === 'inj' ? 'inj' : 'card';
     var cls = e.red2 ? 'red' : e.t, side = e.s === 'a' ? 'a' : 'h';
-    return '<span class="tl-ev ' + side + ' ' + cls + (e.hero ? ' hero' : '') + '" style="left:' + Math.min(99, e.m / total * 100).toFixed(1) + '%" title="' + esc((e.m || 0) + "' " + e.x) + '">' + I(ic, e.t === 'goal' ? '' : '') + '</span>';
+    return '<span class="tl-ev ' + side + ' ' + cls + (e.hero ? ' hero' : '') + '" style="left:' + Math.min(99, e.m / total * 100).toFixed(1) + '%" title="' + esc((e.m || 0) + "' " + e.x) + '">' + I(ic, e.t === 'goal' ? '' : '') + '<em>' + (e.m || 0) + "'" + '</em></span>';
   };
   UI.matchStats = function (evs, upto) {
     var s = { sh: [0, 0], on: [0, 0], g: [0, 0], y: [0, 0], r: [0, 0], sub: [0, 0] };
@@ -275,16 +301,15 @@
     var mineH = prep2.home, mg = mineH ? res.hs : res.as, og = mineH ? res.as : res.hs;
     var letter = res.ps ? ((mineH ? res.ps[0] > res.ps[1] : res.ps[1] > res.ps[0]) ? 'V' : 'D') : mg > og ? 'V' : mg < og ? 'D' : 'E';
     var html2 = '';
-    if (!live) {
-      html2 += '<div class="res-banner ' + letter + '"><div><div class="rt">' + ({ V: 'Victoria', D: 'Derrota', E: 'Empate' }[letter]) + '</div><div class="rs2">' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + ' · ' + D.fmt(f.w) + (res.et ? ' · tras prórroga' : '') + (res.ps ? ' · penales ' + res.ps[0] + '-' + res.ps[1] : '') + '</div></div><div class="row" style="gap:1.4rem">' + UI.crest(f.h, 'lg') + '<span class="mc-score"><span class="big" style="font-size:3rem">' + res.hs + '<i>-</i>' + res.as + '</span></span>' + UI.crest(f.a, 'lg') + '</div>' + (hm && hm.played ? '<div class="row" style="gap:.8rem"><div style="text-align:center">' + UI.rateRing(hm.rating) + '<div class="mut sm">Tu nota</div></div></div>' : '') + '</div>';
-    }
-    html2 += '<div class="mc"><div class="mc-top"><span>' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + '</span><span>·</span><span>' + D.fmt(f.w) + '</span></div><div class="mc-main">' + teamBlock(f.h, comp, '') + '<div class="mc-score"><div class="big" id="mt-score">' + (live ? '0<i>-</i>0' : res.hs + '<i>-</i>' + res.as) + '</div><div class="min ' + (live ? 'live' : '') + '" id="mt-min">' + (live ? "0'" : (res.et ? 'Final · prórroga' : 'Final')) + '</div>' + (res.ps ? '<div class="mut sm" style="margin-top:.3rem">Penales ' + res.ps[0] + ' - ' + res.ps[1] + '</div>' : '') + '</div>' + teamBlock(f.a, comp, '') + '</div>' +
+    var strip = '';
+    if (!live) strip = '<div class="mc-res ' + letter + '"><div class="mr-l"><span class="mr-t">' + ({ V: 'Victoria', D: 'Derrota', E: 'Empate' }[letter]) + '</span><span class="mr-s">' + (res.et ? 'Tras prórroga' : '') + (res.et && res.ps ? ' · ' : '') + (res.ps ? 'Penales ' + res.ps[0] + '-' + res.ps[1] : '') + '</span></div>' + (hm && hm.played ? '<div class="mr-r">' + UI.rateRing(hm.rating) + '<span>Tu nota</span></div>' : '<div class="mr-r"><span>' + (hm ? 'Sin minutos' : '') + '</span></div>') + '</div>';
+    html2 += '<div class="mc">' + strip + '<div class="mc-top"><span>' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + '</span><span>·</span><span>' + D.fmt(f.w) + '</span></div><div class="mc-main">' + teamBlock(f.h, comp, '') + '<div class="mc-score"><div class="big" id="mt-score">' + (live ? '0<i>-</i>0' : res.hs + '<i>-</i>' + res.as) + '</div><div class="min ' + (live ? 'live' : '') + '" id="mt-min">' + (live ? "0'" : (res.et ? 'Final · prórroga' : 'Final')) + '</div>' + (res.ps ? '<div class="mut sm" style="margin-top:.3rem">Penales ' + res.ps[0] + ' - ' + res.ps[1] + '</div>' : '') + '</div>' + teamBlock(f.a, comp, '') + '</div>' +
       '<div class="tl" id="mt-tl"><div class="tl-line"><i id="mt-tlf" style="width:' + (live ? 0 : 100) + '%"></i></div>' + [0, 15, 30, 45, 60, 75, 90].filter(function (m) { return m <= total; }).map(function (m) { return '<span class="tl-tick" style="left:' + (m / total * 100) + '%"></span><span class="tl-lab" style="left:' + (m / total * 100) + '%">' + m + "'</span>"; }).join('') + '<span id="mt-tle">' + (live ? '' : res.ev.map(function (e) { return UI.tlEvent(e, total); }).join('')) + '</span></div>' +
       (live ? '<div class="btn-group" style="justify-content:center;margin-top:.4rem"><button class="btn sm" data-act="mspeed" data-v="1">1×</button><button class="btn sm" data-act="mspeed" data-v="3">3×</button><button class="btn sm" data-act="mspeed" data-v="8">8×</button><button class="btn sm pri" data-act="mskip">' + I('skip') + 'Saltar al final</button></div>' : '') + '</div>';
-    html2 += '<div class="mgrid"><div class="card"><div class="hd"><h3>' + I('whistle') + 'Relato del partido</h3></div><div class="evbox" id="mt-ev" style="max-height:460px;background:transparent;padding:0">' + (live ? '' : res.ev.map(UI.mevRow).join('')) + '</div></div><div>';
-    html2 += '<div class="card"><div class="hd"><h3>' + I('chart') + 'Estadísticas</h3></div><div id="mt-st">' + UI.statBars(UI.matchStats(res.ev, live ? 0 : null)) + '</div></div>';
-    if (hm) html2 += '<div class="card" id="mt-hero" ' + (live ? 'style="display:none"' : '') + '><div class="hd"><h3>' + I('user') + 'Tu rendimiento</h3></div>' + (hm.played ? '<div class="pstat"><div><b>' + hm.min + "'" + '</b><span>Minutos</span></div><div><b>' + hm.g + '</b><span>Goles</span></div><div><b>' + hm.a + '</b><span>Asistencias</span></div><div><b>' + hm.sh + '</b><span>Remates</span></div></div><p class="mut sm" style="margin-top:.6rem">' + (hm.subIn ? 'Ingresaste al minuto ' + hm.subIn + '. ' : 'Fuiste titular. ') + 'Remates a puerta: ' + hm.sot + ' · Pases clave: ' + hm.kp + ' · Tarjetas: ' + hm.yc + ' amarilla(s), ' + hm.rc + ' roja(s).' + (hm.inj ? ' <span class="bad">Terminaste lesionado.</span>' : '') + '</p>' : '<p class="mut">' + ({ out: 'Quedaste fuera de la convocatoria.', bench: 'Estuviste en el banco pero no ingresaste.', starter: '' }[prep2.status.role] || '') + (prep2.status.why ? ' (' + esc(prep2.status.why) + ')' : '') + '</p>') + '</div>';
-    html2 += '<div class="card"><div class="hd"><h3>' + I('user') + 'Alineaciones</h3></div><div class="grid g2"><div><h4>' + esc(C.tname(f.h)) + (res.form ? ' · ' + res.form.h : '') + '</h4>' + res.xi.h.map(function (p) { return '<div class="sm">' + (p.id === 0 ? '<b class="ok">' : '') + esc(p.n) + (p.id === 0 ? '</b>' : '') + ' <span class="dim">' + UI.pos(p.pos) + ' ' + Math.round(p.o) + '</span></div>'; }).join('') + '</div><div><h4>' + esc(C.tname(f.a)) + (res.form ? ' · ' + res.form.a : '') + '</h4>' + res.xi.a.map(function (p) { return '<div class="sm">' + (p.id === 0 ? '<b class="ok">' : '') + esc(p.n) + (p.id === 0 ? '</b>' : '') + ' <span class="dim">' + UI.pos(p.pos) + ' ' + Math.round(p.o) + '</span></div>'; }).join('') + '</div></div><p class="mut sm" style="margin-top:.4rem">Los futbolistas rivales y compañeros son generados por el juego.</p></div></div></div>';
+    html2 += '<div class="mgrid"><div class="card"><div class="hd"><h3>' + I('whistle') + 'Relato del partido</h3>' + (live ? '' : '<div class="seg sm">' + [['key', 'Resumen'], ['all', 'Completo']].map(function (o) { return '<button class="' + ((UI.tab.mevf || 'key') === o[0] ? 'on' : '') + '" data-act="tabset" data-s="mevf" data-t="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>') + '</div><div class="evbox" id="mt-ev" style="max-height:520px;background:transparent;padding:0">' + (live ? '' : UI.mevList(res.ev, UI.tab.mevf || 'key')) + '</div></div><div>';
+    html2 += '<div class="card"><div class="hd"><h3>' + I('chart') + 'Estadísticas</h3><span class="mst-leg"><i style="background:' + UI.clubColors(C.tname(f.h))[0] + '"></i>' + esc(C.tname(f.h)) + '<i style="background:' + UI.clubColors(C.tname(f.a))[0] + '"></i>' + esc(C.tname(f.a)) + '</span></div><div id="mt-st" style="--hc:' + UI.statColors(C.tname(f.h), C.tname(f.a))[0] + ';--ac2c:' + UI.statColors(C.tname(f.h), C.tname(f.a))[1] + '">' + UI.statBars(UI.matchStats(res.ev, live ? 0 : null)) + '</div></div>';
+    if (hm) html2 += '<div class="card" id="mt-hero" ' + (live ? 'style="display:none"' : '') + '><div class="hd"><h3>' + I('user') + 'Tu rendimiento</h3></div>' + (hm.played ? '<div class="pstat"><div><b>' + hm.min + "'" + '</b><span>Minutos</span></div><div><b>' + hm.g + '</b><span>Goles</span></div><div><b>' + hm.a + '</b><span>Asistencias</span></div><div><b>' + hm.sh + '</b><span>Remates</span></div></div><p class="mut sm" style="margin-top:.6rem">' + (hm.subIn ? 'Ingresaste al minuto ' + hm.subIn + '. ' : 'Fuiste titular. ') + 'Remates a puerta: ' + hm.sot + ' · Pases clave: ' + hm.kp + ' · Tarjetas: ' + hm.yc + ' amarilla(s), ' + hm.rc + ' roja(s).' + (hm.inj ? ' <span class="bad">Terminaste lesionado.</span>' : '') + '</p>' + UI.heroPlays(res.ev) : '<p class="mut">' + ({ out: 'Quedaste fuera de la convocatoria.', bench: 'Estuviste en el banco pero no ingresaste.', starter: '' }[prep2.status.role] || '') + (prep2.status.why ? ' (' + esc(prep2.status.why) + ')' : '') + '</p>') + '</div>';
+    html2 += '<div class="card"><div class="hd"><h3>' + I('user') + 'Alineaciones</h3></div><div class="lu-grid">' + UI.lineupCol(f.h, res.xi.h, res.form && res.form.h) + UI.lineupCol(f.a, res.xi.a, res.form && res.form.a) + '</div><p class="mut sm" style="margin-top:.5rem">Los futbolistas rivales y compañeros son generados por el juego.</p></div></div></div>';
     if (!live) html2 += '<div class="card" style="text-align:right"><button class="btn cta" data-act="mnext">' + (left > 1 ? 'Siguiente partido' : 'Terminar la semana') + I('arrow') + '</button></div>';
     return html2;
   };
