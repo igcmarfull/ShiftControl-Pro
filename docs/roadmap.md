@@ -50,7 +50,7 @@ No se requieren más módulos antes del siguiente hito. El cierre de V1 exige:
 
 ### Excepciones aceptadas en V1
 
-- `index.html` conserva el bootstrap/demo y algunas asignaciones mecánicas de
+- `index.html` conserva el bootstrap (sin datos de demostración desde el 20-10-2026) y algunas asignaciones mecánicas de
   empleados y planificación;
 - las lecturas, reglas de negocio, coordinación, cálculos y renderizados siguen
   en el monolito;
