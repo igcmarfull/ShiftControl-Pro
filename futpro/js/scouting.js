@@ -58,7 +58,7 @@
     var h = Rep.ensure(); if (!h) return;
     var t = Rep.targets(), r = h.rep;
     ['loc', 'nat', 'int'].forEach(function (k) { r[k] += (t[k] - r[k]) * (t[k] > r[k] ? 0.05 : 0.025); r[k] = Math.round(r[k] * 100) / 100; });
-    h.int.forEach(function (e) { e.v -= 1.2; });
+    h.int.forEach(function (e) { e.v -= 0.7; });
     h.int = h.int.filter(function (e) { return e.v >= 5; });
   };
   // exposición del jugador frente a un club (qué tan conocido es allí)
@@ -138,7 +138,8 @@
     if (!cand.length) return;
     var club = U.wpick(cand, function (c) { var f = Rep.fit(c); return f.need * Math.exp(-Math.abs(f.gap) / 6) * (c.c === M.heroCountry() ? 1.5 : 0.8); });
     var why = gr >= 0.5 ? 'por tus goles' : perf >= 7 ? 'por tu rendimiento' : age <= 17 ? 'por tu proyección' : 'por tu nivel';
-    Rep.addInterest(club, U.int(10, 24), why);
+    var sup = U.clamp((Rep.fit(club).eff - (club.st - 5)) / 18, 0, 1);        // cuanto mejor es el jugador respecto al club, más rápido crece el interés
+    Rep.addInterest(club, Math.round(U.int(10, 24) * (1 + sup * 0.8)), why);
   };
   // tras un buen partido, un club puede fijarse en el jugador
   Rep.spark = function (hm) {
@@ -156,14 +157,14 @@
     var base = C.wage(val, cw), tierF = lg.t === 1 ? 1 : lg.t === 2 ? 0.78 : 0.58, finF = 0.62 + club.fin * 0.06;
     return Math.max(2, Math.round(base * tierF * finF * (factor || 1) * M.agentMult()));
   };
-  Rep.offers = function (freeAgent) {
+  Rep.offers = function (freeAgent, cap) {
     var S = FP.S, h = Rep.ensure(), age = FP.Hero.age(), w = S.week, cur = h.club != null ? S.clubs[h.club] : null;
     if (Rep.coolOn(w) && !freeAgent) return 0;
     if (age < 16) return 0;
-    var made = 0, maxN = freeAgent ? 2 : 3, pot = M.potEst(), val = M.heroValue();
+    var made = 0, maxN = cap != null ? cap : freeAgent ? 2 : 3, pot = M.potEst(), val = M.heroValue();
     var roleNow = (h.tk === 'pro' || h.tk === 'loan') ? FP.Hero.roleLabel() : 'Titular';
     var wantMove = roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'free' || h.flags.transferReq;
-    var list = h.int.filter(function (e) { return e.v >= 45 && (h.cd[e.c] || 0) <= w; }).sort(function (a, b) { return b.v - a.v; });
+    var list = h.int.filter(function (e) { return e.v >= 38 && (h.cd[e.c] || 0) <= w; }).sort(function (a, b) { return b.v - a.v; });
     list.forEach(function (e) {
       if (made >= maxN) return;
       var club = S.clubs[e.c]; if (!club || club === cur) return;
@@ -174,7 +175,7 @@
       // un club que no mejora el nivel actual solo interesa si hay más minutos o más dinero
       var lower = cur && club.st < cur.st - 3, better = !cur || club.st >= cur.st - 1;
       if (lower && !wantMove && R() > 0.25) return;
-      if (R() > (e.v - 35) / 70) return;
+      if (R() > (e.v - 28) / 60) return;
       made++;
       var role = f.kind === 'project' ? 'Proyecto / suplente' : f.gap >= 3 ? 'Titular' : f.gap >= -1 ? 'Rotación' : 'Suplente';
       var money = lower ? 1.35 + R() * 0.3 : 1;             // un club menor puede ofrecer mejor sueldo
@@ -192,8 +193,8 @@
       e.v = Math.max(20, e.v - 25);
     });
     // cesiones: jugadores sin minutos en clubes de mayor nivel
-    if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur && !Rep.coolOn(w) && (roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'academy' && age >= 17) && M.isWindow(w) && R() < 0.4) {
-      var cc = M.heroCountry(), opts = S.clubs.filter(function (c) { return c.c === cc && c !== cur && Math.abs(c.st - h.ovr) < 7 && clubTier(c).t >= clubTier(cur).t && Rep.exposure(c).ok; });
+    if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur && !Rep.coolOn(w) && (roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'academy' && age >= 17 || age <= 20 && cur.st >= h.ovr + 3) && M.isWindow(w) && R() < 0.3) {
+      var cc = M.heroCountry(), opts = S.clubs.filter(function (c) { return c.c === cc && c !== cur && c.st <= h.ovr + 4 && c.st >= h.ovr - 14 && clubTier(c).t >= clubTier(cur).t && Rep.exposure(c).ok; });
       if (opts.length && !h.offers.some(function (o) { return o.type === 'loan'; })) {
         var lc = U.pick(opts);
         M.addOffer({ type: 'loan', club: lc.id, years: 1, wage: 0, role: 'Con minutos', text: lc.nm + ' solicita tu cesión por una temporada para darte minutos. Regresas a ' + cur.nm + ' al terminar.', exp: w + 5 });
@@ -202,6 +203,13 @@
     return made;
   };
   M.transferOffers = function (freeAgent) { return Rep.offers(freeAgent); };
+  // Durante toda la ventana de fichajes (no solo la primera semana) los clubes interesados pueden presentar oferta; tope de 3 por ventana.
+  Rep.WIN_CAP = 3;
+  Rep.windowOffers = function (w, key) {
+    var h = Rep.ensure(); if (!M.isWindow(w) || w % 2 !== 1) return;
+    var ck = 'wc' + key, n = h.flags[ck] || 0; if (n >= Rep.WIN_CAP) return;
+    h.flags[ck] = n + Rep.offers(false, Rep.WIN_CAP - n);
+  };
 
   // ---------- ofertas semiprofesionales y pruebas para adultos ----------
   Rep.semiOffers = function () {
@@ -345,12 +353,12 @@
     var key = 'win' + M.windowKey(w);
     if (h.tk === 'pro' || h.tk === 'loan') {
       M.contractWatch(w);
-      if (M.isWindow(w) && !h.flags[key]) { h.flags[key] = 1; Rep.offers(false); }
+      Rep.windowOffers(w, key);
     } else if (h.tk === 'academy') {
-      if (age >= 17 && M.isWindow(w) && !h.flags[key]) { h.flags[key] = 1; Rep.offers(false); }
+      if (age >= 17) Rep.windowOffers(w, key);
     } else if (h.tk === 'free') {
       if (w - (h.freeSince || w) >= 3 && R() < 0.2) Rep.offers(true);
-    } else if (h.tk === 'amat' && age >= 17 && M.isWindow(w) && !h.flags[key]) { h.flags[key] = 1; Rep.offers(false); }
+    } else if (h.tk === 'amat' && age >= 17) Rep.windowOffers(w, key);
     if (h.tk === 'free' && h.freeSince != null && w - h.freeSince > 14 && !h.offers.length && R() < 0.5) {
       M.addOffer({ type: 'amateur', club: null, text: 'Un club amateur local te ofrece jugar en su equipo mientras buscas club profesional.', exp: w + 8 });
     }
