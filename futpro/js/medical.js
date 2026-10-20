@@ -10,13 +10,13 @@
     contractura: ['Contractura', 'gemelo', 'muscular', 1, 2, 'no', 0, 10],
     elongacion: ['Elongación', 'isquiotibiales', 'muscular', 2, 4, 'no', 0, 9],
     desgarro: ['Desgarro muscular', 'isquiotibiales', 'muscular', 4, 8, 'no', 0.1, 6],
-    desgarro_grave: ['Desgarro muscular grave', 'muslo', 'muscular', 8, 14, 'no', 0.3, 2],
+    desgarro_grave: ['Desgarro muscular grave', 'muslo', 'muscular', 8, 14, 'no', 0.3, 4],
     esguince_tobillo: ['Esguince de tobillo', 'tobillo', 'ligamento', 2, 6, 'no', 0, 8],
     esguince_rodilla: ['Esguince de rodilla', 'rodilla', 'ligamento', 4, 9, 'no', 0.2, 4],
-    menisco: ['Lesión de menisco', 'rodilla', 'ligamento', 6, 14, 'opcional', 0.5, 2.5],
-    lca: ['Rotura del ligamento cruzado', 'rodilla', 'ligamento', 28, 40, 'obligatoria', 1.2, 0.8],
-    fractura_pie: ['Fractura de metatarsiano', 'pie', 'hueso', 8, 12, 'no', 0.2, 1.5],
-    fractura_tibia: ['Fractura de tibia', 'pierna', 'hueso', 18, 28, 'obligatoria', 1.0, 0.5],
+    menisco: ['Lesión de menisco', 'rodilla', 'ligamento', 6, 14, 'opcional', 0.5, 4],
+    lca: ['Rotura del ligamento cruzado', 'rodilla', 'ligamento', 28, 40, 'obligatoria', 1.2, 1.6],
+    fractura_pie: ['Fractura de metatarsiano', 'pie', 'hueso', 8, 12, 'no', 0.2, 2.5],
+    fractura_tibia: ['Fractura de tibia', 'pierna', 'hueso', 18, 28, 'obligatoria', 1.0, 1],
     contusion: ['Contusión', 'muslo', 'golpe', 1, 3, 'no', 0, 12],
     conmocion: ['Conmoción cerebral', 'cabeza', 'golpe', 1, 3, 'no', 0, 2],
     hombro: ['Lesión de hombro', 'hombro', 'golpe', 3, 6, 'no', 0, 2],
@@ -25,6 +25,8 @@
     periostitis: ['Periostitis', 'pierna', 'sobrecarga', 3, 6, 'no', 0, 4]
   };
   Med.TYPES = T;
+  // Frecuencia base de lesiones del jugador: calibrada para ≈ 2 por temporada y una grave cada ~3 temporadas (referencia: estudios de la UEFA sobre clubes de élite, ver README).
+  Med.BASE = 1.7;
   var CAUSE_W = {
     match: { golpe: 30, muscular: 24, ligamento: 26, hueso: 5, sobrecarga: 8 },
     train: { muscular: 40, sobrecarga: 34, ligamento: 14, golpe: 5, hueso: 2 }

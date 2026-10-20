@@ -346,7 +346,7 @@
     }
     function injCheck(m) {
       ['h', 'a'].forEach(function (sd) {
-        if (R() > 0.0011 * ((hero && sd === heroSide && hm.in && !hm.out && FP.Med) ? FP.Med.riskMult() : 1)) return;
+        if (R() > 0.0011 * ((hero && sd === heroSide && hm.in && !hm.out && FP.Med) ? FP.Med.riskMult() * FP.Med.BASE : 1)) return;
         var arr = xi[sd].filter(function (e) { return !sent[sd][e.p.i]; });
         var e = U.wpick(arr, function (e) { return e.p.i === 0 ? 1 + hero.fat / 60 : 1; });
         var p = e.p, isH = p.i === 0;

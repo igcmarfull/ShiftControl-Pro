@@ -164,7 +164,7 @@
       });
       h.fat = U.clamp(h.fat + (intn === 1 ? -2 : intn === 2 ? 6 : 14) - (8 + h.at.res / 14), 0, 100);
       // riesgo de lesión por entrenamiento
-      var pInj = 0.0035 * (1 + h.fat / 55) * (intn === 3 ? 1.6 : intn === 1 ? 0.6 : 1) * (FP.Med ? FP.Med.riskMult() : 1);
+      var pInj = 0.0035 * (1 + h.fat / 55) * (intn === 3 ? 1.6 : intn === 1 ? 0.6 : 1) * (FP.Med ? FP.Med.riskMult() * FP.Med.BASE : 1);
       if (R() < pInj) Hero.injure('train');
     }
     // descenso físico con la edad
