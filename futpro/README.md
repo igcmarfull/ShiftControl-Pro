@@ -191,3 +191,7 @@ No hay suite de pruebas automatizada en este proyecto. Se comprobó manualmente 
 ## Avatar editable
 
 El avatar ya no es solo aleatorio: se puede elegir tono de piel (6), color de pelo (7), peinado (corto, fade, rizado, largo lateral, melena, rapado, calvo) y barba (ninguna, corta, completa, bigote). Se elige al crear la carrera (paso 1, con vista previa) y se cambia luego en **Mi jugador → Gestión → Apariencia**; "Aleatorio" sortea uno nuevo. Se guarda en `hero.av`; las carreras antiguas conservan su aspecto sorteado hasta que lo cambies.
+
+## Atributos iniciales automáticos
+
+Al crear la carrera, los 30 puntos extra se reparten solos entre los 7 atributos clave de la posición (según los pesos de la media) y se rehacen al cambiar de posición. Cada atributo se puede subir hasta +12 o bajar hasta −8; los puntos quitados quedan libres. Botones: "Reparto automático de la posición" y "Poner todo en 0".

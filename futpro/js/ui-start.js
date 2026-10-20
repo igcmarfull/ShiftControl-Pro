@@ -55,9 +55,20 @@
   // ---------- asistente de nueva carrera ----------
   var form = null;
   A['st-new'] = function () {
-    form = { nm: '', ln: '', nat: 'CHI', city: '', age: 13, ht: 165, kg: 55, pos: 'ST', foot: 'R', style: 'fisico', extra: {}, club: 'amat', amName: '', acId: null, res: null, av: UI.avRandom() };
+    form = { nm: '', ln: '', nat: 'CHI', city: '', age: 13, ht: 165, kg: 55, pos: 'ST', foot: 'R', style: 'fisico', extra: autoExtra('ST'), club: 'amat', amName: '', acId: null, res: null, av: UI.avRandom() };
     Start.wizard();
   };
+  // reparto automático de los 30 puntos según la posición (más peso → más puntos, máx. +12)
+  function sgn(v) { return v > 0 ? '+' + v : v < 0 ? '\u2212' + (-v) : '+0'; }
+  function autoExtra(pos) {
+    var w = C.WN[pos] || C.WN.CM, top = C.ATTRS.slice().sort(function (a, b) { return (w[b] || 0) - (w[a] || 0); }).slice(0, 7), tw = 0, out = {}, left = 30;
+    top.forEach(function (a) { tw += w[a]; });
+    top.forEach(function (a) { var v = Math.min(12, Math.round(30 * w[a] / tw)); out[a] = v; left -= v; });
+    for (var i = 0; left !== 0 && i < 40; i++) { var a = top[i % top.length], d = left > 0 ? 1 : -1; if (out[a] + d >= 0 && out[a] + d <= 12) { out[a] += d; left -= d; } }
+    return out;
+  }
+  A['st-auto'] = function () { readForm(); form.extra = autoExtra(form.pos); Start.wizard(); };
+  A['st-zero'] = function () { readForm(); form.extra = {}; Start.wizard(); };
   Start.wizard = function () {
     var f = form, pts = 30 - Object.keys(f.extra).reduce(function (s, k) { return s + f.extra[k]; }, 0);
     var natOpts = FP.DATA.nations.slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); }).map(function (n) { return '<option value="' + n.c + '" ' + (f.nat === n.c ? 'selected' : '') + '>' + esc(n.n) + '</option>'; }).join('');
@@ -75,8 +86,8 @@
       '<label class="f"><span>Posición</span><select id="w_pos">' + C.POS.filter(function (p) { return p !== 'GK'; }).map(function (p) { return '<option value="' + p + '" ' + (f.pos === p ? 'selected' : '') + '>' + C.POS_ES[p] + ' · ' + esc(C.POS_NAME[p]) + '</option>'; }).join('') + '</select></label>' +
       '<label class="f"><span>Estilo de juego</span><select id="w_style">' + Object.keys(FP.Hero.STYLES).map(function (k) { return '<option value="' + k + '" ' + (f.style === k ? 'selected' : '') + '>' + esc(FP.Hero.STYLES[k].n) + '</option>'; }).join('') + '</select></label>' +
       '</div><h4 style="margin:1rem 0 .4rem">Apariencia</h4>' + UI.avEditor({ nm: f.nm + ' ' + f.ln, nat: f.nat, b: 0, av: f.av }, 'st-av', ['#1f6f7a', '#e9eff4']) + '</div>';
-    html += '<div class="card"><div class="hd"><h3>2 · Atributos iniciales</h3><span class="pill ' + (pts < 0 ? 'r' : 'g') + '">Puntos libres: ' + pts + '</span></div><p class="mut sm">El nivel base depende de tu edad, estilo y posición. Reparte hasta 30 puntos extra (máx. +12 por atributo). El potencial es oculto y se sortea en cada carrera.</p><div class="grid g4">' +
-      C.ATTRS.map(function (a) { return '<label class="f"><span>' + C.ATTR_NAME[a] + ': <b id="w_v_' + a + '">+' + (f.extra[a] || 0) + '</b></span><input type="range" min="0" max="12" value="' + (f.extra[a] || 0) + '" data-live="st-attr" data-a="' + a + '"></label>'; }).join('') + '</div></div>';
+    html += '<div class="card"><div class="hd"><h3>2 · Atributos iniciales</h3><span class="pill ' + (pts < 0 ? 'r' : 'g') + '">Puntos libres: ' + pts + '</span></div><p class="mut sm">El nivel base depende de tu edad, estilo y posición. Al elegir la posición se reparten solos 30 puntos entre sus atributos clave; ajústalos como quieras: sube (hasta +12) o baja (hasta −8) cualquiera, y los puntos que quites quedan libres para otro atributo.</p><p><button class="btn sm" data-act="st-auto">Reparto automático de la posición</button> <button class="btn sm" data-act="st-zero">Poner todo en 0</button></p><p class="mut sm">El potencial es oculto y se sortea en cada carrera.</p><div class="grid g4">' +
+      C.ATTRS.map(function (a) { return '<label class="f"><span>' + C.ATTR_NAME[a] + ': <b id="w_v_' + a + '">' + sgn(f.extra[a] || 0) + '</b></span><input type="range" min="-8" max="12" value="' + (f.extra[a] || 0) + '" data-live="st-attr" data-a="' + a + '"></label>'; }).join('') + '</div></div>';
     html += '<div class="card"><h3>3 · Club de inicio</h3><div class="btn-group"><button class="btn ' + (f.club === 'amat' ? 'pri' : '') + '" data-act="st-club" data-v="amat">Club amateur / escuela de fútbol</button><button class="btn ' + (f.club === 'acad' ? 'pri' : '') + '" data-act="st-club" data-v="acad">Inferiores de un club profesional</button></div>';
     if (f.club === 'amat') html += '<div class="grid g2" style="margin-top:.8rem"><label class="f"><span>Nombre del club amateur (puede ser uno local que no figure en la base de datos)</span><input type="text" id="w_am" value="' + esc(f.amName) + '" placeholder="Ej.: Deportivo Los Aromos"></label></div><p class="mut sm">Disputarás campeonatos regionales y podrás recibir invitaciones de clubes profesionales.</p>';
     else {
@@ -99,11 +110,11 @@
   A['st-club'] = function (d) { readForm(); form.club = d.v; Start.wizard(); };
   A['st-attr'] = function (d, t) {
     var v = +t.value, a = d.a, f = form, used = Object.keys(f.extra).reduce(function (s, k) { return s + (k === a ? 0 : f.extra[k]); }, 0);
-    v = Math.min(v, 30 - used); t.value = v; f.extra[a] = v; if (!v) delete f.extra[a];
-    var lab = document.getElementById('w_v_' + a); if (lab) lab.textContent = '+' + v;
+    v = Math.min(v, 30 - used, 12); t.value = v; f.extra[a] = v; if (!v) delete f.extra[a];
+    var lab = document.getElementById('w_v_' + a); if (lab) lab.textContent = sgn(v);
     var pill = document.querySelector('.hd .pill'); if (pill) { var left = 30 - used - v; pill.textContent = 'Puntos libres: ' + left; }
   };
-  document.addEventListener('change', function (e) { if (form && e.target.id && e.target.id.indexOf('w_') === 0 && (e.target.id === 'w_nat' || e.target.id === 'w_pos' || e.target.id === 'w_res')) { readForm(); if (e.target.id === 'w_nat' || e.target.id === 'w_res') form.acName = null; Start.wizard(); } });
+  document.addEventListener('change', function (e) { if (form && e.target.id && e.target.id.indexOf('w_') === 0 && (e.target.id === 'w_nat' || e.target.id === 'w_pos' || e.target.id === 'w_res')) { readForm(); if (e.target.id === 'w_nat' || e.target.id === 'w_res') form.acName = null; if (e.target.id === 'w_pos') form.extra = autoExtra(form.pos); Start.wizard(); } });
   A['st-create'] = function () {
     readForm();
     var f = form, nm = (f.nm + ' ' + f.ln).trim();
