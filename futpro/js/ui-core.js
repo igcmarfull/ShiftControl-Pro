@@ -8,7 +8,7 @@
   var NAV = [
     ['home', 'Inicio', '⌂'], ['player', 'Mi jugador', '★'], ['club', 'Mi club', '◈'], ['calendar', 'Calendario', '▦'], ['match', 'Partido', '⚽'],
     ['training', 'Entrenamientos', '↗'], ['comps', 'Competiciones', '♛'], ['tables', 'Clasificaciones', '☰'], ['stats', 'Estadísticas', '∑'],
-    ['market', 'Mercado de fichajes', '⇄'], ['contracts', 'Contratos', '✎'], ['news', 'Noticias', '✉'], ['nations', 'Selecciones', '⚑'],
+    ['market', 'Mercado de fichajes', '⇄'], ['contracts', 'Contratos', '✎'], ['news', 'Noticias', '✉'], ['social', 'Redes', '@'], ['nations', 'Selecciones', '⚑'],
     ['honors', 'Palmarés', '♕'], ['career', 'Historial de carrera', '☷'], ['config', 'Configuración', '⚙']
   ];
   UI.NAV = NAV;
@@ -93,18 +93,38 @@
   };
 
   // ---------- selector de liga / país ----------
+  // selector de liga propio (reemplaza la lista nativa del navegador)
   UI.leagueSelect = function (key, opts) {
     opts = opts || {};
-    var cur = UI.filt[key] || opts.def, h = '<label class="f"><span>' + (opts.label || 'Liga') + '</span><select data-act="filt" data-k="' + key + '">';
-    var byC = {};
-    FP.DATA.leagues.forEach(function (l) { (byC[l.c] = byC[l.c] || []).push(l); });
-    Object.keys(byC).sort(function (a, b) { return FP.DATA.countries[a].n.localeCompare(FP.DATA.countries[b].n, 'es'); }).forEach(function (c) {
-      h += '<optgroup label="' + esc(FP.DATA.countries[c].n) + '">';
-      byC[c].forEach(function (l) { h += '<option value="' + l.id + '"' + (cur === l.id ? ' selected' : '') + '>' + esc(l.n) + '</option>'; });
-      h += '</optgroup>';
-    });
-    return h + '</select></label>';
+    var cur = UI.filt[key] || opts.def, d = FP.LGDEF[cur] || FP.DATA.leagues[0];
+    return '<label class="f"><span>' + (opts.label || 'Liga') + '</span><button type="button" class="btn pick" data-act="lgpick" data-k="' + key + '"><b>' + esc(d.n) + '</b> <span class="mut">· ' + esc(FP.DATA.countries[d.c].n) + '</span> ▾</button></label>';
   };
+  UI.pickList = function (q) {
+    q = (q || '').trim().toLowerCase();
+    var byC = {}, cur = UI.filt[UI._pk];
+    FP.DATA.leagues.forEach(function (l) {
+      var cn = FP.DATA.countries[l.c].n;
+      if (q && (cn + ' ' + l.n).toLowerCase().indexOf(q) < 0) return;
+      (byC[l.c] = byC[l.c] || []).push(l);
+    });
+    var mine = FP.S && FP.S.hero ? UI.myLeague() : null, h = '';
+    Object.keys(byC).sort(function (a, b) { return FP.DATA.countries[a].n.localeCompare(FP.DATA.countries[b].n, 'es'); }).forEach(function (c) {
+      h += '<div class="pk-g"><h4>' + esc(FP.DATA.countries[c].n) + '</h4>' + byC[c].map(function (l) {
+        return '<button type="button" class="pk-i' + (l.id === cur ? ' on' : '') + '" data-act="lgset" data-id="' + l.id + '">' + esc(l.n) + (l.id === mine ? ' <span class="pill g">tu liga</span>' : '') + '<span class="pk-t">' + (l.t === 1 ? 'Primera' : l.t + 'ª div.') + '</span></button>';
+      }).join('') + '</div>';
+    });
+    return h || '<p class="mut">Sin resultados.</p>';
+  };
+  A_pick();
+  function A_pick() {
+    UI.acts.lgpick = function (d) {
+      UI._pk = d.k;
+      UI.modal('<h3>Elige una liga</h3><input type="text" id="pk_q" data-live="lgpickq" placeholder="Buscar país o liga… (ej. Chile, Premier)" autocomplete="off" style="width:100%;margin-bottom:.8rem"><div id="pk_list" class="pk">' + UI.pickList('') + '</div>');
+      setTimeout(function () { var i = document.getElementById('pk_q'); if (i) i.focus(); var on = document.querySelector('.pk-i.on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'center' }); }, 30);
+    };
+    UI.acts.lgpickq = function (d, t) { var l = document.getElementById('pk_list'); if (l) l.innerHTML = UI.pickList(t.value); };
+    UI.acts.lgset = function (d) { UI.filt[UI._pk] = d.id; UI.closeModal(); UI.render(); };
+  }
   UI.myLeague = function () {
     var S = FP.S, h = S.hero, t;
     if (h.club != null) return S.clubs[h.club].lg;

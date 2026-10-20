@@ -416,6 +416,7 @@
     if (res.ps) rec.s += ' (' + (prep.home ? res.ps[0] + '-' + res.ps[1] : res.ps[1] + '-' + res.ps[0]) + ' pen.)';
     if (res.et) rec.s += ' (pró.)';
     h.log.unshift(rec); if (h.log.length > 400) h.log.length = 300;
+    h.logTick = (h.logTick || 0) + 1;
     var team = prep.mine;
     // estadísticas
     if (official && hm) {

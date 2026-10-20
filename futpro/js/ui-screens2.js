@@ -27,7 +27,7 @@
     var q = def && def.qual ? Object.keys(def.qual).reduce(function (s, k) { return s + def.qual[k]; }, 0) : 0;
     rows.forEach(function (r) { r.nm = C.tname(r.id); r.fm = lastFive(comp, r.id); });
     return UI.table(id, [
-      { k: 'pos', t: '#', c: 1 }, { k: 'nm', t: 'Equipo', f: function (r) { return UI.club(r.id); } }, { k: 'p', t: 'PJ', n: 1 }, { k: 'w', t: 'G', n: 1 }, { k: 'd', t: 'E', n: 1 }, { k: 'l', t: 'P', n: 1 },
+      { k: 'pos', t: '#', c: 1 }, { k: 'nm', t: 'Equipo', f: function (r) { return UI.clubC(r.id); } }, { k: 'p', t: 'PJ', n: 1 }, { k: 'w', t: 'G', n: 1 }, { k: 'd', t: 'E', n: 1 }, { k: 'l', t: 'P', n: 1 },
       { k: 'gf', t: 'GF', n: 1 }, { k: 'ga', t: 'GC', n: 1 }, { k: 'gd', t: 'DG', n: 1, f: function (r) { return FP.fmt.signed(r.gd); } }, { k: 'pts', t: 'Pts', n: 1, f: function (r) { return '<b>' + r.pts + '</b>'; } },
       { k: 'fm', t: 'Últ. 5', s: false, f: function (r) { return UI.form(r.fm); } }
     ], rows, {
@@ -343,6 +343,7 @@
       var rows2 = FP.DATA.leagues.map(function (l) { return { id: l.id, c: FP.DATA.countries[l.c].n, n: l.n, v: l.v, k: l.clubs.split(';').length }; });
       html += '<div class="card"><h3>Estado de verificación por división</h3>' + UI.table('cfg_v', [{ k: 'c', t: 'País' }, { k: 'n', t: 'División' }, { k: 'k', t: 'Clubes', n: 1 }, { k: 'v', t: 'Verificación', f: function (r) { return UI.verBadge(r.v); } }], rows2, { sort: ['c', 'a'] }) + '</div>';
     } else {
+      html += '<div class="card"><h3>Aspecto</h3><label class="f" style="max-width:320px"><span>Tema visual</span><select data-act="skin">' + Object.keys(UI.skins).map(function (k) { return '<option value="' + k + '" ' + (UI.skin === k ? 'selected' : '') + '>' + UI.skins[k] + '</option>'; }).join('') + '</select></label></div>';
       html += '<div class="card"><h3>Opciones</h3><div class="grid g3"><label class="f"><span>Autoguardado</span><select data-act="cfgauto"><option value="1" ' + (S.cfg.autosave !== false ? 'selected' : '') + '>Activado</option><option value="0" ' + (S.cfg.autosave === false ? 'selected' : '') + '>Desactivado</option></select></label><label class="f"><span>Guardar cada…</span><select data-act="cfgevery">' + [1, 2, 4, 8, 13].map(function (v) { return '<option value="' + v + '" ' + ((S.cfg.autoEvery || 4) === v ? 'selected' : '') + '>' + v + ' semana' + (v > 1 ? 's' : '') + '</option>'; }).join('') + '</select></label></div></div>';
       html += '<div class="card"><h3>Semilla del mundo</h3><p class="mut sm">Semilla: <b>' + S.seed + '</b>. Los resultados de la simulación del mundo son deterministas dado el estado guardado.</p></div>';
     }

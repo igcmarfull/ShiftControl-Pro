@@ -35,6 +35,9 @@
     S.pending = []; S.transfers = S.transfers || [];
     FP.Hero.updateOvr(); FP.Hero.ensureInRoster(); FP.Hero.ensureComps();
     S.created = Date.now(); S.v = 1;
+    // hitos ya cumplidos al comenzar (no se anuncian)
+    S.hero.flags.ms = S.hero.flags.ms || {};
+    if (FP.Social) { FP.Social.milestones().forEach(function (m) { if (m.v >= m.g) S.hero.flags.ms[m.id] = S.week; }); S.hero.soc = null; FP.Social.weekly(S.week); S.hero.soc.logTick = S.hero.logTick || 0; S.hero.soc.lastMsg = S.hero.nextId; S.hero.soc.feed = []; S.hero.soc.fol = FP.Social.followers(); }
   };
   // opts: nm, nat, city, age, h, kg, pos, foot, style, extra, club:{kind:'amat',name} | {kind:'academy',id}
   Game.startCareer = function (opts) {
@@ -109,6 +112,7 @@
   Game.endWeek = function () {
     var S = FP.S, h = S.hero;
     if (h && !h.retired) { FP.Hero.weekEnd(); FP.Market.heroWeekly(S.week); FP.Events.weekly(S.week); }
+    if (h && FP.Social) { FP.Social.weekly(S.week); if (!h.retired) FP.Social.checkMilestones(); }
     Sim.endWeek();
     S.weekOpen = false;
     FP.Sim.autoFlags && FP.Sim.autoFlags();

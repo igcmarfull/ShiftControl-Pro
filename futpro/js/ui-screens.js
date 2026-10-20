@@ -34,7 +34,7 @@
     var f = x.f, h = FP.S.hero;
     var mineId = (f.h === h.team || (x.nat && (f.h >= 5000 && f.h < 20000) && FP.Nat.heroNation() && f.h === FP.Nat.heroNation().id)) ? f.h : f.a;
     var opp = f.h === mineId ? f.a : f.h;
-    return '<div class="row sp" style="padding:.3rem 0;border-bottom:1px solid var(--line)"><span><b>' + (f.h === mineId ? 'vs' : '@') + '</b> ' + UI.club(opp) + (x.nat ? ' <span class="pill b">Selección</span>' : '') + '</span><span class="mut sm">' + esc(x.c.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + ' · ' + D.fmt(f.w) + '</span></div>';
+    return '<div class="row sp" style="padding:.3rem 0;border-bottom:1px solid var(--line)"><span><b>' + (f.h === mineId ? 'vs' : '@') + '</b> ' + UI.clubC(opp) + (x.nat ? ' <span class="pill b">Selección</span>' : '') + '</span><span class="mut sm">' + esc(x.c.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + ' · ' + D.fmt(f.w) + '</span></div>';
   };
   UI.statusPills = function () {
     var h = FP.S.hero, p = '';
@@ -91,6 +91,9 @@
     html += '<div class="card"><h3>Temporada actual</h3><div class="grid g2"><div><div class="mut sm">Partidos</div><b style="font-size:1.4rem">' + s.ap + '</b></div><div><div class="mut sm">Goles</div><b style="font-size:1.4rem">' + s.g + '</b></div><div><div class="mut sm">Asistencias</div><b style="font-size:1.4rem">' + s.a + '</b></div><div><div class="mut sm">Nota media</div><b style="font-size:1.4rem">' + (s.rn ? (s.rs / s.rn).toFixed(2) : '—') + '</b></div></div></div>';
     // entrenamiento
     html += '<div class="card"><div class="hd"><h3>Entrenamiento</h3><a class="lk" data-act="nav" data-s="training">Cambiar</a></div><p>' + esc(FP.Hero.FOCUS[h.train.focus].n) + ' · intensidad ' + ['', 'suave', 'normal', 'intensa'][h.train.int] + '</p><p class="mut sm">Potencial estimado por los ojeadores: <b style="color:var(--tx)">' + pr[0] + '–' + pr[1] + '</b></p></div>';
+    html += '<div class="card"><h3>Perfil</h3>' + UI.radar(h, 230) + '</div>';
+    if (h.soc && h.soc.feed.length) html += '<div class="card"><div class="hd"><h3>Redes</h3><a class="lk" data-act="nav" data-s="social">Ver todo</a></div><div class="tw-mini">' + h.soc.feed.slice(0, 3).map(UI.tweet).join('') + '</div></div>';
+    html += '<div class="card"><div class="hd"><h3>Hitos</h3><a class="lk" data-act="nav" data-s="social">Ver todos</a></div>' + UI.milestoneList(FP.Social.milestones(), 3) + '</div>';
     // tabla de liga
     var lgc = UI.myLeagueComp();
     if (lgc) html += '<div class="card"><div class="hd"><h3>' + esc(lgc.nm) + '</h3><a class="lk" data-act="nav" data-s="tables">Ver completa</a></div>' + UI.miniTable(lgc) + '</div>';
@@ -121,7 +124,7 @@
     var pr = FP.Hero.potRange();
     if (tab === 'card') {
       html += '<div class="grid g21"><div class="card"><div class="pcard"><div class="big">' + UI.ovr(h.ovr, true) + '<div class="pos">' + UI.pos(h.pos) + '</div></div><div><div class="pname">' + esc(h.nm) + '</div><div class="mut">' + age + ' años · ' + esc(C.cname(h.nat)) + (h.city ? ' · ' + esc(h.city) : '') + '</div><div class="mut sm">' + h.ht + ' cm · ' + h.kg + ' kg · pie ' + ({ R: 'derecho', L: 'izquierdo', A: 'ambidiestro' }[h.foot]) + ' · ' + esc(FP.Hero.STYLES[h.style].n) + '</div><div style="margin-top:.4rem">' + UI.statusPills() + '</div></div></div><hr style="border:0;border-top:1px solid var(--line);margin:.8rem 0">' + UI.attrBlock(h) + '</div>' +
-        '<div><div class="card"><h3>Estado</h3><dl class="kv"><dt>Forma</dt><dd>' + Math.round(h.form) + '</dd><dt>Moral</dt><dd>' + Math.round(h.mor) + '</dd><dt>Fatiga</dt><dd>' + Math.round(h.fat) + '</dd><dt>Rol en el equipo</dt><dd>' + esc(FP.Hero.roleLabel()) + '</dd><dt>Valor de mercado</dt><dd>' + UI.money(FP.Market.heroValue()) + '</dd><dt>Potencial (estimado)</dt><dd>' + pr[0] + '–' + pr[1] + ' ' + UI.stars(((pr[0] + pr[1]) / 2 - 40) * 1.7) + '</dd></dl><p class="mut sm" style="margin-top:.5rem">El potencial real es oculto y varía entre carreras. La estimación se afina con la edad y al jugar en clubes profesionales.</p></div>' +
+        '<div><div class="card"><h3>Perfil</h3>' + UI.radar(h, 240) + '</div><div class="card"><h3>Estado</h3><dl class="kv"><dt>Forma</dt><dd>' + Math.round(h.form) + '</dd><dt>Moral</dt><dd>' + Math.round(h.mor) + '</dd><dt>Fatiga</dt><dd>' + Math.round(h.fat) + '</dd><dt>Rol en el equipo</dt><dd>' + esc(FP.Hero.roleLabel()) + '</dd><dt>Valor de mercado</dt><dd>' + UI.money(FP.Market.heroValue()) + '</dd><dt>Potencial (estimado)</dt><dd>' + pr[0] + '–' + pr[1] + ' ' + UI.stars(((pr[0] + pr[1]) / 2 - 40) * 1.7) + '</dd></dl><p class="mut sm" style="margin-top:.5rem">El potencial real es oculto y varía entre carreras. La estimación se afina con la edad y al jugar en clubes profesionales.</p></div>' +
         '<div class="card"><h3>Esta temporada</h3><dl class="kv"><dt>Partidos</dt><dd>' + h.season.ap + '</dd><dt>Titular</dt><dd>' + h.season.st + '</dd><dt>Minutos</dt><dd>' + h.season.min + '</dd><dt>Goles</dt><dd>' + h.season.g + '</dd><dt>Asistencias</dt><dd>' + h.season.a + '</dd><dt>Amarillas / rojas</dt><dd>' + h.season.yc + ' / ' + h.season.rc + '</dd><dt>Nota media</dt><dd>' + (h.season.rn ? (h.season.rs / h.season.rn).toFixed(2) : '—') + '</dd></dl></div>' +
         '<div class="card"><h3>Carrera</h3><dl class="kv"><dt>Partidos</dt><dd>' + h.tot.ap + '</dd><dt>Goles</dt><dd>' + h.tot.g + '</dd><dt>Asistencias</dt><dd>' + h.tot.a + '</dd><dt>Selección</dt><dd>' + h.nt.caps + ' partidos · ' + h.nt.goals + ' goles</dd></dl></div></div></div>';
     } else if (tab === 'prog') {
@@ -247,7 +250,7 @@
     var left = S.pending.length;
     if (mt.phase === 'pre') {
       html += '<div class="card"><div class="mut sm center">' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + ' · ' + D.fmt(f.w) + (left > 1 ? ' · ' + left + ' partidos esta semana' : '') + '</div>' +
-        '<div class="score" style="margin:1rem 0"><div class="tm">' + UI.club(f.h) + '</div><div class="sc">vs</div><div class="tm">' + UI.club(f.a) + '</div></div>' +
+        '<div class="score" style="margin:1rem 0"><div class="tm">' + UI.crest(f.h, 1) + '<br>' + UI.club(f.h) + '</div><div class="sc">vs</div><div class="tm">' + UI.crest(f.a, 1) + '<br>' + UI.club(f.a) + '</div></div>' +
         '<div class="grid g3"><div><h4>Tu rol hoy</h4><b>' + ({ starter: 'Titular', bench: 'Suplente (banca)', out: 'Fuera de convocatoria' }[st.role]) + '</b>' + (st.why ? ' <span class="pill y">' + esc(st.why) + '</span>' : '') + '</div>' +
         '<div><h4>Fuerza</h4>' + esc(hName) + ' <b>' + (comp.ys && comp.ys[f.h] != null ? comp.ys[f.h] : C.strOf(f.h)) + '</b> · ' + esc(aName) + ' <b>' + (comp.ys && comp.ys[f.a] != null ? comp.ys[f.a] : C.strOf(f.a)) + '</b></div>' +
         '<div><h4>Condición</h4>Forma ' + Math.round(h.form) + ' · Moral ' + Math.round(h.mor) + ' · Fatiga ' + Math.round(h.fat) + '</div></div>' +
@@ -257,7 +260,7 @@
     }
     var res = mt.res, hm = res.hero, total = res.ev.length ? res.ev[res.ev.length - 1].m : 90;
     var isLive = mt.phase === 'play';
-    html += '<div class="card"><div class="mut sm center">' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + ' · ' + D.fmt(f.w) + '</div><div class="score" style="margin:.8rem 0"><div class="tm">' + UI.club(f.h) + '</div><div><div class="sc" id="mt-score">' + (isLive ? '0 - 0' : res.hs + ' - ' + res.as) + '</div><div class="mn" id="mt-clock">' + (isLive ? '0\'' : (res.et ? 'Final (prórroga)' : 'Final')) + '</div></div><div class="tm">' + UI.club(f.a) + '</div></div>' +
+    html += '<div class="card"><div class="mut sm center">' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + ' · ' + D.fmt(f.w) + '</div><div class="score" style="margin:.8rem 0"><div class="tm">' + UI.crest(f.h, 1) + '<br>' + UI.club(f.h) + '</div><div><div class="sc" id="mt-score">' + (isLive ? '0 - 0' : res.hs + ' - ' + res.as) + '</div><div class="mn" id="mt-clock">' + (isLive ? '0\'' : (res.et ? 'Final (prórroga)' : 'Final')) + '</div></div><div class="tm">' + UI.crest(f.a, 1) + '<br>' + UI.club(f.a) + '</div></div>' +
       (res.ps ? '<p class="center mut" id="mt-ps">Penales: ' + res.ps[0] + ' - ' + res.ps[1] + '</p>' : '') +
       (isLive ? '<div class="btn-group" style="justify-content:center"><button class="btn sm" data-act="mspeed" data-v="1">1×</button><button class="btn sm" data-act="mspeed" data-v="3">3×</button><button class="btn sm" data-act="mspeed" data-v="8">8×</button><button class="btn sm pri" data-act="mskip">⏭ Saltar al final</button></div>' : '') + '</div>';
     html += '<div class="grid g21"><div class="card"><h3>Relato</h3><div class="evbox" id="mt-ev">' + (isLive ? '' : res.ev.map(UI.evHtml).join('')) + '</div></div><div>';

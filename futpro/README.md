@@ -26,7 +26,8 @@ Las partidas se guardan solas en IndexedDB del navegador y se pueden **exportar/
 | Carrera: amateur/regional, pruebas, cantera, contrato juvenil y profesional, cesiones, traspasos nacionales/internacionales, representantes, renovaciones, agente libre, convocatorias a selecciones juveniles y absoluta, trofeos, premios (Bota de Oro, equipo ideal, mejor joven, Balón de Oro), retiro | `js/market.js`, `js/events.js` | Activo |
 | Mundo independiente: fichajes de la IA por ventanas, cantera nueva cada año, retiros, cambios de entrenador, ascensos y descensos, noticias | `js/market.js`, `js/sim.js` | Activo |
 | Guardado: IndexedDB con varias partidas, autoguardado, exportar/importar, versión de formato con migraciones, sincronización de datos nuevos | `js/storage.js` | Activo |
-| Interfaz oscura y responsive con las 16 secciones pedidas | `js/ui-*.js`, `css/style.css` | Activo |
+| Interfaz con tema “Estadio de noche” (y tema claro opcional), las 16 secciones pedidas, selector de ligas con buscador, escudos de iniciales, radar de atributos | `js/ui-*.js`, `css/*.css` | Activo |
+| Redes sociales simuladas del jugador (hinchas, prensa, club) y hitos de carrera | `js/social.js`, `js/ui-social.js` | Activo (contenido ficticio) |
 
 ## Arquitectura
 

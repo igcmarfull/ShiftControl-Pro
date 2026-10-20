@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   function boot() {
-    try { FP.Start.menu(); }
+    try { FP.UI.initSkin(); FP.Start.menu(); }
     catch (e) { console.error(e); document.getElementById('app').innerHTML = '<pre style="padding:1rem;color:#f87171;white-space:pre-wrap">' + String(e.stack || e) + '</pre>'; }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
