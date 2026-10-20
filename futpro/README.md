@@ -260,3 +260,7 @@ Selector **Vista** (por defecto Agenda): **Agenda** (tarjeta del próximo partid
 ## Noticias: Mi carrera rediseñada (`js/ui-v22.js`)
 
 Arriba, tarjetas de **pendientes** (decisiones abiertas y ofertas) con acceso directo; filtros por tema con contador (Mercado y contratos, Decisiones, Salud, Partidos, Selección, Premios y logros, Otros); mensajes agrupados por fecha (esta semana, semana pasada, por mes) con icono de color por tema, titular y detalle; los últimos mensajes sin leer (hasta 10) se marcan "Nuevo" y las ofertas abiertas enlazan a Contratos. También se corrigió el prefijo duplicado "Sin respuesta a tiempo" en polémicas de redes.
+
+## Biografía: tablas de clubes por nivel (`js/ui-v17.js`)
+
+La tabla de clubes de Biografía → Estadísticas tiene tres vistas: **Cantera y profesional** (dos tablas separadas con su total y resumen por nivel), **Una tabla con filtro** (columna Nivel y filtro Todo / Profesional / Juvenil / Amateur) y **Por temporada** (una fila por año con edad, clubes de cantera/amateur, profesionales, selección y total). Solo se listan temporadas con partidos oficiales (los amistosos suman en su columna) y la fila de total es legible en la piel clara.
