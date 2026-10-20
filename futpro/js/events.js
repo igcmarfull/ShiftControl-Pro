@@ -68,7 +68,7 @@
     if (h.tk === 'loan') cn += ' (cedido)';
     FP.Hero.endSeasonStats(label, cn);
     h.flags = h.flags || {};
-    if (h.tk === 'academy') { m.youthReview(); m.promoteCheck(); }
+    if (h.tk === 'academy') { FP.Youth.review(); m.promoteCheck(); }
     if (h.tk === 'loan' && h.loan) m.endLoan();
     FP.Hero.msg('Terminó la temporada ' + label + '. Revisa tus estadísticas en "Historial de carrera".', 'i');
     h.flags.transferReq = false;

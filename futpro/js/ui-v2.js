@@ -223,7 +223,7 @@
   };
 
   // ======================= PARTIDO =======================
-  var EVI = { goal: 'ball', yellow: 'card', red: 'card', inj: 'inj', sub: 'sub', pen: 'target', save: 'glove', post: 'target', miss: 'ball', block: 'shield', chance: 'zap', start: 'whistle', ht: 'whistle', end: 'whistle', et: 'clock', pens: 'target' };
+  var EVI = { error: 'x', goal: 'ball', yellow: 'card', red: 'card', inj: 'inj', sub: 'sub', pen: 'target', save: 'glove', post: 'target', miss: 'ball', block: 'shield', chance: 'zap', start: 'whistle', ht: 'whistle', end: 'whistle', et: 'clock', pens: 'target' };
   var MAJOR = { goal: 1, yellow: 1, red: 1, sub: 1, inj: 1 };
   UI.mevRow = function (e) {
     var dimEv = !MAJOR[e.t] && !e.hero, ic = EVI[e.t] || 'ball';

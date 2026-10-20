@@ -28,9 +28,9 @@
 
   // ---------- creación ----------
   // o: {nm, nat, city, age, h, kg, pos, foot, style, ovrTarget?, extra:{attr:+n}, potSeed?, club:{kind,...}}
-  Hero.makeAttrs = function (age, pos, styleKey, extra, ovrTarget) {
+  Hero.makeAttrs = function (age, pos, styleKey, extra, ovrTarget, boost) {
     var st = STYLES[styleKey] || STYLES.fisico, base = {}, k;
-    var level = 33 + (age - 12) * 2.6; // nivel medio a esa edad
+    var level = 40 + (age - 12) * 2.7 + (boost || 0); // nivel de un juvenil competitivo de esa edad (escala de las ligas)
     var wn = C.WN[pos] || C.WN.CM;
     C.ATTRS.forEach(function (a) {
       var posBias = (wn[a] || 0) * 40 - 2.5;
@@ -58,9 +58,14 @@
   Hero.create = function (o) {
     var S = FP.S, age = o.age;
     var bornW = o.bornW != null ? o.bornW : Math.round(S.week - (age + R() * 0.95) * 52.1775);
-    var at = Hero.makeAttrs(age, o.pos, o.style, o.extra, o.ovrTarget);
+    var boost = 0;
+    if (o.club && o.club.kind === 'academy' && FP.S.clubs[o.club.id]) { // quien entra a una cantera parte cerca del nivel de esa cantera
+      var floor = C.youthStr(FP.S.clubs[o.club.id], U.clamp(age, 12, 19)) - 4;
+      boost = Math.max(0, floor - (40 + (age - 12) * 2.7 + 3));
+    }
+    var at = Hero.makeAttrs(age, o.pos, o.style, o.extra, o.ovrTarget, boost);
     var ovr = C.ovrOf(at, o.pos);
-    var pot = o.pot != null ? o.pot : U.clamp(Math.round(ovr + 8 + Math.max(0, U.norm() * 8 + 12) + (R() < 0.05 ? 8 : 0)), Math.round(ovr + 4), 96);
+    var pot = o.pot != null ? o.pot : FP.Youth.potFor(ovr, age);
     var h = {
       nm: o.nm, nat: o.nat, city: o.city || '', b: bornW, ht: o.h, kg: o.kg, pos: o.pos, foot: o.foot, style: o.style,
       at: at, cap: Hero.makeCaps(at, o.pos, pot, o.style), pot: pot, ovr: Math.round(ovr),
@@ -102,9 +107,9 @@
   };
 
   // ---------- vista para el motor de partidos ----------
-  Hero.view = function (instr) {
+  Hero.view = function (instr, pen) {
     var h = FP.S.hero, ins = instr || 0;
-    var mf = (h.mor - 50) * 0.03 + (h.form - 50) * 0.025;
+    var mf = (h.mor - 50) * 0.03 + (h.form - 50) * 0.025 - (pen || 0);
     return {
       nm: h.nm, ovr: h.ovr, at: h.at, fat: h.fat, team: h.team,
       matchSlot: function () { return h.pos; },
@@ -197,8 +202,7 @@
     var score = base + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 - fatPen;
     if (tk === 'amat' || tk === 'academy') {
       if (h.fat > 92 && R() < 0.5) return { role: 'bench', why: 'descanso', p: 0.9 };
-      var team = R() < 0.9 ? 'starter' : 'bench';
-      return { role: team, why: '', p: 0.8 };
+      return FP.Youth.heroStatus();
     }
     // profesional: compite contra compañeros de su posición
     var r = (S.ro[h.team] || []).filter(function (p) { return p.i !== 0 && !(p.inj > 0) && p.p === h.pos; });
@@ -206,7 +210,7 @@
     var better = r.filter(function (p) { return p.o > score; }).length;
     var rank = better;
     var role, p = 0.7;
-    var jv = Hero.age() < 19 ? -2.5 : 0; // prejuicio con juveniles
+    var jv = -FP.Youth.adultPenalty(Hero.age()); // madurez física: los juveniles rinden menos entre adultos
     var gapBest = (r.length ? Math.max.apply(null, r.map(function (x) { return x.o; })) : 40) - (score + jv);
     if (rank < slots && gapBest < 3) role = 'starter';
     else if (rank < slots + 1 && gapBest < 7) role = R() < 0.35 + (4 - gapBest) * 0.04 ? 'starter' : 'bench';
@@ -219,7 +223,7 @@
   Hero.roleLabel = function () {
     var h = FP.S.hero; if (h.tk === 'amat' || h.tk === 'academy') return h.tk === 'amat' ? 'Titular (club amateur)' : 'Juvenil del club';
     var r = (FP.S.ro[h.team] || []).filter(function (p) { return p.i !== 0 && p.p === h.pos; }).sort(function (a, b) { return b.o - a.o; });
-    var best = r.length ? r[0].o : 40, d = h.ovr - best;
+    var best = r.length ? r[0].o : 40, d = h.ovr - FP.Youth.adultPenalty(Hero.age()) - best;
     return d >= 6 ? 'Estrella' : d >= 1 ? 'Titular indiscutido' : d >= -3 ? 'Titular' : d >= -7 ? 'Rotación' : 'Suplente';
   };
 
@@ -312,7 +316,7 @@
     // recuperación pasiva
     h.fat = U.clamp(h.fat - (6 + h.at.res / 20), 0, 100);
     // sueldo semanal
-    if (h.contract && h.tk !== 'amat') {
+    if (h.contract && h.contract.wage > 0) {
       var w = h.contract.wage / 52 * (1 - (h.agent ? h.agent.com / 100 : 0));
       h.money += w;
     }
@@ -371,7 +375,7 @@
     var mine = (f.h === h.team || (h.extraTeams || []).indexOf(f.h) >= 0) ? f.h : f.a;
     var st = Hero.squadStatus();
     if (comp.kind === 'F' || mine >= 5000 && mine < 20000) { // amistosos y selecciones
-      if (comp.kind === 'N' || (mine >= 5000 && mine < 20000)) st = Hero.nationalStatus(mine, comp);
+      if (comp.kind === 'N' || (mine >= 5000 && mine < 20000)) st = (comp.cat && FP.NT && FP.NT.heroRole(mine, comp)) || Hero.nationalStatus(mine, comp);
     }
     return { comp: comp, f: f, item: item, opp: opp, mine: mine, status: st, home: f.h === mine };
   };
@@ -385,6 +389,13 @@
     if (d >= 0) return { role: R() < 0.55 ? 'starter' : 'bench', why: '', p: 0.7 };
     return { role: 'bench', why: '', p: 0.35 };
   };
+  // Madurez física: en competiciones de adultos un juvenil rinde menos que lo que dice su media
+  Hero.matchPenalty = function (comp) {
+    var age = Hero.age();
+    if (comp.kind === 'Y' || comp.kind === 'A' || comp.cat) return 0;
+    if (comp.kind === 'F' || comp.kind === 'N') return 0;
+    return FP.Youth.adultPenalty(age);
+  };
   Hero.callThreshold = function (nat, cat) {
     var f = { 'Sub-15': 0.80, 'Sub-17': 0.86, 'Sub-20': 0.92, 'Sub-23': 0.96, 'Absoluta': 1.0 }[cat] || 1;
     var base = nat.r - 8 + (cat === 'Absoluta' ? 0 : 0);
@@ -397,7 +408,8 @@
     var S = FP.S, h = S.hero, comp = prep.comp, f = prep.f;
     opts = opts || {};
     var role = prep.status.role;
-    var ctx = { comp: comp, f: f, role: role, benchP: prep.status.p, hero: Hero.view(h.instr || 0), tactic: { mentality: h.instr || 0 } };
+    var imp = (f.k ? 1.1 : 1) * (comp.kind === 'T' && f.k ? 1.05 : 1) * (comp.kind === 'X' && comp.nat && f.k ? 1.1 : 1);
+    var ctx = { comp: comp, f: f, role: role, status: prep.status, imp: imp, benchP: prep.status.p, hero: Hero.view(h.instr || 0, Hero.matchPenalty(comp)), tactic: { mentality: h.instr || 0 } };
     h.team = h.team; // el equipo ya está definido; para selecciones el id está en prep.mine
     var hv = ctx.hero; hv.team = prep.mine;
     var res = FP.Match.full(ctx);
@@ -412,14 +424,17 @@
     var mineGoals = prep.home ? res.hs : res.as, oppGoals = prep.home ? res.as : res.hs;
     var result = mineGoals > oppGoals ? 'V' : mineGoals < oppGoals ? 'D' : 'E';
     if (res.ps) { result = (prep.home ? res.ps[0] > res.ps[1] : res.ps[1] > res.ps[0]) ? 'V' : 'D'; }
-    var rec = { w: S.week, c: comp.nm, cid: comp.id, o: prep.opp, h: prep.home ? 1 : 0, s: mineGoals + '-' + oppGoals, r: result, role: hm ? (hm.played ? (hm.subIn ? 'sup' : 'tit') : (prep.status.role === 'out' ? 'fuera' : 'banca')) : 'fuera', min: hm && hm.played ? hm.min : 0, g: hm ? hm.g : 0, a: hm ? hm.a : 0, rt: hm && hm.played ? hm.rating : 0, off: official ? 1 : 0 };
+    var rec = { w: S.week, c: comp.nm, cid: comp.id, o: prep.opp, h: prep.home ? 1 : 0, s: mineGoals + '-' + oppGoals, r: result, role: hm ? (hm.played ? (hm.subIn ? 'sup' : 'tit') : (prep.status.role === 'out' ? 'fuera' : 'banca')) : 'fuera', min: hm && hm.played ? hm.min : 0, g: hm ? hm.g : 0, a: hm ? hm.a : 0, rt: hm && hm.played ? hm.rating : 0, off: official ? 1 : 0, k: FP.Stats ? FP.Stats.classOf(comp) : '' };
     if (res.ps) rec.s += ' (' + (prep.home ? res.ps[0] + '-' + res.ps[1] : res.ps[1] + '-' + res.ps[0]) + ' pen.)';
     if (res.et) rec.s += ' (pró.)';
     h.log.unshift(rec); if (h.log.length > 400) h.log.length = 300;
     h.logTick = (h.logTick || 0) + 1;
     var team = prep.mine;
-    // estadísticas
-    if (official && hm) {
+    var isNT = team >= 5000 && team < 20000;
+    // registro por temporada / equipo / competición (nunca mezcla clases)
+    if (FP.Stats && hm) FP.Stats.record(prep, res, hm, result);
+    // acumulados de clubes (juvenil, amateur y profesional); las selecciones y los amistosos no se mezclan aquí
+    if (official && hm && !isNT) {
       var tot = h.season, T = h.tot;
       if (hm.played) {
         tot.ap++; T.ap++; tot.min += hm.min; T.min += hm.min; if (!hm.subIn) tot.st++;
@@ -429,7 +444,9 @@
         h.matchesPlayed++;
       }
     }
-    if (hm && hm.played && team >= 5000 && team < 20000) { h.nt.caps++; h.nt.goals += hm.g; }
+    if (hm && hm.played && isNT) { h.nt.caps++; h.nt.goals += hm.g; }
+    if (FP.Youth && hm && (h.tk === 'academy' || h.tk === 'amat')) FP.Youth.heroTrustUpdate(hm.rating || 6, !!hm.played);
+    if (FP.Rep && hm && !isNT) FP.Rep.spark(hm);
     // morale, forma, fatiga
     if (hm && hm.played) {
       h.fat = U.clamp(h.fat + hm.min / 90 * 20, 0, 100);

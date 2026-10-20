@@ -11,11 +11,12 @@
   function seg(scr, list, cur) {
     return '<div class="seg">' + list.map(function (t) { return '<button class="' + (cur === t[0] ? 'on' : '') + '" data-act="tabset" data-s="' + scr + '" data-t="' + t[0] + '">' + (t[2] ? I(t[2]) : '') + t[1] + '</button>'; }).join('') + '</div>';
   }
+  UI.hdr = hdr; UI.seg = seg;
   function posGrp(p) { return p === 'GK' ? 'G' : (p === 'CB' || p === 'LB' || p === 'RB') ? 'D' : (p === 'DM' || p === 'CM' || p === 'AM') ? 'M' : 'F'; }
   UI.posb = function (p) { return '<span class="posb ' + posGrp(p) + '">' + esc(C.POS_ES[p] || p) + '</span>'; };
   UI.nation = function (code) { return '<span style="display:inline-flex;align-items:center;gap:.3rem">' + UI.flag(code) + '<span class="mut sm">' + esc(code) + '</span></span>'; };
   function compList() {
-    var out = []; Object.keys(FP.S.comps).forEach(function (id) { var c = FP.S.comps[id]; if (c.kind === 'L' || c.kind === 'C' || c.kind === 'X' || c.kind === 'Q' || c.kind === 'A' || c.kind === 'Y' || (c.kind === 'K' && !c.done)) out.push(c); });
+    var out = []; Object.keys(FP.S.comps).forEach(function (id) { var c = FP.S.comps[id]; if (c.kind === 'L' || c.kind === 'C' || c.kind === 'X' || c.kind === 'Q' || c.kind === 'T' || c.kind === 'A' || c.kind === 'Y' || (c.kind === 'K' && !c.done)) out.push(c); });
     return out;
   }
 
@@ -38,13 +39,13 @@
   };
 
   // ---------- COMPETICIONES (maestro-detalle sin desplegables) ----------
-  var CATS = ['Mi competición', 'Ligas', 'Copas nacionales', 'Continentales de clubes', 'Selecciones'];
+  var CATS = ['Mi competición', 'Ligas', 'Copas nacionales', 'Continentales de clubes', 'Selecciones', 'Selecciones juveniles'];
   A.compcat = function (d) { UI.filt.compCat = d.v; UI.filt.compSel = null; UI.render(); };
   A.compsel = function (d) { UI.filt.compSel = d.v; UI.render(); };
   SC.comps = function () {
     var S = FP.S, me = S.hero.team, byCat = {}; CATS.forEach(function (k) { byCat[k] = []; });
     compList().forEach(function (c) {
-      var cat = c.kind === 'L' ? 'Ligas' : c.kind === 'C' ? 'Copas nacionales' : c.kind === 'X' ? (c.nat ? 'Selecciones' : 'Continentales de clubes') : c.kind === 'Q' ? 'Selecciones' : 'Ligas';
+      var cat = c.kind === 'L' ? 'Ligas' : c.kind === 'C' ? 'Copas nacionales' : c.kind === 'X' ? (c.nat ? 'Selecciones' : 'Continentales de clubes') : c.kind === 'Q' ? 'Selecciones' : c.kind === 'T' ? 'Selecciones juveniles' : 'Ligas';
       if (c.teams.indexOf(me) >= 0 && (c.kind === 'L' || c.kind === 'A' || c.kind === 'Y' || c.kind === 'C' || c.kind === 'X')) byCat['Mi competición'].push(c);
       if (c.kind === 'A' || c.kind === 'Y' || c.kind === 'K') return;
       byCat[cat].push(c);
@@ -54,7 +55,7 @@
     var items = byCat[cat].slice();
     if (cat === 'Ligas') items.sort(function (a, b) { return (a.c || '').localeCompare(b.c || '') || (FP.LGDEF[a.lg] ? FP.LGDEF[a.lg].t : 0) - (FP.LGDEF[b.lg] ? FP.LGDEF[b.lg].t : 0); });
     var c0 = UI.filt.compSel && S.comps[UI.filt.compSel] && items.indexOf(S.comps[UI.filt.compSel]) >= 0 ? S.comps[UI.filt.compSel] : items[0] || null;
-    var chips = '<div class="chips">' + CATS.map(function (k) { return '<button class="chip ' + (k === cat ? 'on' : '') + '" data-act="compcat" data-v="' + k + '">' + k.replace('Continentales de clubes', 'Continentales') + ' <span class="dim">' + byCat[k].length + '</span></button>'; }).join('') + '</div>';
+    var chips = '<div class="chips">' + CATS.map(function (k) { return '<button class="chip ' + (k === cat ? 'on' : '') + '" data-act="compcat" data-v="' + k + '">' + k.replace('Continentales de clubes', 'Continentales').replace('Selecciones juveniles', 'Juveniles') + ' <span class="dim">' + byCat[k].length + '</span></button>'; }).join('') + '</div>';
     var q = (UI.filt.compQ || '').toLowerCase(), shown = items.filter(function (c) { return !q || (c.nm + ' ' + (c.c ? FP.DATA.countries[c.c].n : '')).toLowerCase().indexOf(q) >= 0; }), lastC = null;
     var rail = '<div class="card md-l"><div class="hd"><h3>' + I('trophy') + 'Competiciones</h3></div>' + chips + '<input type="text" class="rail-q" data-live="filtq" data-k="compQ" placeholder="Filtrar…" value="' + esc(UI.filt.compQ || '') + '" style="width:100%;margin-top:.5rem"><div class="rail">' +
       shown.slice(0, 160).map(function (c) {
@@ -138,7 +139,12 @@
   };
 
   // ---------- CONTRATOS ----------
-  var OT = { trial: 'Invitación a prueba', academy: 'Ingreso a la cantera', pro: 'Contrato profesional', transfer: 'Oferta de traspaso', loan: 'Cesión', renew: 'Renovación', event: 'Oportunidad', amateur: 'Club amateur' };
+  function negoBtns(o) {
+    if (o.wage == null || !(o.type === 'transfer' || o.type === 'semi' || o.type === 'renew' || o.type === 'pro')) return '';
+    if (o.neg >= 2) return '<div class="mut sm" style="margin-top:.4rem">Negociación cerrada: acepta o rechaza.</div>';
+    return '<div class="chips" style="margin-top:.45rem"><span class="mut sm" style="align-self:center">Negociar:</span><button class="chip" data-act="negot" data-id="' + o.id + '" data-w="0.1">+10% sueldo</button><button class="chip" data-act="negot" data-id="' + o.id + '" data-w="0.2">+20% sueldo</button><button class="chip" data-act="negot" data-id="' + o.id + '" data-y="1">+1 año</button><button class="chip" data-act="negot" data-id="' + o.id + '" data-y="-1">−1 año</button></div>';
+  }
+  var OT = { semi: 'Contrato semiprofesional', trial_pro: 'Prueba con el primer equipo', trial: 'Invitación a prueba', academy: 'Ingreso a la cantera', pro: 'Contrato profesional', transfer: 'Oferta de traspaso', loan: 'Cesión', renew: 'Renovación', event: 'Oportunidad', amateur: 'Club amateur' };
   SC.contracts = function () {
     var S = FP.S, h = S.hero, ct = h.contract, ci = UI.contractInfo(), tr = UI.trust();
     var html = hdr('contract', 'Contratos', 'Tu situación, ofertas y representante');
@@ -148,7 +154,7 @@
       html += '<div class="cc-top" style="margin-bottom:.5rem">' + UI.crest(h.club, 'lg') + '<div><b style="font-size:1.05rem">' + esc(club.nm) + '</b><div class="mut sm">' + ({ juvenil: 'Juvenil (cantera)', prof: 'Profesional', cesion: 'Cesión' }[ct.type] || ct.type) + '</div></div></div>' +
         '<div class="terms"><div><span>Sueldo anual</span><b>' + (ct.wage ? UI.money(ct.wage) : 'Sin sueldo') + '</b></div><div><span>Vence</span><b>' + (h.tk === 'loan' ? 'Fin cesión' : ct.end) + '</b></div><div><span>Restante</span><b>' + (ci.left != null ? ci.left.toFixed(1) + ' años' : '—') + '</b></div><div><span>Valor</span><b>' + UI.money(FP.Market.heroValue()) + '</b></div></div>' +
         '<div class="kv-i" style="margin-top:.5rem"><span>Dinero acumulado</span><b>' + UI.money(h.money) + '</b></div><div class="mut sm" style="margin-top:.5rem">Confianza del míster</div><div class="trust">' + UI.bar(tr.v, 100, tr.cls) + '<b>' + tr.v + '</b></div>' +
-        '<div class="btn-group" style="margin-top:.7rem"><button class="btn sm dng" data-act="reqtrans">' + I('transfer') + 'Solicitar salida</button></div>' + (h.tk === 'loan' && h.loan ? '<p class="mut sm">Cedido por ' + UI.club(h.loan.from) + '.</p>' : '');
+        '<div class="btn-group" style="margin-top:.7rem">' + ((h.tk === 'pro' || h.tk === 'academy') && FP.Hero.age() <= 25 ? '<button class="btn sm" data-act="reqloan">' + I('transfer') + 'Pedir cesión</button>' : '') + '<button class="btn sm dng" data-act="reqtrans">' + I('transfer') + 'Solicitar salida</button></div>' + (h.tk === 'loan' && h.loan ? '<p class="mut sm">Cedido por ' + UI.club(h.loan.from) + '.</p>' : '');
     } else if (h.tk === 'amat') html += '<p class="mut">Juegas en un club amateur: no hay contrato ni sueldo.</p>';
     else html += '<p class="mut">Estás sin contrato. Revisa las ofertas.</p>';
     html += '</div><div class="card"><div class="hd"><h3>' + I('user') + 'Representante</h3></div>';

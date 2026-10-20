@@ -29,6 +29,25 @@ Las partidas se guardan solas en IndexedDB del navegador y se pueden **exportar/
 | Interfaz v2/v3: tema oscuro “Estadio de noche” y **modo claro** (botón sol/luna o Configuración; también automático según el sistema), inicio compacto con confianza del míster, momentos importantes (debut, convocatoria, fichaje, lesión grave, títulos), las 16 secciones, escudos y banderas dibujados, radar de atributos | `js/ui-*.js`, `css/style.css` | Activo (solo presentación) |
 | Redes sociales simuladas del jugador (hinchas, prensa, club) y hitos de carrera | `js/social.js`, `js/ui-social.js` | Activo (contenido ficticio) |
 
+## Profundidad funcional (selecciones, cantera, mercado, estadísticas)
+
+Módulos añadidos (sin reemplazar el motor existente; partidas anteriores se migran al cargar):
+
+| Módulo | Archivo | Qué hace |
+|---|---|---|
+| Talento y cantera | `js/youth.js` | Reserva nacional de promesas (jugadores reales de la simulación, 13–23 años, por país y generación); plantillas juveniles persistentes del club del jugador; estatus semanal titular/suplente/no convocado por posición; evaluación anual con desvinculación; niveles amateur (barrio, regional, semiprofesional); madurez física (un juvenil rinde menos entre adultos). |
+| Selecciones por categorías | `js/nteams.js` | Sub-15, Sub-17, Sub-20, Sub-23 y absoluta con seleccionadores y nóminas persistentes; observación → microciclo → preselección → nómina final; amistosos; torneos continentales juveniles; Mundiales Sub-17 y Sub-20; torneo olímpico Sub-23; historial independiente por categoría; elegibilidad por año de nacimiento y nacionalidad. |
+| Mercado | `js/scouting.js` | Reputación local/nacional/internacional, seguimiento de ojeadores e interés sin oferta, ofertas según nivel, posición y necesidades, rechazo en pruebas con enfriamiento de un año, contratos semiprofesionales, negociación, cesiones solicitadas, cupos de extranjeros y restricciones a menores. |
+| Estadísticas | `js/stats.js` | Registro por temporada, equipo y competición, clasificado en: liga, copas, torneos internacionales de clubes, juvenil, amateur, amistosos y una clase por categoría de selección. Las clases no se mezclan. |
+
+### Torneos de selecciones: qué es real y qué es adaptado
+- **Verificado con fuentes** (formato y cupos): Sudamericano Sub-15 (2024, 10 equipos, 2 grupos de 5, semifinales); Sudamericano Sub-17 (2025, 10 equipos, 7 cupos mundialistas); Sudamericano Sub-20 (2025, grupos + hexagonal final, 4 cupos); Preolímpico sudamericano (2024, 2 cupos); Mundial Sub-17 (48 selecciones, 12 grupos, 2 primeros + 8 mejores terceros; cupos UEFA 11, CAF 10, AFC 9, Concacaf 8, Conmebol 7, OFC 3); Mundial Sub-20 (24 selecciones, 6 grupos; UEFA 5, Conmebol 5, AFC 4, CAF 4, Concacaf 4, OFC 2).
+- **Adaptado / estimado**: las demás confederaciones usan el número de selecciones cargadas (74), por lo que sus formatos son versiones reducidas (marcadas "adaptado" en la pantalla Selecciones → Torneos). Las fechas son aproximadas. No existe Sub-15 oficial fuera de Conmebol: solo hay amistosos. El torneo olímpico se simula sin los tres jugadores mayores permitidos y sin Inglaterra, Escocia ni Gales.
+- Las ediciones previas a mayo de 2026 son **simuladas**, no reales.
+
+### Calibración y pruebas
+`tests/` contiene un arnés en Node (sin dependencias): `node tests/invariants.js` (coherencia: ninguna selección juega contra sí misma, nóminas dentro de edad y nacionalidad, sin pruebas de academia a adultos, estadísticas por clase consistentes) y `node tests/careers.js <temporadas> <carreras> <semilla> <parte> <partes>` + `node tests/summary.js` (carreras largas con perfiles variados; proporciones de profesionales, amateur, libres, convocatorias y selección adulta).
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**

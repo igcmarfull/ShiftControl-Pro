@@ -58,6 +58,7 @@
       for (var t = 0; t < 36; t++) {
         var p = S.pl[1 + Math.floor(R() * (S.pl.length - 1))];
         if (!p || p.c < 0 || p.c === buyer.id || p.p !== pos) continue;
+        if (FP.Rep && !FP.Rep.aiForeignOK(buyer, p)) continue;
         var seller = S.clubs[p.c]; if (!seller) continue;
         var age = C.age(p);
         if (p.o < mu - 3 || p.o > mu + 7) continue;
@@ -388,9 +389,9 @@
     }
     return { ok: false, msg: 'Oferta no reconocida.' };
   };
-  Market.newAmateurClub = function (nm, cc, st) {
+  Market.newAmateurClub = function (nm, cc, st, tier) {
     var S = FP.S, id = 20000 + S.amat.length;
-    S.amat.push({ id: id, nm: nm, c: cc, st: st || 50, user: true, grp: null });
+    S.amat.push({ id: id, nm: nm, c: cc, st: st || 50, user: true, grp: null, tier: tier || null });
     return id;
   };
   Market.joinAmateur = function (id) {
@@ -412,7 +413,7 @@
   Market.signPro = function (clubId, years, wage, role, fee, fromName) {
     var S = FP.S, h = S.hero, club = S.clubs[clubId], age = FP.Hero.age();
     var wasAcademy = h.tk === 'academy' && h.club === clubId;
-    var toAcademy = age < 19 && h.ovr < club.st - 8;
+    var toAcademy = age < 19 && h.ovr - FP.Youth.adultPenalty(age) < club.st - 6;
     h.club = clubId; h.loan = null; h.freeSince = null;
     if (toAcademy) { h.tk = 'academy'; h.team = 30000 + clubId; } else { h.tk = 'pro'; h.team = clubId; }
     h.contract = { type: 'prof', wage: wage, end: Market.endYearOf(FP.LGDEF[club.lg].cal, years), clause: null, role: role };
@@ -427,7 +428,7 @@
   Market.promoteCheck = function () {
     var S = FP.S, h = S.hero; if (h.tk !== 'academy' || !h.contract || h.contract.type !== 'prof') return;
     var club = S.clubs[h.club], age = FP.Hero.age();
-    if (age >= 17 && h.ovr >= club.st - 8) {
+    if (age >= 17 && h.ovr - FP.Youth.adultPenalty(age) >= club.st - 7) {
       h.tk = 'pro'; h.team = h.club; Market.leaveComps(); FP.Hero.ensureInRoster();
       FP.Hero.msg('¡Ascendido al primer equipo de ' + club.nm + '! Ahora competirás por un lugar con los profesionales.', 'ok');
       FP.Sim.news(h.nm + ' (' + age + ') es promovido al primer equipo de ' + club.nm + '.', 'hero', 2);

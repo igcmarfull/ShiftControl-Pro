@@ -62,10 +62,11 @@
     var S = FP.S;
     var h = FP.Hero.create({
       nm: 'Ignacio', nat: 'CHI', city: '', age: 13, h: 168, kg: 56, pos: 'ST', foot: 'R', style: 'fisico', ovrTarget: 58,
-      pot: U.clamp(Math.round(74 + U.norm() * 6), 62, 90)
+      pot: null
     });
     // fecha de nacimiento: 13 años en mayo de 2026
     h.b = D.of(2012, 8, 14); S.pl[0].b = h.b;
+    h.pot = Math.min(96, FP.Youth.potFor(h.ovr, 13) + 2); h.cap = FP.Hero.makeCaps(h.at, h.pos, h.pot, h.style); S.pl[0].pt = h.pot;
     var id = FP.Market.newAmateurClub('Deportivo Los Aromos', 'CHI', 50);
     h.tk = 'amat'; h.team = id; h.club = null;
     // progreso incorporado por el usuario

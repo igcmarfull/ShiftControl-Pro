@@ -3,7 +3,7 @@
   'use strict';
   var FP = window.FP, U = FP.U;
 
-  var VERSION = 1;          // versión del formato de guardado
+  var VERSION = 2;          // versión del formato de guardado
   var DB_NAME = 'futpro', STORE = 'saves';
   var Store = FP.Store = { VERSION: VERSION, mem: {} };
 
@@ -46,6 +46,7 @@
     S.natPool = FP.DATA.nations.map(function (n) { return { c: n.c, conf: n.conf, r: n.r }; });
     S.pending = []; S.weekOpen = false;
     FP.Core.rebuildRoster(); FP.Match.cache = {};
+    if (FP.Youth) FP.Youth.ensure(); if (FP.NT) { FP.NT.ensure(); FP.NT.invalidate(); } if (FP.Stats) FP.Stats.migrate();
     Store.syncData();
     // reindexa cada ko (los índices t.f no se guardan fiables tras ordenar)
     Object.keys(S.comps).forEach(function (id) { var c = S.comps[id]; if (c.ko) FP.Comp.reindex(c); });
@@ -60,6 +61,7 @@
   Store.migrate = function (d) {
     var v = d.ver || 0;
     if (v < 1) { d.ver = 1; d.hist = d.hist || { champs: [], awards: [] }; }
+    if (v < 2) { d.ver = 2; }  // v2: reserva de promesas (S.yp), plantillas juveniles (S.sq), selecciones (S.nt), ledger de estadísticas (h.led)
     // futuras migraciones: if (v < 2) { ...; d.ver = 2; }
     if (d.ver > VERSION) throw new Error('El guardado pertenece a una versión más nueva del juego (v' + d.ver + ').');
     return d;

@@ -228,7 +228,7 @@
       f = comp.fx[comp.cp];
       if (f.d) { comp.cp++; continue; }
       if (f.w > week) break;
-      if (heroTeams && (heroTeams[f.h] || heroTeams[f.a]) && !f.skipHero) {
+      if (heroTeams && (heroTeams[f.h] || heroTeams[f.a]) && !f.skipHero && (!FP.NT || FP.NT.heroPlays(comp, f))) {
         FP.S.pending.push({ c: comp.id, i: comp.cp });
       } else {
         FP.Match.quick(comp, f);

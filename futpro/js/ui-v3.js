@@ -82,9 +82,10 @@
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
   function clubCountry(id) { var c = FP.S.clubs[id]; return c && FP.LGDEF[c.lg] ? FP.LGDEF[c.lg].c : null; }
+  function nts(h) { var n = 0; if (h.nts) Object.keys(h.nts.c).forEach(function (k) { n += h.nts.c[k].n || 0; }); return n; }
   function snap(S) {
     var h = S.hero, nat = FP.Nat.heroNation();
-    return { ap: h.tot.ap, tro: h.trophies.filter(function (t) { return !t.sub; }).length, aw: h.awards.length, ntU: h.nt.dec && h.nt.dec.ok ? h.nt.dec.until : 0, tk: h.tk, team: h.team, cty: h.team != null ? clubCountry(h.team) : null, serious: !!(h.inj && h.inj.n >= 10), nat: nat ? nat.id : null };
+    return { ap: h.tot.ap, tro: h.trophies.filter(function (t) { return !t.sub; }).length, aw: h.awards.length, ntU: nts(h), tk: h.tk, team: h.team, cty: h.team != null ? clubCountry(h.team) : null, serious: !!(h.inj && h.inj.n >= 10), nat: nat ? nat.id : null };
   }
   UI.checkMoments = function () {
     var S = FP.S; if (!S || !S.hero || S.hero.retired === undefined) return;
@@ -92,7 +93,7 @@
     if (!prev) { save(k, cur); return; }   // primera vez que se ve esta partida: no se repite el pasado
     var out = [];
     if (prev.ap === 0 && cur.ap > 0 && (h.tk === 'pro' || h.tk === 'loan')) out.push({ id: 'debut', mk: 'Debut profesional', ic: 'ball', c: '#2fbf71', h: '¡Debutaste!', p: 'Disputaste tus primeros minutos como profesional con ' + UI.club(h.team) + '. El comienzo de una carrera.', club: h.team });
-    if (cur.ntU && cur.ntU !== prev.ntU) { var dc = h.nt.dec, nat = FP.Nat.heroNation(); out.push({ id: 'nt' + cur.ntU, mk: 'Selección nacional', ic: 'flag', c: '#46aabd', h: 'Convocado a ' + (nat ? C.tname(nat.id) : 'la selección'), p: 'Categoría ' + (dc.cat || '') + '. Representar a tu país es un orgullo.', flag: h.nat }); }
+    if (cur.ntU > (prev.ntU || 0)) { var nat = FP.Nat.heroNation(), lab = h.nt.cat || ''; out.push({ id: 'nt' + cur.ntU, mk: 'Selección nacional', ic: 'flag', c: '#46aabd', h: 'Convocado a ' + (nat ? C.tname(nat.id) : 'la selección'), p: 'Categoría ' + lab + '. Representar a tu país es un orgullo.', flag: h.nat }); }
     if (cur.team != null && prev.team != null && cur.team !== prev.team && (cur.tk === 'pro' || cur.tk === 'loan')) {
       var intl = cur.cty && prev.cty && cur.cty !== prev.cty;
       out.push({ id: 'tr' + cur.team, mk: intl ? 'Fichaje internacional' : (cur.tk === 'loan' ? 'Cesión' : 'Nuevo club'), ic: 'transfer', c: '#e2a93b', h: UI.club(cur.team), p: intl ? 'Cruzas fronteras: nueva liga, nuevo desafío.' : 'Empieza una nueva etapa en tu carrera.', club: cur.team });
