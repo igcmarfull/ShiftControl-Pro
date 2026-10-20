@@ -24,6 +24,15 @@
     return h;
   };
 
+  // Puesto del jugador en la tabla de goleadores de su competición de liga (1 = máximo goleador, 0 = no figura entre los 10 primeros)
+  Rep.scorerRank = function () {
+    var S = FP.S, h = S.hero, found = 0;
+    Object.keys(S.comps).forEach(function (k) {
+      var c = S.comps[k]; if (found || c.kind !== 'L' || c.done || !c.sc || c.teams.indexOf(h.team) < 0) return;
+      var top = FP.Comp.topScorers(c, 10, 0); for (var i = 0; i < top.length; i++) if (top[i].pid === 0 && top[i].g >= 4) { found = i + 1; break; }
+    });
+    return found;
+  };
   // ---------- reputación ----------
   function clubTier(club) { return FP.LGDEF[club.lg]; }
   Rep.targets = function () {
@@ -44,7 +53,8 @@
       var tier = Youth.tierOf(S.amat[h.team - 20000]);
       t.loc = tier === 'semipro' ? 42 : tier === 'regional' ? 30 : 18; t.nat = tier === 'semipro' ? 12 : tier === 'regional' ? 4 : 0; t.int = 0;
     }
-    t.loc += perf * 10 + gr * 18; t.nat += perf * 7 + gr * 10; t.int += (h.tk === 'pro' || h.tk === 'loan') ? perf * 6 + gr * 6 : 0;
+    var sr = Rep.scorerRank(), sb = sr ? (sr <= 3 ? 12 : sr <= 5 ? 7 : 3) : 0;           // goleador de la liga
+    t.loc += perf * 10 + gr * 18 + sb; t.nat += perf * 7 + gr * 10 + sb; t.int += (h.tk === 'pro' || h.tk === 'loan') ? perf * 6 + gr * 6 + sb * 0.8 : 0;
     var nts = h.nts ? h.nts.c : {};
     var nb = (nts.U15 && nts.U15.n ? 4 : 0) + (nts.U17 && nts.U17.n ? 7 : 0) + (nts.U20 && nts.U20.n ? 10 : 0) + (nts.U23 && nts.U23.n ? 12 : 0);
     t.nat += nb; t.int += nb * 0.4;
@@ -126,7 +136,7 @@
     var S = FP.S, h = Rep.ensure(), age = FP.Hero.age();
     if (age < 14 && h.tk === 'amat') return;
     var ss = h.season, perf = ss.rn >= 3 ? ss.rs / ss.rn : 6.2, gr = ss.ap ? ss.g / ss.ap : 0;
-    var p = 0.05 + h.rep.loc / 500 + h.rep.nat / 400 + Math.max(0, perf - 6.4) * 0.05 + gr * 0.12;
+    var sr = Rep.scorerRank(), p = 0.05 + h.rep.loc / 500 + h.rep.nat / 400 + Math.max(0, perf - 6.4) * 0.05 + gr * 0.12 + (sr ? (sr <= 3 ? 0.15 : 0.07) : 0);
     if (h.tk === 'free') p *= 0.7;
     if (R() > Math.min(0.5, p)) return;
     var cand = S.clubs.filter(function (c) {
@@ -139,7 +149,7 @@
     var club = U.wpick(cand, function (c) { var f = Rep.fit(c); return f.need * Math.exp(-Math.abs(f.gap) / 6) * (c.c === M.heroCountry() ? 1.5 : 0.8); });
     var why = gr >= 0.5 ? 'por tus goles' : perf >= 7 ? 'por tu rendimiento' : age <= 17 ? 'por tu proyección' : 'por tu nivel';
     var sup = U.clamp((Rep.fit(club).eff - (club.st - 5)) / 18, 0, 1);        // cuanto mejor es el jugador respecto al club, más rápido crece el interés
-    Rep.addInterest(club, Math.round(U.int(10, 24) * (1 + sup * 0.8)), why);
+    Rep.addInterest(club, Math.round(U.int(10, 24) * (1 + sup * 0.8) * (sr && sr <= 3 ? 1.35 : 1)), sr && sr <= 3 ? 'por ser de los máximos goleadores' : why);
   };
   // tras un buen partido, un club puede fijarse en el jugador
   Rep.spark = function (hm) {
