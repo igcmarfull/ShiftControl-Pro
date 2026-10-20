@@ -256,3 +256,7 @@ Se unió el banner de resultado y el marcador en una sola tarjeta (tira de VICTO
 ## Calendario: vistas de "Próximos" (`js/ui-v21.js`)
 
 Selector **Vista** (por defecto Agenda): **Agenda** (tarjeta del próximo partido con fuerza de ambos equipos y lista por mes con color por tipo de competición y fuerza del rival), **Semanas** (una casilla por semana, incluidas las libres) y **Por competición** (barra de avance, balance y próximos partidos de cada competición).
+
+## Noticias: Mi carrera rediseñada (`js/ui-v22.js`)
+
+Arriba, tarjetas de **pendientes** (decisiones abiertas y ofertas) con acceso directo; filtros por tema con contador (Mercado y contratos, Decisiones, Salud, Partidos, Selección, Premios y logros, Otros); mensajes agrupados por fecha (esta semana, semana pasada, por mes) con icono de color por tema, titular y detalle; los últimos mensajes sin leer (hasta 10) se marcan "Nuevo" y las ofertas abiertas enlazan a Contratos. También se corrigió el prefijo duplicado "Sin respuesta a tiempo" en polémicas de redes.

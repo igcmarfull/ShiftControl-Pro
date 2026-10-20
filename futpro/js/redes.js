@@ -144,7 +144,6 @@
       else if (k === 'ign') { if (win(0.6)) m = 'La noticia se desinfló.'; else { img(-6); heat(2); m = 'La noticia falsa se hizo grande.'; } }
       else { if (h.money >= 6) pay(-6, 'inversion', 'Denuncia legal'); img(3); r.brand = U.clamp(r.brand + 1, 0, 100); m = 'La cuenta fue denunciada y la noticia cayó.'; }
     }
-    if (auto) m = 'Sin respuesta a tiempo. ' + m;
     return { ok: true, msg: m };
   }
 
