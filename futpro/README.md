@@ -211,4 +211,4 @@ Todo se guarda en `hero.rd`; tests: `node tests/redes.js`. Calibración pendient
 
 ## Estadísticas: vistas de "Por temporada" (`js/ui-v15.js`)
 
-Selector **Vista** bajo los filtros: Tarjetas (la original), Tabla (una fila por temporada y club, con barras y total de carrera), Línea de tiempo (una tarjeta por temporada con sus cifras y competiciones) y Panorama (gráfico de goles, asistencias y nota por año + resumen por club). Respetan los filtros de clubes/selecciones/amistosos.
+Selector **Vista** bajo los filtros (por defecto Tabla): Tarjetas (la original), Tabla (una fila por temporada y club, con barras y total de carrera), Línea de tiempo (una tarjeta por temporada con sus cifras y competiciones) y Panorama (gráfico de goles, asistencias y nota por año + resumen por club). Respetan los filtros de clubes/selecciones/amistosos.
