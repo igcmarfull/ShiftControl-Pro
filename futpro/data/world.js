@@ -155,7 +155,7 @@
     { id: 'POR2', c: 'POR', n: 'Liga Portugal 2 (Segunda Liga)', t: 2, q: 54, sp: 4, cal: 'euro', rr: 2, up: 2, dn: 2, v: 'p',
       clubs: 'Farense;Boavista;Marítimo;Vizela;Leixões;Penafiel;Feirense;Chaves;Torreense;Paços de Ferreira;Académico de Viseu;Oliveirense;Lusitânia Lourosa;Portimonense;Benfica B;FC Porto B;Sporting CP B;Felgueiras 1932' },
     { id: 'POR3', c: 'POR', n: 'Liga 3', t: 3, q: 48, sp: 3, cal: 'euro', rr: 2, up: 2, dn: 0, v: 'p',
-      clubs: 'Belenenses;Académica de Coimbra;Amora;Varzim;Atlético CP;Paredes;Fafe;Amarante;1.º Dezembro;Sanjoanense;Trofense;Marco 09;Braga B;Mafra;União de Santarém;Lusitano GC;Caldas SC;SC Covilhã;Vitória SC B' },
+      clubs: 'Belenenses;Académica de Coimbra;Amora;Varzim;Atlético CP;Paredes;Fafe;Amarante;1.º Dezembro;Sanjoanense;Trofense;Marco 09;São João de Ver;Braga B;Mafra;União de Santarém;Lusitano GC;Caldas SC;SC Covilhã;Vitória SC B' },
 
     { id: 'NED1', c: 'NED', n: 'Eredivisie', t: 1, q: 65, sp: 8, cal: 'euro', rr: 2, dn: 2, v: 'k', qual: { CL: 2, EL: 2, ECL: 2 },
       clubs: 'PSV Eindhoven;Feyenoord;Ajax;AZ Alkmaar;FC Twente;FC Utrecht;Go Ahead Eagles;Sparta Rotterdam;NEC Nijmegen;SC Heerenveen;Fortuna Sittard;PEC Zwolle;Heracles Almelo;FC Groningen;NAC Breda;Telstar;Excelsior;FC Volendam' },
