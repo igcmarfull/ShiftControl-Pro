@@ -55,6 +55,21 @@ Módulos añadidos (sin reemplazar el motor existente; partidas anteriores se mi
 ### Calibración y pruebas
 `tests/` contiene un arnés en Node (sin dependencias): `node tests/invariants.js` (coherencia: ninguna selección juega contra sí misma, nóminas dentro de edad y nacionalidad, sin pruebas de academia a adultos, estadísticas por clase consistentes) y `node tests/careers.js <temporadas> <carreras> <semilla> <parte> <partes>` + `node tests/summary.js` (carreras largas con perfiles variados; proporciones de profesionales, amateur, libres, convocatorias y selección adulta).
 
+## Profundidad de carrera
+
+Módulos nuevos (cada uno con su pantalla; la lógica está separada de la interfaz):
+
+- **Salud y físico** (`js/medical.js`, pantalla *Salud*): 16 tipos de lesión con zona, causa y duración propias; decisión de tratamiento (club, conservador, cirugía, rehabilitación acelerada, especialista privado) que cambia duración, recaídas y secuelas; carga de partidos, plan de prevención, molestias, alta médica y recaídas. Las zonas ya lesionadas son más frágiles.
+- **Entrenadores y vestuario** (`js/staff.js`, pantalla *Vestuario*): cada entrenador tiene un estilo (formador, defensivo, ofensivo, pragmático, motivador, disciplinario, rotador) que modifica tus minutos y tu relación con él; capitán, ídolo, mentor, rival de puesto y compañeros con relación propia y acciones (consejo, ayudar, salir juntos). El ambiente mueve tu moral; el mentor acelera la progresión de los jóvenes.
+- **Táctica y partido** (`js/tactics.js`, pantalla *Táctica*): rol libre (buscar el gol, crear juego, cubrir) e intensidad de presión, con pausas en el descanso y en el minuto 70 del modo minuto a minuto (`Match.fullSession`; `Match.full` conserva el comportamiento anterior). Cambio de posición con familiaridad (0–100%) y penalización de rendimiento que baja jugando y entrenando "Posición".
+- **Vida personal** (`js/life.js`, pantalla *Vida personal*): estudios con notas, graduación y carrera a distancia; mudanza (familia, residencia o solo), nostalgia, idioma local con clases y adaptación al país; prensa con decisiones que mueven imagen, moral y relación con el entrenador.
+- **Fin de carrera** (`js/postcareer.js`, pantalla *Después del fútbol*): legado (0–100), homenaje de despedida y tres caminos —entrenador (licencias y puestos), comentarista y representante— con simulación simplificada por temporada.
+- **Decisiones** (`js/decisions.js`): cola común de decisiones con plazo; si no respondes se aplica la opción por defecto. Aparecen en Inicio y en cada pantalla.
+
+Notas honestas: los efectos de rol/presión, carga, nostalgia, legado e ingresos posteriores son parámetros de diseño del juego, no valores calibrados con datos deportivos. La calibración de carreras largas sigue pendiente. El guardado pasa a la versión 4 y los guardados anteriores se migran al cargar. Con un partido a medias no se permite guardar.
+
+Pruebas: `node tests/depth.js` (salud, vestuario, táctica con pausas, vida, retiro, guardado), además de `tests/invariants.js` y `tests/contracts.js`.
+
 ## Arquitectura
 
 Todo corre en el navegador con JavaScript clásico (sin módulos ni build): cada archivo es una IIFE que publica objetos en `window.FP`. **El orden de las etiquetas `<script>` de `index.html` es significativo.**

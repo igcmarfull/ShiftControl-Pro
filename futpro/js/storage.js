@@ -3,7 +3,7 @@
   'use strict';
   var FP = window.FP, U = FP.U;
 
-  var VERSION = 3;          // versión del formato de guardado
+  var VERSION = 4;          // versión del formato de guardado
   var DB_NAME = 'futpro', STORE = 'saves';
   var Store = FP.Store = { VERSION: VERSION, mem: {} };
 
@@ -47,6 +47,7 @@
     S.pending = []; S.weekOpen = false;
     FP.Core.rebuildRoster(); FP.Match.cache = {};
     if (FP.Youth) FP.Youth.ensure(); if (FP.NT) { FP.NT.ensure(); FP.NT.invalidate(); } if (FP.Stats) FP.Stats.migrate(); if (FP.Contracts) FP.Contracts.migrate();
+    ['Dec', 'Med', 'Staff', 'Tac', 'Life', 'Post'].forEach(function (k) { var m = FP[k]; if (m && (m.migrate || m.ensure) && S.hero) { try { (m.migrate || m.ensure).call(m); } catch (e) { if (window.console) console.warn('migrar ' + k, e); } } });
     Store.syncData();
     // reindexa cada ko (los índices t.f no se guardan fiables tras ordenar)
     Object.keys(S.comps).forEach(function (id) { var c = S.comps[id]; if (c.ko) FP.Comp.reindex(c); });
@@ -63,6 +64,7 @@
     if (v < 1) { d.ver = 1; d.hist = d.hist || { champs: [], awards: [] }; }
     if (v < 2) { d.ver = 2; }
     if (v < 3) { d.ver = 3; }  // v3: contratos detallados (h.cx), términos por oferta (o.t)  // v2: reserva de promesas (S.yp), plantillas juveniles (S.sq), selecciones (S.nt), ledger de estadísticas (h.led)
+    if (v < 4) { d.ver = 4; }  // v4: salud (h.med), decisiones (h.dec), vestuario (h.lk, S.staff), táctica (h.tac, h.fam), vida personal (h.life), vida posterior (h.post): se crean al cargar
     // futuras migraciones: if (v < 2) { ...; d.ver = 2; }
     if (d.ver > VERSION) throw new Error('El guardado pertenece a una versión más nueva del juego (v' + d.ver + ').');
     return d;

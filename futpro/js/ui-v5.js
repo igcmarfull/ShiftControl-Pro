@@ -168,7 +168,7 @@
   // ---------- finanzas ----------
   function finTab() {
     var h = FP.S.hero, cx = K.ensure(), ct = h.contract, tot = cx.tot;
-    var LBL = { sueldo: 'Sueldos', prima: 'Primas', bono: 'Bonos' };
+    var LBL = { sueldo: 'Sueldos', prima: 'Primas', bono: 'Bonos', post: 'Después del fútbol' };
     var all = Object.keys(tot).reduce(function (s, k) { return s + tot[k]; }, 0);
     var html = '<div class="grid g3"><div class="card"><div class="hd"><h3>' + I('chart') + 'Dinero acumulado</h3></div><div class="kn" style="font-size:1.8rem;font-family:var(--disp)">' + money(h.money) + '</div><div class="mut sm">Ingresos registrados: ' + money(all) + '</div></div>';
     html += '<div class="card"><div class="hd"><h3>' + I('target') + 'Por concepto</h3></div>' + (Object.keys(tot).length ? Object.keys(tot).map(function (k) { return '<div class="kv-i"><span>' + (LBL[k] || k) + '</span><b>' + money(tot[k]) + '</b></div>'; }).join('') : '<p class="mut">Sin ingresos todavía.</p>') + '</div>';

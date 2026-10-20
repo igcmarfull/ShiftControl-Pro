@@ -154,6 +154,7 @@
       }
       var attrs = Hero.focusAttrs(foc), mult = intn === 1 ? 0.6 : intn === 2 ? 1 : 1.4;
       var coach = 1 + (h.pcoach || 0) * 0.1 + (FP.Staff ? FP.Staff.mentorBonus() : 0);
+      if (FP.Life) coach *= FP.Life.trainMult();
       var fatM = h.fat > 80 ? 0.5 : h.fat > 65 ? 0.8 : 1;
       var ar = Hero.ageRate(age);
       attrs.forEach(function (a) {
