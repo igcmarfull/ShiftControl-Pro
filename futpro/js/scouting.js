@@ -181,9 +181,14 @@
       var wage = Rep.wage(club, (role === 'Titular' ? 1.15 : role === 'Rotación' ? 1 : 0.75) * money);
       var years = age < 20 ? U.int(3, 5) : age < 30 ? U.int(2, 4) : U.int(1, 2);
       var fee = Math.round(val * (0.8 + R() * 0.45));
-      if (freeAgent || (h.contract && D.of(h.contract.end, 5, 30) < w + 20)) fee = 0;
+      var ending = h.contract && h.contract.endW != null && h.contract.endW - w <= 26 && h.contract.endW - w > 0;
+      if (freeAgent) fee = 0;
+      else if (ending && age >= 18 && h.tk === 'pro') {          // contrato a punto de vencer: se ofrece un precontrato, no un traspaso inmediato
+        M.addOffer({ type: 'precontract', club: club.id, fee: 0, pre: h.contract.endW + 1, exp: h.contract.endW - 2, why: e.why });
+        e.v = Math.max(20, e.v - 25); return;
+      }
       var lg = clubTier(club), txt = club.nm + ' (' + C.cname(club.c) + ', ' + lg.n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + FP.fmt.money(wage) + ' al año' + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).') + (lower ? ' Ofrece mejor sueldo, pero compite en un nivel menor.' : '');
-      M.addOffer({ type: 'transfer', club: club.id, fee: fee, wage: wage, years: years, role: role, text: txt, exp: w + (freeAgent ? 6 : 5), why: e.why, lower: lower ? 1 : 0 });
+      M.addOffer({ type: 'transfer', club: club.id, fee: fee, wage: wage, years: years, role: role, text: txt, exp: w + (freeAgent ? 6 : 5), why: e.why, lower: lower ? 1 : 0, urgent: f.need >= 1 ? 1 : 0 });
       e.v = Math.max(20, e.v - 25);
     });
     // cesiones: jugadores sin minutos en clubes de mayor nivel
@@ -204,7 +209,8 @@
     if (age < 16 || h.offers.some(function (o) { return o.type === 'semi'; })) return;
     var lvlOk = h.ovr - Youth.adultPenalty(age) >= 40;
     var p = (h.tk === 'free' ? 0.12 : 0.04) + h.rep.loc / 700;
-    if (!lvlOk || R() > p) return;
+    if (!lvlOk || R() > p || (h.lastSemi != null && w - h.lastSemi < 16)) return;
+    h.lastSemi = w;
     var tier = Youth.TIERS.semipro, st = U.int(tier.min, tier.max), nm = FP.Names.club();
     var wage = Math.max(2, Math.round(tier.wage * (0.7 + R() * 0.8) * (FP.DATA.countries[cc] ? FP.DATA.countries[cc].w * 2.2 : 1)));
     M.addOffer({ type: 'semi', club: null, name: nm, cc: cc, st: st, wage: wage, years: U.int(1, 2), role: 'Titular', text: nm + ' (semiprofesional) te ofrece un contrato de ' + FP.fmt.money(wage) + ' al año por ' + 'una o dos temporadas. Compiten en el fútbol regional-semiprofesional.', exp: w + 8 });

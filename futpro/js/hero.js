@@ -199,7 +199,7 @@
     var tk = h.tk;
     var base = C.ovrOf(h.at, h.pos);
     var fatPen = h.fat > 75 ? (h.fat - 75) * 0.08 : 0;
-    var score = base + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 - fatPen;
+    var score = base + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 - fatPen + ((h.ct == null ? 50 : h.ct) - 50) * 0.03;
     if (tk === 'amat' || tk === 'academy') {
       if (h.fat > 92 && R() < 0.5) return { role: 'bench', why: 'descanso', p: 0.9 };
       return FP.Youth.heroStatus();
@@ -316,10 +316,8 @@
     // recuperación pasiva
     h.fat = U.clamp(h.fat - (6 + h.at.res / 20), 0, 100);
     // sueldo semanal
-    if (h.contract && h.contract.wage > 0) {
-      var w = h.contract.wage / 52 * (1 - (h.agent ? h.agent.com / 100 : 0));
-      h.money += w;
-    }
+    if (FP.Contracts) FP.Contracts.payWage();
+    else if (h.contract && h.contract.wage > 0) h.money += h.contract.wage / 52 * (1 - (h.agent ? h.agent.com / 100 : 0));
     if (h.pcoach) h.money -= [0, 0.08, 0.18, 0.4][h.pcoach];
     h.cap = h.cap; // sin cambios
     Hero.updateOvr();
@@ -424,7 +422,7 @@
     var mineGoals = prep.home ? res.hs : res.as, oppGoals = prep.home ? res.as : res.hs;
     var result = mineGoals > oppGoals ? 'V' : mineGoals < oppGoals ? 'D' : 'E';
     if (res.ps) { result = (prep.home ? res.ps[0] > res.ps[1] : res.ps[1] > res.ps[0]) ? 'V' : 'D'; }
-    var rec = { w: S.week, c: comp.nm, cid: comp.id, o: prep.opp, h: prep.home ? 1 : 0, s: mineGoals + '-' + oppGoals, r: result, role: hm ? (hm.played ? (hm.subIn ? 'sup' : 'tit') : (prep.status.role === 'out' ? 'fuera' : 'banca')) : 'fuera', min: hm && hm.played ? hm.min : 0, g: hm ? hm.g : 0, a: hm ? hm.a : 0, rt: hm && hm.played ? hm.rating : 0, off: official ? 1 : 0, k: FP.Stats ? FP.Stats.classOf(comp) : '' };
+    var rec = { w: S.week, c: comp.nm, cid: comp.id, o: prep.opp, h: prep.home ? 1 : 0, s: mineGoals + '-' + oppGoals, r: result, role: hm ? (hm.played ? (hm.subIn ? 'sup' : 'tit') : (prep.status.role === 'out' ? 'fuera' : 'banca')) : 'fuera', min: hm && hm.played ? hm.min : 0, g: hm ? hm.g : 0, a: hm ? hm.a : 0, rt: hm && hm.played ? hm.rating : 0, off: official ? 1 : 0, k: FP.Stats ? FP.Stats.classOf(comp) : '', why: /lesi|suspend/.test(prep.status.why || '') ? 1 : 0 };
     if (res.ps) rec.s += ' (' + (prep.home ? res.ps[0] + '-' + res.ps[1] : res.ps[1] + '-' + res.ps[0]) + ' pen.)';
     if (res.et) rec.s += ' (pró.)';
     h.log.unshift(rec); if (h.log.length > 400) h.log.length = 300;
@@ -445,7 +443,7 @@
       }
     }
     if (hm && hm.played && isNT) { h.nt.caps++; h.nt.goals += hm.g; }
-    if (FP.Youth && hm && (h.tk === 'academy' || h.tk === 'amat')) FP.Youth.heroTrustUpdate(hm.rating || 6, !!hm.played);
+    if (FP.Youth && hm && !isNT) FP.Youth.heroTrustUpdate(hm.rating || 6, !!hm.played);
     if (FP.Rep && hm && !isNT) FP.Rep.spark(hm);
     // morale, forma, fatiga
     if (hm && hm.played) {
