@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FUTPRO — La carrera del futbolista</title>
+<meta name="description" content="Simulador de carrera de futbolista con clubes y ligas reales. Se juega abriendo este archivo en el navegador, sin instalar nada.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app" class="app">
+  <div id="boot" class="boot"><div class="boot-in"><div class="logo-big">FUT<b>PRO</b></div><p>Cargando…</p></div></div>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<noscript><p style="padding:2rem;color:#fff">FUTPRO necesita JavaScript habilitado.</p></noscript>
+
+<!-- El orden de carga es significativo -->
+<script src="js/util.js"></script>
+<script src="data/world.js"></script>
+<script src="js/core.js"></script>
+<script src="js/comp.js"></script>
+<script src="js/match.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/hero.js"></script>
+<script src="js/market.js"></script>
+<script src="js/events.js"></script>
+<script src="js/tournaments.js"></script>
+<script src="js/game.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui-core.js"></script>
+<script src="js/ui-screens.js"></script>
+<script src="js/ui-screens2.js"></script>
+<script src="js/ui-start.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
