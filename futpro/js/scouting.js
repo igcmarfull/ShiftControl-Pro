@@ -175,7 +175,7 @@
       // un club que no mejora el nivel actual solo interesa si hay más minutos o más dinero
       var lower = cur && club.st < cur.st - 3, better = !cur || club.st >= cur.st - 1;
       if (lower && !wantMove && R() > 0.25) return;
-      if (R() > (e.v - 28) / 60) return;
+      if (R() > (e.v - 20) / 50) return;
       made++;
       var role = f.kind === 'project' ? 'Proyecto / suplente' : f.gap >= 3 ? 'Titular' : f.gap >= -1 ? 'Rotación' : 'Suplente';
       var money = lower ? 1.35 + R() * 0.3 : 1;             // un club menor puede ofrecer mejor sueldo
@@ -344,7 +344,7 @@
     var age = FP.Hero.age();
     (h.trials || []).slice().forEach(function (t) { if (t.w <= w) { M.resolveTrial(t); h.trials.splice(h.trials.indexOf(t), 1); } });
     Rep.weekly();
-    if (w % 2 === 0) Rep.scoutWeek(w);
+    Rep.scoutWeek(w);
     if (h.tk === 'amat' || h.tk === 'free') {
       M.scouting(w); Rep.semiOffers();
       if (h.tk === 'free') Rep.seniorTrials();
