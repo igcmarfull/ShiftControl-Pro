@@ -6,6 +6,7 @@
 'use strict';
 
 const CARTON=10;
+const CARTON_OF_TENS=20;
 const num=text=>{
   const digits=String(text??'').replace(/[^\d]/g,'');
   return digits?parseInt(digits,10):null;
@@ -35,6 +36,13 @@ function packSize(name){
   if(star)return Number(star[1])*Number(star[2]);
   const matches=[...String(name||'').matchAll(/(?<![a-z])x\s*(\d{1,3})\b/gi)];
   return matches.length?Number(matches[matches.length-1][1]):1;
+}
+
+// Cajetillas por cartón de tabaco según los cigarrillos por cajetilla del nombre («20s», «HL20», «… 10»).
+function cartonPacks(name){
+  const text=String(name||'');
+  const m=/(?<!\d)(\d{2})\s*s\b/i.exec(text)||/\bHL\s*(\d{2})\b/i.exec(text)||/(?<!\d)(\d{2})\s*$/.exec(text);
+  return m&&Number(m[1])===10?CARTON_OF_TENS:CARTON;
 }
 
 // Columnas de dinero del detalle, en el orden en que aparecen en los títulos de la factura.
@@ -118,12 +126,14 @@ function parse(text){
     else if(unit||row.qty)out.lines.push(row);
   });
   if(!out.lines.length){out.warnings.push('No encontré líneas de detalle en esta factura.');return out}
-  // Facturas de tabaco: se vende por cartón de 10 cajetillas y el nombre solo trae «20s» (cigarrillos por cajetilla).
+  // Facturas de tabaco: se vende por cartón y el nombre solo trae los cigarrillos por cajetilla («20s», «10s»).
+  // Un cartón son 200 cigarrillos: 10 cajetillas de 20 (o 18) y 20 cajetillas de 10.
   if(/tabaco|cigarr/i.test(text)){
     const loose=out.lines.filter(line=>line.packSize===1);
     if(loose.length){
-      loose.forEach(line=>{line.packSize=CARTON});
-      out.warnings.push(`Factura de tabaco: se asumió 1 cartón = ${CARTON} cajetillas en ${loose.length===out.lines.length?'todas las líneas':`${loose.length} líneas`}. Corrige «Unid. por pack» si algún producto viene distinto.`);
+      loose.forEach(line=>{line.packSize=cartonPacks(line.name)});
+      const twenty=loose.filter(line=>line.packSize===CARTON_OF_TENS).length;
+      out.warnings.push(`Factura de tabaco: se asumió 1 cartón = ${CARTON} cajetillas (${CARTON_OF_TENS} en las de 10 cigarrillos${twenty?`: ${twenty} ${twenty===1?'línea':'líneas'}`:''}). Corrige «Unid. por pack» si algún producto viene distinto.`);
     }
   }
   out.freightTotal=out.freightLines.reduce((sum,line)=>sum+line.amount,0);
@@ -180,7 +190,7 @@ function compute(parsed,{flags=[],packs=[]}={}){
     discountSum:lines.reduce((sum,line)=>sum+line.discount,0)};
 }
 
-const api={parse,compute,packSize,defaultHasTax};
+const api={parse,compute,packSize,cartonPacks,defaultHasTax};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else root.InvoiceCostCalc=api;
 })(typeof window!=='undefined'?window:globalThis);
