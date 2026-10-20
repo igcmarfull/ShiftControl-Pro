@@ -60,7 +60,7 @@ function fieldHtml(field){
   const id=`dcf-${field.key}`;
   const cls=`dc-in${auto?' auto':''}`;
   let control;
-  if(field.type==='textarea')control=`<textarea id="${id}" class="${cls}" rows="3" data-dcf="${field.key}">${esc(value)}</textarea>`;
+  if(field.type==='textarea')control=`<textarea id="${id}" class="${cls}" rows="${field.rows||3}" data-dcf="${field.key}">${esc(value)}</textarea>`;
   else if(field.type==='select')control=`<select id="${id}" class="${cls}" data-dcf="${field.key}">${(field.options||[]).map(option=>{const o=typeof option==='string'?{value:option,label:option}:option;return `<option value="${esc(o.value)}"${o.value===value?' selected':''}>${esc(o.label)}</option>`}).join('')}</select>`;
   else if(field.type==='check')return `<label class="dc-check full"><input type="checkbox" id="${id}" data-dcf="${field.key}"${value?' checked':''}> ${esc(field.label)}</label>`;
   else{
@@ -208,14 +208,20 @@ function buildDocx(lib,doc,logo){
   const align={justify:AlignmentType.JUSTIFIED,right:AlignmentType.RIGHT,center:AlignmentType.CENTER};
   const runs=list=>list.map(run=>new TextRun({text:run.text,bold:!!run.b,font:FONT,size:SIZE}));
   const children=[];
-  doc.blocks.forEach(block=>{
+  Render().withKeep(doc.blocks).forEach(block=>{
     if(block.t==='title'||block.t==='heading')children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:dens==='roomy'?360:120,after:dens==='roomy'?420:240},children:[new TextRun({text:block.text,bold:true,color:BLUE,font:'Arial',size:27,characterSpacing:20})]}));
-    else if(block.t==='p')children.push(new Paragraph({alignment:align[block.align]||AlignmentType.LEFT,indent:block.indent?{left:440}:undefined,spacing:{after:block.after!==undefined?block.after*15:AFTER,line:LINE},children:runs(block.runs)}));
+    else if(block.t==='p')children.push(new Paragraph({keepNext:!!block.keep,keepLines:true,alignment:align[block.align]||AlignmentType.LEFT,indent:block.indent?{left:440}:undefined,spacing:{after:block.after!==undefined?block.after*15:AFTER,line:LINE},children:runs(block.runs)}));
+    else if(block.t==='table'){
+      const cell=(text,opts={})=>new TableCell({width:{size:opts.size,type:WidthType.PERCENTAGE},shading:opts.head?{fill:'E8EFFB'}:undefined,margins:{top:50,bottom:50,left:100,right:100},borders:{top:{style:BorderStyle.SINGLE,size:4,color:'8A93A6'},bottom:{style:BorderStyle.SINGLE,size:4,color:'8A93A6'},left:{style:BorderStyle.SINGLE,size:4,color:'8A93A6'},right:{style:BorderStyle.SINGLE,size:4,color:'8A93A6'}},children:[new Paragraph({alignment:opts.center?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{after:0},children:[new TextRun({text:String(text),bold:!!opts.head,font:opts.head?'Arial':FONT,size:opts.head?19:SIZE})]})]});
+      const sizes=[64,18,18];
+      children.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[new TableRow({tableHeader:true,cantSplit:true,children:block.head.map((text,i)=>cell(text,{head:true,size:sizes[i],center:i>0}))}),...block.body.map(row=>new TableRow({cantSplit:true,children:row.map((text,i)=>cell(text,{size:sizes[i],center:i>0}))}))]}));
+      children.push(new Paragraph({spacing:{after:80},children:[]}));
+    }
     else if(block.t==='amounts')children.push(new Table({width:{size:82,type:WidthType.PERCENTAGE},indent:{size:440,type:WidthType.DXA},borders:{...noBorders,insideHorizontal:none,insideVertical:none},rows:block.rows.map(row=>new TableRow({children:[
       new TableCell({borders:{...noBorders,top:row.bold?{style:BorderStyle.SINGLE,size:6,color:'555555'}:none},width:{size:72,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:row.label,bold:!!row.bold,font:FONT,size:SIZE})]})]}),
       new TableCell({borders:{...noBorders,top:row.bold?{style:BorderStyle.SINGLE,size:6,color:'555555'}:none},width:{size:28,type:WidthType.PERCENTAGE},children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[new TextRun({text:row.amount,bold:!!row.bold,font:FONT,size:SIZE})]})]})]}))}));
     else if(block.t==='sign'){
-      children.push(new Paragraph({spacing:{before:SIGN_BEFORE,after:0},children:[]}));
+      children.push(new Paragraph({keepNext:true,spacing:{before:SIGN_BEFORE,after:0},children:[]}));
       const n=block.cols.length;
       children.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:{...noBorders,insideHorizontal:none,insideVertical:none},rows:[new TableRow({cantSplit:true,children:block.cols.map(col=>new TableCell({borders:noBorders,width:{size:Math.floor(100/n),type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.TOP,
         children:[new Paragraph({alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:6,color:'555555',space:4}},spacing:{before:0,after:40},children:[new TextRun({text:'',font:FONT,size:SIZE})]}),

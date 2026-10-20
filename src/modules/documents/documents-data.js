@@ -83,6 +83,7 @@ const TITLE=text=>({t:'title',text});
 const HEADING=text=>({t:'heading',text});
 const SIGN=(...cols)=>({t:'sign',cols});
 const AMOUNTS=rows=>({t:'amounts',rows});
+const TABLE=(head,body)=>({t:'table',head,body});
 const BREAK={t:'break'};
 const SPACER=(h=10)=>({t:'spacer',h});
 
@@ -363,6 +364,39 @@ TEMPLATES.push({
   }
 });
 
+// ---- Acta de entrega de uniforme y elementos de trabajo
+const UNIFORM_DEFAULT=['Pantalón | 1 |','Camisa | 1 |','Gorro | 1 |','Polar | 1 |','Piocha colgante | 1 |','Zapatos | 1 |'].join('\n');
+// «prenda | cantidad | talla» por línea → filas de la tabla (también acepta «;» o tabulación como separador).
+function parseItems(text){
+  return String(text||'').split('\n').map(line=>line.split(/\s*[|;\t]\s*/).map(cell=>cell.trim())).filter(cells=>cells[0])
+    .slice(0,30).map(cells=>[cells[0],cells[1]||'1',cells[2]||'—']);
+}
+TEMPLATES.push({
+  id:'entrega_uniforme',name:'Entrega de uniforme',cat:'Constancias',icon:'▣',
+  desc:'Acta de entrega de uniforme y elementos de trabajo, con los compromisos del trabajador y su devolución al término.',
+  fields:[F.city(),F.date(),F.workerName(),F.workerRut(),F.workerRole(),
+    {key:'kind',label:'Tipo de entrega',type:'select',options:['Entrega inicial','Reposición'],default:'Entrega inicial'},
+    {key:'items',label:'Prendas y elementos',type:'textarea',full:true,rows:8,default:UNIFORM_DEFAULT,hint:'Una por línea: prenda | cantidad | talla (la talla es opcional).'},
+    {key:'delivers',label:'Entrega por la empresa',type:'text',remember:true},{key:'deliversRole',label:'Cargo de quien entrega',type:'text',default:'Supervisor'}],
+  build(v){
+    const rows=parseItems(v.items);
+    return {title:'Entrega de uniforme',fileName:`Entrega_uniforme_${slug(v.workerName)||'trabajador'}`,blocks:[
+      TITLE('ACTA DE ENTREGA DE UNIFORME Y ELEMENTOS DE TRABAJO'),
+      P([r('En '),f(v.city),r(', a '),f(longDate(v.date)),r(', '),b(COMPANY.name),r(`, RUT ${COMPANY.rut}, hace entrega a don(ña) `),f(v.workerName),r(', RUT '),f(v.workerRut),r(', quien se desempeña como '),f(v.workerRole),r(`, de los siguientes elementos de trabajo (${String(v.kind||'Entrega inicial').toLowerCase()}):`)],{align:'justify'}),
+      TABLE(['Prenda o elemento','Cantidad','Talla'],rows.length?rows:[['____________','','']]),
+      SPACER(4),
+      P('El trabajador declara recibirlos conforme y en buen estado, y se compromete a:',{align:'justify'}),
+      P('– Usar el uniforme completo durante la totalidad de su turno, según lo establecido por la empresa y el mandante.',{indent:1,align:'justify',after:3}),
+      P('– Mantenerlo aseado y en buen estado, y no usarlo en labores privadas ni fuera del horario y lugar de trabajo.',{indent:1,align:'justify',after:3}),
+      P('– Informar oportunamente a la administración la pérdida o el deterioro de cualquiera de estos elementos.',{indent:1,align:'justify',after:3}),
+      P('– Devolverlos al término de la relación laboral, en estado de uso normal. El desgaste normal por el uso no da lugar a cobro.',{indent:1,align:'justify'}),
+      P('La pérdida o el deterioro por negligencia o mal uso podrá ser descontado de las remuneraciones, conforme a lo pactado en el contrato de trabajo y dentro de los límites que fija la ley.',{align:'justify'}),
+      P('La presente acta se firma en dos ejemplares del mismo tenor, quedando uno en poder de cada parte.',{align:'justify'}),
+      SIGN([COMPANY.name,person(v.delivers)||'Entrega por la empresa',person(v.deliversRole)||''],[person(v.workerName)||'Trabajador(a)',person(v.workerRut)?`RUT ${person(v.workerRut)}`:'RUT','Recibí conforme'])
+    ]};
+  }
+});
+
 // ---- Certificado de trabajo
 TEMPLATES.push({
   id:'certificado',name:'Certificado de trabajo',cat:'Constancias',icon:'★',
@@ -424,7 +458,7 @@ function visible(field,values){
   return true;
 }
 
-const api={COMPANY,TEMPLATES,CATEGORIES,CAUSALS,get,defaults,visible,longDate,shortDate,clp,toNum,formatRut,numberToWords,pesosInWords,splitInstallments,ordinal,slug,todayIso};
+const api={COMPANY,parseItems,TEMPLATES,CATEGORIES,CAUSALS,get,defaults,visible,longDate,shortDate,clp,toNum,formatRut,numberToWords,pesosInWords,splitInstallments,ordinal,slug,todayIso};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else root.DocumentData=api;
 })(typeof window!=='undefined'?window:globalThis);

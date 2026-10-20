@@ -29,7 +29,7 @@ console.log('ok  fechas, RUT y ordinales');
 // ---- todos los modelos se arman con sus valores por defecto y no dejan basura
 const COMPANY=D.COMPANY;
 const textOf=doc=>doc.blocks.map(b=>b.runs?b.runs.map(r=>r.text).join(''):b.text||(b.rows?b.rows.map(x=>x.label+' '+x.amount).join(' '):b.cols?b.cols.flat().join(' '):'')).join('\n');
-assert.strictEqual(D.TEMPLATES.length,8);
+assert.strictEqual(D.TEMPLATES.length,9);
 D.TEMPLATES.forEach(t=>{
   const doc=t.build(D.defaults(t));
   const text=textOf(doc);
@@ -40,7 +40,7 @@ D.TEMPLATES.forEach(t=>{
   assert.ok(html.includes(COMPANY.name)&&html.includes(COMPANY.rut),`${t.id}: membrete`);
   const keys=t.fields.map(f=>f.key);assert.strictEqual(new Set(keys).size,keys.length,`${t.id}: claves repetidas`);
 });
-console.log('ok  los 8 modelos se arman sin dejar datos rotos');
+console.log('ok  los 9 modelos se arman sin dejar datos rotos');
 
 // ---- finiquito: total, letras y cuotas
 const fin=D.get('finiquito');
@@ -59,6 +59,21 @@ v={...v,a3:'100000',c3:'Feriado legal',pay:'En 3 cuotas',d3:'2026-11-10'};doc=fi
 assert.strictEqual(doc.total,1138649);assert.ok(textOf(doc).includes('FERIADO LEGAL $ 100.000'));
 assert.strictEqual(fin.build({...v,a1:'',a2:'',a3:''}).total,0);
 console.log('ok  finiquito: total, letras, cuotas y conceptos');
+
+
+// ---- entrega de uniforme: tabla de prendas
+assert.deepStrictEqual(D.parseItems('Pantalón | 2 | M\nCamisa\n\nZapatos; 1; 42\n  \nGorro | 1'),[['Pantalón','2','M'],['Camisa','1','—'],['Zapatos','1','42'],['Gorro','1','—']]);
+const uni=D.get('entrega_uniforme');
+v={...D.defaults(uni),workerName:'Persona de Prueba',workerRut:'12.345.678-9',workerRole:'Atendedora',delivers:'Jefe Prueba'};
+doc=uni.build(v);
+const tbl=doc.blocks.find(b=>b.t==='table');
+assert.ok(tbl&&tbl.head.length===3&&tbl.body.length===6,'6 prendas por defecto');
+assert.deepStrictEqual(tbl.body[4],['Piocha colgante','1','—']);
+assert.ok(textOf(doc).includes('Entrega inicial'.toLowerCase())&&textOf(doc).includes('devolverlos al término'.replace('d','D'))||textOf(doc).includes('Devolverlos al término'));
+assert.ok(R.pageHtml(doc,{company:COMPANY}).includes('<table class="dc-table">'));
+assert.strictEqual(D.get('entrega_uniforme').build({...v,items:''}).blocks.find(b=>b.t==='table').body.length,1,'sin prendas deja una fila en blanco');
+assert.strictEqual(uni.build({...v,kind:'Reposición'}).blocks[1].runs.map(x=>x.text).join('').includes('reposición'),true);
+console.log('ok  entrega de uniforme: tabla de prendas');
 
 // ---- campos condicionales
 const ff=Object.fromEntries(fin.fields.map(f=>[f.key,f]));
@@ -107,4 +122,9 @@ assert.strictEqual(dens('carta_aviso'),'normal');
 assert.strictEqual(dens('finiquito'),'compact');assert.strictEqual(dens('contrato'),'compact');
 assert.ok(R.printHtml(D.get('certificado').build(D.defaults(D.get('certificado'))),{company:COMPANY}).includes('class="dens-roomy"'));
 console.log('ok  densidad según el largo del documento');
+// ---- el párrafo previo a la firma se mantiene junto a ella
+const kept=R.withKeep(D.get('constancia_vehiculo').build(D.defaults(D.get('constancia_vehiculo'))).blocks);
+assert.ok(kept[kept.length-2].keep===true&&!kept[0].keep);
+assert.ok(R.printHtml(D.get('constancia_vehiculo').build(D.defaults(D.get('constancia_vehiculo'))),{company:COMPANY}).includes('dc-p al-justify keep'));
+console.log('ok  la firma no queda sola en una hoja');
 console.log('\nTODAS LAS PRUEBAS PASARON');
