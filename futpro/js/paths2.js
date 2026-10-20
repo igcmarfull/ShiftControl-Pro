@@ -63,7 +63,7 @@
 
   // resultado de la temporada en la liga del club
   X.onClosed = function (comp, entry) {
-    var S = FP.S, h = S.hero, p = P.ensure(), pa = p && p.path; if (!h.retired || !pa || !X.isX(pa.k) || pa.k === 'sel' || !pa.job) return;
+    var S = FP.S, h = S.hero, p = h && P.ensure(), pa = p && p.path; if (!h || !h.retired || !pa || !X.isX(pa.k) || pa.k === 'sel' || !pa.job) return;
     var club = S.clubs[pa.job.club]; if (comp.lg !== club.lg) return;
     var tab = entry.tab, n = tab.length, rank = tab.indexOf(club.id) + 1, champ = entry.ch === club.id, dn = entry.dn.indexOf(club.id) >= 0, up = entry.up.indexOf(club.id) >= 0;
     var res = champ ? 'Campeón' : up ? 'Ascenso' : dn ? 'Descenso' : rank <= Math.ceil(n * 0.3) ? 'Zona alta' : rank <= Math.ceil(n * 0.65) ? 'Mitad de tabla' : 'Zona baja';
