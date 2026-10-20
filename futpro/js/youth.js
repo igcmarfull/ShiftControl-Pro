@@ -14,11 +14,11 @@
   var PEN = { 14: 9, 15: 8.5, 16: 7.5, 17: 6, 18: 4.5, 19: 3, 20: 2, 21: 1 };
   Youth.adultPenalty = function (age) { return age >= 22 ? 0 : age <= 14 ? 9 : PEN[age]; };
   // Potencial inicial realista: regresión hacia el nivel adulto proyectado (no "media + 20").
-  // Curva de maduración (fracción del techo que se tiene a cada edad): mezcla de la escala juvenil y del desarrollo hasta ≈ 25 años.
+  // Curva de maduración de referencia (no se usa para el techo; sirve de guía para Hero.closeRate)
   var MAT = { 12: 0.82, 13: 0.845, 14: 0.875, 15: 0.905, 16: 0.93, 17: 0.95, 18: 0.965, 19: 0.975, 20: 0.985, 21: 0.99 };
   Youth.mat = function (age) { return age <= 12 ? MAT[12] : age >= 22 ? 1 : MAT[age]; };
   Youth.potFor = function (ovr, age) {
-    var proj = ovr / Youth.mat(age);
+    var proj = ovr / Youth.f(age);       // el techo proyectado no cambia: solo cambia cuándo se alcanza (ver Hero.closeRate)
     var p = proj + U.norm() * 4.5 + (R() < 0.04 ? 7 : 0);
     return U.clamp(Math.round(p), Math.round(ovr) + 2, 96);
   };

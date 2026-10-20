@@ -125,7 +125,7 @@
   var AGE_RATE = { 12: 1.0, 13: 1.05, 14: 1.15, 15: 1.2, 16: 1.15, 17: 1.05, 18: 0.95, 19: 0.85, 20: 0.75, 21: 0.65, 22: 0.55, 23: 0.48, 24: 0.4, 25: 0.32, 26: 0.25, 27: 0.18, 28: 0.1 };
   // Fracción de la brecha restante (techo − nivel actual) que se cierra por año, según la edad. Calibrada para que el nivel alcance
   // ≈ 85 % del techo a los 13, 95 % a los 17, 99 % a los 21 y el 100 % hacia los 24-25 (picos físicos medidos ≈ 25-26 años; ver README).
-  var CLOSE = { 12: 0.22, 13: 0.22, 14: 0.22, 15: 0.25, 16: 0.27, 17: 0.29, 18: 0.31, 19: 0.34, 20: 0.37, 21: 0.45, 22: 0.6, 23: 0.6, 24: 0.5, 25: 0.35, 26: 0.25, 27: 0.15, 28: 0.08 };
+  var CLOSE = { 12: 0.22, 13: 0.22, 14: 0.22, 15: 0.24, 16: 0.25, 17: 0.26, 18: 0.27, 19: 0.28, 20: 0.29, 21: 0.31, 22: 0.34, 23: 0.34, 24: 0.3, 25: 0.25, 26: 0.2, 27: 0.12, 28: 0.06 };
   Hero.closeRate = function (age) { return age < 12 ? CLOSE[12] : age > 28 ? 0 : CLOSE[age]; };
   Hero.GROWTH_K = 2.8;       // en cada semana solo se entrenan ~5 de los 16 atributos: se compensa para que la tasa anual sea la de CLOSE
   Hero.ageRate = function (age) { return age < 12 ? 1 : age > 28 ? 0 : AGE_RATE[age]; };
