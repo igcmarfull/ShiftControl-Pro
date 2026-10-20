@@ -389,11 +389,11 @@
       if (m === 46 && !half) { half = true; E(45, 'ht', null, 'Descanso: ' + tname('h') + ' ' + goals.h + ' - ' + goals.a + ' ' + tname('a') + '.'); }
       // fatiga del héroe
       if (hm.in && !hm.out) {
-        heroStam -= 0.34 * imp * (1 - (hero.at.res - 40) / 140); hm.min = m;
+        heroStam -= 0.34 * imp * (hero.drain || 1) * (1 - (hero.at.res - 40) / 140); hm.min = m;
         var gk = C.POS_GRP[hero.matchSlot()];
-        hm.inv += gk === 'M' ? 0.045 : gk === 'D' ? 0.035 : gk === 'F' ? 0.03 : 0.02;    // toques de balón que no llegan a ser disparo
+        hm.inv += (gk === 'M' ? 0.045 : gk === 'D' ? 0.035 : gk === 'F' ? 0.03 : 0.02) * (hero.invMul || 1);    // toques de balón que no llegan a ser disparo
         // errores individuales: más probables con poca técnica/serenidad y con cansancio
-        var pErr = U.clamp(0.0034 * (1 + (62 - hero.at.con) / 55 + (100 - hero.at.com) / 160 + (100 - heroStam) / 180), 0.0008, 0.011);
+        var pErr = U.clamp(0.0034 * (hero.errMul || 1) * (1 + (62 - hero.at.con) / 55 + (100 - hero.at.com) / 160 + (100 - heroStam) / 180), 0.0008, 0.011);
         if (R() < pErr) {
           hm.err++; hm.inv += 0.6;
           E(m, 'error', heroSide, tx(T.err, { p: hero.nm }), { hero: 1 });
@@ -492,7 +492,7 @@
     }
     return out;
     }
-    return { runTo: runTo, finish: finish, setMent: function (v) { if (heroSide === 'h') mentH = v; else if (heroSide === 'a') mentA = v; }, minute: function () { return m - 1; }, events: ev, ctx: ctx, hm: hm, setTempo: function (f) { tempo = f; } };
+    return { runTo: runTo, finish: finish, setMent: function (v) { if (heroSide === 'h') mentH = v; else if (heroSide === 'a') mentA = v; }, minute: function () { return m - 1; }, askOut: function () { if (hm.in && !hm.out) heroOutMin = m; }, score: function () { return { h: goals.h, a: goals.a }; }, info: function () { return { xi: xi0, form: { h: lu.h.form, a: lu.a.form } }; }, events: ev, ctx: ctx, hm: hm, setTempo: function (f) { tempo = f; } };
   };
   Match.full = function (ctx) { var s = Match.fullSession(ctx); s.runTo(1e9); return s.finish(); };
 

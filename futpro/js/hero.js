@@ -197,7 +197,7 @@
     if (h.inj && h.inj.n > 0) return { role: 'out', why: 'lesionado' };
     if (h.susp > 0) return { role: 'out', why: 'suspendido' };
     var tk = h.tk;
-    var base = C.ovrOf(h.at, h.pos);
+    var base = C.ovrOf(h.at, h.pos) - (FP.Tac ? FP.Tac.pen() : 0);
     var fatPen = h.fat > 75 ? (h.fat - 75) * 0.08 : 0;
     var score = base + (h.form - 50) * 0.03 + (h.mor - 50) * 0.02 - fatPen + ((h.ct == null ? 50 : h.ct) - 50) * 0.03 + (FP.Staff ? FP.Staff.statusAdj() : 0);
     if (tk === 'amat' || tk === 'academy') {
@@ -402,17 +402,21 @@
 
   // Ejecuta el partido y aplica todo al jugador. Devuelve el resultado completo.
   // mode: 'full' (minuto a minuto, el UI reproduce) | 'quick' (igual, se muestra resumen)
-  Hero.playMatch = function (prep, opts) {
+  Hero.matchCtx = function (prep) {
     var S = FP.S, h = S.hero, comp = prep.comp, f = prep.f;
-    opts = opts || {};
     var role = prep.status.role;
     var imp = (f.k ? 1.1 : 1) * (comp.kind === 'T' && f.k ? 1.05 : 1) * (comp.kind === 'X' && comp.nat && f.k ? 1.1 : 1);
     var ctx = { comp: comp, f: f, role: role, status: prep.status, imp: imp, benchP: prep.status.p, hero: Hero.view(h.instr || 0, Hero.matchPenalty(comp)), tactic: { mentality: h.instr || 0 } };
-    h.team = h.team; // el equipo ya está definido; para selecciones el id está en prep.mine
-    var hv = ctx.hero; hv.team = prep.mine;
-    var res = FP.Match.full(ctx);
-    // aplica al fixture y a la competición
-    FP.Match.apply(comp, f, res);
+    ctx.hero.team = prep.mine;
+    return ctx;
+  };
+  Hero.playMatch = function (prep, opts) {
+    var res = FP.Match.full(Hero.matchCtx(prep));
+    return Hero.applyMatch(prep, res);
+  };
+  // aplica un resultado ya jugado al fixture, a la competición y al jugador
+  Hero.applyMatch = function (prep, res) {
+    FP.Match.apply(prep.comp, prep.f, res);
     Hero.afterMatch(prep, res);
     return res;
   };

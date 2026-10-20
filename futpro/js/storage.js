@@ -120,6 +120,7 @@
   // guarda la partida actual (autoguardado en el mismo registro)
   Store.save = function (label) {
     var S = FP.S;
+    if (FP.Tac && FP.Tac.isLive()) return Promise.reject(new Error('Termina el partido antes de guardar.'));
     if (!S.sid) S.sid = Store.newId();
     var rec = { id: S.sid, meta: Store.meta(), label: label || S.label || null, data: Store.pack() };
     if (label) S.label = label;
@@ -188,6 +189,7 @@
   // ---------- autoguardado ----------
   Store.auto = function (force) {
     var S = FP.S; if (!S || !S.cfg || S.cfg.autosave === false) return Promise.resolve();
+    if (FP.Tac && FP.Tac.isLive()) return Promise.resolve();      // no se guarda con un partido a medias
     var every = S.cfg.autoEvery || 4;
     S.autoCount = (S.autoCount || 0) + 1;
     if (!force && S.autoCount % every !== 0) return Promise.resolve();

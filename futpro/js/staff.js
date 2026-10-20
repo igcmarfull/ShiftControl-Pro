@@ -36,6 +36,7 @@
     var S = FP.S, h = S.hero; if (!h) return null;
     var team = h.tk === 'pro' || h.tk === 'loan' ? h.team : h.tk === 'academy' ? h.club : null;
     if (!h.lk || h.lk.club !== team) { h.lk = { club: team, coach: 10, mood: 50, people: [], cd: {}, advice: 0, since: S.week }; if (team != null) St.buildPeople(); }
+    if (h.lk.club != null && h.lk.tk !== h.tk) { var first = h.lk.tk === undefined && h.lk.people.length && h.tk === 'academy'; if (!first) { h.lk.people = []; h.lk.tk = h.tk; St.buildPeople(); } else h.lk.tk = h.tk; }
     return h.lk;
   };
   St.buildPeople = function () {
