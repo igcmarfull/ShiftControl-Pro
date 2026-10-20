@@ -112,25 +112,29 @@ Fecha de Emisión: 15-10-2026
 Item      Tipo Cod.        Código                                      Nombre Item                 Cantidad     Un.    Precio Unit.     Descto.       Recargo     Monto
      1              INT1    10221633      1135 Marca Uno 20s                                              1                 48.505              0         0        48.505
      2              INT1    10242375      5059 Marca Dos XL 20s                                           3                 39.517              0         0       118.551
+     3              INT1    10242379      9065 Marca Tres Boost 10s                                       2                 44.259              0         0        88.518
 Impuestos Adicionales
          (19 %)
         $ 3.000
                                       Monto Exento         $                                     0
-                                      Monto Neto           $                              167.056
-                                      IVA (19%)            $                               31.741
-                                      Total                $                              201.797`;
+                                      Monto Neto           $                              255.574
+                                      IVA (19%)            $                               48.559
+                                      Total                $                              307.133`;
 const tb=C.parse(TEXT3);
 assert.strictEqual(tb.ok,true,tb.warnings.join(' '));
-assert.strictEqual(tb.lines.length,2);
+assert.strictEqual(tb.lines.length,3);
 assert.strictEqual(tb.lines[0].name,'1135 Marca Uno 20s');assert.strictEqual(tb.lines[0].unit,'');assert.strictEqual(tb.lines[0].qty,1);
-assert.strictEqual(tb.lines[0].packSize,10,'cartón = 10 cajetillas');
-assert.ok(tb.warnings.some(w=>/1 cartón = 10 cajetillas/.test(w)),'avisa el supuesto');
+assert.strictEqual(tb.lines[0].packSize,10,'cartón de cajetillas de 20 = 10 cajetillas');
+assert.strictEqual(tb.lines[2].packSize,20,'cartón de cajetillas de 10 = 20 cajetillas');
+assert.ok(tb.warnings.some(w=>/1 cartón = 10 cajetillas \(20 en las de 10 cigarrillos: 1 línea\)/.test(w)),'avisa el supuesto');
 assert.strictEqual(tb.extraTax,3000);assert.deepStrictEqual(tb.extraBreakdown,[{rate:19,amount:3000}]);
 const tk=C.compute(tb);
 assert.strictEqual(tk.lines[1].units,30);assert.strictEqual(tk.lines[1].packCost,39517);
+assert.strictEqual(tk.lines[2].units,40);assert.ok(Math.abs(tk.lines[2].unitNet-2212.95)<1e-9,'44.259 por cartón de 20 = 2.212,95 por cajetilla');
 assert.ok(Math.abs(tk.lines[0].unitNet-4850.5)<1e-9,'48.505 por cartón son 4.850,5 por cajetilla');
 assert.strictEqual(C.parse(TEXT).warnings.length,0,'las facturas que no son de tabaco no cambian');
-console.log('ok  factura de tabaco: cartón de 10 cajetillas');
+assert.deepStrictEqual(['Kent Actron 20s','Pall Mall Boost 10s','Lucky Crush HL20','Pall Mall Blue 18s HL','Marca XL20s','PM Mini 10','Producto HL 10'].map(C.cartonPacks),[10,20,10,10,10,20,20]);
+console.log('ok  factura de tabaco: cartón de 10 cajetillas (20 en las de 10 cigarrillos)');
 
 const bad=C.parse('Texto cualquiera sin factura '.repeat(5));
 assert.strictEqual(bad.ok,false);assert.ok(bad.warnings.length);
