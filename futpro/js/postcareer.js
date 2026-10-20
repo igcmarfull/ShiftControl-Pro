@@ -75,6 +75,10 @@
     pa.course = { kind: kind, lvl: lvl, left: Math.round(def.w * P.eduFactor()) };
     return { ok: true, msg: 'Comienzas el curso (' + pa.course.left + ' semanas).' };
   };
+  P.ability = function () { var p = P.ensure(), lg = p.legacy || { score: 0 }; return 38 + lg.score * 0.22 + p.lic * 8 + p.exp * 1.2; };
+  // al asumir como director técnico se toma el cargo del club; al salir se devuelve el nombre del anterior
+  P.takeOver = function (job) { var club = FP.S.clubs[job.club]; if (club && job.role === 'head') { job.prevCo = club.co; club.co = FP.S.hero.nm; } };
+  P.leave = function (job) { var club = job && FP.S.clubs[job.club]; if (club && job.role === 'head' && job.prevCo) club.co = job.prevCo; };
   P.pay = function (amt, why) { if (!amt) return; var h = FP.S.hero, p = P.ensure(); FP.Contracts.pay(Math.round(amt), 'post', why); p.income += Math.round(amt); if (p.path) p.path.inc += Math.round(amt); };
   var NEED = { 1: 76, 2: 64, 3: 54, 4: 46, 5: 40 }, WAGE = { 1: 2000, 2: 700, 3: 250, 4: 90, 5: 40 }, ROLEM = { youth: 0.2, assist: 0.35, head: 1 }, ROLEN = { youth: 'Entrenador de juveniles', assist: 'Asistente técnico', head: 'Director técnico' }, ROLEX = { youth: -14, assist: -8, head: 0 };
   P.ROLEN = ROLEN;
@@ -102,7 +106,7 @@
   };
   Dec.handlers.post = function (k, d) {
     var S = FP.S, h = S.hero, p = P.ensure(), pa = p.path; if (!pa) return { ok: true, msg: '' };
-    if (/^j\d/.test(k)) { var c = d.data.cand[+k.slice(1)]; pa.job = { club: c.club, role: c.role, since: S.week }; h.history.push({ w: S.week, t: 'Firma como ' + ROLEN[c.role].toLowerCase() + ' de ' + C.tname(c.club) + '.' }); return { ok: true, msg: 'Aceptas ser ' + ROLEN[c.role].toLowerCase() + ' de ' + C.tname(c.club) + '.' }; }
+    if (/^j\d/.test(k)) { var c = d.data.cand[+k.slice(1)]; pa.job = { club: c.club, role: c.role, since: S.week }; P.takeOver(pa.job); h.history.push({ w: S.week, t: 'Firma como ' + ROLEN[c.role].toLowerCase() + ' de ' + C.tname(c.club) + '.' }); return { ok: true, msg: 'Aceptas ser ' + ROLEN[c.role].toLowerCase() + ' de ' + C.tname(c.club) + '.' }; }
     if (/^c\d/.test(k)) { var pid = +k.slice(1), q = S.pl[pid]; if (q) { pa.clients.push({ pid: pid, since: S.week }); h.history.push({ w: S.week, t: 'Pasas a representar a ' + q.n + '.' }); return { ok: true, msg: 'Representas a ' + q.n + '.' }; } }
     if (k === 'disculparse') { pa.aud = Math.max(0, pa.aud - 1); return { ok: true, msg: 'Pides disculpas en el programa: el asunto se enfría.' }; }
     if (k === 'sostener') { var up = R() < 0.5; pa.aud = U.clamp(pa.aud + (up ? 6 : -7), 0, 100); return { ok: true, msg: up ? 'Tu postura divide, pero sube la audiencia.' : 'Tu postura cae mal: baja la audiencia.' }; }
@@ -114,13 +118,13 @@
     var S = FP.S, h = S.hero, p = P.ensure(), pa = p.path, lg = p.legacy, label = FP.Market.seasonLabel();
     if (h.money > 0) P.pay(Math.min(h.money * 0.02, 400), 'Rendimiento de inversiones');
     if (!pa) return;
-    if (pa.k === 'coach' && pa.job) {
+    if (pa.k === 'coach' && pa.job && pa.job.role !== 'head') {
       var club = S.clubs[pa.job.club], t = tierOf(club), ability = 38 + lg.score * 0.22 + p.lic * 8 + p.exp * 1.2 + U.norm() * 6;
       var perf = ability - (NEED[t] + ROLEX[pa.job.role]) + U.norm() * 5, res = perf >= 12 ? 'Campeón' : perf >= 6 ? 'Zona alta' : perf >= -2 ? 'Mitad de tabla' : perf >= -9 ? 'Lucha por la permanencia' : 'Despedido';
       p.exp++; pa.seasons.push({ y: label, club: pa.job.club, role: pa.job.role, res: res });
       P.pay(WAGE[t] * ROLEM[pa.job.role], 'Sueldo como ' + ROLEN[pa.job.role].toLowerCase());
       if (res === 'Campeón') { pa.titles++; h.history.push({ w: S.week, t: 'Campeón como ' + ROLEN[pa.job.role].toLowerCase() + ' de ' + C.tname(pa.job.club) + '.' }); }
-      if (res === 'Despedido') { h.history.push({ w: S.week, t: 'Despedido de ' + C.tname(pa.job.club) + '.' }); pa.job = null; }
+      if (res === 'Despedido') { h.history.push({ w: S.week, t: 'Despedido de ' + C.tname(pa.job.club) + '.' }); P.leave(pa.job); pa.job = null; }
       else if (perf >= 8 && p.lic >= pa.job.role.length) { /* ascenso se resuelve en las ofertas */ }
     } else if (pa.k === 'tv') {
       pa.aud = U.clamp(pa.aud * 0.9 + lg.score * 0.12 + R() * 6 + (FP.S.hero.life && FP.S.hero.life.edu.degree ? 2 : 0), 0, 100);

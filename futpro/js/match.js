@@ -207,6 +207,7 @@
       else if (id >= 5000 && id < 20000 || id >= 20000 || (ys && ys[id] != null)) lu[sd] = Match.genericLineup(id, comp); // selecciones/amateur/juveniles
       else {
         var opts = {};
+        if (ctx.coachSide === sd && ctx.form) opts.form = ctx.form;                // el director técnico elige la formación
         if (heroSide === sd && ctx.role === 'starter') opts.forced = { p: S.pl[0], slot: hero.matchSlot() };
         else opts.excludeIds = { 0: 1 };
         lu[sd] = Match.lineup(id, opts);
@@ -225,11 +226,13 @@
     var isHeroIn = function () { return heroSide && xi[heroSide].some(function (e) { return e.p.i === 0; }); };
     if (heroSide && ctx.role === 'starter') hm.in = true;
     var st = { h: strFor(comp, f.h), a: strFor(comp, f.a) };
+    if (ctx.coachSide) st[ctx.coachSide] += ctx.coachBoost || 0;
     var goals = { h: 0, a: 0 }, cards = { h: {}, a: {} }, sent = { h: {}, a: {} }, subs = { h: 0, a: 0 };
     var heroStam = hero ? U.clamp(100 - hero.fat * 0.45, 40, 100) : 100;
     var adv = f.n ? 0 : (f.h >= 5000 && f.h < 20000 ? NAT_ADV : HOME_ADV);
-    var mentH = (heroSide === 'h' && ctx.tactic) ? ctx.tactic.mentality : 0;
-    var mentA = (heroSide === 'a' && ctx.tactic) ? ctx.tactic.mentality : 0;
+    var tside = heroSide || ctx.coachSide || null;       // lado que recibe las instrucciones del jugador o del director técnico
+    var mentH = (tside === 'h' && ctx.tactic) ? ctx.tactic.mentality : 0;
+    var mentA = (tside === 'a' && ctx.tactic) ? ctx.tactic.mentality : 0;
 
     function recalc() {
       var rh = sideRatings(xi.h.filter(function (e) { return !sent.h[e.p.i]; }), hero ? hero.stamFactor(heroStam) : 1);
@@ -492,7 +495,7 @@
     }
     return out;
     }
-    return { runTo: runTo, finish: finish, setMent: function (v) { if (heroSide === 'h') mentH = v; else if (heroSide === 'a') mentA = v; }, minute: function () { return m - 1; }, askOut: function () { if (hm.in && !hm.out) heroOutMin = m; }, score: function () { return { h: goals.h, a: goals.a }; }, info: function () { return { xi: xi0, form: { h: lu.h.form, a: lu.a.form } }; }, events: ev, ctx: ctx, hm: hm, setTempo: function (f) { tempo = f; } };
+    return { runTo: runTo, finish: finish, setMent: function (v) { if (tside === 'h') mentH = v; else if (tside === 'a') mentA = v; }, minute: function () { return m - 1; }, askOut: function () { if (hm.in && !hm.out) heroOutMin = m; }, score: function () { return { h: goals.h, a: goals.a }; }, info: function () { return { xi: xi0, form: { h: lu.h.form, a: lu.a.form } }; }, events: ev, ctx: ctx, hm: hm, setTempo: function (f) { tempo = f; } };
   };
   Match.full = function (ctx) { var s = Match.fullSession(ctx); s.runTo(1e9); return s.finish(); };
 
