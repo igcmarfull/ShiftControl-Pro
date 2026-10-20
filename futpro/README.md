@@ -234,3 +234,7 @@ Resumen de carrera arriba (temporadas, partidos, goles, asistencias, títulos, g
 ## Corrección: propuestas tras firmar un precontrato
 
 Con un precontrato firmado (`Contracts.ensure().pre`), `Market.addOffer` ya no crea propuestas de contrato nuevas (traspaso, profesional, semiprofesional, cantera, otro precontrato): solo siguen entrando renovaciones y cesiones, igual que en la regla de aceptación. Antes, `Market.transferOffers` seguía generando un precontrato (incluso del mismo club) que luego no se podía aceptar ("Ya firmaste un precontrato…"). Prueba añadida en `tests/contracts.js`.
+
+## Viaje de prueba al extranjero (`js/tryouts.js`, `js/ui-v11.js`)
+
+En **Pruebas masivas**, quien está sin club (o en un club amateur) puede viajar a otro país a probarse en hasta 3 clubes: elige país y clubes (con probabilidad estimada), paga el viaje (2 mil € en la misma confederación, 5 mil € en otra, +0,8 mil € por club extra; bajo 18 años lo cubre la familia) y vuelve a las 1+n semanas con los resultados. Hasta los 19 años son pruebas de cantera y desde los 20 con el primer equipo (mismas fórmulas de `Market.trialDifficulty` / `Rep.fit`). Las propuestas pasan por las reglas ya existentes: cupo de extranjeros, permiso de trabajo (Inglaterra) y menores. Desde los 16 años solo UE/EEE para menores; bajo 16 no hay viaje. Si la prueba no da propuesta, 30% de que el club quede con algo de interés. Espera de 6 semanas entre viajes. Los costos y el 30% son supuestos de diseño. Pruebas: `node tests/viaje.js`.

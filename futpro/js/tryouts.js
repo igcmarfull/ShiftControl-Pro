@@ -8,6 +8,7 @@
   T.ensure = function () {
     var S = FP.S, h = S && S.hero; if (!h) return null;
     if (!h.ty) h.ty = { reg: null, hist: [], cd: 0 };
+    if (h.ty.trip === undefined) { h.ty.trip = null; h.ty.tripCd = 0; }
     if (!S.ty) S.ty = { k: -1, items: [], nid: 1 };
     return h.ty;
   };
@@ -96,10 +97,80 @@
     Hero.msg('Terminó ' + where + ': quedaste ' + rank + '.º de ' + it.n + (level === 'top' ? ' — ¡destacaste!' + (names.length ? ' Recibes propuestas de ' + names.join(', ') + '.' : '') : level === 'sel' ? ' — quedaste entre los seleccionados' + (names.length ? ': ' + names.join(', ') + ' quiere verte más.' : '.') : ' — no quedaste entre los elegidos.'), level === 'no' ? 'warn' : 'ok');
     return rec;
   };
+
+  // ---------- viaje de prueba al extranjero ----------
+  // Sin club (o en un club amateur) se puede viajar unas semanas a otro país para probarse en hasta 3 clubes.
+  // Menores: solo 16-17 años dentro de la UE/EEE (Rep.foreignOK); bajo 16 no hay viaje. Las pruebas usan las mismas reglas de siempre
+  // (cantera hasta los 19 años, primer equipo desde los 20) y las propuestas pasan por las reglas de extranjeros y permiso de trabajo.
+  T.TRIP_MIN_AGE = 16; T.TRIP_MAX_CLUBS = 3;
+  T.canTrip = function () {
+    var S = FP.S, h = S.hero; T.ensure();
+    if (!T.eligible()) return { ok: false, msg: 'Solo sin club profesional.' };
+    if (Hero.age() < T.TRIP_MIN_AGE) return { ok: false, msg: 'Los viajes de prueba al extranjero son desde los ' + T.TRIP_MIN_AGE + ' años.' };
+    if (h.ty.trip) return { ok: false, msg: 'Ya estás de viaje de prueba.' };
+    if (h.ty.tripCd > S.week) return { ok: false, msg: 'Necesitas recuperarte del viaje: podrás volver a viajar dentro de ' + (h.ty.tripCd - S.week) + ' semanas.' };
+    if (h.inj && h.inj.n > 0) return { ok: false, msg: 'Estás lesionado.' };
+    return { ok: true };
+  };
+  T.tripCountries = function () {
+    var S = FP.S, h = S.hero, home = M.heroCountry(), seen = {}, out = [];
+    S.clubs.forEach(function (c) { if (c.c !== home && !seen[c.c]) { seen[c.c] = 1; out.push(c.c); } });
+    return out.sort(function (a, b) { return FP.DATA.countries[a].n.localeCompare(FP.DATA.countries[b].n, 'es'); });
+  };
+  T.tripClubs = function (cc) {
+    var S = FP.S, h = Rep.ensure(), age = Hero.age(), maxT = age < 18 ? 2 : 3;
+    return S.clubs.filter(function (c) { return c.c === cc && tier(c) <= maxT; }).map(function (c) {
+      var ok = Rep.foreignOK(c, h.nat, age), perm = Rep.permit(c), p;
+      if (age >= 20) { var f = Rep.fit(c); p = U.clamp(0.25 + f.gap * 0.07 + f.need * 0.2, 0.05, 0.85); } else p = M.trialDifficulty(c.id).p;
+      if ((h.cd[c.id] || 0) > S.week) p = Math.min(p, 0.05);
+      return { c: c, p: p, ok: ok && perm, why: !ok ? 'cupo de extranjeros completo' : !perm ? 'sin permiso de trabajo' : '', kind: age >= 20 ? 'primer equipo' : 'cantera', cool: (h.cd[c.id] || 0) > S.week };
+    }).sort(function (a, b) { return tier(b.c) < tier(a.c) ? 1 : tier(b.c) > tier(a.c) ? -1 : b.p - a.p; });
+  };
+  T.tripCost = function (cc, n) {
+    var home = M.heroCountry(), same = FP.DATA.countries[cc].conf === FP.DATA.countries[home].conf, age = Hero.age();
+    return age < 18 ? 0 : Math.round((same ? 2 : 5) + 0.8 * Math.max(0, n - 1));
+  };
+  T.startTrip = function (cc, ids) {
+    Rep.ensure(); var S = FP.S, h = S.hero, age = Hero.age(), can = T.canTrip(); if (!can.ok) return can;
+    ids = (ids || []).filter(function (x, i, a) { return a.indexOf(x) === i; });
+    if (!ids.length) return { ok: false, msg: 'Elige al menos un club.' };
+    if (ids.length > T.TRIP_MAX_CLUBS) return { ok: false, msg: 'Máximo ' + T.TRIP_MAX_CLUBS + ' clubes por viaje.' };
+    var opts = T.tripClubs(cc), chosen = ids.map(function (id) { return opts.filter(function (o) { return o.c.id === id; })[0]; });
+    if (chosen.some(function (o) { return !o || !o.ok; })) return { ok: false, msg: 'Alguno de los clubes no puede recibirte (cupo de extranjeros o permiso de trabajo).' };
+    var cost = T.tripCost(cc, ids.length);
+    if (cost && h.money < cost) return { ok: false, msg: 'No tienes fondos para el viaje (' + FP.fmt.money(cost) + ').' };
+    if (cost) FP.Contracts.pay(-cost, 'inversion', 'Viaje de prueba a ' + FP.DATA.countries[cc].n);
+    var weeks = 1 + ids.length;
+    h.ty.trip = { cc: cc, w0: S.week, w1: S.week + weeks, clubs: ids.slice(), cost: cost };
+    h.fat = U.clamp(h.fat + 6, 0, 100); h.mor = U.clamp(h.mor - 2, 0, 100);
+    Hero.msg('Viajas a ' + FP.DATA.countries[cc].n + ' a probarte en ' + ids.length + (ids.length === 1 ? ' club' : ' clubes') + '. Volverás en ' + weeks + ' semanas' + (cost ? ' (costo ' + FP.fmt.money(cost) + ')' : ' (los gastos los cubre tu familia)') + '.', 'ok');
+    return { ok: true, msg: 'Viaje programado.' };
+  };
+  T.cancelTrip = function () { var h = FP.S.hero; T.ensure(); h.ty.trip = null; };
+  T.finishTrip = function () {
+    var S = FP.S, h = S.hero, tr = h.ty.trip, age = Hero.age(); h.ty.trip = null; h.ty.tripCd = S.week + 6;
+    var before = h.offers.length, got = [];
+    tr.clubs.forEach(function (id) {
+      var n0 = h.offers.length;
+      M.resolveTrial({ club: id, w: S.week, senior: age >= 20 ? 1 : 0, abroad: 1 });
+      if (h.offers.length > n0) got.push(S.clubs[id].nm);
+    });
+    h.fat = U.clamp(h.fat + 4, 0, 100);
+    Hero.msg('Volviste de tu viaje de prueba a ' + FP.DATA.countries[tr.cc].n + (got.length ? ': recibiste propuestas de ' + got.join(', ') + '.' : ': por ahora sin propuestas.'), got.length ? 'ok' : 'i');
+    h.ty.hist.unshift({ w: S.week, kind: 'trip', club: null, cc: tr.cc, n: tr.clubs.length, rank: 0, level: got.length ? 'top' : 'no', offers: got }); if (h.ty.hist.length > 20) h.ty.hist.length = 20;
+  };
+  var rt0 = M.resolveTrial;
+  M.resolveTrial = function (t) {
+    var S = FP.S, h = S.hero, n0 = h.offers.length, r = rt0.apply(this, arguments);
+    if (t && t.abroad && h.offers.length === n0 && R() < 0.3) { var c = S.clubs[t.club]; if (c) Rep.addInterest(c, U.int(6, 14), 'tras tu prueba en el extranjero'); }
+    return r;
+  };
+
   T.weekly = function (w) {
     var h = FP.S.hero; if (!h || h.retired) return; T.ensure();
-    if (!T.eligible()) { h.ty.reg = null; return; }
+    if (!T.eligible()) { h.ty.reg = null; h.ty.trip = null; return; }
     T.refresh();
+    if (h.ty.trip && w >= h.ty.trip.w1) T.finishTrip();
     if (h.ty.reg && w >= h.ty.reg.w) { if (h.inj && h.inj.n > 0) { h.ty.reg = null; Hero.msg('Faltaste a la prueba masiva por lesión.', 'warn'); } else T.resolve(); }
     FP.S.ty.items = FP.S.ty.items.filter(function (x) { return x.w >= w; });
   };
