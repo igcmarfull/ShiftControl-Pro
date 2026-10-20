@@ -44,6 +44,9 @@ var pc = M.addOffer({ type: 'precontract', club: club(1).id, fee: 0, pre: h.cont
 var rp = M.respond(pc.id, true); check(rp.ok, 'precontrato firmado: ' + rp.msg);
 check(h.club === cur.id && h.tk === 'pro', 'continúa en el club actual tras el precontrato');
 check(K.ensure().pre && K.ensure().pre.club === club(1).id, 'queda registrado el precontrato');
+check(M.addOffer({ type: 'precontract', club: club(2).id, fee: 0, pre: h.contract.endW + 1, exp: h.contract.endW - 1 }) === null && !h.offers.some(function (o) { return o.type === 'precontract' || o.type === 'transfer'; }), 'con precontrato firmado no se generan más propuestas de contrato');
+for (var j = 0; j < 8; j++) { M.transferOffers(); }
+check(!h.offers.some(function (o) { return o.type === 'precontract' || o.type === 'transfer' || o.type === 'pro'; }), 'transferOffers no genera propuestas tras el precontrato');
 for (var i = 0; i < 14; i++) { FP.Game.beginWeek(); while (FP.Game.hasPending()) FP.Game.playPending(); FP.Game.endWeek(); }
 check(h.club === club(1).id, 'se incorpora al club del precontrato al terminar el contrato (club ' + h.club + ')');
 // 5) cesión conserva el contrato del dueño

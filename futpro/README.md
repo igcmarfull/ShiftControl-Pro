@@ -230,3 +230,7 @@ Los umbrales son supuestos de diseño (no datos reales). Calibración en `tests/
 ## Resumen de temporada rediseñado (`js/ui-v16.js`)
 
 Resumen de carrera arriba (temporadas, partidos, goles, asistencias, títulos, gráfico de la media). Cada temporada: cabecera con escudo, club, edad, puesto final y titular; indicadores (PJ, goles, asistencias, nota, minutos, media con variación); momentos destacados con icono (títulos, premios, mejor partido, hat-trick, selección, lesiones, movimientos, decisiones); metas como etiquetas; el relato queda en "Leer el relato".
+
+## Corrección: propuestas tras firmar un precontrato
+
+Con un precontrato firmado (`Contracts.ensure().pre`), `Market.addOffer` ya no crea propuestas de contrato nuevas (traspaso, profesional, semiprofesional, cantera, otro precontrato): solo siguen entrando renovaciones y cesiones, igual que en la regla de aceptación. Antes, `Market.transferOffers` seguía generando un precontrato (incluso del mismo club) que luego no se podía aceptar ("Ya firmaste un precontrato…"). Prueba añadida en `tests/contracts.js`.

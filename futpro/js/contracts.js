@@ -222,10 +222,12 @@
   };
   var addOffer0 = M.addOffer;
   M.addOffer = function (o) {
+    // con un precontrato firmado no se aceptan más propuestas de contrato (solo renovación o cesión): no se generan
+    if (CONTRACT_BEARING[o.type] && o.type !== 'renew' && o.type !== 'loan' && K.ensure().pre) return null;
     if (CONTRACT_BEARING[o.type] && !o.t) K.fill(o);
     if (o.t && o.exp == null) o.exp = FP.S.week + 5;
     var r = addOffer0.call(M, o);
-    K.log('ofrecida', offerBrief(o));
+    if (r === o) K.log('ofrecida', offerBrief(o));
     return r;
   };
 
