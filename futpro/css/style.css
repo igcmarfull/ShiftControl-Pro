@@ -557,7 +557,7 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .rv-tn { display: flex; gap: 1.2rem; flex-wrap: wrap; color: var(--mut); } .rv-tn b { font-family: var(--disp); font-size: 1.5rem; color: var(--tx); margin-right: .25rem; }
 .rv-spw { flex: 1; min-width: 220px; max-width: 420px; } .rv-sp { width: 100%; height: 56px; }
 .rv-c { padding: 0; overflow: hidden; }
-.rv-hd { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; padding: 1rem 1.2rem; background: linear-gradient(100deg, var(--petrol2), transparent 70%); border-bottom: 1px solid var(--line); }
+.rv-hd { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; padding: 1rem 1.2rem; background: linear-gradient(100deg, var(--surface3), transparent 70%); border-bottom: 1px solid var(--line); }
 .rv-id { display: flex; align-items: center; gap: .8rem; min-width: 0; } .rv-id .crest { width: 2.6rem; height: 2.6rem; flex: none; } .rv-id .crest img { width: 100%; height: 100%; object-fit: contain; }
 .rv-y { font-family: var(--disp); font-size: 1.8rem; line-height: 1; } .rv-cl { color: var(--mut); margin-top: .2rem; }
 .rv-bd { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; } .rv-rk { background: var(--surface3); border-radius: 999px; padding: .2rem .7rem; font-size: .8rem; font-weight: 650; display: inline-flex; align-items: center; gap: .3rem; } .rv-rk.gold { background: rgba(217, 180, 74, .18); color: var(--gold); }
@@ -598,9 +598,9 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .bio h3 { font-family: var(--font); font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--tx); margin: 1rem 0 .2rem; font-weight: 650; }
 .bio-toc { display: inline-block; font-family: var(--font); background: var(--surface); border: 1px solid var(--line2); border-radius: 8px; padding: .6rem 1rem; margin: .6rem 0; font-size: .85rem; } .bio-toc ol { margin: .3rem 0 0; padding-left: 1.2rem; } .bio-toc a { color: var(--ac2); cursor: pointer; }
 .bx { float: right; width: 300px; margin: 0 0 1rem 1.2rem; background: var(--surface); border: 1px solid var(--line2); border-radius: 8px; font-family: var(--font); font-size: .82rem; overflow: hidden; }
-.bx-t { text-align: center; font-weight: 700; padding: .5rem; background: var(--petrol); } .bx-av { padding: .6rem; display: grid; place-items: center; background: var(--surface2); } .bx-av svg { width: 150px; height: 150px; border-radius: 10px; }
+.bx-t { text-align: center; font-weight: 700; padding: .5rem; background: var(--surface3); color: var(--tx); } .bx-av { padding: .6rem; display: grid; place-items: center; background: var(--surface2); } .bx-av svg { width: 150px; height: 150px; border-radius: 10px; }
 .bx table { width: 100%; border-collapse: collapse; } .bx th, .bx td { padding: .3rem .6rem; text-align: left; vertical-align: top; border-top: 1px solid var(--line); } .bx th { width: 38%; color: var(--mut); font-weight: 600; }
-.bx .bx-h th { background: var(--petrol2); text-align: center; color: var(--tx); width: auto; }
+.bx .bx-h th { background: var(--surface3); text-align: center; color: var(--tx); width: auto; }
 .bx-tb { width: 100%; border-collapse: collapse; font-family: var(--font); font-size: .85rem; margin: .3rem 0 1rem; } .bx-tb th, .bx-tb td { border: 1px solid var(--line2); padding: .35rem .6rem; text-align: left; } .bx-tb th { background: var(--surface2); }
 .bx-ul { font-family: var(--font); font-size: .88rem; padding-left: 1.2rem; } .bx-ul li { margin: .15rem 0; }
 .bio .wk-card { font-family: var(--font); }
