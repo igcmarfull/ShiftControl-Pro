@@ -121,7 +121,7 @@
     return '<thead><tr><th rowspan="2">Club</th><th rowspan="2">Temporada</th><th colspan="3">Liga</th>' + (cols.copa ? '<th colspan="2">Copa nacional</th>' : '') + (cols.cont ? '<th colspan="2">Continental</th>' : '') + '<th colspan="3">Total</th></tr><tr><th>División</th><th class="n">PJ</th><th class="n">G</th>' + (cols.copa ? '<th class="n">PJ</th><th class="n">G</th>' : '') + (cols.cont ? '<th class="n">PJ</th><th class="n">G</th>' : '') + '<th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead>';
   }
   // etiqueta de club: el equipo juvenil se escribe "Club (juv.)" como en un artículo
-  function label(e, youthLabel) { var b = base(e.t), n = b != null && b < 5000 ? C.tname(b) : e.tn; return n + (youthLabel && e.lv === 'juv' ? ' (juv.)' : ''); }
+  function label(e, youthLabel) { var b = base(e.t), n = b != null && b < 5000 ? C.tname(b) : e.tn; return n + (youthLabel && e.lv === 'juv' ? ' (juv.)' : '') + (FP.Bio && FP.Bio.isLoan(e.t, e.o) ? ' (cedido)' : ''); }
   function wtable(list, opts) {
     opts = opts || {};
     var vis = list.filter(function (e) { return agg(e.rows).tot.p > 0; });

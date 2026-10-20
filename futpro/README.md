@@ -276,3 +276,7 @@ Los partidos del primer equipo que juega un juvenil citado (`js/callups.js`) se 
 ## Biografía: campeonato juvenil y primer equipo separados
 
 En las tablas de Biografía el equipo juvenil aparece como "Club (juv.)" con el nombre de su campeonato ("Campeonato Juvenil Sub-17"), sin añadir la liga profesional del club, y los partidos del primer equipo van en filas aparte bajo el club con su división ("Primera División"). Los grupos se arman por nombre aunque la carrera alterne entre juvenil y primer equipo. En la cronología el título juvenil se nombra "Campeón juvenil".
+
+## Biografía: cesiones
+
+El juego registra cada cesión (`hero.bio.loans`: club de origen, club de destino, fechas, opción de compra y desenlace: regreso o compra). La biografía la cuenta en la trayectoria ("En enero de 2027 fue cedido a X por Y durante 6 meses. El préstamo incluía una opción de compra de … Terminada la cesión, regresó a Y."), en la introducción, en la cronología y en las tablas como "Club (cedido)". La trayectoria ahora se arma con el registro de partidos (equipo real de cada temporada: club, juvenil o cedido). Las cesiones de partidas anteriores a este cambio solo se reconocen por el nombre de la temporada.
