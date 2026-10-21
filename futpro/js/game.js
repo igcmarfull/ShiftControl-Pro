@@ -66,7 +66,7 @@
       pot: null
     });
     // fecha de nacimiento: 13 años en mayo de 2026
-    h.b = D.of(D.y0 - 14, 8, 14); S.pl[0].b = h.b;
+    h.b = D.of(D.y0 - 14, 8, 14); S.pl[0].b = h.b; h.bd = [D.y0 - 14, 8, 14];
     h.pot = Math.min(96, FP.Youth.potFor(h.ovr, 13) + 2); h.cap = FP.Hero.makeCaps(h.at, h.pos, h.pot, h.style); S.pl[0].pt = h.pot;
     var id = FP.Market.newAmateurClub('Deportivo Los Aromos', 'CHI', 50);
     h.tk = 'amat'; h.team = id; h.club = null;

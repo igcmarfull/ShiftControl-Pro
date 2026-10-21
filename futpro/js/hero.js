@@ -58,6 +58,7 @@
   Hero.create = function (o) {
     var S = FP.S, age = o.age;
     var bornW = o.bornW != null ? o.bornW : Math.round(S.week - (age + R() * 0.95) * 52.1775);
+    if (o.bd) bornW = D.of(o.bd[0], o.bd[1], o.bd[2]);
     var boost = 0;
     if (o.club && o.club.kind === 'academy' && FP.S.clubs[o.club.id]) { // quien entra a una cantera parte cerca del nivel de esa cantera
       var floor = C.youthStr(FP.S.clubs[o.club.id], U.clamp(age, 12, 19)) - 4;
@@ -78,6 +79,8 @@
       tot: { ap: 0, min: 0, g: 0, a: 0, yc: 0, rc: 0, rs: 0, rn: 0 },
       retired: false, matchesPlayed: 0, extraTeams: [], flags: {}, startW: S.week, startAge: age, scouted: {}, at0: JSON.parse(JSON.stringify(at)), ovr0: Math.round(ovr), prog: [[S.week, Math.round(ovr)]]
     };
+    if (o.bd) h.bd = o.bd.slice();
+    else { var dt = D.d(bornW), dd = new Date(dt.getTime() + Math.floor(R() * 7) * 86400000); h.bd = [dd.getUTCFullYear(), dd.getUTCMonth(), dd.getUTCDate()]; }
     S.hero = h;
     S.pl[0] = { i: 0, n: o.nm, b: bornW, p: o.pos, o: h.ovr, pt: pot, c: -1, ce: 0, nat: o.nat, h: 1 };
     return h;

@@ -179,7 +179,7 @@
   Y.dynasty = function () {
     var S = FP.S, h = hero(), pr = M && M.get(), q = pr && M.player(); if (!h || !h.retired || !pr || pr.kind !== 'hijo' || !q) return null;
     var lg = P.ensure().legacy || P.legacy(), nm = String(q.n).split(' '), age = C.age(q), clubs = (lg.clubs || []).slice(0, 3).map(function (c) { return c.nm; });
-    return { father: h.nm, label: lg.label, score: lg.score, bo: lg.bo, tro: lg.trophies, first: nm[0], last: nm.slice(1).join(' ') || h.nm.split(' ').slice(-1)[0], nat: h.nat, city: h.city || '', pos: q.p === 'GK' ? 'CM' : q.p, age: U.clamp(age, 12, 17), ovr: q.o, pt: q.pt, year: D.year(S.week), clubs: clubs, club: clubs[0] || null, ht: 180, kg: 72 };
+    return { father: h.nm, label: lg.label, score: lg.score, bo: lg.bo, tro: lg.trophies, first: nm[0], last: nm.slice(1).join(' ') || h.nm.split(' ').slice(-1)[0], nat: h.nat, city: h.city || '', pos: q.p === 'GK' ? 'CM' : q.p, age: U.clamp(age, 12, 17), ovr: q.o, pt: q.pt, bm: D.ymd(q.b)[1], bdd: D.ymd(q.b)[2], year: D.year(S.week), clubs: clubs, club: clubs[0] || null, ht: 180, kg: 72 };
   };
   Y.migrate = function () { };
 

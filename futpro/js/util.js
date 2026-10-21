@@ -68,6 +68,9 @@
     fmt: function (w) { var d = new Date(START + w * 7 * DAY); return d.getUTCDate() + ' ' + MESES[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); },
     fmtLong: function (w) { var d = new Date(START + w * 7 * DAY); return MESES_L[d.getUTCMonth()] + ' de ' + d.getUTCFullYear(); },
     of: function (y, m, d) { return Math.floor((Date.UTC(y, m, d) - START) / (7 * DAY)); }, // m: 0-11
+    // fecha de nacimiento exacta del jugador (h.bd = [año, mes 0-11, día]); si no existe, la del lunes de su semana de nacimiento
+    bd: function (h) { if (h && h.bd) return h.bd; var d = this.ymd(h.b); return [d[0], d[1], d[2]]; },
+    bdText: function (h) { var b = this.bd(h); return b[2] + ' de ' + MESES_L[b[1]] + ' de ' + b[0]; },
     ymd: function (w) { var d = new Date(START + w * 7 * DAY); return [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()]; }
   };
 

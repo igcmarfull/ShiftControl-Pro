@@ -118,7 +118,7 @@
   function leadText(h, st, tot, ntTot) {
     var S = FP.S, dem = pron(h), pos = C.POS_NAME[h.pos].toLowerCase(), ret = h.retired;
     var club = h.club != null ? C.tname(h.club) : (h.team != null ? C.tname(h.team) : null);
-    var born = (h.city ? esc(h.city) + ', ' : '') + dlong(h.b);
+    var born = (h.city ? esc(h.city) + ', ' : '') + FP.Date.bdText(h);
     var p = '<b>' + esc(h.nm) + '</b> (' + born + ') ' + (ret ? 'fue' : 'es') + ' un futbolista ' + (dem ? esc(dem) : 'de ' + esc(countryName(h.nat))) + ' que ' + (ret ? 'se desempeñaba' : 'se desempeña') + ' como ' + esc(pos) + (!ret && club && h.tk !== 'free' ? ' en ' + esc(club) : '') + '.';
     if (h.dyn) p += ' Es hijo del exfutbolista ' + esc(h.dyn.father) + ' (' + esc(String(h.dyn.label || '').toLowerCase()) + '), cuya carrera continúa.';
     if (!st.length) return p;
@@ -137,7 +137,7 @@
   function earlyYears(h, st) {
     var S = FP.S, first = st[0], p = [];
     var dem = pron(h);
-    if (h.city || true) p.push('Nació' + (h.city ? ' en ' + esc(h.city) : '') + ' el ' + dlong(h.b) + '. Mide ' + h.ht + ' cm y pesa ' + h.kg + ' kg.');
+    if (h.city || true) p.push('Nació' + (h.city ? ' en ' + esc(h.city) : '') + ' el ' + FP.Date.bdText(h) + '. Mide ' + h.ht + ' cm y pesa ' + h.kg + ' kg.');
     if (first) {
       var first4 = y4(first.rows[0].y), age0 = first.rows[0].age;
       p.push('Comenzó su carrera en ' + esc(first.nm) + (first.youth ? ' (divisiones inferiores)' : '') + ' en ' + first4 + ', con ' + age0 + ' años' + (h.ovr0 ? ' y una media de ' + h.ovr0 : '') + '.');
@@ -273,7 +273,7 @@
     else lock.push(['Retiro', 'se escribe cuando termine tu carrera']);
     var nSec = secs.length, seasons = st.reduce(function (n, s) { return n + s.rows.length; }, 0);
     var grade = h.retired && seasons >= 10 ? ['Artículo destacado', 'g'] : nSec >= 7 && seasons >= 5 ? ['Artículo bueno', 'b'] : nSec >= 4 ? ['En construcción', 'y'] : ['Esbozo', ''];
-    var box = [['Nombre completo', h.nm], ['Nacimiento', (h.city ? h.city + ', ' : '') + dlong(h.b)], ['Nacionalidad', countryName(h.nat)], ['Altura · peso', h.ht + ' cm · ' + h.kg + ' kg'], ['Posición', C.POS_NAME[h.pos]], ['Pie hábil', h.foot === 'L' ? 'Zurdo' : h.foot === 'A' ? 'Ambidiestro' : 'Diestro']];
+    var box = [['Nombre completo', h.nm], ['Nacimiento', (h.city ? h.city + ', ' : '') + FP.Date.bdText(h)], ['Nacionalidad', countryName(h.nat)], ['Altura · peso', h.ht + ' cm · ' + h.kg + ' kg'], ['Posición', C.POS_NAME[h.pos]], ['Pie hábil', h.foot === 'L' ? 'Zurdo' : h.foot === 'A' ? 'Ambidiestro' : 'Diestro']];
     if (!h.retired && h.club != null) box.push(['Club actual', C.tname(h.club)]);
     return { name: h.nm, lead: leadText(h, st, tot, nt), box: box, secs: secs, extra: extra, lock: lock, grade: grade, stints: st.map(function (s) { return { nm: s.nm, yrs: range(s.rows), loan: s.loan }; }), nt: nt ? { p: nt.p, g: nt.g } : null, titles: (h.trophies || []).filter(function (t) { return !t.sub; }).length, seasons: seasons };
   };

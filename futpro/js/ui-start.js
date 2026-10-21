@@ -54,8 +54,12 @@
 
   // ---------- asistente de nueva carrera ----------
   var form = null;
+  // edad el 18 de mayo del año de inicio según la fecha de nacimiento (mismo corte que la semana 0 del calendario)
+  var MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  function ageOf(bd) { var y = Start.y0, a = y - bd.y; if (bd.m > 4 || (bd.m === 4 && bd.d > 18)) a--; return a; }
+  function dimOf(y, m) { return new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); }
   A['st-new'] = function () {
-    form = { nm: '', ln: '', nat: 'CHI', city: '', age: 13, ht: 165, kg: 55, pos: 'ST', foot: 'R', style: 'fisico', extra: autoExtra('ST'), club: 'amat', amName: '', acId: null, res: null, av: UI.avRandom() };
+    form = { nm: '', ln: '', nat: 'CHI', city: '', bd: { d: 15, m: 2, y: Start.y0 - 13 }, age: 13, ht: 165, kg: 55, pos: 'ST', foot: 'R', style: 'fisico', extra: autoExtra('ST'), club: 'amat', amName: '', acId: null, res: null, av: UI.avRandom() };
     Start.wizard();
   };
   // reparto automático de los 30 puntos según la posición (más peso → más puntos, máx. +12)
@@ -73,7 +77,8 @@
   Start.dynasty = function (d) {
     Start.y0 = d.year;
     var styles = Object.keys(FP.Hero.STYLES);
-    form = { nm: d.first, ln: d.last, nat: d.nat, city: d.city, age: d.age, ht: d.ht, kg: d.kg, pos: d.pos, foot: 'R', style: styles[Math.floor(Math.random() * styles.length)], extra: autoExtra(d.pos), club: 'academy', amName: '', acId: null, res: null, av: UI.avRandom(), dyn: d, acName: d.club };
+    var bm = d.bm != null ? d.bm : 5, bdd = d.bdd != null ? d.bdd : 15, by = d.year - d.age - ((bm > 4 || (bm === 4 && bdd > 18)) ? 1 : 0);
+    form = { nm: d.first, ln: d.last, nat: d.nat, city: d.city, bd: { y: by, m: bm, d: bdd }, age: d.age, ht: d.ht, kg: d.kg, pos: d.pos, foot: 'R', style: styles[Math.floor(Math.random() * styles.length)], extra: autoExtra(d.pos), club: 'academy', amName: '', acId: null, res: null, av: UI.avRandom(), dyn: d, acName: d.club };
     Start.wizard();
   };
   Start.wizard = function () {
@@ -86,7 +91,7 @@
       '<label class="f"><span>País</span><select id="w_nat">' + natOpts + '</select></label>' +
       '<label class="f"><span>Ciudad natal</span><input type="text" id="w_city" value="' + esc(f.city) + '"></label>' +
       (FP.DATA.countries[f.nat] ? '' : '<label class="f"><span>País donde juegas (tu selección no tiene liga cargada)</span><select id="w_res">' + Object.keys(FP.DATA.countries).map(function (k) { return '<option value="' + k + '" ' + ((f.res || "ESP") === k ? 'selected' : '') + '>' + esc(FP.DATA.countries[k].n) + '</option>'; }).join('') + '</select></label>') +
-      '<label class="f"><span>Edad de inicio</span><select id="w_age">' + [12, 13, 14, 15, 16, 17].map(function (a) { return '<option ' + (f.age === a ? 'selected' : '') + '>' + a + '</option>'; }).join('') + '</select></label>' +
+      '<label class="f"><span>Fecha de nacimiento (edad al comenzar: <b>' + f.age + '</b>)</span><div class="row" style="gap:.35rem"><select id="w_bdd">' + Array.apply(null, Array(dimOf(f.bd.y, f.bd.m))).map(function (x, i) { return '<option ' + (f.bd.d === i + 1 ? 'selected' : '') + '>' + (i + 1) + '</option>'; }).join('') + '</select><select id="w_bdm">' + MES.map(function (n, i) { return '<option value="' + i + '" ' + (f.bd.m === i ? 'selected' : '') + '>' + n + '</option>'; }).join('') + '</select><select id="w_bdy">' + [12, 13, 14, 15, 16, 17, 18].map(function (a) { var yy = Start.y0 - a; return '<option ' + (f.bd.y === yy ? 'selected' : '') + '>' + yy + '</option>'; }).join('') + '</select></div></label>' +
       '<label class="f"><span>Altura (cm)</span><input type="number" id="w_ht" value="' + f.ht + '" min="140" max="205"></label>' +
       '<label class="f"><span>Peso (kg)</span><input type="number" id="w_kg" value="' + f.kg + '" min="35" max="110"></label>' +
       '<label class="f"><span>Pie dominante</span><select id="w_foot"><option value="R" ' + (f.foot === 'R' ? 'selected' : '') + '>Derecho</option><option value="L" ' + (f.foot === 'L' ? 'selected' : '') + '>Izquierdo</option><option value="A" ' + (f.foot === 'A' ? 'selected' : '') + '>Ambidiestro</option></select></label>' +
@@ -110,7 +115,7 @@
     var g = function (id) { var e = document.getElementById(id); return e ? e.value : null; };
     var f = form;
     if (g('w_nm') != null) f.nm = g('w_nm'); if (g('w_ln') != null) f.ln = g('w_ln'); if (g('w_nat')) f.nat = g('w_nat'); if (g('w_city') != null) f.city = g('w_city');
-    if (g('w_age')) f.age = +g('w_age'); if (g('w_ht')) f.ht = +g('w_ht'); if (g('w_kg')) f.kg = +g('w_kg'); if (g('w_foot')) f.foot = g('w_foot'); if (g('w_pos')) f.pos = g('w_pos'); if (g('w_style')) f.style = g('w_style');
+    if (g('w_bdy')) { f.bd = { y: +g('w_bdy'), m: +g('w_bdm'), d: Math.min(+g('w_bdd'), dimOf(+g('w_bdy'), +g('w_bdm'))) }; f.age = ageOf(f.bd); } if (g('w_ht')) f.ht = +g('w_ht'); if (g('w_kg')) f.kg = +g('w_kg'); if (g('w_foot')) f.foot = g('w_foot'); if (g('w_pos')) f.pos = g('w_pos'); if (g('w_style')) f.style = g('w_style');
     if (g('w_res')) f.res = g('w_res'); if (g('w_am') != null) f.amName = g('w_am'); if (g('w_ac')) f.acName = g('w_ac');
   }
   A['st-av'] = function (d) { readForm(); if (d.k === 'rnd') form.av = UI.avRandom(); else form.av[d.k] = +d.v; Start.wizard(); };
@@ -121,18 +126,19 @@
     var lab = document.getElementById('w_v_' + a); if (lab) lab.textContent = sgn(v);
     var pill = document.querySelector('.hd .pill'); if (pill) { var left = 30 - used - v; pill.textContent = 'Puntos libres: ' + left; }
   };
-  document.addEventListener('change', function (e) { if (form && e.target.id && e.target.id.indexOf('w_') === 0 && (e.target.id === 'w_nat' || e.target.id === 'w_pos' || e.target.id === 'w_res')) { readForm(); if (e.target.id === 'w_nat' || e.target.id === 'w_res') form.acName = null; if (e.target.id === 'w_pos') form.extra = autoExtra(form.pos); Start.wizard(); } });
+  document.addEventListener('change', function (e) { if (form && e.target.id && e.target.id.indexOf('w_') === 0 && (e.target.id === 'w_nat' || e.target.id === 'w_pos' || e.target.id === 'w_res' || e.target.id === 'w_bdd' || e.target.id === 'w_bdm' || e.target.id === 'w_bdy')) { readForm(); if (e.target.id === 'w_nat' || e.target.id === 'w_res') form.acName = null; if (e.target.id === 'w_pos') form.extra = autoExtra(form.pos); Start.wizard(); } });
   A['st-create'] = function () {
     readForm();
     var f = form, nm = (f.nm + ' ' + f.ln).trim();
     if (f.nm.trim().length < 2) { UI.toast('Escribe el nombre del jugador.', 'warn'); return; }
+    if (f.age < 12 || f.age > 17) { UI.toast('Con esa fecha tendrías ' + f.age + ' años al comenzar: elige una edad entre 12 y 17.', 'warn'); return; }
     if (f.club === 'amat' && f.amName.trim().length < 3) { UI.toast('Escribe el nombre del club amateur.', 'warn'); return; }
     var used = Object.keys(f.extra).reduce(function (s, k) { return s + f.extra[k]; }, 0);
     if (used > 30) { UI.toast('Te pasaste de los 30 puntos.', 'warn'); return; }
     loading('Preparando el mundo…', 0.02);
     var seed = Math.floor(Math.random() * 2e9);
     FP.Game.buildWorld(seed, progress, Start.y0).then(function () {
-      var opts = { res: f.res, nm: nm, nat: f.nat, city: f.city, age: f.age, h: f.ht, kg: f.kg, pos: f.pos, foot: f.foot, style: f.style, extra: f.extra, av: f.av };
+      var opts = { res: f.res, nm: nm, nat: f.nat, city: f.city, age: f.age, bd: [f.bd.y, f.bd.m, f.bd.d], h: f.ht, kg: f.kg, pos: f.pos, foot: f.foot, style: f.style, extra: f.extra, av: f.av };
       if (f.dyn) { opts.ovrTarget = f.dyn.ovr; opts.pot = f.dyn.pt; }
       if (f.club === 'amat') opts.club = { kind: 'amat', name: f.amName.trim() };
       else { var c = FP.S.clubs.filter(function (c) { return c.nm === f.acName; })[0] || FP.S.clubs.filter(function (c) { return c.nm === 'Colo-Colo'; })[0]; opts.club = { kind: 'academy', id: c.id }; }
