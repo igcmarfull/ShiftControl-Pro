@@ -517,7 +517,7 @@ def find_club(row, index_pair):
 
 
 def safe_svg(b):
-    if len(b) > 400_000 or b'<!DOCTYPE' in b.upper() or b'<!ENTITY' in b.upper(): return False
+    if len(b) > 2_500_000 or b'<!DOCTYPE' in b.upper() or b'<!ENTITY' in b.upper(): return False
     try: root = ET.fromstring(b)
     except ET.ParseError: return False
     if root.tag.rsplit('}',1)[-1] != 'svg': return False
@@ -529,7 +529,8 @@ def safe_svg(b):
             v = value.lower().strip()
             if 'javascript:' in v or '@import' in v or 'url(http' in v or 'url(//' in v:
                 return False
-            if attr == 'href' and v and not v.startswith('#'): return False
+            # Se admiten solo imágenes rasterizadas incrustadas (data:image/...;base64); nada externo.
+            if attr == 'href' and v and not v.startswith('#') and not re.match(r'data:image/(png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$', v): return False
     return True
 
 
@@ -551,7 +552,7 @@ def save_one(item):
                 b = target.read_bytes()
                 if (ext == '.svg' and safe_svg(b)) or (ext == '.png' and valid_png(b)):
                     return row, target, url, source_id, 'existente'
-            b = fetch(url, limit=2_000_000, retries=1)
+            b = fetch(url, limit=2_600_000, retries=1)
             if not (safe_svg(b) if ext == '.svg' else valid_png(b)):
                 raise ValueError('Imagen no válida o no segura')
             # Si ya existe la otra extensión, se limpia tras instalar la nueva.

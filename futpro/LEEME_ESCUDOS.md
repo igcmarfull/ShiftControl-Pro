@@ -28,8 +28,8 @@ En la revisión de los dos catálogos remotos se identificaron aproximadamente *
 
 ## Descarga completa incluida (octubre 2026)
 
-Esta rama ya incluye en `assets/crests/` los escudos descargados: **1685 de 2113** clubes (ver `assets/escudos-fuentes.csv`). Los 428 restantes conservan el escudo generado: son clubes sin escudo en las dos fuentes públicas, o ficticios.
+Esta rama ya incluye en `assets/crests/` los escudos descargados: **1712 de 2113** clubes (ver `assets/escudos-fuentes.csv`). Los 401 restantes conservan el escudo generado: son clubes sin escudo en las dos fuentes públicas, o ficticios.
 
 - El instalador ahora cubre más países y ~250 equivalencias de nombres revisadas a mano.
 - Si la API de GitHub no responde, usa `git` como respaldo para listar los archivos (requiere tener `git`).
-- Algunos SVG muy pesados (>400 KB, p. ej. Sevilla) se descartan por seguridad.
+- Algunos SVG muy pesados (>2,5 MB) se descartan; los SVG con imágenes rasterizadas incrustadas (data:image) se admiten, nada externo.

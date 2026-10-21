@@ -28,7 +28,6 @@ BOL,BOL1,Gualberto Villarroel SJ,sin coincidencia de nombre en la fuente
 BRA,BRA1,Botafogo,sin coincidencia de nombre en la fuente
 BRA,BRA2,Athletic Club (MG),sin coincidencia de nombre en la fuente
 BRA,BRA2,CRB,sin coincidencia de nombre en la fuente
-BRA,BRA2,Juventude,coincide pero falló la descarga/validación
 BRA,BRA2,Novorizontino,sin coincidencia de nombre en la fuente
 BRA,BRA2,Operário-PR,sin coincidencia de nombre en la fuente
 BRA,BRA3,ABC,sin coincidencia de nombre en la fuente
@@ -41,7 +40,6 @@ BRA,BRA4,Rio Branco,sin coincidencia de nombre en la fuente
 BRA,BRA4,Sampaio Corrêa,sin coincidencia de nombre en la fuente
 BUL,BUL2,Chernomorets Burgas,sin coincidencia de nombre en la fuente
 BUL,BUL2,Fratria,sin coincidencia de nombre en la fuente
-BUL,BUL2,Litex,coincide pero falló la descarga/validación
 BUL,BUL2,Lokomotiv Gorna Oryahovitsa,sin coincidencia de nombre en la fuente
 BUL,BUL2,Maritsa Plovdiv,sin coincidencia de nombre en la fuente
 BUL,BUL2,Minyor Pernik,sin coincidencia de nombre en la fuente
@@ -50,7 +48,6 @@ BUL,BUL2,Spartak Pleven,sin coincidencia de nombre en la fuente
 BUL,BUL2,Sportist Svoge,sin coincidencia de nombre en la fuente
 BUL,BUL2,Vihren Sandanski,sin coincidencia de nombre en la fuente
 BUL,BUL2,Yantra,sin coincidencia de nombre en la fuente
-CHI,CHI2,Rangers de Talca,coincide pero falló la descarga/validación
 CHI,CHI3,Atlético Colina,sin coincidencia de nombre en la fuente
 CHI,CHI3,Brujas de Salamanca,sin coincidencia de nombre en la fuente
 CHI,CHI3,Concón National,sin coincidencia de nombre en la fuente
@@ -99,7 +96,6 @@ CRC,CRC1,Santos de Guápiles,sin coincidencia de nombre en la fuente
 CYP,CYP1,Omonia,sin coincidencia de nombre en la fuente
 CZE,CZE1,Slovácko,sin coincidencia de nombre en la fuente
 CZE,CZE1,České Budějovice,sin coincidencia de nombre en la fuente
-CZE,CZE2,Dynamo České Budějovice,sin coincidencia de nombre en la fuente
 CZE,CZE2,FC Vlašim,sin coincidencia de nombre en la fuente
 CZE,CZE2,Jihlava,sin coincidencia de nombre en la fuente
 CZE,CZE2,SK Prostějov,sin coincidencia de nombre en la fuente
@@ -121,18 +117,11 @@ ECU,ECU2,San Antonio,sin coincidencia de nombre en la fuente
 ECU,ECU2,Vargas Torres,sin coincidencia de nombre en la fuente
 ENG,ENG2,Ipswich Town,sin coincidencia de nombre en la fuente
 ENG,ENG2,Leicester City,sin coincidencia de nombre en la fuente
-ENG,ENG2,West Bromwich Albion,coincide pero falló la descarga/validación
-ENG,ENG4,Milton Keynes Dons,coincide pero falló la descarga/validación
-ENG,ENG5,Altrincham,coincide pero falló la descarga/validación
-ENG,ENG5,Braintree Town,coincide pero falló la descarga/validación
 ESP,ESP1,Alavés,sin coincidencia de nombre en la fuente
-ESP,ESP1,Getafe,coincide pero falló la descarga/validación
-ESP,ESP1,Sevilla,coincide pero falló la descarga/validación
 ESP,ESP2,Sporting de Gijón,sin coincidencia de nombre en la fuente
 ESP,ESP3,CP Cacereño,sin coincidencia de nombre en la fuente
 ESP,ESP3,Real Madrid Castilla,sin coincidencia de nombre en la fuente
 ESP,ESP4,FC Barcelona Atlètic,sin coincidencia de nombre en la fuente
-ESP,ESP4,Sestao River,coincide pero falló la descarga/validación
 ESP,ESP4,UD Melilla,sin coincidencia de nombre en la fuente
 FIN,FIN1,HJK,sin coincidencia de nombre en la fuente
 FIN,FIN1,SJK,sin coincidencia de nombre en la fuente
@@ -140,12 +129,10 @@ FIN,FIN2,EIF,sin coincidencia de nombre en la fuente
 FIN,FIN2,MP Mikkeli,sin coincidencia de nombre en la fuente
 FIN,FIN2,PS Kemi,sin coincidencia de nombre en la fuente
 FIN,FIN2,Reipas,sin coincidencia de nombre en la fuente
-FRA,FRA2,Troyes,coincide pero falló la descarga/validación
 FRA,FRA3,Bourg-en-Bresse 01,sin coincidencia de nombre en la fuente
 FRA,FRA3,Le Puy,sin coincidencia de nombre en la fuente
 FRA,FRA3,Sochaux,sin coincidencia de nombre en la fuente
 GER,GER1,1. FC Köln,sin coincidencia de nombre en la fuente
-GER,GER3,Erzgebirge Aue,coincide pero falló la descarga/validación
 GER,GER3,Rot-Weiss Essen,sin coincidencia de nombre en la fuente
 GER,GER3,SSV Ulm 1846,sin coincidencia de nombre en la fuente
 GER,GER3,VfL Osnabrück,sin coincidencia de nombre en la fuente
@@ -243,9 +230,7 @@ JAM,JAM1,Vere United,sin coincidencia de nombre en la fuente
 JAM,JAM1,Waterhouse,sin coincidencia de nombre en la fuente
 JPN,JPN3,Azul Claro Numazu,sin coincidencia de nombre en la fuente
 JPN,JPN3,Iwate Grulla Morioka,sin coincidencia de nombre en la fuente
-JPN,JPN3,Nara Club,coincide pero falló la descarga/validación
 KOR,KOR2,Gimhae FC,sin coincidencia de nombre en la fuente
-MAR,MAR1,AS FAR,coincide pero falló la descarga/validación
 MAR,MAR1,Difaâ El Jadida,sin coincidencia de nombre en la fuente
 MAR,MAR1,FUS Rabat,sin coincidencia de nombre en la fuente
 MAR,MAR1,Mouloudia Oujda,sin coincidencia de nombre en la fuente
@@ -278,7 +263,6 @@ PER,PER2,Deportivo Coopsol,sin coincidencia de nombre en la fuente
 PER,PER2,Deportivo Llacuabamba,sin coincidencia de nombre en la fuente
 PER,PER2,Pirata FC,sin coincidencia de nombre en la fuente
 PER,PER2,Santos de Nasca,sin coincidencia de nombre en la fuente
-POL,POL2,Polonia Bytom,coincide pero falló la descarga/validación
 POL,POL3,Chojniczanka Chojnice,sin coincidencia de nombre en la fuente
 POL,POL3,Gwardia Koszalin,sin coincidencia de nombre en la fuente
 POL,POL3,Kotwica Kołobrzeg,sin coincidencia de nombre en la fuente
@@ -294,13 +278,11 @@ POL,POL3,Wisła Puławy,sin coincidencia de nombre en la fuente
 POL,POL3,Zagłębie Sosnowiec,sin coincidencia de nombre en la fuente
 POR,POR1,AVS,sin coincidencia de nombre en la fuente
 POR,POR1,Vitória SC,sin coincidencia de nombre en la fuente
-POR,POR2,Académico de Viseu,sin coincidencia de nombre en la fuente
 POR,POR3,1.º Dezembro,sin coincidencia de nombre en la fuente
 POR,POR3,Atlético CP,sin coincidencia de nombre en la fuente
 POR,POR3,Lusitano GC,sin coincidencia de nombre en la fuente
 POR,POR3,União de Santarém,sin coincidencia de nombre en la fuente
 POR,POR3,Vitória SC B,sin coincidencia de nombre en la fuente
-QAT,QAT2,Al Kharaitiyat,coincide pero falló la descarga/validación
 QAT,QAT2,Al Mesaimeer B,sin coincidencia de nombre en la fuente
 ROU,ROU2,ASA Târgu Mureș,sin coincidencia de nombre en la fuente
 ROU,ROU2,Bihor Oradea,sin coincidencia de nombre en la fuente
@@ -320,7 +302,6 @@ RUS,RUS1,Nizhny Novgorod,sin coincidencia de nombre en la fuente
 RUS,RUS2,Alania,sin coincidencia de nombre en la fuente
 RUS,RUS2,Tom Tomsk,sin coincidencia de nombre en la fuente
 RUS,RUS2,Volgar,sin coincidencia de nombre en la fuente
-SCO,SCO2,Greenock Morton,coincide pero falló la descarga/validación
 SLV,SLV1,Alianza,sin coincidencia de nombre en la fuente
 SLV,SLV1,Atlético Marte,sin coincidencia de nombre en la fuente
 SLV,SLV1,Firpo,sin coincidencia de nombre en la fuente
@@ -329,7 +310,6 @@ SLV,SLV1,Municipal Limeño,sin coincidencia de nombre en la fuente
 SLV,SLV1,Águila,sin coincidencia de nombre en la fuente
 SRB,SRB1,Borac Čačak,sin coincidencia de nombre en la fuente
 SRB,SRB1,IMT Beograd,sin coincidencia de nombre en la fuente
-SRB,SRB1,Javor Ivanjica,coincide pero falló la descarga/validación
 SRB,SRB2,Dubočica,sin coincidencia de nombre en la fuente
 SRB,SRB2,Grafičar,sin coincidencia de nombre en la fuente
 SRB,SRB2,Inđija,sin coincidencia de nombre en la fuente
@@ -404,7 +384,6 @@ UAE,UAE2,Fujairah,sin coincidencia de nombre en la fuente
 UAE,UAE2,Gulf United,sin coincidencia de nombre en la fuente
 UAE,UAE2,Hatta,sin coincidencia de nombre en la fuente
 UAE,UAE2,Masafi,sin coincidencia de nombre en la fuente
-UKR,UKR1,Chornomorets Odesa,coincide pero falló la descarga/validación
 UKR,UKR2,Kremin Kremenchuk,sin coincidencia de nombre en la fuente
 UKR,UKR2,Mynai,sin coincidencia de nombre en la fuente
 UKR,UKR2,Skala 1911,sin coincidencia de nombre en la fuente
@@ -414,16 +393,10 @@ URU,URU2,Colón (URU),sin coincidencia de nombre en la fuente
 URU,URU2,Huracán,sin coincidencia de nombre en la fuente
 USA,USA1,LAFC,sin coincidencia de nombre en la fuente
 USA,USA2,Memphis 901,sin coincidencia de nombre en la fuente
-USA,USA2,Sacramento Republic,coincide pero falló la descarga/validación
-UZB,UZB1,Bunyodkor,coincide pero falló la descarga/validación
 UZB,UZB1,Mash'al,sin coincidencia de nombre en la fuente
-UZB,UZB1,Nasaf,coincide pero falló la descarga/validación
-UZB,UZB1,Qizilqum,coincide pero falló la descarga/validación
 UZB,UZB2,Aral Nukus,sin coincidencia de nombre en la fuente
-UZB,UZB2,Metallurg Bekabad,coincide pero falló la descarga/validación
 UZB,UZB2,Olimpik Toshkent,sin coincidencia de nombre en la fuente
 UZB,UZB2,Sirdaryo,sin coincidencia de nombre en la fuente
 UZB,UZB2,Turon Yaypan,sin coincidencia de nombre en la fuente
 UZB,UZB2,Yangiyer,sin coincidencia de nombre en la fuente
 UZB,UZB2,Zomin,sin coincidencia de nombre en la fuente
-WAL,WAL1,Barry Town United,coincide pero falló la descarga/validación

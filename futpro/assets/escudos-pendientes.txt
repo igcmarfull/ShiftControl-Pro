@@ -1,4 +1,3 @@
-CHI - Rangers de Talca
 CHI - Santiago Morning
 CHI - Lota Schwager
 CHI - Provincial Osorno
@@ -42,7 +41,6 @@ ARG - Midland
 ARG - Acassuso
 ARG - Ciudad de Bolívar
 BRA - Botafogo
-BRA - Juventude
 BRA - Novorizontino
 BRA - CRB
 BRA - Operário-PR
@@ -96,29 +94,21 @@ ECU - Vargas Torres
 BOL - Gualberto Villarroel SJ
 ENG - Leicester City
 ENG - Ipswich Town
-ENG - West Bromwich Albion
-ENG - Milton Keynes Dons
-ESP - Sevilla
-ESP - Getafe
 ESP - Alavés
 ESP - Sporting de Gijón
 ESP - Real Madrid Castilla
 ESP - CP Cacereño
 ESP - FC Barcelona Atlètic
-ESP - Sestao River
 ESP - UD Melilla
 GER - 1. FC Köln
 GER - VfL Osnabrück
-GER - Erzgebirge Aue
 GER - Rot-Weiss Essen
 GER - SSV Ulm 1846
-FRA - Troyes
 FRA - Le Puy
 FRA - Sochaux
 FRA - Bourg-en-Bresse 01
 POR - Vitória SC
 POR - AVS
-POR - Académico de Viseu
 POR - Atlético CP
 POR - 1.º Dezembro
 POR - União de Santarém
@@ -127,7 +117,6 @@ POR - Vitória SC B
 NED - Jong AZ
 NED - Jong PSV
 BEL - Charleroi
-SCO - Greenock Morton
 TUR - İstanbul Başakşehir
 TUR - Amedspor
 GRE - OFI Crete
@@ -148,13 +137,11 @@ NOR - Åsane
 NOR - Strømmen
 NOR - Lyn
 NOR - Egersund
-POL - Polonia Bytom
 CZE - Slovácko
 CZE - České Budějovice
 CZE - FC Vlašim
 CZE - SK Prostějov
 CZE - Jihlava
-CZE - Dynamo České Budějovice
 USA - LAFC
 MEX - Atlético La Paz
 MEX - Tampico Madero
@@ -164,12 +151,10 @@ CRC - Pérez Zeledón
 CRC - Santos de Guápiles
 CRC - Limón FC
 CRC - Municipal Grecia
-JPN - Nara Club
 JPN - Azul Claro Numazu
 JPN - Iwate Grulla Morioka
 KOR - Gimhae FC
 CHN - Shenzhen Peng City
-MAR - AS FAR
 MAR - FUS Rabat
 MAR - Difaâ El Jadida
 MAR - Rapide Oued Zem
@@ -199,7 +184,6 @@ HRV - Jarun
 HRV - Opatija
 HRV - Orijent 1919
 SRB - IMT Beograd
-SRB - Javor Ivanjica
 SRB - Borac Čačak
 SRB - Jedinstvo Ub
 SRB - Zlatibor Čajetina
@@ -247,9 +231,7 @@ BUL - Chernomorets Burgas
 BUL - Vihren Sandanski
 BUL - Lokomotiv Gorna Oryahovitsa
 BUL - Spartak Pleven
-BUL - Litex
 BUL - Sozopol
-UKR - Chornomorets Odesa
 UKR - Skala 1911
 UKR - Kremin Kremenchuk
 UKR - Mynai
@@ -265,7 +247,6 @@ ISR - Maccabi Jaffa
 ISR - Hapoel Ashkelon
 ISR - Beitar Tel Aviv Bat Yam
 CYP - Omonia
-WAL - Barry Town United
 FIN - HJK
 FIN - SJK
 FIN - PS Kemi
@@ -340,11 +321,7 @@ GRE - Ethnikos Piraeus
 GRE - Niki Volos
 GRE - Apollon Larissa
 GRE - Ethnikos Asteras
-ENG - Altrincham
-ENG - Braintree Town
-USA - Sacramento Republic
 USA - Memphis 901
-QAT - Al Kharaitiyat
 QAT - Al Mesaimeer B
 UAE - Shabab Al Ahli
 UAE - Al Wasl
@@ -381,14 +358,10 @@ IRN - Ario Eslamshahr
 IRN - Naft Va Gaz Gachsaran
 IRN - Chooka Talesh
 IRN - Shahrdari Astara
-UZB - Bunyodkor
-UZB - Nasaf
-UZB - Qizilqum
 UZB - Mash'al
 UZB - Yangiyer
 UZB - Sirdaryo
 UZB - Zomin
-UZB - Metallurg Bekabad
 UZB - Turon Yaypan
 UZB - Aral Nukus
 UZB - Olimpik Toshkent
