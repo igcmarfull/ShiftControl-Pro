@@ -67,17 +67,21 @@
   };
 
   // ---------- representados: ofertas múltiples ----------
+  Y.offersFor = function (q, su) {
+    var cur = q.c >= 0 ? FP.S.clubs[q.c] : null;
+    return (su || G.suitors(q)).map(function (c) {
+      var role = q.o >= c.st + 1 ? 'titular indiscutido' : q.o >= c.st - 3 ? 'titular' : 'rotación';
+      var wage = Math.round(P.wageEst(q) * (0.9 + R() * 0.6) * (c.st > (cur ? cur.st : 0) ? 1.15 : 1)), fee = Math.round(C.value(q.o, q.pt, C.age(q)) * (0.85 + R() * 0.3));
+      return { club: c.id, role: role, wage: wage, fee: fee, comm: G.comm(q, c, fee) };
+    });
+  };
   var ge0 = G.events;
   G.events = function (cl, q, y) {
     var st = Dec.ensure(), n0 = st ? st.list.length : 0, r = ge0.apply(this, arguments);
     var d = st && st.list.filter(function (x) { return x.kind === 'agente' && x.uniq === 'oferta' + cl.pid + y; })[0];
     if (!d) return r;
     var su = G.suitors(q); if (su.length < 2) return r;
-    var cur = q.c >= 0 ? FP.S.clubs[q.c] : null, offers = su.map(function (c) {
-      var role = q.o >= c.st + 1 ? 'titular indiscutido' : q.o >= c.st - 3 ? 'titular' : 'rotación';
-      var wage = Math.round(P.wageEst(q) * (0.9 + R() * 0.6) * (c.st > (cur ? cur.st : 0) ? 1.15 : 1)), fee = Math.round(C.value(q.o, q.pt, C.age(q)) * (0.85 + R() * 0.3));
-      return { club: c.id, role: role, wage: wage, fee: fee, comm: G.comm(q, c, fee) };
-    });
+    var cur = q.c >= 0 ? FP.S.clubs[q.c] : null, offers = Y.offersFor(q, su);
     st.list = st.list.filter(function (x) { return x !== d; });
     Dec.add({ kind: 'agente', uniq: d.uniq, title: 'Ofertas por ' + q.n, text: offers.length + ' clubes quieren a ' + q.n + ' (' + q.o + ', ' + C.age(q) + ' años). Hoy juega en ' + (cur ? cur.nm : 'ningún club') + '. Tú negocias.', def: 'rechazar', exp: 24, data: { pid: cl.pid, kind: 'oferta', multi: 1, offers: offers },
       opts: offers.map(function (o, i) { var c = FP.S.clubs[o.club]; return { k: 'o' + i, label: c.nm + ' (' + FP.LGDEF[c.lg].n + ')', hint: 'Sueldo ' + fm(o.wage) + '/año · ' + o.role + ' · tu comisión ' + fm(o.comm) }; }).concat([{ k: 'negociar', label: 'Poner a licitar a los clubes', hint: 'Puedes conseguir mejores condiciones… o perderlas todas.' }, { k: 'rechazar', label: 'Rechazar todas', hint: q.n + ' se queda.' }]) });
@@ -103,6 +107,32 @@
     }
     var o = dt.offers[+k.slice(1)]; return o ? close(o, 1) : { ok: true, msg: '' };
   };
+
+  // ---------- protegido: cambios de club ----------
+  // un protegido ya profesional recibe ofertas cuando su contrato termina, cuando supera a su club o, a veces, sin más
+  Y.protMoves = function () {
+    var S = FP.S, pr = M && M.get(), q = pr && M.player(); if (!pr || !q || q.c < 0 || q.c >= 5000) return;
+    var age = C.age(q), cur = S.clubs[q.c], y = D.year(S.week); if (age < 17 || Dec.open('protegido').some(function (d) { return d.data.mt; })) return;
+    var ending = q.ce <= y + 1 && age >= 18, outgrown = q.o >= cur.st + 3 && age >= 18;
+    if (!(ending || outgrown || R() < 0.12)) return;
+    var su = G.suitors(q).slice(0, 3); if (!su.length) return;
+    var offers = Y.offersFor(q, su);
+    Dec.add({ kind: 'protegido', uniq: 'mt' + q.i + y, title: q.n + ' recibe ofertas', text: (ending ? 'Su contrato con ' + cur.nm + ' termina pronto. ' : outgrown ? 'Ya está por encima del nivel de ' + cur.nm + '. ' : '') + su.length + (su.length === 1 ? ' club se interesa' : ' clubes se interesan') + ' por él. Pide tu consejo' + ((ending || outgrown) ? '; si no respondes, acepta la mejor oferta.' : '.'), def: (ending || outgrown) ? 'o0' : 'quedarse', exp: 24, data: { pid: q.i, mt: 1, offers: offers },
+      opts: offers.map(function (o, i) { var c = S.clubs[o.club]; return { k: 'o' + i, label: c.nm + ' (' + FP.LGDEF[c.lg].n + ')', hint: 'Sueldo ' + fm(o.wage) + '/año · ' + o.role }; }).concat([{ k: 'quedarse', label: 'Que siga en ' + cur.nm, hint: 'Más estabilidad; sube el vínculo contigo.' }]) });
+  };
+  var ph0 = Dec.handlers.protegido;
+  Dec.handlers.protegido = function (k, d) {
+    var dt = d.data || {};
+    if (!dt.mt) return ph0.apply(this, arguments);
+    var S = FP.S, pr = M.get(), q = S.pl[dt.pid]; if (!pr || !q || typeof q !== 'object' || pr.pid !== q.i) return { ok: true, msg: '' };
+    if (k === 'quedarse') { pr.bond = Math.min(100, pr.bond + 3); if (q.ce <= D.year(S.week) + 1) q.ce = D.year(S.week) + U.int(2, 4); return { ok: true, msg: q.n + ' sigue en su club.' }; }
+    var o = dt.offers[+k.slice(1)]; if (!o) return { ok: true, msg: '' };
+    var club = S.clubs[o.club]; G.move(q, club.id); pr.club = club.id; pr.bond = Math.min(100, pr.bond + (o.role === 'rotación' ? -2 : 4));
+    hist(q.n + ' ficha por ' + club.nm + ' con tu consejo (' + o.role + ').'); FP.Sim.news(q.n + ' ficha por ' + club.nm + '.', 'transfer', 1);
+    return { ok: true, msg: q.n + ' ficha por ' + club.nm + ' (' + o.role + ').' };
+  };
+  var my0 = M.yearTick;
+  M.yearTick = function () { var r = my0.apply(this, arguments); try { Y.protMoves(); } catch (e) { if (window.console) console.warn('proyectos', e); } return r; };
 
   // ---------- jugadores seguidos en tu club ----------
   Y.myClub = function () {

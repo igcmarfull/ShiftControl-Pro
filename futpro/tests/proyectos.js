@@ -53,6 +53,15 @@ t('K.ctx lleva a los favoritos', K.ctx({ comp: { kind: 'L' }, f: {}, home: true 
 Y.toggleFav(far.i); t('quitar el favorito', !Y.fav()[far.i]);
 pa.job = null; t('sin cargo no hay club', Y.myClub() === null && !!Y.canSign(far.i));
 
+// --- protegido: cambios de club ---
+var son0 = FP.Mentor.createSon(); son0.b = S.week - Math.round(20 * 52.18); son0.o = 74; son0.pt = 82; son0.p = 'CM';
+var c2 = S.clubs.filter(function (c) { return c.c === h.nat && FP.LGDEF[c.lg].t === 2; })[0]; FP.Agency.move(son0, c2.id); son0.ce = FP.Date.year(S.week);
+var pr0 = FP.Mentor.get(); var mt = null;
+for (var q2 = 0; q2 < 30 && !mt; q2++) { FP.Proy.protMoves(); mt = Dec.open('protegido').filter(function (d) { return d.data.mt; })[0]; }
+t('el protegido recibe ofertas de traspaso', !!mt && mt.data.offers.length >= 1 && mt.opts.some(function (o) { return o.k === 'quedarse'; }));
+if (mt) { var cb = son0.c, b0 = pr0.bond; Dec.resolve(mt.id, 'o0'); t('acepta y cambia de club', son0.c !== cb && son0.c === mt.data.offers[0].club && pr0.club === son0.c); }
+Dec.open('protegido').forEach(function (d) { Dec.resolve(d.id, 'quedarse'); });
+FP.Mentor.release();
 // --- dinastía ---
 var son = FP.Mentor.createSon(); son.b = S.week - Math.round(16 * 52.18); son.o = 66; son.pt = 83; son.p = 'ST';
 var dy = Y.dynasty(); t('datos de dinastía del hijo', dy && dy.age === 16 && dy.ovr === 66 && dy.pt === 83 && dy.nat === h.nat && dy.last && dy.first, JSON.stringify(dy));
