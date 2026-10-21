@@ -257,7 +257,7 @@
       var years = age < 20 ? U.int(3, 5) : age < 30 ? U.int(2, 4) : U.int(1, 2);
       var fee = Math.round(val * (0.8 + R() * 0.45));
       if (freeAgent || (h.contract && D.of(h.contract.end, 5, 30) < S.week + 20)) fee = 0;
-      var text = club2.nm + ' (' + C.cname(club2.c) + ', ' + FP.LGDEF[club2.lg].n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + FP.fmt.money(wage) + ' al año' + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).');
+      var text = club2.nm + ' (' + C.cname(club2.c) + ', ' + FP.LGDEF[club2.lg].n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + (FP.Wages ? FP.Wages.fmt(wage) : FP.fmt.money(wage) + ' al año') + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).');
       Market.addOffer({ type: 'transfer', club: club2.id, fee: fee, wage: wage, years: years, role: role, text: text, exp: S.week + (freeAgent ? 6 : 5) });
     }
     // cesiones: jugadores profesionales de club grande sin minutos

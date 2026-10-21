@@ -14,7 +14,7 @@
   function termsGrid(t, o, noBonus) {
     var cells = [
       ['Sueldo mensual', t.wage ? money(K.monthly(t.wage)) : 'Sin sueldo'],
-      ['Sueldo anual', t.wage ? money(t.wage) : '—'],
+      ['Sueldo anual', t.wage ? money(t.wage) + (FP.Wages ? ' (' + money(FP.Wages.monthly(t.wage)) + ' al mes)' : '') : '—'],
       ['Duración', K.durLabel(t.startW, t.endW)],
       ['Inicio', K.fmtDate(t.startW)],
       ['Término', t.endW != null ? K.fmtDate(t.endW) : String(t.endY)],

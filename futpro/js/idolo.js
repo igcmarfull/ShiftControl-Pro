@@ -183,7 +183,7 @@
     if (!cand.length || R() > 0.45) return;
     var id = cand.sort(function (a, b) { return Id.pts(b) - Id.pts(a); })[0], club = S.clubs[id], val = M.heroValue(), ending = h.contract && h.contract.endW != null && h.contract.endW - S.week < 40 || h.tk === 'free';
     var role = h.ovr >= club.st - 3 ? 'Titular' : 'Rotación', wage = M.wageFor(club, role === 'Titular' ? 1.1 : 0.95), years = age < 30 ? U.int(2, 3) : U.int(1, 2), fee = ending ? 0 : Math.round(val * (0.6 + R() * 0.3));
-    M.addOffer({ type: 'transfer', club: id, fee: fee, wage: wage, years: years, role: role, ido: 1, text: club.nm + ' quiere que vuelvas: sigues siendo ' + Id.label(Id.pts(id)).toLowerCase() + ' del club. ' + role + ', ' + years + ' años, ' + FP.fmt.money(wage) + ' al año' + (fee ? ', traspaso ' + FP.fmt.money(fee) : '') + '.', exp: S.week + 8 });
+    M.addOffer({ type: 'transfer', club: id, fee: fee, wage: wage, years: years, role: role, ido: 1, text: club.nm + ' quiere que vuelvas: sigues siendo ' + Id.label(Id.pts(id)).toLowerCase() + ' del club. ' + role + ', ' + years + ' años, ' + (FP.Wages ? FP.Wages.fmt(wage) : FP.fmt.money(wage) + ' al año') + (fee ? ', traspaso ' + FP.fmt.money(fee) : '') + '.', exp: S.week + 8 });
   };
 
   // ---------- retiro: homenaje, salón del club y puesto en el club ----------

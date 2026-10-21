@@ -200,7 +200,7 @@
         M.addOffer({ type: 'precontract', club: club.id, fee: 0, pre: h.contract.endW + 1, exp: h.contract.endW - 2, why: e.why });
         e.v = Math.max(20, e.v - 25); return;
       }
-      var lg = clubTier(club), txt = club.nm + ' (' + C.cname(club.c) + ', ' + lg.n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + FP.fmt.money(wage) + ' al año' + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).') + (lower ? ' Ofrece mejor sueldo, pero compite en un nivel menor.' : '');
+      var lg = clubTier(club), txt = club.nm + ' (' + C.cname(club.c) + ', ' + lg.n + ') quiere ficharte: ' + role.toLowerCase() + ', ' + years + ' años, ' + (FP.Wages ? FP.Wages.fmt(wage) : FP.fmt.money(wage) + ' al año') + (fee ? ', traspaso ' + FP.fmt.money(fee) + '.' : ' (agente libre).') + (lower ? ' Ofrece mejor sueldo, pero compite en un nivel menor.' : '');
       M.addOffer({ type: 'transfer', club: club.id, fee: fee, wage: wage, years: years, role: role, text: txt, exp: w + (freeAgent ? 6 : 5), why: e.why, lower: lower ? 1 : 0, urgent: f.need >= 1 ? 1 : 0 });
       e.v = Math.max(20, e.v - 25);
     });
@@ -335,7 +335,7 @@
     if (R() < p) {
       if (askW) o.wage = Math.round(o.wage * (1 + askW));
       if (askY) o.years = U.clamp(o.years + askY, 1, 5);
-      o.text = o.text.replace(/\d+ años, [^.]*al año/, o.years + ' años, ' + FP.fmt.money(o.wage) + ' al año');
+      o.text = o.text.replace(/\d+ años, [^.]*?al año( \([^)]*al mes\))?/, o.years + ' años, ' + (FP.Wages ? FP.Wages.fmt(o.wage) : FP.fmt.money(o.wage) + ' al año'));
       o.exp = Math.max(o.exp || 0, S.week + 2);
       return { ok: true, msg: 'El club aceptó tu contrapropuesta.' };
     }

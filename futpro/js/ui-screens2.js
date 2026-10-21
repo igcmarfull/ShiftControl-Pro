@@ -219,7 +219,7 @@
     var html = '<h1>Contratos</h1><div class="grid g2"><div class="card"><h3>Contrato actual</h3>';
     if (ct && h.club != null) {
       var club = S.clubs[h.club], endW = FP.Market.contractEndWeek(ct, FP.LGDEF[club.lg].cal);
-      html += '<dl class="kv"><dt>Club</dt><dd>' + UI.club(h.club) + '</dd><dt>Tipo</dt><dd>' + ({ juvenil: 'Juvenil (cantera)', prof: 'Profesional', cesion: 'Cesión' }[ct.type] || ct.type) + '</dd><dt>Sueldo anual</dt><dd>' + (ct.wage ? UI.money(ct.wage) : 'sin sueldo') + '</dd><dt>Vence</dt><dd>' + (h.tk === 'loan' ? 'fin de la cesión' : ct.end + ' (' + D.fmt(endW) + ')') + '</dd><dt>Valor de mercado</dt><dd>' + UI.money(FP.Market.heroValue()) + '</dd><dt>Dinero acumulado</dt><dd>' + UI.money(h.money) + '</dd></dl>';
+      html += '<dl class="kv"><dt>Club</dt><dd>' + UI.club(h.club) + '</dd><dt>Tipo</dt><dd>' + ({ juvenil: 'Juvenil (cantera)', prof: 'Profesional', cesion: 'Cesión' }[ct.type] || ct.type) + '</dd><dt>Sueldo anual</dt><dd>' + (ct.wage ? UI.money(ct.wage) + (FP.Wages ? ' <span class="mut sm">(' + FP.fmt.money(FP.Wages.monthly(ct.wage)) + ' al mes)</span>' : '') : 'sin sueldo') + '</dd><dt>Vence</dt><dd>' + (h.tk === 'loan' ? 'fin de la cesión' : ct.end + ' (' + D.fmt(endW) + ')') + '</dd><dt>Valor de mercado</dt><dd>' + UI.money(FP.Market.heroValue()) + '</dd><dt>Dinero acumulado</dt><dd>' + UI.money(h.money) + '</dd></dl>';
       html += '<div class="btn-group" style="margin-top:.7rem"><button class="btn sm dng" data-act="reqtrans">Solicitar salida</button></div>';
       if (h.tk === 'loan' && h.loan) html += '<p class="mut sm">Cedido por ' + UI.club(h.loan.from) + '.</p>';
     } else if (h.tk === 'amat') html += '<p class="mut">Juegas en un club amateur: no hay contrato ni sueldo.</p>';

@@ -1,8 +1,6 @@
-/* FUTPRO — sueldos realistas: cada liga paga distinto y dentro de la liga los clubes ricos pagan más.
-   sueldo = valor del jugador (con su curva) × escala de la liga × factor de economía del club.
-   La escala de cada liga se calibra con el mundo del propio juego: el sueldo MEDIO de un jugador de la liga coincide con una referencia
-   (REF, en M€ por año) usando el valor medio real de sus plantillas. Así no importa cuánto valgan los jugadores simulados: la liga paga
-   lo que debe y los jugadores caros ganan más que los baratos. Las referencias son aproximaciones de diseño (de memoria), no datos oficiales.
+/* FUTPRO — sueldos realistas: cada club tiene una masa salarial y el jugador cobra su parte según su valor.
+   masa del club = sueldo medio de su liga (REF, M€ al año) × 25 jugadores × presupuesto relativo del club (BUDGET si es conocido; si no, valor de su plantilla y economía),
+   normalizado para que la media de la liga sea la referencia. Un grande de Chile paga más que un club de Primera B, y nadie cobra más del 15 % de la masa. Las referencias son aproximaciones de diseño (de memoria), no datos oficiales.
    Cambia solo cómo se calculan sueldos de ofertas, renovaciones y representados; no modifica partidos, valores ni el guardado. */
 (function () {
   'use strict';
@@ -26,37 +24,66 @@
     return Math.max(0.005, top * (TIERX[def.t] || 0.01));
   };
   // curva de sueldo con el valor del jugador (k€): crece algo menos que el valor
-  W.ALPHA = 0.9;       // el sueldo crece menos que el valor: las figuras ganan más, pero no en proporción al precio
-  function curve(v) { return 0.2 * Math.pow(Math.max(v, 5), W.ALPHA); }
-  // clubes ricos pagan más por el mismo jugador: economía 1-10 → ×0,55 a ×1,45
-  W.finFactor = function (club) { return 0.45 + 0.1 * U.clamp(club.fin || 5, 1, 10); };
+  W.ALPHA = 0.9;
+  function curve(v) { return Math.pow(Math.max(v, 5), W.ALPHA); }
 
-  var cache = { key: null, idx: {} };
+  // presupuesto salarial relativo de los clubes más conocidos (1 = club típico de su liga; aproximaciones de diseño, no cifras oficiales).
+  // El resto de los clubes se deduce del valor de su plantilla y de su economía (ver idx)
+  W.BUDGET = {
+    'Colo-Colo': 2.6, 'Universidad de Chile': 2.7, 'Universidad Católica': 2.3, 'Coquimbo Unido': 1.0, 'Palestino': 0.9, 'Huachipato': 0.9, 'O\'Higgins': 0.8, 'Cobresal': 0.7, 'Audax Italiano': 0.8, 'Everton de Viña del Mar': 0.8,
+    'Unión Española': 1.6, 'Cobreloa': 1.4, 'Santiago Wanderers': 1.3, 'Deportes Iquique': 1.0, 'Deportes Antofagasta': 1.0,
+    'Boca Juniors': 3.2, 'River Plate': 3.6, 'Racing Club': 2.0, 'Independiente': 1.8, 'San Lorenzo': 1.5, 'Estudiantes de La Plata': 1.4, 'Vélez Sarsfield': 1.4, 'Rosario Central': 1.3,
+    'Flamengo': 3.4, 'Palmeiras': 3.4, 'Corinthians': 2.2, 'São Paulo': 2.3, 'Botafogo': 2.4, 'Fluminense': 1.8, 'Atlético Mineiro': 2.0, 'Internacional': 1.8, 'Grêmio': 1.8,
+    'América': 2.4, 'Monterrey': 2.2, 'Tigres UANL': 2.4, 'Guadalajara': 1.8, 'Cruz Azul': 1.7, 'Pumas UNAM': 1.4
+  };
+  var BPY = 25;        // jugadores que se reparten la masa salarial
+
+  var cache = { key: null, clubs: {}, lg: {}, sq: {} };
   function yearKey() { return FP.S.seed + '|' + D.year(FP.S.week); }
-  // escala de la liga: la que hace que el sueldo medio del plantel sea la referencia
-  W.leagueScale = function (lgId) {
-    var key = yearKey(); if (cache.key !== key) cache = { key: key, idx: {} };
-    if (cache.idx[lgId] != null) return cache.idx[lgId];
-    var S = FP.S, sum = 0, n = 0;
-    S.clubs.forEach(function (c) {
-      if (c.lg !== lgId) return; var ff = W.finFactor(c);
-      (S.ro[c.id] || []).forEach(function (p) { if (p.i === 0) return; sum += curve(C.value(p.o, p.pt, C.age(p))) * ff; n++; });
+  function fresh() { var k = yearKey(); if (cache.key !== k) cache = { key: k, clubs: {}, lg: {}, sq: {} }; }
+  function squadValue(c) { return (FP.S.ro[c.id] || []).reduce(function (a, p) { return p.i === 0 ? a : a + C.value(p.o, p.pt, C.age(p)); }, 0); }
+  // presupuesto relativo de cada club de una liga, normalizado a media 1 (así el sueldo medio de la liga es siempre la referencia)
+  function leagueIdx(lgId) {
+    if (cache.lg[lgId]) return cache.lg[lgId];
+    var cl = FP.S.clubs.filter(function (c) { return c.lg === lgId; }), sv = cl.map(squadValue), mean = sv.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, cl.length) || 1, raw = {}, sum = 0;
+    cl.forEach(function (c, i) {
+      var r = W.BUDGET[c.nm];
+      if (r == null) r = Math.pow(Math.max(sv[i], mean * 0.1) / mean, 0.5) * (0.8 + 0.04 * U.clamp(c.fin || 5, 1, 10));
+      raw[c.id] = r; sum += r;
     });
-    var mean = n ? sum / n : 0, s = mean > 0 ? W.ref(lgId) * 1000 / mean : 1;       // la referencia está en M€; el sueldo, en k€
-    return cache.idx[lgId] = U.clamp(s, 0.02, 400);
+    var m = sum / Math.max(1, cl.length) || 1, out = {}; cl.forEach(function (c) { out[c.id] = raw[c.id] / m; });
+    return cache.lg[lgId] = out;
+  }
+  // masa salarial anual del club (k€)
+  W.bill = function (club) {
+    fresh(); if (cache.clubs[club.id] != null) return cache.clubs[club.id];
+    var idx = leagueIdx(club.lg)[club.id] || 1;
+    return cache.clubs[club.id] = W.ref(club.lg) * 1000 * BPY * idx;
   };
-  // sueldo anual (k€) de un jugador de ese valor (k€) en ese club
-  // sueldo mínimo de la liga (10 % del sueldo medio) y techo de cordura (dos veces el valor del jugador al año: en ligas
-  // donde los valores simulados son muy bajos, la figura de la liga cobra por encima de su valor, como los jugadores franquicia)
+  // suma de las curvas de la plantilla, sin el jugador (para repartir la masa); se mezcla con la media de la liga para que un club
+  // con una estrella no pague menos por el resto de la plantilla que uno sin ella
+  function rawCurve(club) {
+    var s = 0, n = 0; (FP.S.ro[club.id] || []).forEach(function (p) { if (p.i === 0) return; s += curve(C.value(p.o, p.pt, C.age(p))); n++; });
+    if (n < 18) { var avg = n ? s / n : curve(300); s += (BPY - 1 - n) * avg; }
+    return s;
+  }
+  function squadCurve(club) {
+    fresh(); if (cache.sq[club.id] != null) return cache.sq[club.id];
+    if (cache.lgSq == null) cache.lgSq = {};
+    if (cache.lgSq[club.lg] == null) { var cl = FP.S.clubs.filter(function (c) { return c.lg === club.lg; }); cache.lgSq[club.lg] = cl.reduce(function (a, c) { return a + rawCurve(c); }, 0) / Math.max(1, cl.length); }
+    return cache.sq[club.id] = 0.5 * rawCurve(club) + 0.5 * cache.lgSq[club.lg];
+  }
+  // sueldo anual (k€) de un jugador de ese valor (k€) en ese club: su parte de la masa salarial. Ningún jugador cobra más del 15 % de la masa
+  // ni más de 2,5 veces su valor al año; el mínimo es la décima parte del sueldo medio del club.
   W.wage = function (value, club) {
-    var raw = curve(value) * W.leagueScale(club.lg) * W.finFactor(club), floor = W.ref(club.lg) * 100 * W.finFactor(club);
-    return Math.max(2, Math.round(Math.min(Math.max(raw, floor), Math.max(2, value * 2))));
+    var bill = W.bill(club), h = curve(value), raw = bill * h / (squadCurve(club) + h), floor = bill / BPY * 0.1, cap = Math.max(floor, Math.min(bill * 0.15, value * 2.5));
+    return Math.max(2, Math.round(Math.min(Math.max(raw, floor), cap)));
   };
-  // sueldo medio estimado de la plantilla de un club (k€)
-  W.clubAverage = function (club) {
-    var ps = (FP.S.ro[club.id] || []).filter(function (p) { return p.i !== 0; }); if (!ps.length) return 0;
-    return Math.round(ps.reduce(function (a, p) { return a + W.wage(C.value(p.o, p.pt, C.age(p)), club); }, 0) / ps.length);
-  };
+  // sueldo medio del plantel del club (k€ al año)
+  W.clubAverage = function (club) { return Math.round(W.bill(club) / BPY); };
+  W.monthly = function (annual) { return Math.round(annual / 12); };
+  // «850 mil € al año (71 mil € al mes)»
+  W.fmt = function (annual) { return FP.fmt.money(annual) + ' al año (' + FP.fmt.money(W.monthly(annual)) + ' al mes)'; };
 
   // ---------- conexión: ofertas, renovaciones y representados ----------
   var rep0 = Rep && Rep.wage;
