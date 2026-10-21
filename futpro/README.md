@@ -416,3 +416,13 @@ La Biografía se redacta con un motor determinista que lee el historial real de 
 
 - **Tablas de estadísticas** (Biografía): cada etapa (temporadas consecutivas en un club) es su propio bloque, en orden cronológico. Al volver a un club se repite su nombre con la marca «2.ª etapa», y la fila **Total club** aparece al terminar su última etapa con lo acumulado en todas («Total club (2 etapas)»). Columnas: Club (escudo y país), Div. (1.ª, 2.ª…; juveniles y amateur muestran su categoría), Temporada y, por grupo (Liga, Copa nacional, Continental, Total), PJ, G y A.
 - **Legado**: el estatus es histórico y se evalúa **una sola vez por club** con todas sus etapas (`Narr.clubTotals`); volver no lo concede de nuevo. La Wiki lo cuenta una vez, con las etapas y lo acumulado. El estatus, el cariño y el salón del club ya se guardaban por club en el módulo de legado.
+
+## Valor de mercado según rendimiento
+
+`js/valor.js` (lógica), `js/ui-valor.js` (tarjeta «Tu valor de mercado» en Mercado › Reputación) y `tests/valor.js`.
+
+- El valor base (nivel, potencial estimado y edad) se multiplica por un ajuste que sale de: **forma reciente** (las temporadas de los últimos dos años evaluadas por el motor narrativo según posición, nivel de la competición y minutos), **títulos y distinciones** de los últimos tres años (con peso decreciente), **rol** en el equipo y **selección absoluta**. Límites: ×0,8 a ×1,8.
+- En carreras simuladas el ajuste fue de ×0,98 a ×1,27 (mediana ×1,03).
+- Afecta solo a tu jugador, se calcula al consultarse (memorizado por semana) y no guarda estado. Los jóvenes se valoran sobre todo por su potencial (el ajuste pesa menos) y el rendimiento en categorías bajas pesa menos.
+- Como el sueldo, el traspaso y las cláusulas parten de `Market.heroValue()`, suben o bajan con él. El número de ofertas lo sigue decidiendo el sistema de reputación e interés de clubes (`js/scouting.js`).
+- Los pesos son supuestos de diseño, no datos reales.
