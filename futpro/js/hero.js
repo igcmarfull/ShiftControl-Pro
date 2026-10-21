@@ -248,7 +248,9 @@
       var club = S.clubs[h.club];
       var lg = S.lgs[club.lg], lc = S.comps[lg.cmp];
       var hasY = Object.keys(S.comps).some(function (id) { var c = S.comps[id]; return c.kind === 'Y' && !c.done && c.teams.indexOf(h.team) >= 0; });
-      if (!hasY && lc) Hero.newYouthLeague(club.lg);
+      // un campeonato juvenil ya terminado esta temporada no se vuelve a crear (si no, el mismo año se «ganaba» varias veces)
+      var doneY = S.comps['Y:' + club.lg + ':' + lc.y + ':' + h.club];
+      if (!hasY && lc && !(doneY && doneY.done)) Hero.newYouthLeague(club.lg);
     }
   };
   // Torneo regional amateur: 8 equipos, todos contra todos + final de los 2 primeros
