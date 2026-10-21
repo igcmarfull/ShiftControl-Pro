@@ -50,9 +50,9 @@ t('el curso es más corto para una leyenda', pa.course && pa.course.left < Math.
 t('rung básico', RT.rung() >= 1);
 pa.course = null; h.post.lic = 3; h.post.exp = 3;
 var club = S.clubs.filter(function (c) { return c.c === h.nat && FP.LGDEF[c.lg].t === 3; })[1] || S.clubs.filter(function (c) { return c.c === h.nat; })[5];
-pa.job = { club: club.id, role: 'head', since: S.week }; P.takeOver(pa.job);
+pa.job = { club: club.id, role: 'head', since: S.week, conf: 100 }; P.takeOver(pa.job);
 var played = 0, guard = 0, sacked = false, K = FP.Coach, seas0 = pa.seasons.length;
-while (pa.seasons.length < seas0 + 2 && guard++ < 52 * 4) { var mm = K.stepWeek(); while (mm && K.next()) { K.quick(K.next(), '4-3-3', 0); played++; if (!pa.job) { sacked = true; break; } } if (mm) FP.Game.endWeek(); Dec.open().forEach(function (d) { Dec.resolve(d.id, d.opts[0].k); }); if (!pa.job) { sacked = true; break; } }
+while (pa.seasons.length < seas0 + 2 && guard++ < 52 * 4) { var mm = K.stepWeek(); while (mm && K.next()) { K.quick(K.next(), '4-3-3', 0); played++; if (!pa.job) { sacked = true; break; } } if (mm) FP.Game.endWeek(); Dec.open().forEach(function (d) { Dec.resolve(d.id, d.kind === 'rt' ? d.def : d.opts[0].k); }); if (!pa.job) { sacked = true; break; } }
 t('el técnico juega partidos reales', played > 20, played);
 t('confianza acotada', !pa.job || (pa.job.conf >= 0 && pa.job.conf <= 100), pa.job && pa.job.conf);
 t('rung de primera categoría marcado', RT.rung() >= 6, RT.rung());

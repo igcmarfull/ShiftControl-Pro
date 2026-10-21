@@ -27,7 +27,8 @@ var cl = S.pl.filter(function (p) { return p && typeof p === 'object' && p.c >= 
 t('hay candidato con varios pretendientes', !!cl);
 if (cl) {
   pa.clients.push({ pid: cl.i, since: S.week, loy: 60, com: 0, star: false, nm: cl.n });
-  var found = null; for (var tr = 0; tr < 40 && !found; tr++) { cl.ce = D().year(S.week) + 3; FP.Agency.events(pa.clients[0], cl, D().year(S.week) + tr); found = Dec.open('agente').filter(function (d) { return d.data.multi; })[0]; Dec.open('agente').filter(function (d) { return !d.data.multi; }).forEach(function (d) { Dec.resolve(d.id, 'rechazar'); }); }
+  var found = null; for (var tr = 0; tr < 200 && !found; tr++) { cl.ce = D().year(S.week) + 3; FP.Agency.events(pa.clients[0], cl, D().year(S.week) + tr); found = Dec.open('agente').filter(function (d) { return d.data.multi; })[0]; Dec.open('agente').filter(function (d) { return !d.data.multi; }).forEach(function (d) { Dec.resolve(d.id, d.def); }); }
+  if (!found) console.log('DBG suitors', FP.Agency.suitors(cl).length, 'ce', cl.ce, 'age', FP.Core.age(cl), 'club', cl.c, 'agent', h.post.path.k, 'clients', h.post.path.clients.length, 'dec', JSON.stringify(Dec.open('agente').map(function (d) { return d.data.kind + d.uniq; })));
   t('oferta múltiple creada', !!found);
   if (found) {
     t('varias ofertas con sueldo y rol', found.data.offers.length >= 2 && found.data.offers.every(function (o) { return o.wage > 0 && o.role && o.comm >= 0; }), JSON.stringify(found.data.offers[0]));
