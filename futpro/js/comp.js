@@ -11,10 +11,18 @@
     if (cal === 'euro') return { s: D.of(y, 7, 9), e: D.of(y + 1, 4, 24), brk: true };
     return { s: D.of(y, 1, 14), e: D.of(y, 10, 29), brk: false };
   };
+  // semanas de ventana FIFA (y la siguiente, donde se juegan los partidos): los campeonatos de clubes no se programan en ellas
+  var intlCache = {};
+  Comp.isIntl = function (w) {
+    var Nat = FP.Nat; if (!Nat || !Nat.windows) return false;
+    var y = D.year(w), s = intlCache[y]; if (!s) { s = intlCache[y] = {}; [y - 1, y, y + 1].forEach(function (yy) { Nat.windows(yy).forEach(function (x) { s[x] = 1; s[x + 1] = 1; }); }); }
+    return !!s[w];
+  };
   Comp.weeksFor = function (cal, y, rounds) {
     var wn = Comp.window(cal, y), list = [], w;
     for (w = wn.s; w <= wn.e; w++) {
       if (wn.brk) { var ymd = D.ymd(w); if ((ymd[1] === 11 && ymd[2] >= 22) || (ymd[1] === 0 && ymd[2] <= 4)) continue; }
+      if (Comp.isIntl(w)) continue;
       list.push(w);
     }
     var L = list.length, out = [];
@@ -114,11 +122,12 @@
     comp.ko = { cur: slots, r: -1, rounds: [], opts: opts || {}, stage: comp.st };
     Comp.koStartRound(comp, null);
   };
+  function tierOfId(id) { var c = id < 5000 && FP.S.clubs[id]; return c ? FP.LGDEF[c.lg].t : 9; }
   Comp.koStartRound = function (comp, afterWeek) {
     var ko = comp.ko, o = ko.opts, cur = ko.cur, ties = cur.length / 2, r = ko.r + 1;
     ko.r = r;
     var isFinal = ties === 1;
-    var legs = isFinal ? (o.finalLegs || 1) : (o.legs || 1);
+    var legs = isFinal ? (o.finalLegs || 1) : (ties === 2 && o.semiLegs ? o.semiLegs : (o.legs || 1));
     var wk = o.weeks && o.weeks[r] != null ? o.weeks[r] : (afterWeek != null ? afterWeek + 2 : FP.S.week + 1);
     var rd = { nm: (o.names && o.names[r]) || roundName(ties), legs: legs, ties: [], w: wk };
     ko.rounds.push(rd);
@@ -129,7 +138,9 @@
       var yi = rd.ties.length - 1;
       var w1 = Array.isArray(wk) ? wk[0] : wk, w2 = Array.isArray(wk) ? wk[1] : wk + 1;
       if (legs === 1) {
-        Comp.addFx(comp, a, b, w1, { k: 1, x: r, y: yi, n: isFinal && o.neutralFinal ? 1 : 0, ro: rd.nm });
+        var ha = a, hb = b;
+        if (o.lowerHost && !isFinal && ties > 4) { var ta = tierOfId(a), tb = tierOfId(b); if (ta < tb) { ha = b; hb = a; } }       // en las primeras rondas juega de local el club de menor categoría
+        Comp.addFx(comp, ha, hb, w1, { k: 1, x: r, y: yi, n: isFinal && o.neutralFinal ? 1 : 0, ro: rd.nm });
       } else {
         Comp.addFx(comp, a, b, w1, { k: 1, l: 1, x: r, y: yi, ro: rd.nm });
         Comp.addFx(comp, b, a, w2, { k: 1, l: 2, x: r, y: yi, ro: rd.nm });
@@ -192,6 +203,7 @@
     if (rd.ties.length === 1) { comp.champ = rd.ties[0].win; comp.runner = rd.ties[0].win === rd.ties[0].a ? rd.ties[0].b : rd.ties[0].a; ko.winners = [rd.ties[0].win]; return 'end'; }
     if (ko.opts.oneRound) { ko.winners = rd.ties.map(function (t) { return t.win; }); return 'end'; }
     var next = rd.ties.map(function (t) { return t.win; });
+    if (ko.opts.redraw && next.length > 2) next = U.shuffle(next.slice());           // sorteo libre desde la segunda ronda
     ko.cur = next;
     var lastW = 0; comp.fx.forEach(function (f) { if (f.w > lastW) lastW = f.w; });
     Comp.koStartRound(comp, Math.max(week, lastW));
@@ -199,22 +211,26 @@
   };
 
   // ---------- copas nacionales ----------
+  // reglas de copa por país (de memoria, simplificadas): ida y vuelta en la Copa do Brasil y en las semifinales de España, Italia y Portugal
+  Comp.CUPCFG = { BRA: { legs: 2, finalLegs: 2 }, ESP: { semiLegs: 2 }, ITA: { semiLegs: 2 }, POR: { semiLegs: 2 }, COL: { legs: 2, finalLegs: 2 }, ECU: { legs: 2, finalLegs: 2 }, ENG: {}, GER: {}, FRA: {}, ARG: {}, CHI: {} };
   Comp.newCup = function (cc, y) {
     var S = FP.S, cdef = FP.DATA.countries[cc], leagues = FP.DATA.leagues.filter(function (l) { return l.c === cc; });
     var maxT = cc === 'ENG' ? 4 : cc === 'ESP' ? 3 : cc === 'ITA' ? 2 : cc === 'GER' ? 3 : 2;
     var teams = [];
     leagues.forEach(function (l) { if (l.t <= maxT) teams = teams.concat(S.lgs[l.id].teams); });
     if (teams.length < 4) return null;
-    teams.sort(function (a, b) { return Core().clubs[b].st - Core().clubs[a].st; });
+    // los clubes de primera entran como cabezas de serie (jugarán a los más débiles); dentro de cada categoría el orden es en gran parte azar
+    var cfg = Comp.CUPCFG[cc] || {};
+    teams.sort(function (a, b) { var A = Core().clubs[a], B = Core().clubs[b]; return (FP.LGDEF[A.lg].t - FP.LGDEF[B.lg].t) * 100 + (B.st - A.st) * 0.3 + (R() - 0.5) * 60; });
     var cal = leagues[0].cal, wn = Comp.window(cal, y);
     var size = 2; while (size < teams.length) size *= 2;
     var rounds = Math.log2(size), weeks = [];
-    for (var r = 0; r < rounds; r++) weeks.push(wn.s + 3 + Math.round(r * 36 / Math.max(1, rounds - 1)));
+    for (var r = 0; r < rounds; r++) { var wk = wn.s + 3 + Math.round(r * 36 / Math.max(1, rounds - 1)); while (Comp.isIntl(wk) || ((cfg.legs === 2 || (cfg.semiLegs && r === rounds - 2)) && Comp.isIntl(wk + 1))) wk++; weeks.push(wk); }
     var comp = Comp.create({ id: 'C:' + cc + ':' + y, kind: 'C', nm: cdef.cup, y: y, teams: teams, c: cc });
     comp.stages = [{ k: 'ko' }]; comp.w0 = weeks[0]; comp.w1 = weeks[weeks.length - 1];
     comp.label = cal === 'euro' ? (y + '/' + String(y + 1).slice(2)) : String(y);
     comp.cal = cal;
-    Comp.koInit(comp, teams, { legs: 1, weeks: weeks, neutralFinal: true });
+    Comp.koInit(comp, teams, { legs: cfg.legs || 1, finalLegs: cfg.finalLegs || 1, semiLegs: cfg.semiLegs || 0, weeks: weeks, neutralFinal: cfg.neutralFinal !== false && !(cfg.finalLegs === 2), lowerHost: cfg.lowerHost !== false, redraw: cfg.redraw !== false });
     return comp;
   };
   function Core() { return FP.S; }
