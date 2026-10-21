@@ -37,14 +37,15 @@
   };
 
   // ----- cachés de goleadores por club -----
+  Match.SCT = { exp: 4, xi: 99, bench: 1, rest: 1 };       // reparto de goles de la IA entre el plantel (calibrado en tests/goleadores.js)
   function swFor(clubId) {
     var c = Match.cache[clubId];
     if (c && c.ro === FP.S.ro[clubId] && c.n === (FP.S.ro[clubId] || []).length) return c;
     var r = (FP.S.ro[clubId] || []).filter(function (p) { return !(p.inj > 0) && !(p.su > 0); });
-    var ws = [], as = [], tw = 0, ta = 0, i;
+    var ws = [], as = [], tw = 0, ta = 0, i, T = Match.SCT, rk = r.map(function (p) { return p.o; }).sort(function (x, y) { return y - x; });
     for (i = 0; i < r.length; i++) {
-      var p = r[i], q = Math.pow(p.o / 60, 4);
-      var w = SW_POS[p.p] * q, a = AS_POS[p.p] * q; tw += w; ta += a; ws.push(tw); as.push(ta);
+      var p = r[i], q = Math.pow(p.o / 60, T.exp), pos = rk.indexOf(p.o), dep = pos < T.xi ? 1 : pos < T.xi + 4 ? T.bench : T.rest;     // quien juega marca más que el suplente
+      var w = SW_POS[p.p] * q * dep, a = AS_POS[p.p] * Math.pow(p.o / 60, 4) * (pos < T.xi ? 1 : 0.5); tw += w; ta += a; ws.push(tw); as.push(ta);
     }
     c = Match.cache[clubId] = { r: r, ws: ws, as: as, tw: tw, ta: ta, ro: FP.S.ro[clubId], n: (FP.S.ro[clubId] || []).length };
     return c;
