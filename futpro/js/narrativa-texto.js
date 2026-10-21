@@ -483,6 +483,9 @@
   };
 
   // ---------- conexión con la Wiki: el motor reemplaza el cuerpo del artículo y conserva ficha, cronología y estructura ----------
+  // utilidades de redacción compartidas con otros artículos (p. ej. la página de club, js/clubwiki.js)
+  N.text = { seed: function (key) { ctx = { M: null, seed: hash(key), used: {}, said: {} }; }, V: V, cap: cap, lcf: lcf, join: join, span: span, shortLg: shortLg, plural: plural, list: list };
+
   var build0 = B.build;
   B.build = function () {
     var d = build0.apply(this, arguments);

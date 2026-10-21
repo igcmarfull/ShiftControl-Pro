@@ -426,3 +426,12 @@ La Biografía se redacta con un motor determinista que lee el historial real de 
 - Afecta solo a tu jugador, se calcula al consultarse (memorizado por semana) y no guarda estado. Los jóvenes se valoran sobre todo por su potencial (el ajuste pesa menos) y el rendimiento en categorías bajas pesa menos.
 - Como el sueldo, el traspaso y las cláusulas parten de `Market.heroValue()`, suben o bajan con él. El número de ofertas lo sigue decidiendo el sistema de reputación e interés de clubes (`js/scouting.js`).
 - Los pesos son supuestos de diseño, no datos reales.
+
+## Página de club
+
+`js/clubwiki.js` (datos y redacción), `js/ui-clubwiki.js` (pantalla) y `tests/clubwiki.js`. Se abre en **Mi club › Historia** y con el botón «Ver artículo del club» de la ficha de cualquier club.
+
+- Se redacta **a demanda** con lo que el juego ya guarda: la historia de cada liga (`S.lgs[].hist`: tabla final, campeón, subcampeón), los campeones de copas y torneos internacionales (`S.hist.champs`), los goleadores de cada temporada, los récords del módulo de legado, los derbis y los datos actuales del club. **No añade nada al guardado** (la prueba lo comprueba) y cuesta unos 2 ms por artículo.
+- Secciones: introducción, historia registrada (etapas por categoría), palmarés, rivalidades, jugadores destacados, tu paso por el club, tabla de temporadas y situación actual con el plantel.
+- Los ascensos y descensos se deducen de la categoría de la temporada siguiente (el juego marca plazas que no siempre se llenan).
+- Solo cuenta lo registrado desde el inicio de la partida: el juego no tiene la historia real previa de los clubes, y así se indica.
