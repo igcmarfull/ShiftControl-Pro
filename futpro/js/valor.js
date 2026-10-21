@@ -21,7 +21,8 @@
   function ageW(age) { return age <= 19 ? 0.5 : age <= 21 ? 0.7 : age <= 28 ? 1 : 1.1; }
 
   var cache = null;
-  function sig() { var h = FP.S.hero; return FP.S.week + '|' + Object.keys((h.led && h.led.rows) || {}).length + '|' + (h.awards || []).length + '|' + (h.trophies || []).length + '|' + Math.round(h.ovr * 10); }
+  // la memoria se invalida al cambiar la semana, el nivel, los premios o cualquier cifra del registro (un partido jugado dentro de la misma semana)
+  function sig() { var h = FP.S.hero, rows = (h.led && h.led.rows) || {}, sum = 0, n = 0; for (var k in rows) { var r = rows[k]; sum += r.p + 7 * r.g + 13 * r.a + r.min * 0.01; n++; } return FP.S.week + '|' + n + '|' + Math.round(sum * 100) + '|' + (h.awards || []).length + '|' + (h.trophies || []).length + '|' + Math.round(h.ovr * 10); }
 
   V.compute = function () {
     var S = FP.S, h = S.hero, N = FP.Narr, cfg = V.CFG, now = S.week, age = FP.Hero.age(), parts = [], form = 0, hon = 0, role = 0, nt = 0;
