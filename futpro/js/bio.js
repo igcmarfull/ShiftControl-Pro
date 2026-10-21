@@ -110,13 +110,14 @@
   }
   // ficha lateral: clubes de formación (juveniles y amateur, solo años) y clubes profesionales (con partidos y goles)
   function boxClubs(h) {
-    var form = [], pro = [];
+    var form = [], pro = [], amat = [], seenPro = false;
     entryRows(h).forEach(function (r) {
-      var nm = baseName(r.club), loan = /\(cedido\)/i.test(r.club), list = r.form ? form : pro, g = list[list.length - 1];
+      if (!r.form) seenPro = true;
+      var nm = baseName(r.club), loan = /\(cedido\)/i.test(r.club), list = r.form ? (seenPro && r.t >= 20000 && r.t < 30000 ? amat : form) : pro, g = list[list.length - 1];
       if (g && g.nm === nm && g.loan === loan) { g.rows.push(r); g.ap += r.ap; g.g += r.g; } else list.push({ nm: nm, loan: loan, rows: [r], ap: r.ap, g: r.g });
     });
     function fmt(l, stats) { return l.map(function (x) { return { yrs: range(x.rows), nm: x.nm, loan: x.loan, ap: stats ? x.ap : null, g: stats ? x.g : null }; }); }
-    return { form: fmt(form, false), pro: fmt(pro, true) };
+    return { form: fmt(form, false), pro: fmt(pro, true), amat: fmt(amat, true) };
   }
   function range2(rows) { var ys = rows.map(function (r) { return y4(r.s); }).filter(function (y) { return y > 0; }); if (!ys.length) return ''; var a = Math.min.apply(null, ys), b = Math.max.apply(null, ys); return a === b ? String(a) : a + '–' + b; }
   function sumRows(rows) { return rows.reduce(function (t, r) { t.ap += r.ap; t.g += r.g; t.a += r.a; t.min += r.min; return t; }, { ap: 0, g: 0, a: 0, min: 0 }); }

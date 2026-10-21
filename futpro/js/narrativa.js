@@ -137,10 +137,12 @@
     all = all.filter(function (s) { return s.all.p > 0; }); M.all = all;
     M.pro = all.filter(function (s) { return s.lv === 'pro'; }); M.youth = all.filter(function (s) { return s.lv === 'juv'; }); M.amat = all.filter(function (s) { return s.lv === 'amat'; });
     M.form = all.filter(function (s) { return s.lv !== 'pro'; });
+    // el fútbol amateur posterior al debut profesional no es formación: se cuenta aparte
+    var fy = M.pro.length ? M.pro[0].y : 9999; M.late = M.form.filter(function (s) { return s.lv === 'amat' && s.y > fy; }); M.formPre = M.form.filter(function (s) { return M.late.indexOf(s) < 0; });
     M.stints = N.stintsOf(M.pro);
     M.tot = z0(); M.pro.forEach(function (s) { addTo(M.tot, s.all); });
     M.totL = z0(); M.pro.forEach(function (s) { addTo(M.totL, s.L); });
-    M.totForm = z0(); M.form.forEach(function (s) { addTo(M.totForm, s.all); });
+    M.totForm = z0(); M.formPre.forEach(function (s) { addTo(M.totForm, s.all); }); M.totLate = z0(); M.late.forEach(function (s) { addTo(M.totLate, s.all); });
     M.firstPro = M.pro[0] || null; M.lastPro = M.pro[M.pro.length - 1] || null;
     var lab = {}; M.pro.forEach(function (s) { lab[s.s] = 1; }); M.nProSeasons = Object.keys(lab).length;
     M.clubs = []; M.stints.forEach(function (g) { if (!g.loan && M.clubs.indexOf(g.t) < 0) M.clubs.push(g.t); });
@@ -195,7 +197,7 @@
     var h = M.h, hist = (h.med && h.med.hist) || [], out = [];
     hist.forEach(function (e) {
       if (!e || e.n < 6) return;
-      var st = M.stints.filter(function (g) { return e.w <= g.w1 + 6 && (g.w0 == null || e.w >= g.w0 - 6); })[0] || null;
+      var st = M.stints.filter(function (g) { var w0 = g.w0 != null ? g.w0 : g.seasons[0].o - 60; return e.w <= g.w1 + 6 && e.w >= w0 - 6; })[0] || null;
       out.push({ w: e.w, nm: e.nm, zone: e.zone, n: e.n, relapse: !!e.relapse, stint: st, major: e.n >= 16, big: e.n >= 26 });
     });
     return out;

@@ -142,6 +142,7 @@ function allowedFacts(M) {
   M.all.concat([]).forEach(function (s) { [s.L, s.all, s.copa, s.cont].forEach(function (T) { add(T.p); add(T.g); add(T.a); }); years[s.y] = 1; years[s.ye] = 1; String(s.s).split('/').forEach(function (z) { if (z.length === 4) years[+z] = 1; else if (z.length === 2) years[2000 + +z] = 1; }); });
   M.stints.forEach(function (g) { [g.L, g.all].forEach(function (T) { add(T.p); add(T.g); add(T.a); }); add(g.n); years[g.y0] = 1; years[g.y1] = 1; });
   M.stints.forEach(function (g) { for (var i = 0; i < g.seasons.length; i++) { var P = 0, G = 0, Aa = 0; for (var j = i; j < g.seasons.length; j++) { P += g.seasons[j].L.p; G += g.seasons[j].L.g; Aa += g.seasons[j].L.a; add(P); add(G); add(Aa); } } });   // sumas de tramos consecutivos dentro de una etapa
+  for (var i0 = 0; i0 < M.pro.length; i0++) { var P0 = 0, G0 = 0, A0 = 0; for (var j0 = i0; j0 < M.pro.length; j0++) { P0 += M.pro[j0].L.p; G0 += M.pro[j0].L.g; A0 += M.pro[j0].L.a; add(P0); add(G0); add(A0); } }   // tramos consecutivos de varios clubes
   M.nt.cats.forEach(function (c) { add(c.p); add(c.g); add(c.offP); years[c.y0] = 1; years[c.y1] = 1; });
   M.inj.forEach(function (e) { add(e.n); years[FP.Date.year(e.w)] = 1; });
   M.tro.forEach(function (x) { years[x.y] = 1; }); M.aw.forEach(function (x) { years[x.y] = 1; });
@@ -174,7 +175,7 @@ function check(name, h, noRetireStamp) {
   var proTot = 0; FP.Stats.rows().forEach(function (r) { if ((r.k === 'liga' || r.k === 'copa' || r.k === 'cont') && r.t < 5000) proTot += r.p; });
   t(name + ': total profesional = suma de filas profesionales', M.tot.p === proTot, M.tot.p + ' vs ' + proTot);
   // clubes nombrados ⊂ clubes con vínculo registrado
-  var allowed = {}; M.all.forEach(function (s) { allowed[s.name] = 1; }); M.stints.forEach(function (g) { allowed[g.name] = 1; }); B_loans().forEach(function (l) { allowed[C.tname(l.from)] = 1; allowed[C.tname(l.to)] = 1; });
+  var allowed = {}; if (h.club != null) allowed[C.tname(h.club)] = 1; if (h.team != null) allowed[C.tname(h.team)] = 1; M.all.forEach(function (s) { allowed[s.name] = 1; }); M.stints.forEach(function (g) { allowed[g.name] = 1; }); B_loans().forEach(function (l) { allowed[C.tname(l.from)] = 1; allowed[C.tname(l.to)] = 1; });
   (h.trophies || []).forEach(function (x) { allowed[x.club] = 1; });
   var txt2 = text.replace(new RegExp(h.city, 'g'), '').replace(/Primera [A-Z][a-z]+/g, '').replace(/Copa [A-Za-zÁéíóúñ]+/g, '').replace(/Liga de [A-Za-z]+/g, ''); var foreign = []; FP.S.clubs.forEach(function (c) { if (c.nm.length >= 6 && !allowed[c.nm] && txt2.indexOf(c.nm) >= 0) { var sup = Object.keys(allowed).some(function (a) { return a.indexOf(c.nm) >= 0; }); if (!sup) foreign.push(c.nm); } });
   t(name + ': solo menciona clubes de su historial', !foreign.length, foreign.join(','));

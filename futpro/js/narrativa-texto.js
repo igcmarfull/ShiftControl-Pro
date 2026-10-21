@@ -133,7 +133,7 @@
       p.push(V('lead.nopro', [function () { return 'Aún no ha debutado como profesional; ha jugado en ' + nm(o.name) + (o.lv === 'juv' ? ' (categorías inferiores)' : o.lv === 'amat' ? ' (fútbol amateur)' : '') + '.'; }, function () { return 'Su trayectoria se limita por ahora al ' + (M.youth.length ? 'fútbol formativo' : 'fútbol amateur') + ', con ' + apps(M.totForm.p) + (M.form.length > 1 ? ' en varios equipos' : ' en ' + nm(o.name)) + '.'; }]));
       return p.join(' ');
     }
-    var cl = clubNames(M), nC = M.clubs.length, nCt = M.countries.length, topT = M.topTier, H = honours(M), one = nC === 1, g1 = M.stints.filter(function (g) { return !g.loan; })[0] || M.stints[0];
+    var cl = clubNames(M), nC = M.clubs.length, nCt = M.countries.length, topT = M.topTier, H = honours(M), one = nC === 1 && !M.stints.some(function (g) { return g.loan; }), g1 = M.stints.filter(function (g) { return !g.loan; })[0] || M.stints[0];
     var formed = M.all[0] && M.all[0].lv !== 'pro' ? M.all[0].name : null;
     var tier1n = M.pro.filter(function (s) { return s.tier === 1; }).length, said = {};
     // 1) forma de la carrera
@@ -195,23 +195,23 @@
       var lvTxt = f.lv === 'juv' ? 'en las categorías inferiores de ' + nm(f.name) : f.lv === 'amat' ? 'en el fútbol amateur con ' + nm(f.name) : 'en ' + nm(f.name);
       out.push(V('early.start', [function () { return 'Comenzó a competir ' + lvTxt + ' en ' + f.y + (f.age ? ', con ' + f.age + ' años' : '') + (h.ovr0 ? ' y una media de ' + h.ovr0 : '') + '.'; }, function () { return 'Su primera temporada registrada fue la de ' + f.s + ', ' + lvTxt + (f.age ? ', a los ' + f.age + ' años' : '') + '.'; }]));
     }
-    var groups = []; M.form.forEach(function (s) { var g = groups[groups.length - 1], key = s.lv + '|' + s.name; if (g && g.key === key) { g.y1 = s.ye; } else groups.push({ key: key, lv: s.lv, name: s.name, y0: s.y, y1: s.ye }); });
-    if (groups.length > 1 || (groups.length === 1 && M.form.length > 1)) {
+    var groups = []; M.formPre.forEach(function (s) { var g = groups[groups.length - 1], key = s.lv + '|' + s.name; if (g && g.key === key) { g.y1 = s.ye; } else groups.push({ key: key, lv: s.lv, name: s.name, y0: s.y, y1: s.ye }); });
+    if (groups.length > 1 || (groups.length === 1 && M.formPre.length > 1)) {
       var am = groups.filter(function (g) { return g.lv === 'amat'; }), jv = groups.filter(function (g) { return g.lv !== 'amat'; }), gl = function (a) { return list(a.map(function (g) { return nm(g.name) + ' (' + span(g.y0, g.y1) + ')'; })); };
       out.push(V('early.path', [function () { return 'En su etapa formativa ' + (jv.length ? 'pasó por las inferiores de ' + gl(jv) : '') + (jv.length && am.length ? ' y también jugó en el fútbol amateur con ' + gl(am) : am.length ? 'jugó en el fútbol amateur con ' + gl(am) : '') + '.'; }, function () { return 'Su formación ' + (jv.length ? 'incluyó las categorías inferiores de ' + gl(jv) : '') + (jv.length && am.length ? ', además de ' + gl(am) + ' en el fútbol amateur' : am.length ? 'transcurrió en el fútbol amateur, con ' + gl(am) : '') + '.'; }]) + ' En total disputó ' + apps(M.totForm.p) + (M.totForm.g ? ' y marcó ' + goals(M.totForm.g) : '') + ' en esas categorías.');
     }
-    var ys = M.form.filter(function (s) { return s.perf.sample === 'plena'; }).sort(function (a, b) { return b.perf.z - a.perf.z; })[0];
+    var ys = M.formPre.filter(function (s) { return s.perf.sample === 'plena'; }).sort(function (a, b) { return b.perf.z - a.perf.z; })[0];
     if (ys && ys.perf.z >= 0.9) out.push('Su mejor campaña formativa fue ' + when(ys) + ' con ' + nm(ys.name) + ': ' + prod(ys, M) + ', un rendimiento ' + evalPhrase(ys.perf.lab, 'y') + '.');
     var jt = M.tro.filter(function (x) { return /Juvenil/i.test(x.t.nm) && !x.t.sub; }), ja = M.aw.filter(function (x) { return /juvenil|joven/i.test(x.a.nm); });
     if (jt.length || ja.length) out.push('En categorías juveniles ' + (jt.length ? 'ganó ' + esc(titleList(jt.map(function (x) { return x.t; }))) : '') + (jt.length && ja.length ? ' y recibió ' : ja.length ? 'recibió ' : '') + (ja.length ? esc(awardList(ja.map(function (x) { return x.a; }))) : '') + '.');
-    var hist = h.history || [], ev = (h.bio && h.bio.ev) || [], deb = hist.filter(function (e) { return /^Debut con el primer equipo/.test(e.t); })[0], prom = ev.filter(function (e) { return /Ascendido al primer equipo/.test(e.t); })[0];
+    var hist = h.history || [], ev = (h.bio && h.bio.ev) || [], deb = hist.filter(function (e) { return /^Debut con el primer equipo/.test(e.t) && (M.firstPro ? e.club === M.firstPro.base : true); })[0], prom = ev.filter(function (e) { return /Ascendido al primer equipo/.test(e.t); })[0];
     var fp = M.firstPro;
     if (fp) {
       var sig = hist.filter(function (e) { return /^Firma con/.test(e.t) && e.club === fp.base && !/juvenil\/reserva/.test(e.t); })[0], pieces = [];
       if (prom && deb && prom.w <= deb.w) pieces.push('Fue ascendido al primer equipo de ' + nm(fp.name) + ' en ' + mlong(prom.w) + ' y debutó el ' + dlong(deb.w) + '.');
       else if (deb && sig && sig.w >= deb.w) pieces.push('Debutó con el primer equipo de ' + nm(fp.name) + ' el ' + dlong(deb.w) + ' y firmó con el club en ' + mlong(sig.w) + '.');
       else if (deb) pieces.push('Debutó con el primer equipo de ' + nm(fp.name) + ' el ' + dlong(deb.w) + '.');
-      else pieces.push('Su debut profesional llegó ' + when(fp) + ' con ' + nm(fp.name) + (fp.age ? ', a los ' + fp.age + ' años' : '') + '.');
+      else pieces.push('Su debut profesional llegó ' + when(fp) + ' con ' + nm(fp.name) + (fp.loan ? ' (cedido)' : '') + (fp.age ? ', a los ' + fp.age + ' años' : '') + '.');
       if (sig && !prom && !(deb && sig.w >= deb.w)) pieces.unshift('En ' + mlong(sig.w) + ' firmó con ' + nm(fp.name) + '.');
       out.push(pieces.join(' '));
     }
@@ -300,7 +300,8 @@
     if (depth >= 2) { var mo = B.moments().filter(function (m) { var yy = D.year(m.w); return !m.nat && X.baseName(m.club) === g.name && yy >= g.y0 && yy <= g.y1 + 1 && m.sc >= 5; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, depth >= 3 ? 2 : 1).sort(function (a, b) { return a.w - b.w; }); if (mo.length) out.push(cap('entre sus actuaciones destacadas figuran: ' + esc(mo.map(X.momentText).join('; '))) + '.'); }
     if (!usedPhases) injuriesAt(M, g, out);
     var next = M.stints[g.i + 1];
-    if (next && next.loan && depth >= 1) out.push(V('exit.loan', ['Más tarde fue cedido a ' + nm(next.name) + '.', 'Después pasó cedido a ' + nm(next.name) + '.'], g.t));
+    if (next && next.foldedInto === g) { /* ya resumida en el texto de cesiones */ }
+    else if (next && next.loan && depth >= 1) out.push(V('exit.loan', ['Más tarde fue cedido a ' + nm(next.name) + '.', 'Después pasó cedido a ' + nm(next.name) + '.'], g.t));
     else if (!next && !M.retired && depth >= 1) out.push(V('now', ['Continúa en el club.', 'Sigue vinculado al club.'], g.t));
     return out.filter(function (x) { return x; });
   }
@@ -348,10 +349,10 @@
     out.push('En ' + mlong(big.w) + ' sufrió ' + (big.nm ? 'una lesión (' + esc(big.nm.toLowerCase()) + ', en ' + esc(big.zone) + ')' : 'una lesión') + ' que lo mantuvo ' + plural(big.n, 'semana', 'semanas') + ' alejado de las canchas.');
   }
   // tramos de clubes con muy poca participación se agrupan para no repetir la misma fórmula
-  function stintGroups(M) {
+  function stintGroups(M, list0) {
     var out = [], run = [];
     function flush() { if (run.length >= 2) out.push({ minor: run.slice() }); else run.forEach(function (g) { out.push({ g: g }); }); run = []; }
-    M.stints.forEach(function (g) { if (g.i > 0 && g.n <= 2 && g.L.p < 24 && !g.tro.length && !g.aw.length && stintMass(g) < 2 && !g.moves.length && !g.inj.length) run.push(g); else { flush(); out.push({ g: g }); } });
+    list0.forEach(function (g) { if (g.i > 0 && g.n <= 2 && g.L.p < 24 && !g.tro.length && !g.aw.length && stintMass(g) < 2 && !g.moves.length && !g.inj.length) run.push(g); else { flush(); out.push({ g: g }); } });
     flush(); return out;
   }
   function minorText(M, run) {
@@ -359,13 +360,34 @@
     var names = run.map(function (g) { return nm(g.name) + (g.loan ? ' (cedido)' : '') + (g.country && g.country !== M.h.nat ? ' [' + esc(cn(g.country)) + ']' : ''); }), y0 = run[0].y0, y1 = run[run.length - 1].y1;
     return V('minor', [function () { return (y0 === y1 ? 'En ' + y0 : 'Entre ' + y0 + ' y ' + y1) + ' pasó sucesivamente por ' + list(names) + ', sin superar los ' + Math.max.apply(null, run.map(function (g) { return g.L.p; })) + ' partidos en ninguno de ellos.'; }, function () { return 'Durante ese tramo (' + span(y0, y1) + ') defendió a ' + list(names) + '. En conjunto disputó ' + apps(T.p) + (offense(M) && T.g ? ' y marcó ' + goals(T.g) : '') + '.'; }]);
   }
+  // cesiones de poca participación: se resumen dentro de la etapa anterior en lugar de abrir una sección por cada una
+  function foldLoans(M) {
+    var out = [];
+    M.stints.forEach(function (g) {
+      var prev = out[out.length - 1];
+      if (g.loan && g.L.p < 25 && !g.tro.length && !g.aw.length && prev && !g.inj.length) { (prev.folded = prev.folded || []).push(g); g.foldedInto = prev; }
+      else out.push(g);
+    });
+    return out;
+  }
+  function foldedText(g) {
+    var f = g.folded; if (!f || !f.length) return '';
+    var items = f.map(function (x) { var s0 = x.seasons[0]; return nm(x.name) + ' (' + when(s0).replace(/^en /, '') + ', ' + apps(x.L.p) + ')'; });
+    return V('folded', [function () { return 'Durante ese período fue cedido a ' + list(items) + '.'; }, function () { return 'Pasó cedido por ' + list(items) + '.'; }], g.t);
+  }
   function career(M) {
     var subs = [];
-    stintGroups(M).forEach(function (e) {
+    stintGroups(M, foldLoans(M)).forEach(function (e) {
       if (e.minor) { var run = e.minor; subs.push({ t: 'Etapa itinerante · ' + span(run[0].y0, run[run.length - 1].y1), p: [minorText(M, run)] }); return; }
-      var g = e.g; subs.push({ t: String(g.name) + (g.loan ? ' (cedido)' : '') + ' · ' + span(g.y0, g.y1), p: stintParas(M, g) });
+      var g = e.g, ps = stintParas(M, g), ft = foldedText(g); if (ft) ps.splice(Math.min(1, ps.length), 0, ft); subs.push({ t: String(g.name) + (g.loan ? ' (cedido)' : '') + ' · ' + span(g.y0, g.y1), p: ps });
     });
+    if (M.late.length) subs.push({ t: 'Fútbol amateur · ' + span(M.late[0].y, M.late[M.late.length - 1].ye), p: [lateText(M)] });
     return subs;
+  }
+
+  function lateText(M) {
+    var by = [], T = M.totLate; M.late.forEach(function (s) { var g = by[by.length - 1]; if (g && g.name === s.name) g.y1 = s.ye; else by.push({ name: s.name, y0: s.y, y1: s.ye }); });
+    return 'Después de su etapa profesional jugó en el fútbol amateur con ' + list(by.map(function (g) { return nm(g.name) + ' (' + span(g.y0, g.y1) + ')'; })) + ', con ' + apps(T.p) + (T.g && offense(M) ? ' y ' + goals(T.g) : '') + '.';
   }
 
   // =====================================================================================================
@@ -439,7 +461,7 @@
     if (nat.length) secs.push({ id: 'seleccion', t: 'Selección nacional', sub: nat.map(function (x) { return { t: x.t, p: x.p }; }), tables: ['nat'] }); else lock.push(['Selección nacional', 'se escribe cuando juegues con tu selección']);
     secs.push({ id: 'estilo', t: 'Estilo de juego', p: X.styleText(h) });
     if (M.pro.length) secs.push({ id: 'estadisticas', t: 'Estadísticas profesionales', tables: ['pro'] });
-    if (M.form.length) secs.push({ id: 'estjuv', t: 'Estadísticas juveniles', tables: ['youth'] });
+    if (M.form.length) secs.push({ id: 'estjuv', t: M.late.length || M.amat.length ? 'Estadísticas juveniles y amateur' : 'Estadísticas juveniles', tables: ['youth'] });
     var tr = h.trophies || [], aw = h.awards || [];
     if (tr.length || aw.length) secs.push({ id: 'palmares', t: 'Palmarés y distinciones', trophies: tr, awards: aw }); else lock.push(['Palmarés y distinciones', 'se completa al ganar títulos o premios']);
     var rc = records(M); if (rc.length) secs.push({ id: 'records', t: 'Récords y legado', p: rc }); else lock.push(['Récords y legado', 'aparece con una carrera más larga']);
