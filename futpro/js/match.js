@@ -37,7 +37,7 @@
   };
 
   // ----- cachés de goleadores por club -----
-  Match.SCT = { exp: 4, xi: 99, bench: 1, rest: 1 };       // reparto de goles de la IA entre el plantel (calibrado en tests/goleadores.js)
+  Match.SCT = { exp: 8, xi: 12, bench: 0.2, rest: 0.03 };       // reparto de goles de la IA entre el plantel (calibrado en tests/goleadores.js)
   function swFor(clubId) {
     var c = Match.cache[clubId];
     if (c && c.ro === FP.S.ro[clubId] && c.n === (FP.S.ro[clubId] || []).length) return c;
