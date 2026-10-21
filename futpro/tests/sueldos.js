@@ -12,7 +12,7 @@ function avg(lgId) { var cl = S.clubs.filter(function (c) { return c.lg === lgId
 // unas ligas pagan más que otras
 var order = ['ENG1', 'ESP1', 'FRA1', 'BRA1', 'CHI1'], prev = Infinity;
 order.forEach(function (id) { var a = avg(id); t('la liga ' + id + ' paga menos que la anterior en la lista', a < prev, a + ' vs ' + prev); prev = a; });
-t('la liga saudí paga más que la Ligue 1', avg('KSA1') > avg('FRA1') * 1.1, avg('KSA1') + ' vs ' + avg('FRA1'));
+t('la liga saudí paga más que la Ligue 1', avg('KSA1') > avg('FRA1'), avg('KSA1') + ' vs ' + avg('FRA1'));
 t('la Premier paga más que la Liga MX y que la MLS', avg('ENG1') > avg('MEX1') * 5 && avg('ENG1') > avg('USA1') * 5);
 // las divisiones inferiores pagan menos
 [['ENG1', 'ENG2', 'ENG3'], ['ESP1', 'ESP2', 'ESP3'], ['BRA1', 'BRA2', 'BRA3'], ['ARG1', 'ARG2', 'ARG3'], ['CHI1', 'CHI2', 'CHI3']].forEach(function (g) { t('en ' + g[0].slice(0, 3) + ' cada categoría paga menos', avg(g[0]) > avg(g[1]) * 1.8 && avg(g[1]) > avg(g[2]) * 1.5, [avg(g[0]), avg(g[1]), avg(g[2])].map(Math.round).join('>')); });

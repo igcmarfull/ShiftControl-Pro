@@ -7,18 +7,24 @@
   var FP = window.FP, U = FP.U, C = FP.Core, D = FP.Date, M = FP.Market, Rep = FP.Rep;
   var W = FP.Wages = {};
 
-  // sueldo medio de un futbolista del primer equipo, en M€ al año (referencias aproximadas de diseño)
-  W.REF = {
-    ENG1: 5.5, ENG2: 0.9, ENG3: 0.25, ENG4: 0.12, ENG5: 0.06, ESP1: 3.2, ESP2: 0.35, ESP3: 0.08, ESP4: 0.04, ITA1: 2.6, ITA2: 0.4, ITA3: 0.1, GER1: 3.0, GER2: 0.5, GER3: 0.12,
-    FRA1: 1.6, FRA2: 0.25, FRA3: 0.07, POR1: 1.0, POR2: 0.12, POR3: 0.05, NED1: 0.9, NED2: 0.15, BEL1: 0.7, BEL2: 0.12, SCO1: 0.5, SCO2: 0.1, SCO3: 0.04, TUR1: 1.3, TUR2: 0.15, GRE1: 0.6,
-    SUI1: 0.5, AUT1: 0.5, DEN1: 0.45, SWE1: 0.3, NOR1: 0.3, POL1: 0.35, CZE1: 0.3, RUS1: 0.8, UKR1: 0.3,
-    BRA1: 0.45, BRA2: 0.12, BRA3: 0.04, BRA4: 0.02, ARG1: 0.2, ARG2: 0.04, ARG3: 0.01, ARG4: 0.006, CHI1: 0.14, CHI2: 0.032, CHI3: 0.01, CHI4: 0.005,
-    URU1: 0.08, URU2: 0.025, COL1: 0.12, COL2: 0.03, PER1: 0.07, ECU1: 0.09, MEX1: 0.5, MEX2: 0.08, USA1: 0.55, USA2: 0.14,
-    JPN1: 0.35, JPN2: 0.1, JPN3: 0.04, KOR1: 0.25, KOR2: 0.06, CHN1: 0.8, KSA1: 2.5, AUS1: 0.12, EGY1: 0.2, MAR1: 0.12, QAT1: 1.0, UAE1: 0.6, IRN1: 0.15, IND1: 0.12, THA1: 0.15
+  // sueldo medio de un futbolista del primer equipo, en k€ al año (aproximaciones de diseño hechas de memoria, no datos oficiales).
+  // Las ligas cuyos clubes están en js/sueldos-datos.js usan en cambio el promedio de esa tabla (W.ref), para que ambas coincidan
+  var REFK = {
+    ENG1: 7200, ENG2: 1350, ENG3: 350, ENG4: 170, ENG5: 80, ESP1: 4000, ESP2: 680, ESP3: 120, ESP4: 60, ITA1: 3350, ITA2: 460, ITA3: 90, GER1: 3370, GER2: 740, GER3: 170,
+    FRA1: 2600, FRA2: 350, FRA3: 80, POR1: 970, POR2: 100, POR3: 30, NED1: 900, NED2: 90, BEL1: 880, BEL2: 120, SCO1: 780, SCO2: 100, SCO3: 40, TUR1: 1240, TUR2: 150, GRE1: 560, GRE2: 70,
+    SUI1: 570, SUI2: 90, SUI3: 30, AUT1: 570, AUT2: 70, DEN1: 470, DEN2: 70, DEN3: 25, SWE1: 320, SWE2: 40, NOR1: 300, NOR2: 45, POL1: 370, POL2: 40, POL3: 15, CZE1: 335, CZE2: 30, RUS1: 900, RUS2: 90, UKR1: 330, UKR2: 25,
+    HRV1: 180, HRV2: 30, SRB1: 140, SRB2: 20, ROU1: 150, ROU2: 30, HUN1: 100, HUN2: 25, BUL1: 80, BUL2: 15, ISR1: 150, ISR2: 30, CYP1: 70, IRL1: 40, IRL2: 12, WAL1: 25, FIN1: 50, FIN2: 15, ISL1: 40, ISL2: 8,
+    BRA1: 1350, BRA2: 220, BRA3: 60, BRA4: 25, ARG1: 395, ARG2: 45, ARG3: 12, ARG4: 6, CHI1: 110, CHI2: 38, CHI3: 10, CHI4: 5, URU1: 95, URU2: 25, PAR1: 100, COL1: 170, COL2: 30, PER1: 120, PER2: 20, ECU1: 125, ECU2: 25, BOL1: 90, VEN1: 60,
+    MEX1: 710, MEX2: 80, USA1: 800, USA2: 100, CAN1: 80, CRC1: 80, HON1: 25, PAN1: 25, GUA1: 25, SLV1: 20, JAM1: 20,
+    JPN1: 520, JPN2: 120, JPN3: 40, KOR1: 415, KOR2: 70, CHN1: 900, KSA1: 2540, AUS1: 175, QAT1: 690, QAT2: 150, UAE1: 590, UAE2: 120, IRN1: 110, IRN2: 40, UZB1: 100, UZB2: 20, IND1: 100, IND2: 25, THA1: 120, THA2: 45,
+    EGY1: 335, MAR1: 185, RSA1: 280, TUN1: 50, ALG1: 40
   };
+  W.REF = {}; Object.keys(REFK).forEach(function (k) { W.REF[k] = REFK[k] / 1000; });
   // ligas sin referencia: se deduce del peso económico del país y de la categoría
   var TIERX = { 1: 1, 2: 0.2, 3: 0.06, 4: 0.025, 5: 0.012 };
   W.ref = function (lgId) {
+    var tab = W.BUDGET && W.BUDGET[lgId];
+    if (tab) { var v = Object.keys(tab).map(function (k) { return tab[k]; }); return v.reduce(function (a, b) { return a + b; }, 0) / v.length / 28; }      // masa media de la tabla ÷ 28 jugadores con ficha
     if (W.REF[lgId] != null) return W.REF[lgId];
     var def = FP.LGDEF[lgId], cw = FP.DATA.countries[def.c], w = cw ? cw.w : 0.5, top = U.clamp(0.1 * Math.pow(w / 0.35, 2.2), 0.03, 6);
     return Math.max(0.005, top * (TIERX[def.t] || 0.01));
