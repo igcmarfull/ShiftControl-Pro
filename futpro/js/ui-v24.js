@@ -76,7 +76,7 @@
     var E = RT.hofLoad(), cur = h.retired ? RT.hofEntry() : null, html = '';
     var rows = E.slice();
     html += '<div class="card"><div class="hd"><h3>' + I('trophy') + 'Salón de la Fama de tus carreras</h3></div>' + (rows.length ? '<table class="wt"><thead><tr><th>Jugador</th><th class="n">Legado</th><th class="n">Balón de Oro</th><th class="n">Títulos</th><th class="n">Partidos</th><th class="n">Goles</th><th class="n">Nivel máx.</th><th>Después</th><th></th></tr></thead><tbody>' +
-      rows.map(function (e) { var me = cur && e.id === cur.id; return '<tr><td>' + (me ? '<b>' + esc(e.nm) + '</b>' : esc(e.nm)) + '<div class="mut sm">' + esc(e.label) + ' · retiro a los ' + e.ret + ' (' + e.yr + ')' + '</div></td><td class="n">' + e.score + '</td><td class="n">' + e.bo + '</td><td class="n">' + e.tro + '</td><td class="n">' + e.ap + '</td><td class="n">' + e.g + '</td><td class="n">' + e.peak + '</td><td>' + esc(e.path || '—') + '</td><td><button class="btn sm" data-act="rt-hofdel" data-id="' + esc(e.id) + '">Quitar</button></td></tr>'; }).join('') + '</tbody></table><p class="mut sm">Se guarda en este navegador cada vez que te retiras. Compara tus carreras entre sí.</p>' : '<p class="mut">Aún no hay carreras terminadas en este navegador. Cuando te retires, tu carrera quedará registrada aquí.</p>') + '</div>';
+      rows.map(function (e) { var me = cur && e.id === cur.id; return '<tr><td>' + (me ? '<b>' + esc(e.nm) + '</b>' : esc(e.nm)) + '<div class="mut sm">' + esc(e.label) + ' · retiro a los ' + e.ret + ' (' + e.yr + ')' + (e.dy ? ' · hijo de ' + esc(e.dy) : '') + '</div></td><td class="n">' + e.score + '</td><td class="n">' + e.bo + '</td><td class="n">' + e.tro + '</td><td class="n">' + e.ap + '</td><td class="n">' + e.g + '</td><td class="n">' + e.peak + '</td><td>' + esc(e.path || '—') + '</td><td><button class="btn sm" data-act="rt-hofdel" data-id="' + esc(e.id) + '">Quitar</button></td></tr>'; }).join('') + '</tbody></table><p class="mut sm">Se guarda en este navegador cada vez que te retiras. Compara tus carreras entre sí.</p>' : '<p class="mut">Aún no hay carreras terminadas en este navegador. Cuando te retires, tu carrera quedará registrada aquí.</p>') + '</div>';
     if (h.retired) {
       var img = ''; try { img = RT.card().toDataURL('image/png'); } catch (e) { }
       html += '<div class="grid g2"><div class="card"><div class="hd"><h3>' + I('arrow') + 'Compartir tu carrera</h3></div>' + (img ? '<img src="' + img + '" alt="Tarjeta de carrera" style="width:100%;max-width:340px;border-radius:8px;display:block;margin:.3rem auto">' : '') + '<div class="btn-group" style="margin-top:.6rem"><button class="btn pri" data-act="rt-img">Descargar tarjeta (PNG)</button><button class="btn" data-act="rt-pdf">Imprimir / guardar PDF</button></div></div>' +
@@ -87,10 +87,10 @@
 
   SC.retiro = function () {
     var S = FP.S, h = S.hero, p = P.ensure(), rt = RT.ensure(), tab = UI.tab.retiro || 'vida';
-    var html = hdr('book', 'Vida y legado', 'Salud, carrera de entrenador, presidencia, reencuentros y cierre', seg('retiro', [['vida', 'Vida', 'plus'], ['carrera', 'Carrera', 'target'], ['reenc', 'Reencuentros', 'user'], ['cierre', 'Cierre', 'trophy']], tab));
+    var html = hdr('book', 'Vida y legado', 'Salud, carrera, academia propia, reencuentros y cierre', seg('retiro', [['vida', 'Vida', 'plus'], ['carrera', 'Carrera', 'target'], ['acad', 'Academia', 'train'], ['reenc', 'Reencuentros', 'user'], ['cierre', 'Cierre', 'trophy']], tab));
     if (!h.retired) html += '<div class="notice">Todavía estás en actividad. Aquí se desarrolla lo que viene después: tu salud, tu carrera como entrenador o presidente y el cierre de tu historia. Ya puedes ver el Salón de la Fama con tus carreras anteriores.</div>';
-    if (!h.retired && tab !== 'cierre') return html + '<div class="card"><p class="mut">Disponible cuando te retires.</p></div>';
-    return html + (tab === 'carrera' ? careerTab(h, p) : tab === 'reenc' ? reencTab(h, rt) : tab === 'cierre' ? closeTab(h, p) : lifeTab(h, rt));
+    if (!h.retired && tab !== 'cierre' && tab !== 'acad') return html + '<div class="card"><p class="mut">Disponible cuando te retires.</p></div>';
+    return html + (tab === 'carrera' ? careerTab(h, p) : tab === 'acad' && UI.acadTab ? UI.acadTab(h, p) : tab === 'reenc' ? reencTab(h, rt) : tab === 'cierre' ? closeTab(h, p) : lifeTab(h, rt));
   };
   A['pr-inject'] = function () { done(RT.inject()); };
   A['pr-stadium'] = function () { done(RT.stadium()); };

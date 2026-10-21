@@ -120,6 +120,7 @@
     var club = h.club != null ? C.tname(h.club) : (h.team != null ? C.tname(h.team) : null);
     var born = (h.city ? esc(h.city) + ', ' : '') + dlong(h.b);
     var p = '<b>' + esc(h.nm) + '</b> (' + born + ') ' + (ret ? 'fue' : 'es') + ' un futbolista ' + (dem ? esc(dem) : 'de ' + esc(countryName(h.nat))) + ' que ' + (ret ? 'se desempeñaba' : 'se desempeña') + ' como ' + esc(pos) + (!ret && club && h.tk !== 'free' ? ' en ' + esc(club) : '') + '.';
+    if (h.dyn) p += ' Es hijo del exfutbolista ' + esc(h.dyn.father) + ' (' + esc(String(h.dyn.label || '').toLowerCase()) + '), cuya carrera continúa.';
     if (!st.length) return p;
     var names = []; st.forEach(function (s) { if (names.indexOf(s.nm) < 0) names.push(s.nm); });
     p += ' ' + (names.length > 1 ? 'Ha pasado por ' + names.length + ' clubes, entre ellos ' + esc(list(names.slice(-3).reverse().slice(0, 3))) + '.' : 'Ha defendido a ' + esc(names[0]) + '.');

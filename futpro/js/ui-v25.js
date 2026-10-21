@@ -53,7 +53,7 @@
     if (!list.length) return html + '<div class="card"><p class="mut">Aún no sigues a ningún jugador. Apadrina a una promesa, representa a un cliente o funda una academia en <a class="more" data-act="nav" data-s="post">Después del fútbol</a>.</p></div>';
     var cur = fi.pl[UI.fpid] || list[0]; UI.fpid = cur.pid;
     html += '<div class="seg">' + list.map(function (r) { return '<button class="' + (r.pid === cur.pid ? 'on' : '') + '" data-act="fichago" data-id="' + r.pid + '">' + esc(r.n) + (r.end ? ' †' : '') + '</button>'; }).join('') + '</div>';
-    html += '<div class="card fi-page">' + infobox(cur, FP.S.pl[cur.pid]) + '<h1 class="fi-h">' + esc(cur.n) + '</h1><div class="mut sm">' + esc(KIND[cur.kind] || '') + (cur.end ? ' · retirado' : '') + '</div>' + body(cur) + '<div class="fi-clr"></div></div>';
+    html += '<div class="card fi-page">' + infobox(cur, FP.S.pl[cur.pid]) + '<h1 class="fi-h">' + esc(cur.n) + '</h1><div class="mut sm">' + esc(KIND[cur.kind] || '') + (cur.end ? ' · retirado' : '') + '</div>' + (UI.fichaTools ? UI.fichaTools(cur) : '') + body(cur) + '<div class="fi-clr"></div></div>';
     return html;
   };
   A.fichago = function (d) { UI.fpid = +d.id; UI.go('ficha'); };

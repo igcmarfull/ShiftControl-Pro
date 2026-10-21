@@ -69,11 +69,18 @@
   }
   A['st-auto'] = function () { readForm(); form.extra = autoExtra(form.pos); Start.wizard(); };
   A['st-zero'] = function () { readForm(); form.extra = {}; Start.wizard(); };
+  // dinastía: continúa la historia con el hijo (nombre, país, posición, nivel y potencial heredados)
+  Start.dynasty = function (d) {
+    Start.y0 = d.year;
+    var styles = Object.keys(FP.Hero.STYLES);
+    form = { nm: d.first, ln: d.last, nat: d.nat, city: d.city, age: d.age, ht: d.ht, kg: d.kg, pos: d.pos, foot: 'R', style: styles[Math.floor(Math.random() * styles.length)], extra: autoExtra(d.pos), club: 'academy', amName: '', acId: null, res: null, av: UI.avRandom(), dyn: d, acName: d.club };
+    Start.wizard();
+  };
   Start.wizard = function () {
     var f = form, pts = 30 - Object.keys(f.extra).reduce(function (s, k) { return s + f.extra[k]; }, 0);
     var natOpts = FP.DATA.nations.slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); }).map(function (n) { return '<option value="' + n.c + '" ' + (f.nat === n.c ? 'selected' : '') + '>' + esc(n.n) + '</option>'; }).join('');
     var clubs = FP.S ? [] : [];
-    var html = '<div class="start"><h1>Nueva carrera</h1><div class="card"><h3>1 · Tu futbolista</h3><div class="grid g4">' +
+    var html = '<div class="start"><h1>Nueva carrera</h1>' + (f.dyn ? '<div class="notice">Dinastía: continúas la historia de <b>' + esc(f.dyn.father) + '</b> (' + esc(f.dyn.label) + ', legado ' + f.dyn.score + '). Heredas su apellido, su país y el nivel y el potencial de tu personaje; el mundo se genera de nuevo en ' + f.dyn.year + '.</div>' : '') + '<div class="card"><h3>1 · Tu futbolista</h3><div class="grid g4">' +
       '<label class="f"><span>Nombre</span><input type="text" id="w_nm" value="' + esc(f.nm) + '" placeholder="Ignacio"></label>' +
       '<label class="f"><span>Apellido</span><input type="text" id="w_ln" value="' + esc(f.ln) + '"></label>' +
       '<label class="f"><span>País</span><select id="w_nat">' + natOpts + '</select></label>' +
@@ -126,9 +133,11 @@
     var seed = Math.floor(Math.random() * 2e9);
     FP.Game.buildWorld(seed, progress, Start.y0).then(function () {
       var opts = { res: f.res, nm: nm, nat: f.nat, city: f.city, age: f.age, h: f.ht, kg: f.kg, pos: f.pos, foot: f.foot, style: f.style, extra: f.extra, av: f.av };
+      if (f.dyn) { opts.ovrTarget = f.dyn.ovr; opts.pot = f.dyn.pt; }
       if (f.club === 'amat') opts.club = { kind: 'amat', name: f.amName.trim() };
       else { var c = FP.S.clubs.filter(function (c) { return c.nm === f.acName; })[0] || FP.S.clubs.filter(function (c) { return c.nm === 'Colo-Colo'; })[0]; opts.club = { kind: 'academy', id: c.id }; }
-      FP.Game.startCareer(opts); UI.scr = 'home'; UI.mt = null;
+      var hh = FP.Game.startCareer(opts); UI.scr = 'home'; UI.mt = null;
+      if (f.dyn) { hh.dyn = f.dyn; if (hh.soc) hh.soc.fame = (hh.soc.fame || 0) + Math.round(f.dyn.score / 10); hh.history.push({ w: FP.S.week, t: 'Comienza la carrera de ' + hh.nm + ', hijo de ' + f.dyn.father + '.' }); }
       return FP.Store.save().catch(function () { });
     }).then(function () { UI.render(); }).catch(Start.fail);
   };

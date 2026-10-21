@@ -338,3 +338,19 @@ Envuelve `postcareer.js`, `coaching.js` y `paths2.js` (no los reemplaza). Estado
 - **Cierre:** Salón de la Fama entre partidas (`localStorage` `futpro.hof`, solo en este navegador), tarjeta de carrera PNG y versión imprimible (PDF desde el diálogo de impresión).
 
 Límites: las partidas anteriores no tienen compañeros/rivales anotados hasta que vuelven a jugar un año (al retirarse se anota el vestuario actual). Todos los umbrales, costos y porcentajes son supuestos de diseño probados en `tests/retiro.js`, no datos reales.
+
+## Retiro jugable: fichas, selección, academia, agente y dinastía
+
+**Fichas (`js/ficha.js`, `js/ui-v25.js`, pantalla «Ficha de jugadores»).** Libro de carrera estilo enciclopedia de cada jugador que sigues: protegido/hijo, representados y promesas de tu academia (`hero.fi`). Por temporada y club guarda goles y asistencias reales del acumulado de la competición; los **partidos y minutos son estimados** a partir de la alineación probable del club en cada partido (se marcan con asterisco). Anota título de liga, goleador, Balón de Oro, debut, primer gol y convocatorias (las estadísticas de selección vienen de `p.ns`). Los retirados quedan con su ficha cerrada porque el mundo borra a los retirados.
+
+**Seleccionador jugable (`js/seleccion.js`, `js/ui-v26.js`).** Camino «Seleccionador»: Sub-17 y Sub-20/Sub-23 (licencias 1 y 2) y Absoluta (licencia Pro y 3 años de experiencia o legado 80). Armas la **convocatoria** (23, o 26 en la absoluta, con cupos por posición; el motor elige tu once y banco entre ellos) y diriges con el motor real y pausas los partidos de tu categoría (amistosos, continentales y mundiales). Cómo se integra: `NT.squadOf` y `NT.strength` usan tu lista; `NT.lineup` acepta formación y, para la absoluta, tu lista; `NT.heroPlays` encola solo los partidos de tu categoría; `Coach.job()` devuelve el cargo de selección (`club == null`). Confianza de la federación medida contra lo esperado (`(resultado − esperado)·16`), destitución con 12+ partidos y confianza ≤ 12. Cada torneo terminado registra resultado y sube la confianza; campeón o subcampeón ofrece el siguiente escalón. En la absoluta la lista mejor que la recomendada suma hasta +3 de fuerza (la calidad de las listas juveniles ya se refleja en `comp.ys`).
+
+**Academia propia (`js/proyectos.js`, pestaña «Academia»).** Fundación 150 mil €, 5 niveles (150/450/800/1300/1900 mil € por subir), gasto anual 25 mil € por nivel. Cada año ingresan 1–3 promesas de 12–13 años de tu país (`Youth.makePros`), con potencial ajustado por nivel y legado. A los 17+ pasan a un club (compensación por formación del 8% del valor) y cobras 5% del valor en traspasos posteriores. Pueden apadrinarse o representarse y tienen ficha.
+
+**Representados: ofertas múltiples.** Cuando hay 2+ pretendientes aparece una decisión con cada club (sueldo, rol, tu comisión), «poner a licitar» (≈55–70% de mejorar sueldo +25% y comisión ×1,3; si falla, pierdes la operación) o rechazar.
+
+**Jugadores seguidos en tu club.** Si diriges un club (director técnico, deportivo o presidente) puedes llevar a un seguido a tu plantel (en presidencia paga la caja). Como director técnico puedes pedirle minutos (`Match.lineup` suma +8 al favorito): juega aunque sea algo peor y, con 1200+ min estimados, progresa +1 al año.
+
+**Dinastía.** Con un hijo como protegido, «Continuar la dinastía» abre la creación de carrera con su nombre, país, posición, nivel y potencial heredados; el mundo se genera de nuevo en el año actual, la biografía y el Salón de la Fama indican «hijo de» y hay un bonus de fama inicial de `legado/10`. La partida anterior queda guardada.
+
+Límites: las fichas solo cuentan desde que sigues al jugador; las nóminas de selección de otras categorías las sigue armando la IA; todos los umbrales, costos y porcentajes son supuestos de diseño probados en `tests/ficha.js`, `tests/seleccion.js` y `tests/proyectos.js`, no datos reales.

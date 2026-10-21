@@ -404,7 +404,7 @@
   RT.hofEntry = function () {
     var h = hero(), p = h && h.post, lg = p && (p.legacy || (h.retired ? null : P.legacy())); if (!lg) return null;
     var pa = p.path, rt = RT.ensure();
-    return { id: h.nm + '|' + (rt && rt.hid), nm: h.nm, nat: h.nat, label: lg.label, score: lg.score, bo: lg.bo, tro: lg.trophies, g: lg.g, ap: lg.ap, peak: lg.peak, caps: lg.caps, ret: h.retiredAge, yr: D.year(h.retiredW), path: pa ? P.PATHS[pa.k].nm : '', pt: pa ? pa.titles : 0, hl: rt && rt.hl != null ? Math.round(rt.hl) : null, nw: FP.Dinero ? Math.round(FP.Dinero.networth()) : Math.round(h.money) };
+    return { id: h.nm + '|' + (rt && rt.hid), nm: h.nm, nat: h.nat, label: lg.label, score: lg.score, bo: lg.bo, tro: lg.trophies, g: lg.g, ap: lg.ap, peak: lg.peak, caps: lg.caps, ret: h.retiredAge, yr: D.year(h.retiredW), path: pa ? P.PATHS[pa.k].nm : '', dy: h.dyn ? h.dyn.father : '', pt: pa ? pa.titles : 0, hl: rt && rt.hl != null ? Math.round(rt.hl) : null, nw: FP.Dinero ? Math.round(FP.Dinero.networth()) : Math.round(h.money) };
   };
   RT.hofSave = function () {
     var h = hero(); if (!h || !h.retired) return;
