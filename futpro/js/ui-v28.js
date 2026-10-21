@@ -10,7 +10,7 @@
 
   // ---------- pantallas agrupadas ----------
   var ORIG = {};
-  ['player', 'health', 'locker', 'life', 'review', 'goals', 'career', 'honors', 'bio', 'training', 'tactics', 'tables', 'stats', 'market', 'contracts', 'tryouts', 'post', 'retiro', 'ficha'].forEach(function (k) { ORIG[k] = SC[k]; });
+  ['player', 'health', 'locker', 'life', 'review', 'goals', 'career', 'honors', 'bio', 'training', 'tactics', 'tables', 'stats', 'market', 'contracts', 'tryouts', 'post', 'retiro', 'ficha', 'club', 'idolo'].forEach(function (k) { ORIG[k] = SC[k]; });
 
   // separa el encabezado propio de una pantalla: devuelve sus herramientas (botones, pestañas internas) y el resto
   function split(html) {
@@ -39,11 +39,12 @@
   merged('training', 'Entrenamientos y táctica', 'train', 'Plan de entrenamiento y táctica', [{ k: 'entrena', n: 'Entrenamientos', id: 'training' }, { k: 'tactica', n: 'Táctica', id: 'tactics' }]);
   merged('tables', 'Clasificaciones y estadísticas', 'table', 'Tablas del mundo y estadísticas', [{ k: 'tablas', n: 'Clasificaciones', id: 'tables' }, { k: 'stats', n: 'Estadísticas', id: 'stats' }]);
   merged('market', 'Mercado y contratos', 'transfer', 'Fichajes, contratos y pruebas', [{ k: 'mercado', n: 'Mercado de fichajes', id: 'market' }, { k: 'contratos', n: 'Contratos', id: 'contracts' }, { k: 'pruebas', n: 'Pruebas masivas', id: 'tryouts' }]);
+  merged('club', 'Mi club', 'shield', 'Tu club y tu legado en él', [{ k: 'club', n: 'Club', id: 'club' }, { k: 'legado', n: 'Legado', id: 'idolo' }]);
   merged('after', 'Después del retiro', 'medal', 'Legado, caminos, vida, proyectos y fichas', [{ k: 'legado', n: 'Legado y caminos', id: 'post' }, { k: 'vida', n: 'Vida y proyectos', id: 'retiro' }, { k: 'fichas', n: 'Fichas de jugadores', id: 'ficha' }]);
 
   // identificadores antiguos → pestaña del grupo
   var ALIAS = { health: ['player', 'salud'], locker: ['player', 'vestuario'], life: ['player', 'vida'], review: ['mycareer', 'resumen'], goals: ['mycareer', 'metas'], career: ['mycareer', 'historial'], honors: ['mycareer', 'palmares'], bio: ['mycareer', 'bio'],
-    tactics: ['training', 'tactica'], stats: ['tables', 'stats'], contracts: ['market', 'contratos'], tryouts: ['market', 'pruebas'], post: ['after', 'legado'], retiro: ['after', 'vida'], ficha: ['after', 'fichas'] };
+    tactics: ['training', 'tactica'], stats: ['tables', 'stats'], contracts: ['market', 'contratos'], tryouts: ['market', 'pruebas'], post: ['after', 'legado'], retiro: ['after', 'vida'], ficha: ['after', 'fichas'], idolo: ['club', 'legado'] };
   UI.ALIAS = ALIAS;
   var render0 = UI.render;
   UI.render = function () { var a = ALIAS[UI.scr]; if (a) { UI.scr = a[0]; UI.tab['g_' + a[0]] = a[1]; } return render0.apply(this, arguments); };

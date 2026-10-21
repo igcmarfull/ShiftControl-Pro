@@ -378,3 +378,14 @@ La nueva carrera pide la **fecha de nacimiento** (día, mes y año) en lugar de 
 **Calendario y copas (`js/comp.js`, `js/supercopas.js`, `tests/calendario.js`).** Las ligas ya no programan jornadas en las semanas de ventana FIFA (ni la siguiente). Las copas tienen sorteo en gran parte aleatorio (los de primera entran como cabezas de serie, sorteo libre desde la segunda ronda), juega de local el club de menor categoría en las primeras rondas, y reglas por país (`Comp.CUPCFG`): Brasil, Colombia y Ecuador a ida y vuelta; semifinales a ida y vuelta en España, Italia y Portugal. Cada temporada se juega la **supercopa** (≈20 países) entre el campeón de liga y el de copa (si son el mismo, el subcampeón de liga). Medido: 0 de 145 mil partidos de liga en fecha FIFA; los ganadores de copa son de primera el 91 %; el de menor categoría fue local 2433 veces frente a 0.
 
 Límites: todos los parámetros son supuestos de diseño; las referencias reales son de memoria. Las supercopas se juegan a un solo partido (la real de España y otras tiene formato distinto).
+
+## Legado e ídolo por club
+
+Pestaña **Mi club › Legado** (`js/idolo.js`, `js/ui-idolo.js`, `tests/idolo.js`).
+
+- **Legado histórico** (0–100) por club: partidos, goles, asistencias, temporadas, ligas, copas, goles en finales, derbis, descensos evitados, ascensos, hat-tricks y ofertas rechazadas para quedarte. Estatus: Desconocido, Jugador querido (20), Referente (40), Ídolo (60), Leyenda (80), Ídolo eterno (95).
+- **Escala según el club**: el mismo aporte vale menos en un club grande que en uno pequeño (`Id.size`).
+- **Cariño de la hinchada** (hoy): sube y baja con el rendimiento y con cómo te vas; irse a un rival directo lo penaliza.
+- **Eventos**: hinchas piden renovación (sube lo que exigen en la renovación), ovación o silbidos al volver, oferta de regreso, salón del club al retirarte, puesto de embajador o entrenador de juveniles.
+- **Récords del club**: solo desde el inicio de la partida (el juego no tiene la historia real previa).
+- Los pesos y umbrales son supuestos de diseño, no datos reales. Partidas anteriores se reconstruyen una vez desde el registro de estadísticas.
