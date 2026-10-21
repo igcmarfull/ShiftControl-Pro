@@ -55,9 +55,6 @@
   // valor base: el cálculo original (nivel, potencial estimado y edad)
   V.base = function () { return V.base0(); };
   V.get = function () { var k = sig(); if (!cache || cache.k !== k) cache = { k: k, v: V.compute() }; return cache.v; };
-  // pequeño impulso al número de ofertas cuando el mercado te ve en alza (y menor cuando estás en baja)
-  V.demand = function () { try { return U.clamp(V.get().mult - 1, -0.2, 0.8); } catch (e) { return 0; } };
-
   V.base0 = M.heroValue;
   M.heroValue = function () { try { return V.get().value; } catch (e) { return V.base0.apply(this, arguments); } };
 })();

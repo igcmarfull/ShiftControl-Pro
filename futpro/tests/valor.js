@@ -69,7 +69,6 @@ t('jugar con la selección absoluta suma un poco', ntM > noNtM, ntM + ' vs ' + n
   t('calcular el valor no modifica el estado', before === after);
   t('el multiplicador respeta sus límites', c.mult >= V.CFG.lo && c.mult <= V.CFG.hi && isFinite(c.value), c.mult);
   t('V.get memoriza dentro de la misma semana', V.get() === V.get());
-  t('la demanda de ofertas está acotada', V.demand() >= -0.2 && V.demand() <= 0.8, V.demand());
   t('sin registros el ajuste es neutro', (function () { var h2 = newHero({ pos: 'ST' }); return Math.abs(V.compute().mult - 1) < 0.001; })());
   t('el valor de los demás jugadores no cambia (C.value)', C.value(70, 75, 24) === C.value(70, 75, 24) && M.heroValue !== C.value);
 })();

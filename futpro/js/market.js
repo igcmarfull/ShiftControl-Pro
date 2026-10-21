@@ -227,7 +227,7 @@
     var cur = h.club != null ? S.clubs[h.club] : null;
     var potEst = Market.potEst(), val = Market.heroValue();
     var curLvl = cur ? Market.clubLevel(cur) : 40;
-    var lambda = 0.55 + (h.agent ? h.agent.lvl * 0.3 : 0) + U.clamp((h.ovr - (cur ? cur.st - 2 : 50)) * 0.1, -0.5, 1.6) + (h.season.g + h.season.a * 0.5) * 0.02 + (FP.Valor ? FP.Valor.demand() : 0);   // el mercado te ve en alza o en baja (js/valor.js)
+    var lambda = 0.55 + (h.agent ? h.agent.lvl * 0.3 : 0) + U.clamp((h.ovr - (cur ? cur.st - 2 : 50)) * 0.1, -0.5, 1.6) + (h.season.g + h.season.a * 0.5) * 0.02;
     if (freeAgent) lambda += 0.8;
     var n = Math.min(3, U.poisson(Math.max(0.1, lambda)));
     if (age < 17) n = 0;
