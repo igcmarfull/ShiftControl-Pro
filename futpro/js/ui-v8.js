@@ -60,7 +60,7 @@
     return html + '</div></div>';
   }
   function pathTab(p) {
-    var S = FP.S, h = S.hero, pa = p.path, html = UI.decCards(['post', 'agente', 'gestion']);
+    var S = FP.S, h = S.hero, pa = p.path, html = UI.decCards(['post', 'agente', 'gestion', 'rt']);
     if (!pa) {
       html += '<div class="grid g2">' + Object.keys(P.PATHS).map(function (k) { return '<div class="card"><div class="hd"><h3>' + esc(P.PATHS[k].nm) + '</h3></div><p class="mut sm">' + esc(P.PATHS[k].d) + '</p><button class="btn pri" data-act="postpath" data-k="' + k + '">Elegir</button></div>'; }).join('') + '</div>';
       return html;

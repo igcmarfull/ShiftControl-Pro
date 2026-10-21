@@ -110,5 +110,5 @@
   // navegación, avisos y acceso desde el inicio del retirado
   var gr = UI.GROUPS[0][1], ix = 0; gr.forEach(function (n, i) { if (n[0] === 'post') ix = i; }); gr.splice(ix + 1, 0, ['retiro', 'Vida y legado', 'book']);
   var badges0 = UI.badges;
-  UI.badges = function () { var b = badges0.apply(this, arguments); if (FP.S && FP.S.hero) { var n = Dec.open('rt').length; b.retiro = n || undefined; } return b; };
+  UI.badges = function () { var b = badges0.apply(this, arguments); if (FP.S && FP.S.hero) { var n = Dec.open('rt').length; b.retiro = n || undefined; if (n) b.post = (b.post || 0) + n; } return b; };
 })();

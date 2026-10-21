@@ -213,6 +213,8 @@
   RT.promo = function () {
     var S = FP.S, p = P.ensure(), pa = p.path; if (!pa || pa.k !== 'coach' || !pa.job || !pa.seasons.length) return;
     var last = pa.seasons[pa.seasons.length - 1], good = last.res === 'Campeón' || last.res === 'Ascenso' || last.res === 'Zona alta';
+    // con licencia para el siguiente escalón, dos temporadas en el mismo cargo y club también abren la puerta
+    var same = pa.seasons.filter(function (x) { return x.club === pa.job.club && x.role === pa.job.role; }).length; if (same >= 2) good = true;
     if (!good || Dec.open('rt').some(function (d) { return d.data.t === 'ascenso'; })) return;
     var j = pa.job, club = S.clubs[j.club], opts = [], data;
     if (j.role === 'youth' && p.lic >= 2) { opts.push({ k: 'si', label: 'Subir a asistente técnico en ' + club.nm, hint: 'Más sueldo y responsabilidad.' }); data = { club: j.club, role: 'assist' }; }
@@ -220,7 +222,7 @@
     else if (j.role === 'head') { var b = bigger(club, 'head')[0]; if (b) { opts.push({ k: 'si', label: 'Dirigir a ' + b.nm + ' (' + FP.LGDEF[b.lg].n + ')', hint: 'Un club mayor; más exigencia y sueldo.' }); data = { club: b.id, role: 'head' }; } }
     if (!data) return;
     opts.push({ k: 'no', label: 'Seguir donde estás', hint: '' });
-    Dec.add({ kind: 'rt', uniq: 'asc' + S.week, title: 'Te ofrecen dar un paso adelante', text: 'Tu temporada (' + last.res.toLowerCase() + ') no pasó inadvertida.', opts: opts, def: 'no', exp: 20, data: { t: 'ascenso', club: data.club, role: data.role } });
+    Dec.add({ kind: 'rt', uniq: 'asc' + S.week, title: 'Te ofrecen dar un paso adelante', text: same >= 2 && last.res !== 'Campeón' && last.res !== 'Zona alta' ? 'Llevas ' + same + ' temporadas en el mismo cargo y tienes la licencia para dar el salto.' : 'Tu temporada (' + last.res.toLowerCase() + ') no pasó inadvertida.', opts: opts, def: 'no', exp: 52, data: { t: 'ascenso', club: data.club, role: data.role } });
   };
   var olc0 = Sim.onLeagueClosed;
   Sim.onLeagueClosed = function (comp, entry) {
