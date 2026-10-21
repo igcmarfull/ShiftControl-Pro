@@ -3,7 +3,9 @@
   'use strict';
   var FP = window.FP, U = FP.U, R = U.R, C = FP.Core;
 
-  var HOME_ADV = 3.0, NAT_ADV = 2.2;
+  var NAT_ADV = 2.2;
+  // parámetros de realismo del partido (calibrados en tests/partidos.js): ventaja de local, penales, tarjetas, VAR y goles de jugada
+  Match.RL = { homeAdv: 3.0, pen: 0.045, pgMul: 1, card: 0.19, pRed: 0.035, varAnnul: 0, varFrom: 2018, derby: 1 };
   var SW_POS = { ST: 10, LW: 6, RW: 6, AM: 5, CM: 2.4, DM: 1, LB: 1, RB: 1, CB: 1.3, GK: 0.02 };
   var AS_POS = { ST: 3.6, LW: 6, RW: 6, AM: 6, CM: 4, DM: 1.5, LB: 3.2, RB: 3.2, CB: 0.7, GK: 0.05 };
   var SHOT_BONUS = { ST: 4, LW: 1, RW: 1, AM: 0, CM: -7, DM: -12, LB: -20, RB: -20, CB: -22, GK: -40 };
@@ -16,7 +18,7 @@
     return C.strOf(id);
   }
   function lambdas(stH, stA, neutral, nat) {
-    var d = stH + (neutral ? 0 : (nat ? NAT_ADV : HOME_ADV)) - stA;
+    var d = stH + (neutral ? 0 : (nat ? NAT_ADV : Match.RL.homeAdv)) - stA;
     d = U.clamp(d, -45, 45);
     return [1.32 * Math.exp(0.03 * d), 1.08 * Math.exp(-0.03 * d)];
   }
@@ -195,7 +197,8 @@
     HV = hero;
     var heroSide = hero && (f.h === hero.team ? 'h' : f.a === hero.team ? 'a' : null);
     var ev = [], n = 0;
-    function E(m, type, side, text, extra) { var e = { m: m, t: type, s: side, x: text }; if (extra) for (var k in extra) e[k] = extra[k]; ev.push(e); return e; }
+    var curXg0 = null;
+    function E(m, type, side, text, extra) { var e = { m: m, t: type, s: side, x: text }; if (extra) for (var k in extra) e[k] = extra[k]; if (curXg0 != null && (type === 'goal' || type === 'save' || type === 'miss' || type === 'block' || type === 'post')) e.xg = Math.round(curXg0 * 100) / 100; ev.push(e); return e; }
 
     // alineaciones
     var teamIds = { h: f.h, a: f.a }, lu = {}, ys = comp.ys;
@@ -225,13 +228,16 @@
     var xi0 = { h: xi.h.map(function (e) { return { n: e.p.i === 0 ? hero.nm : e.p.n, pos: e.slot, o: e.p.i === 0 ? hero.ovr : e.p.o, id: e.p.i }; }), a: xi.a.map(function (e) { return { n: e.p.i === 0 ? hero.nm : e.p.n, pos: e.slot, o: e.p.i === 0 ? hero.ovr : e.p.o, id: e.p.i }; }) };
     var hm = { in: false, out: false, min: 0, g: 0, a: 0, sh: 0, sot: 0, kp: 0, yc: 0, rc: 0, inj: 0, subIn: 0, subOut: 0, role: ctx.role, ratingBase: 6.0, big: 0, drib: 0, tk: 0, err: 0, xg: 0, inv: 0 };
     var imp = ctx.imp || 1;       // importancia del partido (eliminatorias y finales aumentan ritmo y desgaste)
+    var RL = Match.RL, dby = !!(FP.Derbis && f.h < 5000 && FP.Derbis.is(f.h, f.a)), refF = U.clamp(1 + U.norm() * 0.25, 0.6, 1.5) * (dby ? 1.3 : 1);      // derbi y severidad del árbitro
+    if (dby) imp = imp * 1.08;
+    var lgd = comp.lg ? FP.LGDEF[comp.lg] : null, VARon = RL.varAnnul > 0 && FP.Date.year(S.week) >= RL.varFrom && f.h < 5000 && ((lgd && lgd.q >= 60) || comp.kind === 'X');
     var isHeroIn = function () { return heroSide && xi[heroSide].some(function (e) { return e.p.i === 0; }); };
     if (heroSide && ctx.role === 'starter') hm.in = true;
     var st = { h: strFor(comp, f.h), a: strFor(comp, f.a) };
     if (ctx.coachSide) st[ctx.coachSide] += ctx.coachBoost || 0;
     var goals = { h: 0, a: 0 }, cards = { h: {}, a: {} }, sent = { h: {}, a: {} }, subs = { h: 0, a: 0 };
     var heroStam = hero ? U.clamp(100 - hero.fat * 0.45, 40, 100) : 100;
-    var adv = f.n ? 0 : (f.h >= 5000 && f.h < 20000 ? NAT_ADV : HOME_ADV);
+    var adv = f.n ? 0 : (f.h >= 5000 && f.h < 20000 ? NAT_ADV : Match.RL.homeAdv + (dby ? 1 : 0));
     var tside = heroSide || ctx.coachSide || null;       // lado que recibe las instrucciones del jugador o del director técnico
     var mentH = (tside === 'h' && ctx.tactic) ? ctx.tactic.mentality : 0;
     var mentA = (tside === 'a' && ctx.tactic) ? ctx.tactic.mentality : 0;
@@ -281,6 +287,7 @@
       if (teamIds[sd] < 5000 || real(sp)) { if (real(sp)) addSc(comp, sp, teamIds[sd], 0); if (assist && real(assist.p)) addSc(comp, assist.p, teamIds[sd], 1); }
       else if (assist && real(assist.p)) addSc(comp, assist.p, teamIds[sd], 1);
     }
+    var curXg = null;
     function attack(m, sd, extraMult) {
       var od = sd === 'h' ? 'a' : 'h', A = rt[sd], Dd = rt[od];
       var sh = chooseShooter(sd), p = sh.p;
@@ -288,20 +295,20 @@
       var shotSk = shooterFin(sh, sd);
       var head = (isHero && hero.headerSkill() > hero.shotSkill() + 8 && R() < 0.35) || (!isHero && (sh.slot === 'CB' || sh.slot === 'ST') && R() < 0.18);
       // penal por falta en el área
-      var isPen = R() < 0.045;
+      var isPen = R() < RL.pen * (0.8 + 0.4 * refF);
       var rel = (A.atk + A.off * 0.5) - (Dd.def + Dd.off * 0.3);
       var pg = 0.085 + rel * 0.0026 + (shotSk - 58) * 0.0021 - (Dd.gk - 62) * 0.0018;
-      pg = U.clamp(pg * (extraMult || 1), 0.02, 0.42);
+      pg = U.clamp(pg * (extraMult || 1) * RL.pgMul, 0.02, 0.45); curXg = pg;
       if (isHero && !isPen) { hm.xg += pg; hm.inv += 1.2; }
       if (isPen) {
         var taker = sh; // pateador: el mejor rematador
         xi[sd].forEach(function (e) { if (!sent[sd][e.p.i] && shooterFin(e, sd) > shooterFin(taker, sd) + 4 && R() < 0.8) taker = e; });
-        E(m, 'pen', sd, '¡Penal para ' + tname(sd) + '!', {});
+        E(m, 'pen', sd, '¡Penal para ' + tname(sd) + '!', {}); curXg0 = 0.76;
         if (R() < U.clamp(0.74 + (shooterFin(taker, sd) - 60) * 0.004 - (Dd.gk - 62) * 0.002, 0.45, 0.9)) {
-          goalScored(m, sd, taker, null, 'pen');
+          goalScored(m, sd, taker, null, 'pen'); curXg0 = null;
           if (taker.p.i === 0) { hm.sh++; hm.xg += 0.76; hm.inv += 1.5; }
         } else {
-          E(m, 'miss', sd, tx(T.penMiss, { p: nameOf(taker.p) }), { hero: taker.p.i === 0 ? 1 : 0 });
+          E(m, 'miss', sd, tx(T.penMiss, { p: nameOf(taker.p) }), { hero: taker.p.i === 0 ? 1 : 0 }); curXg0 = null;
           if (taker.p.i === 0) { hm.sh++; hm.big++; hm.xg += 0.76; hm.inv += 1.5; }
         }
         return;
@@ -311,9 +318,14 @@
       if (r < pg) {
         var asst = R() < 0.72 ? chooseAssist(sd, sh) : null;
         if (isHero) hm.sh--; // goalScored suma tiro
-        goalScored(m, sd, sh, asst, head ? 'head' : 'normal');
+        if (VARon && R() < RL.varAnnul) {
+          curXg0 = curXg; E(m, 'save', sd, '¡Gol de ' + nameOf(p) + '! Pero el VAR lo revisa…', { hero: isHero ? 1 : 0 }); curXg0 = null;
+          E(m, 'var', sd, 'Gol anulado tras la revisión del VAR (' + (R() < 0.7 ? 'fuera de juego' : 'mano previa') + ').', { hero: isHero ? 1 : 0 }); if (isHero) { hm.big++; hm.sh++; }
+          return;
+        }
+        curXg0 = curXg; goalScored(m, sd, sh, asst, head ? 'head' : 'normal'); curXg0 = null;
       } else {
-        var r2 = R();
+        var r2 = R(); curXg0 = curXg;
         var nm = nameOf(p), hFlag = isHero ? 1 : 0;
         var as2 = R() < 0.4 ? chooseAssist(sd, sh) : null;
         if (as2 && as2.p.i === 0) { hm.kp++; hm.inv += 0.8; }
@@ -321,10 +333,11 @@
         else if (r2 < 0.37) { E(m, 'post', sd, tx(T.post, { p: nm }), { hero: hFlag }); if (isHero) { hm.sot++; hm.big++; } }
         else if (r2 < 0.78) { E(m, 'miss', sd, tx(T.miss, { p: nm }), { hero: hFlag }); if (isHero && R() < 0.3) hm.big++; }
         else E(m, 'block', sd, tx(T.block, { p: nm }), { hero: hFlag });
+        curXg0 = null;
       }
     }
     function cardCheck(m) {
-      if (R() > 0.19) return;
+      if (R() > RL.card * refF) return;
       var sd = R() < 0.5 ? 'h' : 'a';
       var arr = xi[sd].filter(function (e) { return !sent[sd][e.p.i]; });
       var e = U.wpick(arr, function (e) {
@@ -333,7 +346,7 @@
         return w;
       });
       var p = e.p, id = p.i, isH = id === 0;
-      var pRed = 0.035 * (isH ? (100 - hero.at.dis) / 45 : 1);
+      var pRed = RL.pRed * (isH ? (100 - hero.at.dis) / 45 : 1);
       var rr = R();
       if (rr < pRed) { sent[sd][id] = 1; E(m, 'red', sd, tx(T.red, { p: nameOf(p), t: tname(sd) }), { hero: isH ? 1 : 0, pid: id }); if (isH) { hm.rc++; hm.out = true; hm.min = m; } p.su = (p.su || 0) + (isH ? 0 : U.int(1, 3)); if (!isH) FP.Sim.hurt(p); rt = recalc(); return; }
       if (rr < 0.55) {
@@ -386,7 +399,7 @@
     var subMins = { h: [U.int(58, 66), U.int(70, 76), U.int(80, 86)], a: [U.int(58, 66), U.int(70, 76), U.int(80, 86)] };
     var ref = { h: [], a: [] };
 
-    E(0, 'start', null, 'Comienza el partido: ' + tname('h') + ' vs ' + tname('a') + '.');
+    E(0, 'start', null, (dby ? '¡Derbi! ' : '') + 'Comienza el partido: ' + tname('h') + ' vs ' + tname('a') + '.');
     var total = 90 + U.int(2, 5), half = false, m = 1;
     var tempo = 0.22 * (1 + (imp - 1) * 0.6);
     function runTo(limit) {

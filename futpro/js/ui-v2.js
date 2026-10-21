@@ -224,8 +224,8 @@
   };
 
   // ======================= PARTIDO =======================
-  var EVI = { error: 'x', goal: 'ball', yellow: 'card', red: 'card', inj: 'inj', sub: 'sub', pen: 'target', save: 'glove', post: 'target', miss: 'ball', block: 'shield', chance: 'zap', start: 'whistle', ht: 'whistle', end: 'whistle', et: 'clock', pens: 'target' };
-  var MAJOR = { goal: 1, yellow: 1, red: 1, sub: 1, inj: 1 };
+  var EVI = { var: 'search', error: 'x', goal: 'ball', yellow: 'card', red: 'card', inj: 'inj', sub: 'sub', pen: 'target', save: 'glove', post: 'target', miss: 'ball', block: 'shield', chance: 'zap', start: 'whistle', ht: 'whistle', end: 'whistle', et: 'clock', pens: 'target' };
+  var MAJOR = { goal: 1, yellow: 1, red: 1, sub: 1, inj: 1, var: 1 };
   UI.mevRow = function (e) {
     var dimEv = !MAJOR[e.t] && !e.hero, ic = EVI[e.t] || 'ball';
     var cls = 'mev ' + (e.t === 'goal' ? 'goal ' : '') + (e.hero ? 'hero ' : '') + (dimEv ? 'dim-ev' : '');
@@ -264,9 +264,9 @@
     return '<span class="tl-ev ' + side + ' ' + cls + (e.hero ? ' hero' : '') + '" style="left:' + Math.min(99, e.m / total * 100).toFixed(1) + '%" title="' + esc((e.m || 0) + "' " + e.x) + '">' + I(ic, e.t === 'goal' ? '' : '') + '<em>' + (e.m || 0) + "'" + '</em></span>';
   };
   UI.matchStats = function (evs, upto) {
-    var s = { sh: [0, 0], on: [0, 0], g: [0, 0], y: [0, 0], r: [0, 0], sub: [0, 0] };
+    var s = { sh: [0, 0], on: [0, 0], g: [0, 0], y: [0, 0], r: [0, 0], sub: [0, 0], xg: [0, 0] };
     evs.forEach(function (e) {
-      if (upto != null && e.m > upto) return; var i = e.s === 'a' ? 1 : 0;
+      if (upto != null && e.m > upto) return; var i = e.s === 'a' ? 1 : 0; if (e.xg) s.xg[i] += e.xg;
       if (e.t === 'goal') { s.g[i]++; s.sh[i]++; s.on[i]++; } else if (e.t === 'save' || e.t === 'post') { s.sh[i]++; s.on[i]++; } else if (e.t === 'miss' || e.t === 'block') { if (!/penal/i.test(e.x)) s.sh[i]++; }
       else if (e.t === 'yellow') { if (e.red2) s.r[i]++; else s.y[i]++; } else if (e.t === 'red') s.r[i]++; else if (e.t === 'sub') s.sub[i]++;
     });
@@ -274,7 +274,7 @@
   };
   UI.statBars = function (s) {
     function row(l, a, b) { var t = (a + b) || 1; return '<div class="sbar"><div class="sl">' + l + '</div><b>' + a + '</b><div class="tr"><i class="hh" style="width:' + (a / t * 100) + '%"></i><i class="aa" style="width:' + (b / t * 100) + '%"></i></div><b>' + b + '</b></div>'; }
-    return row('Remates', s.sh[0], s.sh[1]) + row('A puerta', s.on[0], s.on[1]) + row('Goles', s.g[0], s.g[1]) + row('Amarillas', s.y[0], s.y[1]) + row('Cambios', s.sub[0], s.sub[1]);
+    return row('Remates', s.sh[0], s.sh[1]) + row('A puerta', s.on[0], s.on[1]) + (s.xg && (s.xg[0] || s.xg[1]) ? row('Goles esperados (xG)', Math.round(s.xg[0] * 100) / 100, Math.round(s.xg[1] * 100) / 100) : '') + row('Goles', s.g[0], s.g[1]) + row('Amarillas', s.y[0], s.y[1]) + row('Cambios', s.sub[0], s.sub[1]);
   };
   function teamBlock(id, comp, st) {
     var p = teamPos(comp, id), l5 = last5(comp, id);
