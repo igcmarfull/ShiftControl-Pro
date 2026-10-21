@@ -1,6 +1,6 @@
 /* FUTPRO — sueldos realistas: cada club tiene una masa salarial y el jugador cobra su parte según su valor.
    masa del club = sueldo medio de su liga (REF, M€ al año) × 25 jugadores × presupuesto relativo del club (BUDGET si es conocido; si no, valor de su plantilla y economía),
-   normalizado para que la media de la liga sea la referencia. Un grande de Chile paga más que un club de Primera B, y nadie cobra más del 15 % de la masa. Las referencias son aproximaciones de diseño (de memoria), no datos oficiales.
+   normalizado para que la media de la liga sea la referencia. Un grande de Chile paga más que un club de Primera B, y nadie cobra más de la parte máxima de la masa. Las referencias son aproximaciones de diseño (de memoria), no datos oficiales.
    Cambia solo cómo se calculan sueldos de ofertas, renovaciones y representados; no modifica partidos, valores ni el guardado. */
 (function () {
   'use strict';
@@ -12,7 +12,7 @@
     ENG1: 5.5, ENG2: 0.9, ENG3: 0.25, ENG4: 0.12, ENG5: 0.06, ESP1: 3.2, ESP2: 0.35, ESP3: 0.08, ESP4: 0.04, ITA1: 2.6, ITA2: 0.4, ITA3: 0.1, GER1: 3.0, GER2: 0.5, GER3: 0.12,
     FRA1: 1.6, FRA2: 0.25, FRA3: 0.07, POR1: 1.0, POR2: 0.12, POR3: 0.05, NED1: 0.9, NED2: 0.15, BEL1: 0.7, BEL2: 0.12, SCO1: 0.5, SCO2: 0.1, SCO3: 0.04, TUR1: 1.3, TUR2: 0.15, GRE1: 0.6,
     SUI1: 0.5, AUT1: 0.5, DEN1: 0.45, SWE1: 0.3, NOR1: 0.3, POL1: 0.35, CZE1: 0.3, RUS1: 0.8, UKR1: 0.3,
-    BRA1: 0.45, BRA2: 0.12, BRA3: 0.04, BRA4: 0.02, ARG1: 0.2, ARG2: 0.06, ARG3: 0.03, ARG4: 0.015, CHI1: 0.14, CHI2: 0.045, CHI3: 0.015, CHI4: 0.008,
+    BRA1: 0.45, BRA2: 0.12, BRA3: 0.04, BRA4: 0.02, ARG1: 0.2, ARG2: 0.04, ARG3: 0.01, ARG4: 0.006, CHI1: 0.14, CHI2: 0.032, CHI3: 0.01, CHI4: 0.005,
     URU1: 0.08, URU2: 0.025, COL1: 0.12, COL2: 0.03, PER1: 0.07, ECU1: 0.09, MEX1: 0.5, MEX2: 0.08, USA1: 0.55, USA2: 0.14,
     JPN1: 0.35, JPN2: 0.1, JPN3: 0.04, KOR1: 0.25, KOR2: 0.06, CHN1: 0.8, KSA1: 2.5, AUS1: 0.12, EGY1: 0.2, MAR1: 0.12, QAT1: 1.0, UAE1: 0.6, IRN1: 0.15, IND1: 0.12, THA1: 0.15
   };
@@ -27,7 +27,10 @@
 
   // masa salarial aproximada de los clubes conocidos por liga: W.BUDGET[liga][club] (js/sueldos-datos.js). El resto se deduce del valor de su plantilla y su economía
   W.BUDGET = {};
-  var BPY = 25;        // jugadores que se reparten la masa salarial
+  var BPY = 25;
+  // parte máxima de la masa que puede llevarse un solo jugador: en las divisiones bajas las diferencias entre figura y plantel son menores
+  var CAPSHARE = { 1: 0.15, 2: 0.10, 3: 0.08 };
+  W.capShare = function (club) { return CAPSHARE[FP.LGDEF[club.lg].t] || 0.06; };        // jugadores que se reparten la masa salarial
 
   var cache = { key: null, clubs: {}, lg: {}, sq: {} };
   function yearKey() { return FP.S.seed + '|' + D.year(FP.S.week); }
@@ -70,11 +73,11 @@
     return cache.sq[club.id] = { m: m, w: vs.reduce(function (a, v) { return a + Math.pow(Math.max(v, 5) / m, W.BETA); }, 0) };
   }
   // sueldo anual (k€) de un jugador de ese valor (k€) en ese club: su parte de la masa salarial. Las figuras del plantel (valor muy por encima
-  // de la media del club) se llevan una parte desproporcionada (BETA > 1). Ningún jugador cobra más del 15 % de la masa ni más de 2,5 veces
+  // de la media del club) se llevan una parte desproporcionada (BETA > 1). Ningún jugador cobra más de la parte máxima de la masa ni más de 2,5 veces
   // su valor al año; el mínimo es la décima parte del sueldo medio del club.
   W.BETA = 1.35;
   W.wage = function (value, club) {
-    var bill = W.bill(club), sq = squadVals(club), h = Math.pow(Math.max(value, 5) / sq.m, W.BETA), raw = bill * h / (sq.w + h), floor = Math.min(bill * 0.15, Math.max(bill / BPY * 0.1, value * 0.1 * U.clamp(W.richness(club) - 1, 0, 2))), cap = Math.max(floor, Math.min(bill * 0.15, value * 4));
+    var bill = W.bill(club), sq = squadVals(club), h = Math.pow(Math.max(value, 5) / sq.m, W.BETA), raw = bill * h / (sq.w + h), floor = Math.min(bill * W.capShare(club), Math.max(bill / BPY * 0.1, value * 0.1 * U.clamp(W.richness(club) - 1, 0, 2))), cap = Math.max(floor, Math.min(bill * W.capShare(club), value * 4));
     return Math.max(2, Math.round(Math.min(Math.max(raw, floor), cap)));
   };
   // sueldo medio del plantel del club (k€ al año)
@@ -90,7 +93,8 @@
     if (W.off) return rep0.apply(this, arguments);
     var val = M.heroValue(), lg = FP.LGDEF[club.lg];
     var gulf = { KSA: 1, QAT: 1, UAE: 1, CHN: 1 }[club.c] && lg.t === 1 && FP.Hero.age() >= 30 ? 1.25 : 1;   // la liga ya paga más; el «retiro dorado» de los veteranos suma algo
-    return Math.max(2, Math.round(W.wage(val, club) * gulf * (factor || 1) * M.agentMult()));
+    // el techo por jugador también vale con los factores de rol y de agente: un club no paga a una sola persona más de su parte máxima de la masa
+    return Math.max(2, Math.round(Math.min(W.wage(val, club) * gulf * (factor || 1) * M.agentMult(), Math.max(W.bill(club) * W.capShare(club) * gulf, 2))));
   };
   if (FP.Agency) FP.Agency.comm = function (q, club, fee) { return Math.round(W.wage(C.value(q.o, q.pt, C.age(q)), club) * 0.15 + (fee || 0) * 0.02); };
   if (FP.Post) { var ps0 = FP.Post.wageEst; FP.Post.wageEst = function (pl) { var club = FP.S.clubs[pl.c]; return club ? W.wage(C.value(pl.o, pl.pt, C.age(pl)), club) : ps0.apply(this, arguments); }; }

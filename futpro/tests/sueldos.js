@@ -64,5 +64,10 @@ t('en la Premier el club más rico paga entre 3 y 8 veces lo que el más pobre',
 t('Real Madrid y Barcelona encabezan la masa salarial de La Liga', W.bill(nm('Real Madrid')) > W.bill(nm('Sevilla')) * 3 && W.bill(nm('FC Barcelona')) > W.bill(nm('Villarreal')) * 3);
 var mean = function (lg) { var o = ord(lg); return o.reduce(function (x, y) { return x + y; }, 0) / o.length; };
 t('la masa media de un club de Premier es varias veces la de uno del Championship', mean('ENG1') > mean('ENG2') * 3, mean('ENG1') + ' vs ' + mean('ENG2'));
+// una oferta de un club de Primera B no puede ser de varias decenas de miles de euros al mes
+var iq = nm('Deportes Iquique');
+[0.75, 1, 1.15, 1.4].forEach(function (f) { t('Primera B chilena: oferta con factor ' + f + ' menor a 12 k€ al mes (' + W.monthly(FP.Rep.wage(iq, f)) + ')', W.monthly(FP.Rep.wage(iq, f)) < 12); });
+t('con rol y agente, la oferta no supera la parte máxima de la masa del club', S.clubs.every(function (c) { return FP.Rep.wage(c, 1.4) <= Math.max(2, Math.round(W.bill(c) * W.capShare(c) * (c.c === 'KSA' || c.c === 'QAT' || c.c === 'UAE' || c.c === 'CHN' ? 1.25 : 1)) + 1); }));
+t('las divisiones bajas tienen una parte máxima menor que Primera', W.capShare(iq) < W.capShare(uch));
 console.log('ok' , ok, 'fallas', bad);
 process.exit(bad ? 1 : 0);
