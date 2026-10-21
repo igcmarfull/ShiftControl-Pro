@@ -27,15 +27,8 @@
   W.ALPHA = 0.9;
   function curve(v) { return Math.pow(Math.max(v, 5), W.ALPHA); }
 
-  // presupuesto salarial relativo de los clubes más conocidos (1 = club típico de su liga; aproximaciones de diseño, no cifras oficiales).
-  // El resto de los clubes se deduce del valor de su plantilla y de su economía (ver idx)
-  W.BUDGET = {
-    'Colo-Colo': 2.6, 'Universidad de Chile': 2.7, 'Universidad Católica': 2.3, 'Coquimbo Unido': 1.0, 'Palestino': 0.9, 'Huachipato': 0.9, 'O\'Higgins': 0.8, 'Cobresal': 0.7, 'Audax Italiano': 0.8, 'Everton de Viña del Mar': 0.8,
-    'Unión Española': 1.6, 'Cobreloa': 1.4, 'Santiago Wanderers': 1.3, 'Deportes Iquique': 1.0, 'Deportes Antofagasta': 1.0,
-    'Boca Juniors': 3.2, 'River Plate': 3.6, 'Racing Club': 2.0, 'Independiente': 1.8, 'San Lorenzo': 1.5, 'Estudiantes de La Plata': 1.4, 'Vélez Sarsfield': 1.4, 'Rosario Central': 1.3,
-    'Flamengo': 3.4, 'Palmeiras': 3.4, 'Corinthians': 2.2, 'São Paulo': 2.3, 'Botafogo': 2.4, 'Fluminense': 1.8, 'Atlético Mineiro': 2.0, 'Internacional': 1.8, 'Grêmio': 1.8,
-    'América': 2.4, 'Monterrey': 2.2, 'Tigres UANL': 2.4, 'Guadalajara': 1.8, 'Cruz Azul': 1.7, 'Pumas UNAM': 1.4
-  };
+  // masa salarial aproximada de los clubes conocidos por liga: W.BUDGET[liga][club] (js/sueldos-datos.js). El resto se deduce del valor de su plantilla y su economía
+  W.BUDGET = {};
   var BPY = 25;        // jugadores que se reparten la masa salarial
 
   var cache = { key: null, clubs: {}, lg: {}, sq: {} };
@@ -46,9 +39,10 @@
   function leagueIdx(lgId) {
     if (cache.lg[lgId]) return cache.lg[lgId];
     var cl = FP.S.clubs.filter(function (c) { return c.lg === lgId; }), sv = cl.map(squadValue), mean = sv.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, cl.length) || 1, raw = {}, sum = 0;
+    var tab = W.BUDGET[lgId] || {}, known = cl.map(function (c) { return tab[c.nm]; }).filter(function (x) { return x != null; }).sort(function (a, b) { return a - b; }), med = known.length ? known[Math.floor(known.length / 2)] : 1;
     cl.forEach(function (c, i) {
-      var r = W.BUDGET[c.nm];
-      if (r == null) r = Math.pow(Math.max(sv[i], mean * 0.1) / mean, 0.5) * (0.8 + 0.04 * U.clamp(c.fin || 5, 1, 10));
+      var r = tab[c.nm];       // clubes fuera de la tabla: relativos a la mediana de los conocidos de su liga
+      if (r == null) r = med * Math.pow(Math.max(sv[i], mean * 0.1) / mean, 0.5) * (0.8 + 0.04 * U.clamp(c.fin || 5, 1, 10));
       raw[c.id] = r; sum += r;
     });
     var m = sum / Math.max(1, cl.length) || 1, out = {}; cl.forEach(function (c) { out[c.id] = raw[c.id] / m; });

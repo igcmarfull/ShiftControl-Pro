@@ -48,5 +48,16 @@ t('Universidad de Chile y Unión Española: la masa salarial de la U es mayor', 
 t('el sueldo medio de la Primera chilena coincide con su referencia (±1 %)', Math.abs(S.clubs.filter(function (c) { return c.lg === 'CHI1'; }).reduce(function (a, c) { return a + W.clubAverage(c); }, 0) / 16 / (W.ref('CHI1') * 1000) - 1) < 0.01);
 t('la oferta de un club muestra el sueldo mensual', /al mes/.test(W.fmt(960)) && /al año/.test(W.fmt(960)));
 t('nadie cobra más del 15 % de la masa del club', S.clubs.every(function (c) { return W.wage(500000, c) <= W.bill(c) * 0.15 + 1; }));
+// la tabla de presupuestos cubre por completo las ligas que incluye y sus nombres existen en el mundo
+Object.keys(W.BUDGET).forEach(function (lg) {
+  var names = S.clubs.filter(function (c) { return c.lg === lg; }).map(function (c) { return c.nm; });
+  t(lg + ': todos los clubes de la liga están en la tabla', names.every(function (n) { return W.BUDGET[lg][n] != null; }), names.filter(function (n) { return W.BUDGET[lg][n] == null; }).join(', '));
+  t(lg + ': ningún nombre de la tabla sobra', Object.keys(W.BUDGET[lg]).every(function (n) { return names.indexOf(n) >= 0; }));
+});
+var ord = function (lg) { return S.clubs.filter(function (c) { return c.lg === lg; }).map(W.bill).sort(function (a, b) { return b - a; }); };
+t('en la Premier el club más rico paga entre 3 y 8 veces lo que el más pobre', ord('ENG1')[0] / ord('ENG1')[19] > 3 && ord('ENG1')[0] / ord('ENG1')[19] < 8);
+t('Real Madrid y Barcelona encabezan la masa salarial de La Liga', W.bill(nm('Real Madrid')) > W.bill(nm('Sevilla')) * 3 && W.bill(nm('FC Barcelona')) > W.bill(nm('Villarreal')) * 3);
+var mean = function (lg) { var o = ord(lg); return o.reduce(function (x, y) { return x + y; }, 0) / o.length; };
+t('la masa media de un club de Premier es varias veces la de uno del Championship', mean('ENG1') > mean('ENG2') * 3, mean('ENG1') + ' vs ' + mean('ENG2'));
 console.log('ok' , ok, 'fallas', bad);
 process.exit(bad ? 1 : 0);
