@@ -5,12 +5,12 @@
 
   var NAT_ADV = 2.2;
   // parámetros de realismo del partido (calibrados en tests/partidos.js): ventaja de local, penales, tarjetas, VAR y goles de jugada
-  Match.RL = { homeAdv: 3.0, pen: 0.045, pgMul: 1, card: 0.19, pRed: 0.035, varAnnul: 0, varFrom: 2018, derby: 1 };
   var SW_POS = { ST: 10, LW: 6, RW: 6, AM: 5, CM: 2.4, DM: 1, LB: 1, RB: 1, CB: 1.3, GK: 0.02 };
   var AS_POS = { ST: 3.6, LW: 6, RW: 6, AM: 6, CM: 4, DM: 1.5, LB: 3.2, RB: 3.2, CB: 0.7, GK: 0.05 };
   var SHOT_BONUS = { ST: 4, LW: 1, RW: 1, AM: 0, CM: -7, DM: -12, LB: -20, RB: -20, CB: -22, GK: -40 };
 
   var Match = FP.Match = { cache: {} };
+  Match.RL = { homeAdv: 3.0, pen: 0.045, pgMul: 1, card: 0.19, pRed: 0.035, varAnnul: 0, varFrom: 2018, derby: 1 };
   var HV = null; // vista del jugador durante un partido detallado
 
   function strFor(comp, id) {
