@@ -143,25 +143,29 @@
     // la fila de total ocupa 3 columnas de texto en tablas con club agrupado y 3 en las planas
     return '<table class="wt">' + whead(cols) + '<tbody>' + body + '</tbody></table>';
   }
-  function careerLine(list) { var t = agg([].concat.apply([], list.map(function (e) { return e.rows; }))).tot; return '<p class="wt-n"><b>Total en clubes:</b> ' + t.p + ' partidos, ' + t.g + ' goles y ' + t.a + ' asistencias.</p>'; }
+  function tot3(list) { return agg([].concat.apply([], list.map(function (e) { return e.rows; }))).tot; }
+  function careerLine(pro, low) {
+    var t = tot3(pro), f = low ? tot3(low) : null;
+    return '<p class="wt-n">' + (pro.length ? '<b>Total profesional:</b> ' + t.p + ' partidos, ' + t.g + ' goles y ' + t.a + ' asistencias.' : '') + (f && f.p ? (pro.length ? ' ' : '') + '<b>Etapa formativa:</b> ' + f.p + ' partidos, ' + f.g + ' goles y ' + f.a + ' asistencias.' : '') + '</p>';
+  }
 
   // ---- A · una sola tabla, con subtotales por club ----
   function viewAll(list) { return wtable(list, { youthLabel: true }); }
   // ---- B · dos tablas: clubes y categorías inferiores ----
   function viewTwo(list) {
     var pro = list.filter(function (e) { return e.lv === 'pro'; }), low = list.filter(function (e) { return e.lv !== 'pro'; }), h = '';
-    if (pro.length) h += '<h4 class="wt-h">Clubes profesionales</h4>' + wtable(pro, { totalLabel: 'Total profesional' });
-    if (low.length) h += '<h4 class="wt-h">Categorías inferiores y fútbol amateur</h4>' + wtable(low, { totalLabel: 'Total categorías inferiores' });
-    return h + careerLine(list);
+    if (low.length) h += '<h4 class="wt-h">Etapa formativa</h4>' + wtable(low, { totalLabel: 'Total etapa formativa' });
+    if (pro.length) h += '<h4 class="wt-h">Carrera profesional</h4>' + wtable(pro, { totalLabel: 'Total profesional' });
+    return h + careerLine(pro, low);
   }
   // ---- C · plana: una fila por temporada y club, sin subtotales ----
   function viewFlat(list) { return wtable(list, { flat: true, youthLabel: true }); }
 
   function clubsTable() {
     var list = entries(); if (!list.length) return '<div class="card"><p class="mut">Todavía no hay partidos de club registrados.</p></div>';
-    var view = UI.tab.bwv || 'all', VW = [['all', 'Todo junto'], ['two', 'Dos tablas'], ['flat', 'Plana']];
+    var view = UI.tab.bwv || 'two', VW = [['two', 'Formación y profesional'], ['all', 'Todo junto'], ['flat', 'Plana']];
     var bar = '<div class="wt-v">Vista: ' + VW.map(function (v) { return v[0] === view ? '<b>' + v[1] + '</b>' : '<a data-act="tabset" data-s="bwv" data-t="' + v[0] + '">' + v[1] + '</a>'; }).join(' · ') + '</div>';
-    return bar + (view === 'two' ? viewTwo(list) : view === 'flat' ? viewFlat(list) : viewAll(list)) + '<p class="wt-n">PJ: partidos jugados · G: goles · A: asistencias. «Liga» incluye competiciones juveniles y amateur. No se incluyen amistosos.</p>';
+    return bar + (view === 'two' ? viewTwo(list) : view === 'flat' ? viewFlat(list) : viewAll(list)) + '<p class="wt-n">PJ: partidos jugados · G: goles · A: asistencias. ' + (view === 'two' ? 'La etapa formativa (juvenil y amateur) no suma al total profesional. ' : '«Liga» incluye competiciones juveniles y amateur. ') + 'No se incluyen amistosos.</p>';
   }
 
   var CATS = [['u15', 'Selección Sub-15'], ['u17', 'Selección Sub-17'], ['u20', 'Selección Sub-20'], ['u23', 'Selección Sub-23'], ['abs', 'Selección absoluta']];

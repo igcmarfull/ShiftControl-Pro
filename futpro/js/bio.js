@@ -97,7 +97,7 @@
       var t = e.rows.reduce(function (a, r) { a.ap += r.p; a.g += r.g; a.a += r.a; a.min += r.min; a.rs += r.rs; a.rn += r.rn; return a; }, { ap: 0, g: 0, a: 0, min: 0, rs: 0, rn: 0 });
       var b = e.t != null && e.t >= 30000 && e.t < 50000 ? e.t - 30000 : e.t, nm = b != null && b < 5000 ? C.tname(b) : e.tn;
       var loan = B.isLoan(e.t, e.o), youth = e.t != null && e.t >= 30000 && e.t < 50000;
-      return { y: e.s, club: nm + (youth ? ' (juv.)' : '') + (loan ? ' (cedido)' : ''), ap: t.ap, g: t.g, a: t.a, min: t.min, rt: t.rn ? t.rs / t.rn : 0, age: ageOf[y4(e.s)], t: e.t, o: e.o };
+      return { y: e.s, club: nm + (youth ? ' (juv.)' : '') + (loan ? ' (cedido)' : ''), ap: t.ap, g: t.g, a: t.a, min: t.min, rt: t.rn ? t.rs / t.rn : 0, age: ageOf[y4(e.s)], t: e.t, o: e.o, form: e.t != null && e.t >= 20000 && e.t < 50000 };
     }).filter(function (r) { return r.ap > 0; });
   }
   function stints(h) {
@@ -108,6 +108,17 @@
     });
     return out;
   }
+  // ficha lateral: clubes de formación (juveniles y amateur, solo años) y clubes profesionales (con partidos y goles)
+  function boxClubs(h) {
+    var form = [], pro = [];
+    entryRows(h).forEach(function (r) {
+      var nm = baseName(r.club), loan = /\(cedido\)/i.test(r.club), list = r.form ? form : pro, g = list[list.length - 1];
+      if (g && g.nm === nm && g.loan === loan) { g.rows.push(r); g.ap += r.ap; g.g += r.g; } else list.push({ nm: nm, loan: loan, rows: [r], ap: r.ap, g: r.g });
+    });
+    function fmt(l, stats) { return l.map(function (x) { return { yrs: range(x.rows), nm: x.nm, loan: x.loan, ap: stats ? x.ap : null, g: stats ? x.g : null }; }); }
+    return { form: fmt(form, false), pro: fmt(pro, true) };
+  }
+  function range2(rows) { var ys = rows.map(function (r) { return y4(r.s); }).filter(function (y) { return y > 0; }); if (!ys.length) return ''; var a = Math.min.apply(null, ys), b = Math.max.apply(null, ys); return a === b ? String(a) : a + '–' + b; }
   function sumRows(rows) { return rows.reduce(function (t, r) { t.ap += r.ap; t.g += r.g; t.a += r.a; t.min += r.min; return t; }, { ap: 0, g: 0, a: 0, min: 0 }); }
   function range(rows) { var a = y4(rows[0].y), b = yEnd(rows[rows.length - 1].y); return a === b ? String(a) : a + '–' + b; }
   function historyFor(h, nm) { return (h.history || []).filter(function (e) { return e.club != null && e.club < 5000 && C.tname(e.club) === nm; }); }
@@ -275,6 +286,6 @@
     var grade = h.retired && seasons >= 10 ? ['Artículo destacado', 'g'] : nSec >= 7 && seasons >= 5 ? ['Artículo bueno', 'b'] : nSec >= 4 ? ['En construcción', 'y'] : ['Esbozo', ''];
     var box = [['Nombre completo', h.nm], ['Nacimiento', (h.city ? h.city + ', ' : '') + FP.Date.bdText(h)], ['Nacionalidad', countryName(h.nat)], ['Altura · peso', h.ht + ' cm · ' + h.kg + ' kg'], ['Posición', C.POS_NAME[h.pos]], ['Pie hábil', h.foot === 'L' ? 'Zurdo' : h.foot === 'A' ? 'Ambidiestro' : 'Diestro']];
     if (!h.retired && h.club != null) box.push(['Club actual', C.tname(h.club)]);
-    return { name: h.nm, lead: leadText(h, st, tot, nt), box: box, secs: secs, extra: extra, lock: lock, grade: grade, stints: st.map(function (s) { return { nm: s.nm, yrs: range(s.rows), loan: s.loan }; }), nt: nt ? { p: nt.p, g: nt.g } : null, titles: (h.trophies || []).filter(function (t) { return !t.sub; }).length, seasons: seasons };
+    return { name: h.nm, lead: leadText(h, st, tot, nt), box: box, secs: secs, extra: extra, lock: lock, grade: grade, stints: st.map(function (s) { return { nm: s.nm, yrs: range(s.rows), loan: s.loan }; }), boxClubs: boxClubs(h), ntRows: CATS.filter(function (k) { return by[k]; }).map(function (k) { var t = ST.sum(by[k].rows); return { cat: CATN[k], p: t.p, g: t.g, y: range2(by[k].rows) }; }).filter(function (x) { return x.p; }), nt: nt ? { p: nt.p, g: nt.g } : null, titles: (h.trophies || []).filter(function (t) { return !t.sub; }).length, seasons: seasons };
   };
 })();

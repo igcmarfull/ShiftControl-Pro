@@ -389,3 +389,12 @@ Pestaña **Mi club › Legado** (`js/idolo.js`, `js/ui-idolo.js`, `tests/idolo.j
 - **Eventos**: hinchas piden renovación (sube lo que exigen en la renovación), ovación o silbidos al volver, oferta de regreso, salón del club al retirarte, puesto de embajador o entrenador de juveniles.
 - **Récords del club**: solo desde el inicio de la partida (el juego no tiene la historia real previa).
 - Los pesos y umbrales son supuestos de diseño, no datos reales. Partidas anteriores se reconstruyen una vez desde el registro de estadísticas.
+
+## Trayectoria estilo Wikipedia: formación, profesional y selecciones
+
+Solo presentación (`js/ui-v17.js`, `js/ui-v18.js`, `js/bio.js`); no cambia el registro de estadísticas.
+
+- **Estadísticas › Clubes** abre por defecto en «Formación y profesional»: tabla **Etapa formativa** (juvenil y amateur) y tabla **Carrera profesional**. Las vistas «Todo junto» y «Plana» siguen disponibles.
+- El **total profesional** ya no incluye las ligas juveniles ni amateur; la línea final muestra ambos totales por separado.
+- **Ficha lateral**: «Clubes juveniles» (solo años y club), «Clubes profesionales» (con partidos y goles, p. ej. `50 (40)`) y «Selección nacional» con una línea por categoría.
+- Las selecciones siguen en su propia tabla, sin sumarse a los clubes.
