@@ -180,17 +180,17 @@
     return base + (m - ref) * 0.9;
   };
   // Alineación real para el motor de partidos (jugadores clonados con la media ajustada a la fuerza del equipo)
-  NT.lineup = function (natId, comp, heroRole) {
-    var S = FP.S, cat = comp.cat; if (!cat || cat === 'ABS') return null;
+  NT.lineup = function (natId, comp, heroRole, form) {
+    var S = FP.S, cat = comp.cat || (FP.Sel && FP.Sel.mine(natId, 'ABS') ? 'ABS' : null); if (!cat || (cat === 'ABS' && !(FP.Sel && FP.Sel.mine(natId, 'ABS')))) return null;
     var players = NT.squadOf(natId, cat); if (players.length < 14) return null;
     var h = S.hero, ys = comp.ys && comp.ys[natId], list = players.map(function (p) { return { p: p, sc: p.i === 0 ? h.ovr : p.o }; });
     var heroHere = h && !h.retired && h.nat === S.nat[natId - 5000].c;
-    var t = Youth.pickTeam(list, '4-3-3'), xi = t.xi, mean = xi.reduce(function (s, x) { return s + x.e.p.o; }, 0) / Math.max(1, xi.length);
+    var t = Youth.pickTeam(list, form || '4-3-3'), xi = t.xi, mean = xi.reduce(function (s, x) { return s + x.e.p.o; }, 0) / Math.max(1, xi.length);
     var off = ys != null ? ys - mean : 0;
     function clone(p) { return p.i === 0 ? p : { i: p.i, n: p.n, p: p.p, o: Math.round(p.o + off), nat: p.nat, ref: p }; }
     var outXI = xi.map(function (x) { return { p: clone(x.e.p), slot: x.slot }; });
     var bench = t.bench.map(function (e) { return clone(e.p); });
-    return { xi: outXI, bench: bench, form: '4-3-3', generic: false, team: t };
+    return { xi: outXI, bench: bench, form: form || '4-3-3', generic: false, team: t };
   };
   // Rol del jugador en un partido de selección: el entrenador alinea al mejor por puesto
   NT.heroRole = function (natId, comp) {
@@ -602,6 +602,7 @@
   // ¿Juega el jugador este partido? Evita que una convocatoria juvenil lo ponga en un partido de otra categoría
   NT.heroPlays = function (comp, f) {
     var S = FP.S, h = S.hero; if (!h) return true;
+    var sj = FP.Sel && FP.Sel.job(); if (sj && (f.h === sj.nat || f.a === sj.nat)) return (comp.cat || 'ABS') === sj.cat;     // seleccionador: solo los partidos de su categoría
     var nat = Nat.byCode(h.nat);
     var isNatMatch = nat && (f.h === nat.id || f.a === nat.id) && (comp.nat || comp.kind === 'X' || comp.kind === 'Q' || comp.kind === 'T' || comp.kind === 'N');
     if (!isNatMatch) return true;

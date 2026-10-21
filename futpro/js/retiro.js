@@ -191,6 +191,14 @@
     var r = kf0.apply(this, arguments), j = K.job(); if (!j) return r;
     var mine = prep.home ? res.hs : res.as, opp = prep.home ? res.as : res.hs, S = FP.S, h = hero();
     if (j.conf == null) j.conf = 60;
+    if (j.club == null) {            // selección: confianza de la federación
+      // la federación mide contra lo esperado: una selección débil no pierde la confianza por perder con favoritos
+      var w0 = res.ps ? (prep.home ? res.ps[0] > res.ps[1] : res.ps[1] > res.ps[0]) : mine > opp, l0 = res.ps ? !w0 : mine < opp;
+      var sd = K.str(prep, prep.mine) - K.str(prep, prep.opp), ex = 1 / (1 + Math.pow(10, -sd / 14)), sc0 = w0 ? 1 : l0 ? 0 : 0.5;
+      j.conf = U.clamp(j.conf + (sc0 - ex) * 16, 0, 100); j.n = (j.n || 0) + 1;
+      if (j.conf <= 12 && j.n >= 12) { var pa0 = P.ensure().path; hist('Destituido como seleccionador de ' + S.nat[j.nat - 5000].nm + '.'); Hero.msg('La federación te destituye por los malos resultados.', 'warn'); pa0.seasons.push({ y: String(D.year(S.week)), nat: j.nat, cat: j.cat, role: 'sel', res: 'Destituido', mid: 1 }); pa0.job = null; }
+      return r;
+    }
     var w = res.ps ? (prep.home ? res.ps[0] > res.ps[1] : res.ps[1] > res.ps[0]) : mine > opp, l = res.ps ? !w : mine < opp;
     j.conf = U.clamp(j.conf + (w ? 5 : l ? -5 : 0) + (RT.ensure().mateCoach ? 0.5 : 0), 0, 100);
     j.n = (j.n || 0) + 1;
@@ -228,9 +236,13 @@
   Sim.onLeagueClosed = function (comp, entry) {
     if (olc0) olc0(comp, entry);
     try {
-      var j = K.job(); if (j) j.conf = 60 + ((j.conf == null ? 60 : j.conf) - 60) * 0.5;
-      if (j && RT.ensure().mateCoach) j.conf = Math.min(100, j.conf + 3);
-      RT.promo(); RT.presClose(comp, entry);
+      var j = K.job(), mine = j && j.club != null && FP.S.clubs[j.club].lg === comp.lg;      // solo al cerrar la liga de su propio club
+      if (mine) {
+        j.conf = 60 + ((j.conf == null ? 60 : j.conf) - 60) * 0.5;
+        if (RT.ensure().mateCoach) j.conf = Math.min(100, j.conf + 3);
+        RT.promo();
+      }
+      RT.presClose(comp, entry);
     } catch (e) { if (window.console) console.warn('retiro', e); }
   };
   var yt0 = P.yearTick;

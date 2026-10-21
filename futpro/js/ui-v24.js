@@ -55,6 +55,7 @@
     if (!pa) return UI.decCards(['rt']) + '<div class="card"><p class="mut">Aún no elegiste qué hacer después del fútbol. ' + link('post', 'Elegir un camino') + '</p></div>';
     if (pa.k === 'coach') return coachTab(h, p, pa);
     if (pa.k === 'pres') return presTab(h, p, pa);
+    if (pa.k === 'sel' && UI.selTab) return UI.selTab(h, p, pa);
     return UI.decCards(['rt']) + '<div class="card"><div class="hd"><h3>' + I('target') + esc(P.PATHS[pa.k].nm) + '</h3></div><p class="mut">' + esc(P.PATHS[pa.k].d) + '</p><div class="row sp"><span class="mut sm">Ingresos en este camino</span><b>' + m(pa.inc || 0) + '</b></div><p class="mut sm" style="margin-top:.5rem">' + link('post', 'Ver el detalle en Después del fútbol') + '</p></div>';
   }
 

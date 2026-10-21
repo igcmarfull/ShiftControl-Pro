@@ -20,9 +20,10 @@
     })();
   }
   function teamBlock(id) { return '<div class="mc-team">' + UI.crest(id, 'lg') + '<div class="tn">' + UI.club(id) + '</div></div>'; }
-  function xiList(club, form) {
-    var lu = Match.lineup(club, { form: form });
-    return '<div class="grid g2">' + lu.xi.map(function (e) { return '<div class="sm row sp"><span>' + UI.posb(e.slot) + ' ' + esc(e.p.n) + '</span><b>' + Math.round(e.p.o) + '</b></div>'; }).join('') + '</div>';
+  function xiList(club, form, comp) {
+    var xi = K.xi(club, form, comp);
+    if (!xi.length) return '<p class="mut sm">El once se define al empezar el partido con tu convocatoria.</p>';
+    return '<div class="grid g2">' + xi.map(function (e) { return '<div class="sm row sp"><span>' + UI.posb(e.slot) + ' ' + esc(e.n) + '</span><b>' + e.o + '</b></div>'; }).join('') + '</div>';
   }
   function panel(cm) {
     var sc = cm.sess.score(), mine = cm.prep.home ? sc.h : sc.a, opp = cm.prep.home ? sc.a : sc.h;
@@ -32,21 +33,21 @@
   SC.coach = function () {
     var S = FP.S, h = S.hero, j = K.job(), html = hdr('whistle', 'Banquillo', 'Dirige los partidos de tu club');
     if (!h.retired || !j) return html + '<div class="card"><p class="mut">Todavía no diriges a ningún equipo como director técnico. Elige el camino de entrenador en <a class="more" data-act="nav" data-s="post">Después del fútbol</a>, saca las licencias y acepta una oferta de director técnico.</p></div>';
-    var club = S.clubs[j.club], cm = UI.cm;
+    var club = K.pseudo(j), cm = UI.cm;
     if (cm && S.comps[cm.prep.comp.id] !== cm.prep.comp) cm = UI.cm = null;
     if (!cm) {
       var pr = K.next();
       var rec = j.rec ? j.rec.w + 'G · ' + j.rec.d + 'E · ' + j.rec.l + 'P' : 'sin partidos aún';
-      html += '<div class="card"><div class="row sp"><div class="row" style="gap:.7rem">' + UI.crest(club.id, 'lg') + '<div><b style="font-size:1.1rem">' + esc(club.nm) + '</b><div class="mut sm">Director técnico · temporada actual: ' + rec + '</div></div></div><button class="btn pri" data-act="cnextmatch">' + I('fwd') + 'Ir al próximo partido</button></div></div>';
+      html += '<div class="card"><div class="row sp"><div class="row" style="gap:.7rem">' + UI.crest(club.id, 'lg') + '<div><b style="font-size:1.1rem">' + esc(club.nm) + '</b><div class="mut sm">' + (j.club == null ? 'Seleccionador ' + FP.Sel.CATS[j.cat].n + ' · balance: ' : 'Director técnico · temporada actual: ') + rec + '</div></div></div><div class="btn-group">' + (j.club == null ? '<button class="btn" data-act="nav" data-s="convoca">' + I('user') + 'Convocatoria</button>' : '') + '<button class="btn pri" data-act="cnextmatch">' + I('fwd') + 'Ir al próximo partido</button></div></div></div>';
       if (!pr) return html + '<div class="card"><p class="mut">No hay partidos pendientes esta semana.</p></div>';
       UI.cm = cm = { phase: 'pre', prep: pr, form: club.fm || '4-3-3', ment: 0 };
     }
-    var prep = cm.prep, f = prep.f, comp = prep.comp, club2 = S.clubs[j.club];
+    var prep = cm.prep, f = prep.f, comp = prep.comp, club2 = club;
     if (cm.phase === 'pre') {
       html += '<div class="mc"><div class="mc-top"><span>' + esc(comp.nm) + (f.ro ? ' · ' + esc(f.ro) : '') + '</span><span>·</span><span>' + D.fmt(f.w) + '</span></div><div class="mc-main">' + teamBlock(f.h) + '<div class="mc-score"><div class="big" style="color:var(--dim)">VS</div></div>' + teamBlock(f.a) + '</div></div>';
       html += '<div class="grid g2"><div class="card"><div class="hd"><h3>' + I('target') + 'Planteamiento</h3></div><h4>Formación</h4><div class="btn-group">' + Object.keys(Match.FORMS).map(function (k) { return '<button class="btn sm ' + (cm.form === k ? 'pri' : '') + '" data-act="cform" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div><h4 style="margin-top:.8rem">Mentalidad</h4><div class="btn-group">' + [-1, 0, 1].map(function (v) { return '<button class="btn sm ' + (cm.ment === v ? 'pri' : '') + '" data-act="cment" data-v="' + v + '">' + MENT[v] + '</button>'; }).join('') +
-        '</div><p class="mut sm" style="margin-top:.6rem">Fuerza del equipo ' + Math.round(C.strOf(prep.mine)) + ' · rival ' + Math.round(C.strOf(prep.opp)) + ' · tu calidad como técnico aporta ' + (K.boost() >= 0 ? '+' : '') + K.boost().toFixed(1) + '.</p><div class="row" style="gap:.6rem;margin-top:.8rem"><button class="btn cta" data-act="cplay" data-mode="live">' + I('play', 'fill') + 'Dirigir en vivo</button><button class="btn" data-act="cplay" data-mode="quick">' + I('zap') + 'Simular</button></div></div>' +
-        '<div class="card"><div class="hd"><h3>' + I('user') + 'Once inicial (' + esc(cm.form) + ')</h3></div>' + xiList(prep.mine, cm.form) + '</div></div>';
+        '</div><p class="mut sm" style="margin-top:.6rem">Fuerza del equipo ' + Math.round(K.str(prep, prep.mine)) + ' · rival ' + Math.round(K.str(prep, prep.opp)) + ' · tu calidad como técnico aporta ' + (K.boost() >= 0 ? '+' : '') + K.boost().toFixed(1) + '.</p><div class="row" style="gap:.6rem;margin-top:.8rem"><button class="btn cta" data-act="cplay" data-mode="live">' + I('play', 'fill') + 'Dirigir en vivo</button><button class="btn" data-act="cplay" data-mode="quick">' + I('zap') + 'Simular</button></div></div>' +
+        '<div class="card"><div class="hd"><h3>' + I('user') + 'Once inicial (' + esc(cm.form) + ')</h3></div>' + xiList(prep.mine, cm.form, comp) + '</div></div>';
       return html;
     }
     var res = cm.res, live = cm.phase !== 'done', total = Math.max(res.et ? 120 : 90, res.ev.length ? res.ev[res.ev.length - 1].m : 90);

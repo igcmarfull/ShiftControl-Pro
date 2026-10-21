@@ -54,7 +54,7 @@
     var e = comp.sc[p.i]; if (!e) e = comp.sc[p.i] = [0, 0, club, p.n];
     e[idx]++; e[2] = club; e[3] = p.n;
     var rp = p.ref || p;
-    if (comp.cat && FP.NT) { if (rp.i !== 0) FP.NT.addStat(rp, comp.cat, idx === 0 ? 2 : 3, 1); return; } // selecciones: estadística propia, no del club
+    if ((comp.cat || (comp.nat && FP.Sel && FP.Sel.job())) && FP.NT) { if (rp.i !== 0) FP.NT.addStat(rp, comp.cat || 'ABS', idx === 0 ? 2 : 3, 1); return; } // selecciones: estadística propia, no del club
     if (idx === 0) rp.g = (rp.g || 0) + 1; else rp.as = (rp.as || 0) + 1;
   }
   Match.addSc = addSc;
@@ -137,7 +137,7 @@
       var best = null, bv = -1;
       for (var i = 0; i < all.length; i++) {
         var p = all[i]; if (used[p.i]) continue;
-        var v = p.o - fitPen(p.p, sl) + (p.p === sl ? 0.5 : 0);
+        var v = p.o - fitPen(p.p, sl) + (p.p === sl ? 0.5 : 0) + (opts.fav && opts.fav[p.i] ? 8 : 0);
         if (v > bv) { bv = v; best = p; }
       }
       if (best) { used[best.i] = 1; xi.push({ p: best, slot: sl }); }
@@ -201,13 +201,14 @@
     ['h', 'a'].forEach(function (sd) {
       var id = teamIds[sd];
       var real = null;
-      if (id >= 5000 && id < 20000 && comp.cat && FP.NT) real = FP.NT.lineup(id, comp);
+      if (id >= 5000 && id < 20000 && FP.NT && (comp.cat || (FP.Sel && FP.Sel.mine(id, 'ABS')))) real = FP.NT.lineup(id, comp, null, ctx.coachSide === sd ? ctx.form : null);
       else if (heroSide === sd && ctx.status && ctx.status.team && FP.Youth && (id >= 20000)) real = FP.Youth.toLineup(ctx.status.team);
       if (real) lu[sd] = real;
       else if (id >= 5000 && id < 20000 || id >= 20000 || (ys && ys[id] != null)) lu[sd] = Match.genericLineup(id, comp); // selecciones/amateur/juveniles
       else {
         var opts = {};
         if (ctx.coachSide === sd && ctx.form) opts.form = ctx.form;                // el director técnico elige la formación
+        if (ctx.coachSide === sd && ctx.fav) opts.fav = ctx.fav;                    // jugadores a los que el técnico da minutos
         if (heroSide === sd && ctx.role === 'starter') opts.forced = { p: S.pl[0], slot: hero.matchSlot() };
         else opts.excludeIds = { 0: 1 };
         lu[sd] = Match.lineup(id, opts);

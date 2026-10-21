@@ -5,17 +5,22 @@
   var FP = window.FP, U = FP.U, R = U.R, C = FP.Core, Sim = FP.Sim, P = FP.Post, Match = FP.Match;
   var K = FP.Coach = {};
 
-  K.job = function () { var h = FP.S && FP.S.hero, pa = h && h.retired && h.post && h.post.path; return pa && pa.k === 'coach' && pa.job && pa.job.role === 'head' ? pa.job : null; };
+  K.job = function () {
+    var h = FP.S && FP.S.hero, pa = h && h.retired && h.post && h.post.path;
+    if (pa && pa.k === 'coach' && pa.job && pa.job.role === 'head') return pa.job;
+    return (FP.Sel && FP.Sel.job()) || null;          // seleccionador: el equipo es una selección (j.club == null)
+  };
+  K.team = function (j) { return j.club != null ? j.club : j.nat; };
   K.boost = function () { return U.clamp((P.ability() - 58) * 0.06, -2, 2.5); };      // la calidad del técnico mejora (o empeora) un poco a su equipo
 
   // los partidos del club dirigido van a la cola S.pending (como los del jugador)
   var ht0 = Sim.heroTeams;
-  Sim.heroTeams = function () { var j = K.job(); if (j) { var o = {}; o[j.club] = 1; return o; } return ht0.apply(this, arguments); };
+  Sim.heroTeams = function () { var j = K.job(); if (j) { var o = {}; o[K.team(j)] = 1; return o; } return ht0.apply(this, arguments); };
 
   K.prep = function (item) {
     var S = FP.S, comp = S.comps[item.c], j = K.job(); if (!comp || !j) return null;
     var f = comp.fx[item.i]; if (!f) return null;
-    return { comp: comp, f: f, mine: j.club, home: f.h === j.club, opp: f.h === j.club ? f.a : f.h };
+    var tm = K.team(j); return { comp: comp, f: f, mine: tm, home: f.h === tm, opp: f.h === tm ? f.a : f.h };
   };
   K.next = function () {
     var S = FP.S;
@@ -51,7 +56,7 @@
 
   // cierre de temporada del club dirigido: resultado real, sueldo, títulos y posible despido
   K.onClosed = function (comp, entry) {
-    var S = FP.S, h = S.hero, j = K.job(); if (!j) return;
+    var S = FP.S, h = S.hero, j = K.job(); if (!j || j.club == null) return;
     var club = S.clubs[j.club]; if (comp.lg !== club.lg) return;
     var p = P.ensure(), pa = p.path, tab = entry.tab, n = tab.length, rank = tab.indexOf(j.club) + 1;
     var champ = entry.ch === j.club, up = entry.up.indexOf(j.club) >= 0, dn = entry.dn.indexOf(j.club) >= 0, lg = FP.LGDEF[club.lg];
