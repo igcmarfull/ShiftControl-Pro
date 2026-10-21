@@ -10,7 +10,7 @@
   var SHOT_BONUS = { ST: 4, LW: 1, RW: 1, AM: 0, CM: -7, DM: -12, LB: -20, RB: -20, CB: -22, GK: -40 };
 
   var Match = FP.Match = { cache: {} };
-  Match.RL = { homeAdv: 3.0, pen: 0.045, pgMul: 1, card: 0.19, pRed: 0.035, varAnnul: 0, varFrom: 2018, derby: 1 };
+  Match.RL = { homeAdv: 3.0, pen: 0.045, pgMul: 1, card: 0.19, pRed: 0.035, varAnnul: 0, varFrom: 2018, fullHome: 0 };
   var HV = null; // vista del jugador durante un partido detallado
 
   function strFor(comp, id) {
@@ -234,6 +234,7 @@
     var isHeroIn = function () { return heroSide && xi[heroSide].some(function (e) { return e.p.i === 0; }); };
     if (heroSide && ctx.role === 'starter') hm.in = true;
     var st = { h: strFor(comp, f.h), a: strFor(comp, f.a) };
+    if (!f.n && !(f.h >= 5000 && f.h < 20000)) st.h += RL.fullHome + (dby ? 1 : 0);      // el partido detallado no recogía bien la localía
     if (ctx.coachSide) st[ctx.coachSide] += ctx.coachBoost || 0;
     var goals = { h: 0, a: 0 }, cards = { h: {}, a: {} }, sent = { h: {}, a: {} }, subs = { h: 0, a: 0 };
     var heroStam = hero ? U.clamp(100 - hero.fat * 0.45, 40, 100) : 100;
