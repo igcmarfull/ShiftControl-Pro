@@ -10,7 +10,7 @@
   var SHOT_BONUS = { ST: 4, LW: 1, RW: 1, AM: 0, CM: -7, DM: -12, LB: -20, RB: -20, CB: -22, GK: -40 };
 
   var Match = FP.Match = { cache: {} };
-  Match.RL = { homeAdv: 3.0, pen: 0.045, pgMul: 1, card: 0.19, pRed: 0.035, varAnnul: 0, varFrom: 2018, fullHome: 0 };
+  Match.RL = { homeAdv: 2.0, pen: 0.014, pgMul: 1.28, card: 0.30, pRed: 0.018, varAnnul: 0.04, varFrom: 2018, fullHome: 5.5, lamMul: 1.04 };
   var HV = null; // vista del jugador durante un partido detallado
 
   function strFor(comp, id) {
@@ -20,7 +20,7 @@
   function lambdas(stH, stA, neutral, nat) {
     var d = stH + (neutral ? 0 : (nat ? NAT_ADV : Match.RL.homeAdv)) - stA;
     d = U.clamp(d, -45, 45);
-    return [1.32 * Math.exp(0.03 * d), 1.08 * Math.exp(-0.03 * d)];
+    return [1.32 * Match.RL.lamMul * Math.exp(0.03 * d), 1.08 * Match.RL.lamMul * Math.exp(-0.03 * d)];
   }
   Match.lambdas = lambdas;
 
@@ -291,7 +291,8 @@
     var curXg = null;
     function attack(m, sd, extraMult) {
       var od = sd === 'h' ? 'a' : 'h', A = rt[sd], Dd = rt[od];
-      var sh = chooseShooter(sd), p = sh.p;
+      var sh = chooseShooter(sd); if (!sh) return;          // sin jugadores disponibles (expulsiones y lesiones)
+      var p = sh.p;
       var isHero = p.i === 0;
       var shotSk = shooterFin(sh, sd);
       var head = (isHero && hero.headerSkill() > hero.shotSkill() + 8 && R() < 0.35) || (!isHero && (sh.slot === 'CB' || sh.slot === 'ST') && R() < 0.18);
