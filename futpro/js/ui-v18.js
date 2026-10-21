@@ -25,7 +25,7 @@
     if (sec.sub) h += sec.sub.map(function (x) { return '<h3>' + esc(x.t) + '</h3>' + x.p.map(para).join(''); }).join('');
     if (sec.items) h += '<ul class="bx-ul">' + sec.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
     if (sec.trophies) h += trophies(sec);
-    if (sec.tables) h += sec.tables.map(function (k) { return '<h3>' + (k === 'nat' ? 'Selección' : 'Clubes') + '</h3>' + UI.bioTables[k](); }).join('');
+    if (sec.tables) h += sec.tables.map(function (k) { return (k === 'pro' || k === 'youth' ? '' : '<h3>' + (k === 'nat' ? 'Estadísticas con la selección' : 'Clubes') + '</h3>') + UI.bioTables[k](); }).join('');
     return h;
   }
 

@@ -260,6 +260,9 @@
     var seen = {}; return ev.filter(function (e) { var k = e.w + e.t; if (seen[k]) return false; seen[k] = 1; return true; });
   }
 
+  // utilidades compartidas con el motor narrativo (js/narrativa.js)
+  B.x = { styleText: styleText, injuryText: injuryText, personalText: personalText, timeline: timeline, milestones: milestones, momentText: momentText, dlong: dlong, mlong: mlong, y4: y4, yEnd: yEnd, plural: plural, list: list, tname: tname, baseName: baseName, pron: pron, countryName: countryName, CATS: CATS, CATN: CATN, boxClubs: boxClubs, range2: range2, stints: stints, sumRows: sumRows, range: range };
+
   // ---------- documento ----------
   B.build = function () {
     var S = FP.S, h = S.hero, ST = FP.Stats; B.ensure();

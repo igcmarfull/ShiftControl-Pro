@@ -185,5 +185,12 @@
     return '<table class="wt"><thead><tr><th>Selección</th><th>Año</th><th>Competición</th><th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead><tbody>' + body + '</tbody></table><p class="wt-n">No se incluyen amistosos.</p>';
   }
 
-  UI.bioTables = { clubs: clubsTable, nat: natTable };
+  // tablas separadas por etapa (Biografía): profesional y formativa
+  function levelTable(isPro) {
+    var list = entries().filter(function (e) { return isPro ? e.lv === 'pro' : e.lv !== 'pro'; });
+    if (!list.length) return '<p class="mut sm">Todavía no hay partidos registrados en esta etapa.</p>';
+    var tot = tot3(list);
+    return wtable(list, { totalLabel: isPro ? 'Total profesional' : 'Total etapa formativa' }) + '<p class="wt-n">PJ: partidos jugados · G: goles · A: asistencias. ' + (isPro ? 'Solo incluye clubes profesionales; la etapa formativa se cuenta aparte. ' : 'Incluye categorías juveniles y fútbol amateur; no suma al total profesional. ') + 'No se incluyen amistosos.</p>';
+  }
+  UI.bioTables = { clubs: clubsTable, nat: natTable, pro: function () { return levelTable(true); }, youth: function () { return levelTable(false); } };
 })();
