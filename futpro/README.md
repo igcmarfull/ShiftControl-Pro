@@ -435,3 +435,14 @@ La Biografía se redacta con un motor determinista que lee el historial real de 
 - Secciones: introducción, historia registrada (etapas por categoría), palmarés, rivalidades, jugadores destacados, tu paso por el club, tabla de temporadas y situación actual con el plantel.
 - Los ascensos y descensos se deducen de la categoría de la temporada siguiente (el juego marca plazas que no siempre se llenan).
 - Solo cuenta lo registrado desde el inicio de la partida: el juego no tiene la historia real previa de los clubes, y así se indica.
+
+## Sueldos por liga y por club
+
+`js/sueldos.js` (`FP.Wages`) y `tests/sueldos.js`. Sustituye el cálculo de sueldos de ofertas, renovaciones y representados (`Rep.wage`, comisiones del agente, sueldo estimado de un cliente).
+
+- **Cada liga paga distinto.** El sueldo medio de un jugador de la liga sale de una referencia aproximada (`W.REF`, en M€ al año: p. ej. Premier ≈ 5,5, La Liga ≈ 3,2, Brasileirão ≈ 0,45, Primera chilena ≈ 0,10; segundas y terceras divisiones mucho menos). Las ligas sin referencia se deducen del peso económico del país y de la categoría. Las referencias son aproximaciones de diseño, no datos oficiales.
+- **Se calibra con el mundo del juego**: la escala de cada liga hace que el sueldo medio de sus plantillas simuladas coincida con la referencia, usando el valor real de esos jugadores. Un jugador cobra según su posición dentro de la escala de su liga.
+- **Los clubes ricos pagan más** por el mismo jugador: el factor de economía (1 a 10) va de ×0,55 a ×1,45.
+- La curva crece algo menos que el valor (`W.ALPHA`), hay un sueldo mínimo por liga (10 % del medio) y un techo de dos veces el valor del jugador al año. En ligas donde los valores simulados son muy bajos, la figura de la liga cobra por encima de su valor, como un jugador franquicia.
+- Tu tarjeta «Tu valor de mercado» muestra el sueldo a tu valor en tu club y el sueldo medio de tu liga; el artículo de cada club muestra el sueldo medio de su plantel.
+- Comparado con el cálculo anterior, en carreras simuladas de 10 años los sueldos suben unas 2,5 a 4 veces en las ligas pequeñas (por ejemplo, un zaguero de la primera chilena: de 37 k€ a 150 k€ como máximo), más cerca de la realidad.
