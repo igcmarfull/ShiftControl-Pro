@@ -33,3 +33,7 @@ Esta rama ya incluye en `assets/crests/` los escudos descargados: **1712 de 2113
 - El instalador ahora cubre más países y ~250 equivalencias de nombres revisadas a mano.
 - Si la API de GitHub no responde, usa `git` como respaldo para listar los archivos (requiere tener `git`).
 - Algunos SVG muy pesados (>2,5 MB) se descartan; los SVG con imágenes rasterizadas incrustadas (data:image) se admiten, nada externo.
+
+## Wikidata/Commons: resultado de la prueba
+
+`tools/escudos_wikidata.py` busca el logo que Wikidata asocia a cada club. En la práctica casi ningún club tiene logo en Commons, porque los escudos son imágenes no libres que Wikipedia aloja solo localmente. En una prueba con decenas de clubes (Leicester, Santiago Morning, Getafe…) no devolvió ninguno, así que **no aporta escudos nuevos** y `js/crests-wiki.js` queda vacío. Se conserva por si cambia la fuente.
