@@ -211,16 +211,28 @@
     if (Sim.onRollover) Sim.onRollover(cc);
   };
 
+  // Perfil de desarrollo de cada jugador: dv = años de adelanto (−) o retraso (+) respecto de la curva media (maduradores tempranos y tardíos).
+  // Se asigna la primera vez que progresa: su nivel actual se reubica sobre su propia curva (el tardío parte más abajo, el temprano más arriba).
+  Sim.REV = { up: 0.03, dn: 0.06 };                // probabilidad anual de explosión o estancamiento del potencial (≤ 23 años)
+  Sim.devShift = function (p) { return U.clamp(Math.round(U.norm() * 1.3 * 2) / 2, -2, 3); };
   function progressPlayer(p, age) {
-    var d;
-    if (age <= 21) d = (p.pt - p.o) * (0.30 + R() * 0.15) + U.norm() * 0.9;
-    else if (age <= 25) d = (p.pt - p.o) * (0.28 + R() * 0.2) + U.norm() * 0.8;
-    else if (age <= 29) d = U.norm() * 0.8 - 0.1;
-    else if (age <= 32) d = -(0.5 + (age - 29) * 0.35) + U.norm() * 0.8;
-    else d = -(1.5 + (age - 32) * 0.5) + U.norm() * 0.9;
+    var d, FY = FP.Youth && FP.Youth.f;
+    if (p.dv == null) {
+      p.dv = Sim.devShift(p);
+      var fi = function (x) { var lo = Math.floor(x), hi = Math.ceil(x); return lo === hi ? FY(lo) : FY(lo) * (hi - x) + FY(hi) * (x - lo); };       // curva de madurez interpolada
+      if (FY && p.dv && age <= 21) p.o = U.clamp(Math.round(p.o + p.pt * (fi(age - p.dv) - FY(age))), 25, Math.max(25, p.pt));
+    }
+    var a = age - p.dv;                                         // edad de desarrollo
+    if (age >= 30) d = age <= 32 ? -(0.5 + (age - 29) * 0.35) + U.norm() * 0.8 : -(1.5 + (age - 32) * 0.5) + U.norm() * 0.9;
+    else if (a <= 21) d = (p.pt - p.o) * (0.30 + R() * 0.15) + U.norm() * 0.9;
+    else if (a <= 25) d = (p.pt - p.o) * (0.28 + R() * 0.2) + U.norm() * 0.8;
+    else d = U.norm() * 0.8 - 0.1;
     p.o = U.clamp(Math.round(p.o + d), 25, 96);
-    if (age <= 24) p.pt = Math.max(p.o, Math.min(97, p.pt + Math.round(U.norm() * 0.8)));
-    else p.pt = p.o;
+    if (age <= 24) {
+      p.pt = Math.max(p.o, Math.min(97, p.pt + Math.round(U.norm() * 0.8)));
+      // revisiones de potencial: explosiones y estancamientos (promedio neutro)
+      if (age <= 23) { var r = R(), RV = Sim.REV; if (r < RV.up) p.pt = Math.min(97, p.pt + U.int(4, 8)); else if (r < RV.up + RV.dn) { var cut = U.int(3, 6); p.pt = Math.max(p.o - Math.round(cut / 2), p.pt - cut); p.o = Math.min(p.o, p.pt); } }
+    } else p.pt = p.o;
   }
   Sim.progressPlayer = progressPlayer;
   var MINPOS = { GK: 2, CB: 3, LB: 1, RB: 1, DM: 1, CM: 2, AM: 1, LW: 1, RW: 1, ST: 2 };

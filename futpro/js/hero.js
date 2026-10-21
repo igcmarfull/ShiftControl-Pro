@@ -129,9 +129,12 @@
   // Fracción de la brecha restante (techo − nivel actual) que se cierra por año, según la edad. Calibrada para que el nivel alcance
   // ≈ 85 % del techo a los 13, 95 % a los 17, 99 % a los 21 y el 100 % hacia los 24-25 (picos físicos medidos ≈ 25-26 años; ver README).
   var CLOSE = { 12: 0.22, 13: 0.22, 14: 0.22, 15: 0.24, 16: 0.25, 17: 0.26, 18: 0.27, 19: 0.28, 20: 0.29, 21: 0.31, 22: 0.34, 23: 0.34, 24: 0.3, 25: 0.25, 26: 0.2, 27: 0.12, 28: 0.06 };
-  Hero.closeRate = function (age) { return age < 12 ? CLOSE[12] : age > 28 ? 0 : CLOSE[age]; };
+  function lerp(T, x, lo, hi, out) { if (x < lo) return T[lo]; if (x > hi) return out; var a = Math.floor(x), b = Math.ceil(x); return a === b ? T[a] : T[a] * (b - x) + T[b] * (x - a); }
+  Hero.closeRate = function (age) { return lerp(CLOSE, age, 12, 28, 0); };
+  // edad de desarrollo del jugador: el que madura tarde (dv > 0) crece como alguien más joven y viceversa
+  Hero.devAge = function (age) { var h = FP.S && FP.S.hero; return age - (h && h.dv ? h.dv : 0); };
   Hero.GROWTH_K = 2.8;       // en cada semana solo se entrenan ~5 de los 16 atributos: se compensa para que la tasa anual sea la de CLOSE
-  Hero.ageRate = function (age) { return age < 12 ? 1 : age > 28 ? 0 : AGE_RATE[age]; };
+  Hero.ageRate = function (age) { return age < 12 ? 1 : lerp(AGE_RATE, age, 12, 28, 0); };
   Hero.facility = function () {
     var h = FP.S.hero;
     if (h.tk === 'amat') return 0.75;
@@ -164,10 +167,10 @@
       var coach = 1 + (h.pcoach || 0) * 0.1 + (FP.Staff ? FP.Staff.mentorBonus() : 0);
       if (FP.Life) coach *= FP.Life.trainMult();
       var fatM = h.fat > 80 ? 0.5 : h.fat > 65 ? 0.8 : 1;
-      var ar = Hero.ageRate(age);
+      var ar = Hero.ageRate(Hero.devAge(age));
       attrs.forEach(function (a) {
         var gap = h.cap[a] - h.at[a]; if (gap <= 0) return;
-        var g = gap * (Hero.closeRate(age) / 52) * Hero.GROWTH_K * mult * fac * coach * fatM * (0.85 + R() * 0.3);
+        var g = gap * (Hero.closeRate(Hero.devAge(age)) / 52) * Hero.GROWTH_K * mult * fac * coach * fatM * (0.85 + R() * 0.3);
         h.at[a] = Math.min(h.cap[a], h.at[a] + g); res.gains[a] = g;
       });
       h.fat = U.clamp(h.fat + (intn === 1 ? -2 : intn === 2 ? 6 : 14) - (8 + h.at.res / 14), 0, 100);
@@ -486,10 +489,10 @@
     var oppSt = C.strOf(prep.opp), d = oppSt - h.ovr;
     var lvl = U.clamp(1 + d * 0.03, 0.5, 1.6);
     var q = U.clamp((hm.rating - 5) / 2.5, 0.3, 1.6);
-    var amt = 0.06 * (hm.min / 90) * lvl * q * (Hero.closeRate(age) / 0.25);
+    var amt = 0.06 * (hm.min / 90) * lvl * q * (Hero.closeRate(Hero.devAge(age)) / 0.25);
     var attrs = Hero.focusAttrs('pos');
     attrs.forEach(function (a) { var gap = h.cap[a] - h.at[a]; if (gap > 0) h.at[a] = Math.min(h.cap[a], h.at[a] + amt * Math.min(gap, 20) / 12); });
-    if (hm.g) h.at.fin = Math.min(h.cap.fin, h.at.fin + 0.03 * Hero.ageRate(age));
+    if (hm.g) h.at.fin = Math.min(h.cap.fin, h.at.fin + 0.03 * Hero.ageRate(Hero.devAge(age)));
     Hero.updateOvr();
   };
 

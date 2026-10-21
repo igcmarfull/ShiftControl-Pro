@@ -19,7 +19,7 @@
   Youth.mat = function (age) { return age <= 12 ? MAT[12] : age >= 22 ? 1 : MAT[age]; };
   Youth.potFor = function (ovr, age) {
     var proj = ovr / Youth.f(age);       // el techo proyectado no cambia: solo cambia cuándo se alcanza (ver Hero.closeRate)
-    var p = proj + U.norm() * 4.5 + (R() < 0.04 ? 7 : 0);
+    var p = proj + U.norm() * 5.5 + (R() < 0.05 ? 8 : R() < 0.06 ? -5 : 0);     // dispersión y colas: talentos y límites que se descubren con el tiempo
     return U.clamp(Math.round(p), Math.round(ovr) + 2, 96);
   };
   var topLg = {};

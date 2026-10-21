@@ -24,6 +24,8 @@
     if (t.renewBonus) cells.push(['Prima por renovación', money(t.renewBonus)]);
     if (o && o.fee) cells.push(['Traspaso', money(o.fee)]);
     if (t.release) cells.push(['Cláusula de rescisión', money(t.release)]);
+    if (t.auto) cells.push(['Renovación automática', '+' + t.auto.years + ' año con ' + t.auto.n + ' partidos']);
+    if (t.relegation) cells.push(['Si el club desciende', 'rebaja del ' + Math.round(t.relegation.cut * 100) + '%']);
     cells.push(['Cesión', t.loanable === false ? 'No permitida' : 'Permitida']);
     if (t.loan) { cells.push(['Cesión hasta', K.fmtDate(t.loan.endW)]); cells.push(['Opción de compra', t.loan.buy ? money(t.loan.buy) : 'Sin opción']); }
     var html = '<div class="terms" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">' + cells.map(function (c) { return '<div><span>' + c[0] + '</span><b>' + c[1] + '</b></div>'; }).join('') + '</div>';
@@ -40,7 +42,7 @@
     var club = h.club != null ? S.clubs[h.club] : null, left = ct.endW != null ? Math.max(0, ct.endW - S.week) : null;
     var status = h.tk === 'loan' ? 'Cedido' : ct.status === 'cedido' ? 'Cedido' : left != null && left <= 26 ? 'Por vencer' : 'Activo';
     html += '<div class="cc-top" style="margin-bottom:.5rem">' + (h.team < 5000 ? UI.crest(h.team, 'lg') : '') + '<div><b style="font-size:1.05rem">' + esc(cname(h.team)) + '</b><div class="mut sm">' + esc(K.KIND[ct.kind] || ({ juvenil: 'Contrato juvenil', prof: 'Contrato profesional', semi: 'Contrato semiprofesional', cesion: 'Cesión' }[ct.type] || 'Contrato')) + ' · ' + pill(status, status === 'Activo' ? 'g' : status === 'Por vencer' ? 'y' : 'b') + '</div></div></div>';
-    var t = { wage: ct.wage, startW: ct.startW, endW: ct.endW, endY: ct.end, role: ct.role || '—', signBonus: ct.signBonus, bonuses: ct.bonuses || {}, release: ct.release, loanable: ct.loanable };
+    var t = { wage: ct.wage, startW: ct.startW, endW: ct.endW, endY: ct.end, role: ct.role || '—', signBonus: ct.signBonus, bonuses: ct.bonuses || {}, release: ct.release, auto: ct.auto, relegation: ct.relegation, loanable: ct.loanable };
     html += termsGrid(t, null, true);
     // progreso de bonos de la temporada
     var ss = h.season, sk = M.seasonLabel(), b = ct.bonuses || {};
