@@ -1,0 +1,428 @@
+CHI - Rangers de Talca
+CHI - Santiago Morning
+CHI - Lota Schwager
+CHI - Provincial Osorno
+CHI - Deportes Linares
+CHI - Deportes Rengo
+CHI - General Velásquez
+CHI - Trasandino
+CHI - Real San Joaquín
+CHI - Provincial Ovalle
+CHI - Brujas de Salamanca
+CHI - Concón National
+CHI - Santiago City
+CHI - Atlético Colina
+CHI - Deportes Rancagua
+CHI - Malleco Unido
+CHI - Naval
+CHI - Lautaro de Buin
+CHI - Quintero Unido
+CHI - Comunal Cabrero
+CHI - Constitución Unido
+CHI - Atlético Oriente
+CHI - Rodelindo Román
+CHI - Imperial Unido
+CHI - Chimbarongo
+CHI - Aguará
+CHI - Futuro
+CHI - Municipal Puente Alto
+ARG - Huracán
+ARG - Gimnasia La Plata
+ARG - Instituto
+ARG - Central Córdoba (SdE)
+ARG - Gimnasia y Esgrima de Mendoza
+ARG - Colón
+ARG - Temperley
+ARG - San Martín de Tucumán
+ARG - Mitre (SdE)
+ARG - Racing de Córdoba
+ARG - Atlanta
+ARG - Maipú
+ARG - Midland
+ARG - Acassuso
+ARG - Ciudad de Bolívar
+BRA - Botafogo
+BRA - Juventude
+BRA - Novorizontino
+BRA - CRB
+BRA - Operário-PR
+BRA - Athletic Club (MG)
+BRA - ABC
+BRA - Itabuna
+BRA - Portuguesa
+BRA - Guarani
+BRA - Sampaio Corrêa
+BRA - Aparecidense
+BRA - Gama
+BRA - Rio Branco
+URU - Racing de Montevideo
+URU - Juventud de Las Piedras
+URU - Huracán
+URU - Colón (URU)
+PAR - Guaraní
+PAR - Nacional (PAR)
+PAR - Sol de América
+PAR - Tacuary
+COL - Real Cartagena
+COL - Real Santander
+COL - Barranquilla FC
+COL - Deportes Quindío
+COL - Patriotas
+COL - Orsomarso
+COL - Atlético FC
+COL - Cortuluá
+COL - Tigres FC
+COL - Bogotá FC
+COL - Leones FC
+COL - Boca Juniors de Cali
+PER - Carlos A. Mannucci
+PER - Pirata FC
+PER - Academia Cantolao
+PER - Deportivo Coopsol
+PER - Atlético Torino
+PER - Credicoop San Cristóbal
+PER - Deportivo Llacuabamba
+PER - Santos de Nasca
+ECU - Vinotinto Ecuador
+ECU - 22 de Julio
+ECU - 9 de Octubre
+ECU - Atlético FC
+ECU - Cumbayá
+ECU - Gualaceo
+ECU - Independiente Juniors
+ECU - San Antonio
+ECU - Liga de Portoviejo
+ECU - Vargas Torres
+BOL - Gualberto Villarroel SJ
+ENG - Leicester City
+ENG - Ipswich Town
+ENG - West Bromwich Albion
+ENG - Milton Keynes Dons
+ESP - Sevilla
+ESP - Getafe
+ESP - Alavés
+ESP - Sporting de Gijón
+ESP - Real Madrid Castilla
+ESP - CP Cacereño
+ESP - FC Barcelona Atlètic
+ESP - Sestao River
+ESP - UD Melilla
+GER - 1. FC Köln
+GER - VfL Osnabrück
+GER - Erzgebirge Aue
+GER - Rot-Weiss Essen
+GER - SSV Ulm 1846
+FRA - Troyes
+FRA - Le Puy
+FRA - Sochaux
+FRA - Bourg-en-Bresse 01
+POR - Vitória SC
+POR - AVS
+POR - Académico de Viseu
+POR - Atlético CP
+POR - 1.º Dezembro
+POR - União de Santarém
+POR - Lusitano GC
+POR - Vitória SC B
+NED - Jong AZ
+NED - Jong PSV
+BEL - Charleroi
+SCO - Greenock Morton
+TUR - İstanbul Başakşehir
+TUR - Amedspor
+GRE - OFI Crete
+SUI - FC Vaduz
+AUT - Austria Lustenau
+AUT - SKN St. Pölten
+AUT - Austria Klagenfurt
+DEN - Brøndby
+DEN - Vejle
+DEN - Hillerød
+DEN - HB Køge
+DEN - B.93
+SWE - Örgryte IS
+SWE - Östersunds FK
+NOR - KFUM Oslo
+NOR - HamKam
+NOR - Åsane
+NOR - Strømmen
+NOR - Lyn
+NOR - Egersund
+POL - Polonia Bytom
+CZE - Slovácko
+CZE - České Budějovice
+CZE - FC Vlašim
+CZE - SK Prostějov
+CZE - Jihlava
+CZE - Dynamo České Budějovice
+USA - LAFC
+MEX - Atlético La Paz
+MEX - Tampico Madero
+MEX - Atlético Morelia
+CRC - Cartaginés
+CRC - Pérez Zeledón
+CRC - Santos de Guápiles
+CRC - Limón FC
+CRC - Municipal Grecia
+JPN - Nara Club
+JPN - Azul Claro Numazu
+JPN - Iwate Grulla Morioka
+KOR - Gimhae FC
+CHN - Shenzhen Peng City
+MAR - AS FAR
+MAR - FUS Rabat
+MAR - Difaâ El Jadida
+MAR - Rapide Oued Zem
+MAR - Union Touarga
+MAR - Youssoufia Berrechid
+MAR - Mouloudia Oujda
+RSA - SuperSport United
+RSA - Cape Town City
+RSA - Royal AM
+TUN - Espérance de Tunis
+TUN - Étoile du Sahel
+TUN - US Monastir
+TUN - CA Bizertin
+TUN - EGS Gafsa
+TUN - JS Kairouan
+TUN - AS Gabès
+TUN - US Tataouine
+ALG - NC Magra
+ALG - AS Khroub
+HRV - Cibalia
+HRV - Inter Zaprešić
+HRV - Hrvatski Dragovoljac
+HRV - Kustošija
+HRV - Dubrava
+HRV - Solin
+HRV - Jarun
+HRV - Opatija
+HRV - Orijent 1919
+SRB - IMT Beograd
+SRB - Javor Ivanjica
+SRB - Borac Čačak
+SRB - Jedinstvo Ub
+SRB - Zlatibor Čajetina
+SRB - Grafičar
+SRB - Radnički Kragujevac
+SRB - Tekstilac Odžaci
+SRB - Dubočica
+SRB - Smederevo 1924
+SRB - Radnički Sremska Mitrovica
+SRB - Žarkovo
+SRB - Inđija
+SRB - Trayal Kruševac
+SRB - Mladost Novi Sad
+SRB - Jagodina
+ROU - Ceahlăul Piatra Neamț
+ROU - Gloria Buzău
+ROU - Politehnica Timișoara
+ROU - Bihor Oradea
+ROU - ASA Târgu Mureș
+ROU - Metalul Buzău
+ROU - CSM Slatina
+ROU - Pandurii Târgu Jiu
+ROU - Minaur Baia Mare
+ROU - Unirea Dej
+ROU - Olimpia Satu Mare
+HUN - Zalaegerszeg
+HUN - Diósgyőr
+HUN - Nyíregyháza
+HUN - MTK Budapest
+HUN - Szeged-Csanád
+HUN - BVSC Budapest
+HUN - Tiszakécske
+HUN - Szentlőrinc
+HUN - Pécs
+HUN - Siófok
+HUN - Szombathelyi Haladás
+HUN - Budapest Honvéd
+HUN - Csákvár
+BUL - Minyor Pernik
+BUL - Yantra
+BUL - Maritsa Plovdiv
+BUL - Sportist Svoge
+BUL - Fratria
+BUL - Chernomorets Burgas
+BUL - Vihren Sandanski
+BUL - Lokomotiv Gorna Oryahovitsa
+BUL - Spartak Pleven
+BUL - Litex
+BUL - Sozopol
+UKR - Chornomorets Odesa
+UKR - Skala 1911
+UKR - Kremin Kremenchuk
+UKR - Mynai
+RUS - Nizhny Novgorod
+RUS - Volgar
+RUS - Alania
+RUS - Tom Tomsk
+ISR - Hapoel Ramat Gan
+ISR - Hapoel Acre
+ISR - Hapoel Nof HaGalil
+ISR - Hapoel Umm al-Fahm
+ISR - Maccabi Jaffa
+ISR - Hapoel Ashkelon
+ISR - Beitar Tel Aviv Bat Yam
+CYP - Omonia
+WAL - Barry Town United
+FIN - HJK
+FIN - SJK
+FIN - PS Kemi
+FIN - EIF
+FIN - MP Mikkeli
+FIN - Reipas
+ISL - Víkingur Reykjavík
+ISL - Þór Akureyri
+ISL - Njarðvík
+ISL - Selfoss
+ISL - Þróttur Reykjavík
+HON - CD Olimpia
+HON - Motagua
+HON - Real España
+HON - Marathón
+HON - Olancho
+HON - Victoria
+HON - Real Sociedad Tocoa
+HON - Lobos UPNFM
+HON - Génesis Comayagua
+HON - Juticalpa
+PAN - Alianza (Panamá)
+PAN - Costa del Este
+PAN - CAI Horizonte
+GUA - Comunicaciones (Guatemala)
+GUA - Achuapa
+GUA - Zacapa
+GUA - Sanarate
+SLV - Alianza
+SLV - Águila
+SLV - Municipal Limeño
+SLV - Firpo
+SLV - Jocoro
+SLV - Atlético Marte
+JAM - Cavalier
+JAM - Mount Pleasant
+JAM - Harbour View
+JAM - Waterhouse
+JAM - Portmore United
+JAM - Dunbeholden
+JAM - Molynes United
+JAM - Tivoli Gardens
+JAM - Vere United
+JAM - Arnett Gardens
+JAM - Montego Bay United
+JAM - Chapelton Maroons
+ARG - Armenio
+ARG - Justo José de Urquiza
+SUI - Breitenrain
+SUI - Brühl St. Gallen
+SUI - Zürich U21
+SUI - Biel-Bienne
+SUI - Cham
+SUI - Baden
+SUI - Lausanne-Sport U21
+SUI - Gambarogno
+DEN - B 93
+POL - Stal Stalowa Wola
+POL - Olimpia Grudziądz
+POL - Resovia Rzeszów
+POL - Kotwica Kołobrzeg
+POL - Chojniczanka Chojnice
+POL - Stomil Olsztyn
+POL - Wisła Puławy
+POL - Gwardia Koszalin
+POL - Sandecja Nowy Sącz
+POL - Skra Częstochowa
+POL - Podbeskidzie
+POL - Zagłębie Sosnowiec
+POL - Radunia Stężyca
+GRE - Ethnikos Piraeus
+GRE - Niki Volos
+GRE - Apollon Larissa
+GRE - Ethnikos Asteras
+ENG - Altrincham
+ENG - Braintree Town
+USA - Sacramento Republic
+USA - Memphis 901
+QAT - Al Kharaitiyat
+QAT - Al Mesaimeer B
+UAE - Shabab Al Ahli
+UAE - Al Wasl
+UAE - Al Wahda
+UAE - Al Jazira
+UAE - Al Nasr
+UAE - Dibba Al Fujairah
+UAE - Kalba
+UAE - Emirates Club
+UAE - Al Dhafra
+UAE - Al Orooba
+UAE - Hatta
+UAE - Masafi
+UAE - Al Hamriyah
+UAE - Fujairah
+UAE - Dubai United
+UAE - Al Taawon
+UAE - Gulf United
+UAE - Al Thaid
+IRN - Nassaji Mazandaran
+IRN - Havadar
+IRN - Chadormalou
+IRN - Naft Masjed Soleyman
+IRN - Sanat Naft Abadan
+IRN - Shahin Bushehr
+IRN - Pars Jonoubi Jam
+IRN - Mes Kerman
+IRN - Khooshe Talaei Saveh
+IRN - Gostaresh Foulad
+IRN - Nirooye Zamini
+IRN - Iranjavan Bushehr
+IRN - Arman Gohar Sirjan
+IRN - Ario Eslamshahr
+IRN - Naft Va Gaz Gachsaran
+IRN - Chooka Talesh
+IRN - Shahrdari Astara
+UZB - Bunyodkor
+UZB - Nasaf
+UZB - Qizilqum
+UZB - Mash'al
+UZB - Yangiyer
+UZB - Sirdaryo
+UZB - Zomin
+UZB - Metallurg Bekabad
+UZB - Turon Yaypan
+UZB - Aral Nukus
+UZB - Olimpik Toshkent
+IND - Churchill Brothers
+IND - Rajasthan United
+IND - Gokulam Kerala
+IND - Sreenidi Deccan
+IND - Real Kashmir
+IND - Aizawl
+IND - Dempo
+IND - Namdhari
+IND - Shillong Lajong
+IND - TRAU
+THA - Bangkok United
+THA - Muangthong United
+THA - Nakhon Ratchasima
+THA - Chiangrai United
+THA - Kanchanaburi Power
+THA - Police Tero
+THA - Trat
+THA - Samut Prakan City
+THA - Lampang
+THA - Nakhon Si United
+THA - Phrae United
+THA - Suphanburi
+THA - Customs Ladkrabang
+THA - Phitsanulok
+THA - Udon United
+THA - Songkhla
+THA - Krabi
+THA - Kasetsart
+THA - Ranong United
+THA - Pattaya Dolphins
+THA - Nakhon Pathom United
+THA - Phuket City
+ARG - Club Atlético Atlas
+ARG - Muñiz

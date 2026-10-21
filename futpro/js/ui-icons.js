@@ -156,6 +156,15 @@
     return crestCache[name] = { svg: svg, slug: slug };
   };
   // sizes: undefined=pequeño, 'lg', 'xl'
+  // Si la imagen real no carga, recuperar el SVG generado sin cambiar la partida.
+  UI.crestFail = function (img) {
+    var container = img && img.parentNode;
+    if (!container) return;
+    var name = img.getAttribute('data-crest-name') || '?';
+    var generated = UI.crestSvg(name).svg;
+    var cls = container.className || 'crest';
+    container.outerHTML = generated.replace('class="crest"', 'class="' + esc(cls) + '"');
+  };
   UI.crest = function (id, size) {
     if (typeof size === 'number' || size === true) size = 'lg';
     var cls = size ? ' ' + size : '';
@@ -163,10 +172,10 @@
     var nm = C.tname(id) || '?';
     var base = id >= 30000 && FP.S.clubs[id - 30000] ? FP.S.clubs[id - 30000].nm : nm;
     var c = UI.crestSvg(base), img = FP.CRESTS[c.slug];
-    if (img) return '<span class="crest' + cls + '"><img src="' + esc(img) + '" alt="Escudo de ' + esc(base) + '"></span>';
+    if (img) return '<span class="crest' + cls + '"><img loading="lazy" decoding="async" src="' + esc(img) + '" alt="Escudo de ' + esc(base) + '" data-crest-name="' + esc(base) + '" onerror="FP.UI.crestFail(this)"></span>';
     return c.svg.replace('class="crest"', 'class="crest' + cls + '"');
   };
-  UI.crestName = function (nm, size) { var c = UI.crestSvg(nm), img = FP.CRESTS[c.slug], cls = size ? ' ' + size : ''; return img ? '<span class="crest' + cls + '"><img src="' + esc(img) + '" alt=""></span>' : c.svg.replace('class="crest"', 'class="crest' + cls + '"'); };
+  UI.crestName = function (nm, size) { var c = UI.crestSvg(nm), img = FP.CRESTS[c.slug], cls = size ? ' ' + size : ''; return img ? '<span class="crest' + cls + '"><img loading="lazy" decoding="async" src="' + esc(img) + '" alt="Escudo de ' + esc(nm) + '" data-crest-name="' + esc(nm) + '" onerror="FP.UI.crestFail(this)"></span>' : c.svg.replace('class="crest"', 'class="crest' + cls + '"'); };
   UI.clubC = function (id) { return UI.crest(id) + UI.club(id); };
 
   // ---------- avatar del futbolista ----------
