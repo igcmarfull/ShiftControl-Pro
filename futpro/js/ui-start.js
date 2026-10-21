@@ -137,7 +137,7 @@
       if (f.club === 'amat') opts.club = { kind: 'amat', name: f.amName.trim() };
       else { var c = FP.S.clubs.filter(function (c) { return c.nm === f.acName; })[0] || FP.S.clubs.filter(function (c) { return c.nm === 'Colo-Colo'; })[0]; opts.club = { kind: 'academy', id: c.id }; }
       var hh = FP.Game.startCareer(opts); UI.scr = 'home'; UI.mt = null;
-      if (f.dyn) { hh.dyn = f.dyn; if (hh.soc) hh.soc.fame = (hh.soc.fame || 0) + Math.round(f.dyn.score / 10); hh.history.push({ w: FP.S.week, t: 'Comienza la carrera de ' + hh.nm + ', hijo de ' + f.dyn.father + '.' }); }
+      if (f.dyn) { hh.dyn = f.dyn; if (hh.soc) hh.soc.fame = (hh.soc.fame || 0) + Math.round(f.dyn.score / 10); (hh.history = hh.history || []).push({ w: FP.S.week, t: 'Comienza la carrera de ' + hh.nm + ', hijo de ' + f.dyn.father + '.' }); }
       return FP.Store.save().catch(function () { });
     }).then(function () { UI.render(); }).catch(Start.fail);
   };
