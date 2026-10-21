@@ -44,15 +44,28 @@ CLUB_TYPES = {'Q476028', 'Q847017', 'Q103229495', 'Q15944511', 'Q1194951'}  # cl
 SOCCER = 'Q2736'
 
 
-def call(params, tries=3):
+import threading
+_gate = threading.Lock(); _last = [0.0]
+
+
+def pause(gap=0.8):
+    """Ritmo global y educado hacia Wikimedia: evita el error 429."""
+    with _gate:
+        d = _last[0] + gap - time.time()
+        if d > 0: time.sleep(d)
+        _last[0] = time.time()
+
+
+def call(params, tries=5):
     url = API + '?' + urlencode(dict(params, format='json'))
     for k in range(tries):
         try:
+            pause()
             with urlopen(Request(url, headers=UA), timeout=30) as r:
                 return json.loads(r.read().decode('utf-8'))
         except Exception:
             if k == tries - 1: raise
-            time.sleep(1.5 * (k + 1))
+            time.sleep(3 * (k + 1))
 
 
 def claim_ids(ent, prop):
@@ -65,10 +78,20 @@ def claim_ids(ent, prop):
 
 def logo_file(ent):
     best = None
-    for c in ent.get('claims', {}).get('P154', []):
+    for prop in ('P154', 'P8972', 'P18'):
+        r = _logo_prop(ent, prop)
+        if r: return r
+    return None
+
+
+def _logo_prop(ent, prop):
+    best = None
+    for c in ent.get('claims', {}).get(prop, []):
         v = c.get('mainsnak', {}).get('datavalue', {}).get('value')
         if not isinstance(v, str): continue
         if c.get('rank') == 'deprecated': continue
+        # P18 es la imagen general del club: solo vale si el nombre del archivo indica un escudo.
+        if prop == 'P18' and not re.search(r'logo|escudo|crest|badge|emblem|shield|insignia|logotipo|wappen|blason', v, re.I): continue
         if c.get('rank') == 'preferred': return v
         # Sin fecha de fin = vigente.
         if 'P582' not in c.get('qualifiers', {}) and best is None: best = v
@@ -128,13 +151,14 @@ def download(fname):
     ext = fname.rsplit('.', 1)[-1].lower()
     base = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + quote(fname.replace(' ', '_'))
     url = base if ext == 'svg' else base + '?width=256'
-    for k in range(3):
+    for k in range(5):
         try:
+            pause(1.2)
             with urlopen(Request(url, headers=UA), timeout=40) as r:
                 data = r.read(4_000_000)
                 return data, ('svg' if ext == 'svg' else 'png'), url
         except Exception:
-            time.sleep(2 * (k + 1))
+            time.sleep(4 * (k + 1))
     return None, None, None
 
 
