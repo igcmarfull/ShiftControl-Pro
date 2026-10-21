@@ -313,3 +313,16 @@ Ajuste: desde los 20 años las pruebas abiertas (jornadas, showcases y viaje al 
 Catar (primera y segunda), Emiratos Árabes (primera y segunda), Irán (Persian Gulf Pro League y Azadegan), Uzbekistán (Super Liga y Pro Liga), India (Indian Super League e I-League, sin ascenso) y Tailandia (Thai League 1 y 2), con cupos para la Liga de Campeones de la AFC, y Argentina suma la **Primera C** (4.ª división; la Primera B Metropolitana ya era la 3.ª). Se agregaron las selecciones India y Tailandia, banderas y listas de nombres indios y tailandeses.
 
 **Retiro dorado:** desde los 30 años, la liga del Golfo (Arabia, Catar, Emiratos) y China pagan un 55% más de sueldo en primera. Y de los 31 años en adelante, con media 66 o más, los clubes de esos países se interesan al azar (cada ~10 semanas con 10% de probabilidad, ~42-58 puntos de interés), con menos exigencia de exposición internacional (-18). Los valores son supuestos de diseño.
+
+## Finanzas personales (`js/dinero.js`, `js/ui-v23.js`)
+
+Nueva pantalla **Finanzas personales** (menú Gestión) con cuatro pestañas:
+
+- **Resumen:** patrimonio (caja + inversiones), variación del último año, totales de la carrera (impuestos, gastos de vida, comisiones, ingresos de inversiones, pérdidas por estafas, ayudas), gráfico y últimos movimientos.
+- **Impuestos:** una tasa efectiva por país sobre sueldo, primas, bonos y patrocinios (Chile 27%, España/Inglaterra 45%, Bélgica 50%; Arabia, Catar y Emiratos 0%). Es un supuesto de diseño, no la ley fiscal real. Hace que el Golfo valga más como retiro dorado.
+- **Estilo de vida** (desde los 18 años): vivienda, transporte y entorno de apoyo (4 niveles). Cuestan una parte del sueldo (con mínimos), suben la moral y el entorno de apoyo acelera la recuperación; gastar más del 55% de lo que ganas genera estrés. Sin liquidez el nivel baja solo. Los gastos continúan retirado (con una referencia que decae).
+- **Inversiones:** depósito (~3%), bolsa (~7% con ciclos bajistas), propiedades (~3,5% + arriendo 4,5%, 3% de comisión al vender), negocio propio (cada año ~35% prospera / 40% estable / 25% fracasa) y club amateur local (da fama). Se compra por 10, 25 o 50% de la caja; ganancias realizadas tributan 15%.
+- **Asesor financiero** (básico 0,4% anual; premium 0,9%): frena estafas, mejora los negocios y, el premium, el retorno. **Familia** (casa para los padres, ayuda mensual) y **fundación** (aporte anual que mejora imagen, fama y marca).
+- Decisiones `dinero`: amigo que pide un préstamo, familiar que necesita ayuda, oferta de negocio y estafas ("inversión que no puedes perderte"); aparecen con patrimonio desde ~150 mil € (~1 vez cada 10-20 semanas como máximo).
+
+Todos los porcentajes son supuestos de diseño, sin contrastar con datos reales. La contabilidad de estos flujos va en `hero.fx`; el dinero en caja sigue siendo `hero.money`.
