@@ -113,34 +113,46 @@
 
   // ---------- estilo Wikipedia ("wikitable"): sin etiquetas de nivel ni tarjetas de resumen ----------
   function wcols(list) { var t = agg([].concat.apply([], list.map(function (e) { return e.rows; }))); return { copa: t.copa.p > 0, cont: t.cont.p > 0 }; }
-  function wcells(o, cols) {
-    return '<td class="n">' + cell(o.liga.p) + '</td><td class="n">' + cell(o.liga.g) + '</td>' + (cols.copa ? '<td class="n">' + cell(o.copa.p) + '</td><td class="n">' + cell(o.copa.g) + '</td>' : '') + (cols.cont ? '<td class="n">' + cell(o.cont.p) + '</td><td class="n">' + cell(o.cont.g) + '</td>' : '') +
-      '<td class="n tt">' + cell(o.tot.p) + '</td><td class="n tt">' + cell(o.tot.g) + '</td><td class="n tt">' + cell(o.tot.a) + '</td>';
-  }
+  // tres columnas (PJ, G, A) por grupo de competiciones, como en un artículo de Wikipedia
+  function g3(o) { return '<td class="n">' + cell(o.p) + '</td><td class="n">' + cell(o.g) + '</td><td class="n">' + cell(o.a) + '</td>'; }
+  function wcells(o, cols) { return g3(o.liga) + (cols.copa ? g3(o.copa) : '') + (cols.cont ? g3(o.cont) : '') + '<td class="n tt">' + cell(o.tot.p) + '</td><td class="n tt">' + cell(o.tot.g) + '</td><td class="n tt">' + cell(o.tot.a) + '</td>'; }
   function whead(cols) {
-    return '<thead><tr><th rowspan="2">Club</th><th rowspan="2">Temporada</th><th colspan="3">Liga</th>' + (cols.copa ? '<th colspan="2">Copa nacional</th>' : '') + (cols.cont ? '<th colspan="2">Continental</th>' : '') + '<th colspan="3">Total</th></tr><tr><th>División</th><th class="n">PJ</th><th class="n">G</th>' + (cols.copa ? '<th class="n">PJ</th><th class="n">G</th>' : '') + (cols.cont ? '<th class="n">PJ</th><th class="n">G</th>' : '') + '<th class="n">PJ</th><th class="n">G</th><th class="n">A</th></tr></thead>';
+    var sub = '<th class="n">PJ</th><th class="n">G</th><th class="n">A</th>';
+    return '<thead><tr><th rowspan="2">Club</th><th rowspan="2">Div.</th><th rowspan="2">Temporada</th><th colspan="3">Liga</th>' + (cols.copa ? '<th colspan="3">Copa nacional</th>' : '') + (cols.cont ? '<th colspan="3">Continental</th>' : '') + '<th colspan="3">Total</th></tr><tr>' + sub + (cols.copa ? sub : '') + (cols.cont ? sub : '') + sub + '</tr></thead>';
   }
   // etiqueta de club: el equipo juvenil se escribe "Club (juv.)" como en un artículo
   function label(e, youthLabel) { var b = base(e.t), n = b != null && b < 5000 ? C.tname(b) : e.tn; return n + (youthLabel && e.lv === 'juv' ? ' (juv.)' : '') + (FP.Bio && FP.Bio.isLoan(e.t, e.o) ? ' (cedido)' : ''); }
+  // división en forma abreviada (1.ª, 2.ª…); en juveniles y amateur, la categoría
+  function divShort(e) {
+    var full = mainDiv(e);
+    if (e.lv === 'juv') { var m = /Sub-\d+/.exec(full); return m ? m[0] : 'Juv.'; }
+    if (e.lv === 'amat') return 'Amat.';
+    var b = base(e.t), club = b != null && b < 5000 ? FP.S.clubs[b] : null, def = null;
+    if (club) { e.rows.forEach(function (r) { if (r.k !== 'liga') return; for (var id in FP.LGDEF) { var d = FP.LGDEF[id]; if (d.c === club.c && d.n === r.c && (!def || r.p > 0)) { def = d; break; } } }); if (!def) def = FP.LGDEF[club.lg]; }
+    return def ? def.t + '.ª' : '–';
+  }
+  function clubCell(e, k, stage, many) {
+    var b = base(e.t), cl = b != null && b < 5000 ? C.team(b) : null;
+    return '<div class="wt-cn">' + crest(e.t) + '<span><b>' + esc(k) + '</b>' + (cl ? '<span class="wt-cc">' + UI.flag(cl.c) + esc(C.cname(cl.c)) + '</span>' : '') + (many && stage > 1 ? '<span class="wt-et">' + stage + '.ª etapa</span>' : '') + '</span></div>';
+  }
+  // Cada etapa (temporadas consecutivas en el mismo club) forma su propio bloque, en orden cronológico. El club se repite al volver y
+  // la fila «Total club» aparece al terminar su última etapa, con lo acumulado en todas.
   function wtable(list, opts) {
     opts = opts || {};
     var vis = list.filter(function (e) { return agg(e.rows).tot.p > 0; });
     if (!vis.length) return '<p class="mut sm">Sin partidos oficiales.</p>';
-    var cols = wcols(vis), body = '', all = z(), nc = 2 + 3 + (cols.copa ? 2 : 0) + (cols.cont ? 2 : 0);
-    var groups = [];
-    vis.forEach(function (e) { var k = label(e, opts.youthLabel), g = opts.flat ? null : groups.filter(function (x) { return x.k === k; })[0]; if (g) g.list.push(e); else groups.push({ k: k, e: e, list: [e] }); });
-    groups.forEach(function (g) {
-      g.list = opts.flat ? g.list : mergeSeasons(g.list);
-      var rowsAll = [].concat.apply([], g.list.map(function (s) { return s.rows; })), many = g.list.length > 1 && !opts.flat;
-      g.list.forEach(function (s, i) {
-        body += '<tr>' + (opts.flat ? '<td>' + esc(g.k) + '</td>' : (i === 0 ? '<td class="wt-c" rowspan="' + (g.list.length + (many ? 1 : 0)) + '">' + esc(g.k) + '</td>' : '')) + '<td>' + esc(s.s) + '</td><td class="wt-d">' + esc(mainDiv(s)) + '</td>' + wcells(agg(s.rows), cols) + '</tr>';
+    var cols = wcols(vis), body = '', blocks = [], count = {}, last = {}, sums = {};
+    vis.forEach(function (e) { var k = label(e, opts.youthLabel), bl = blocks[blocks.length - 1]; if (!opts.flat && bl && bl.k === k) bl.list.push(e); else blocks.push({ k: k, e: e, list: [e] }); });
+    blocks.forEach(function (bl, i) { count[bl.k] = (count[bl.k] || 0) + 1; bl.stage = count[bl.k]; last[bl.k] = i; (sums[bl.k] = sums[bl.k] || []).push.apply(sums[bl.k], [].concat.apply([], bl.list.map(function (e) { return e.rows; }))); });
+    blocks.forEach(function (bl, i) {
+      var seas = opts.flat ? bl.list : mergeSeasons(bl.list), isLast = last[bl.k] === i, many = count[bl.k] > 1;
+      seas.forEach(function (s, j) {
+        body += '<tr>' + (opts.flat ? '<td>' + esc(bl.k) + '</td>' : (j === 0 ? '<td class="wt-c" rowspan="' + (seas.length + (isLast && !opts.flat ? 1 : 0)) + '">' + clubCell(bl.e, bl.k, bl.stage, many) + '</td>' : '')) + '<td class="wt-d" title="' + esc(mainDiv(s)) + '">' + esc(divShort(s)) + '</td><td>' + esc(s.s) + '</td>' + wcells(agg(s.rows), cols) + '</tr>';
       });
-      if (many) body += '<tr class="wt-s"><td colspan="2">Total en el club</td>' + wcells(agg(rowsAll), cols) + '</tr>';
-      add(all, agg(rowsAll).tot);
+      if (isLast && !opts.flat) body += '<tr class="wt-s"><td colspan="2">Total club' + (many ? ' (' + count[bl.k] + ' etapas)' : '') + '</td>' + wcells(agg(sums[bl.k]), cols) + '</tr>';
     });
     var tot = agg([].concat.apply([], vis.map(function (e) { return e.rows; })));
-    body += '<tr class="wt-t"><td colspan="3">' + esc(opts.totalLabel || 'Total carrera') + '</td>' + wcells(tot, cols).replace(/^/, '') + '</tr>';
-    // la fila de total ocupa 3 columnas de texto en tablas con club agrupado y 3 en las planas
+    body += '<tr class="wt-t"><td colspan="3">' + esc(opts.totalLabel || 'Total carrera') + '</td>' + wcells(tot, cols) + '</tr>';
     return '<table class="wt">' + whead(cols) + '<tbody>' + body + '</tbody></table>';
   }
   function tot3(list) { return agg([].concat.apply([], list.map(function (e) { return e.rows; }))).tot; }

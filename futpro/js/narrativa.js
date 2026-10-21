@@ -163,7 +163,7 @@
     M.tro = (h.trophies || []).map(function (t) { return { t: t, w: trophyWeight(t), y: X.y4(t.y) }; });
     M.aw = (h.awards || []).map(function (a) { return { a: a, w: awardWeight(a), y: X.y4(a.y) }; });
     N.attach(M);
-    M.ido = N.legacyClubs(M);
+    M.clubTotals = N.clubTotals(M); M.ido = N.legacyClubs(M);
     M.arch = N.archetypes(M);
     M.ev = N.events(M);
     return M;
@@ -233,10 +233,23 @@
     });
   };
 
+  // ---------- acumulado por institución: una etapa nueva empieza cuando entre dos pasos por el mismo club hubo otro club (las cesiones no la cortan) ----------
+  N.clubTotals = function (M) {
+    var by = {}, order = [], lastOwn = null;
+    M.stints.forEach(function (g) {
+      if (g.loan || g.t == null) return;
+      var c = by[g.t]; if (!c) { c = by[g.t] = { t: g.t, name: g.name, stages: [], n: 0, L: z0(), all: z0(), tro: [], y0: g.y0, y1: g.y1 }; order.push(c); }
+      if (!c.stages.length || lastOwn !== g.t) c.stages.push({ y0: g.y0, y1: g.y1, n: 0 }); var st = c.stages[c.stages.length - 1]; st.y1 = g.y1; st.n += g.n;
+      c.n += g.n; c.y0 = Math.min(c.y0, g.y0); c.y1 = Math.max(c.y1, g.y1); addTo(c.L, g.L); addTo(c.all, g.all); c.tro = c.tro.concat(g.tro); lastOwn = g.t;
+    });
+    return order;
+  };
+
   // ---------- legado por club (estatus que el juego asigna) ----------
+  // El estatus es histórico y acumulativo: se evalúa una sola vez por club con todas sus etapas; volver a un club no lo concede de nuevo.
   N.legacyClubs = function (M) {
     var out = [], Id = FP.Idolo; if (!Id || !M.h.ido) return out;
-    M.stints.forEach(function (g) { if (g.loan || g.t == null) return; var c = M.h.ido.clubs && M.h.ido.clubs[g.t]; if (!c) return; var s = Id.status(g.t); if (s.rank >= 2) out.push({ t: g.t, name: g.name, label: s.label, rank: s.rank, pts: s.pts, g: g }); });
+    M.clubTotals.forEach(function (c) { var d = M.h.ido.clubs && M.h.ido.clubs[c.t]; if (!d) return; var s = Id.status(c.t); if (s.rank >= 2) out.push({ t: c.t, name: c.name, label: s.label, rank: s.rank, pts: s.pts, c: c, g: c.stages[0] }); });
     out.sort(function (a, b) { return b.rank - a.rank || b.pts - a.pts; });
     return out;
   };
@@ -247,7 +260,7 @@
     var a = {}, h = M.h, ns = M.nProSeasons, rated = M.rated, avgz = rated.length ? rated.reduce(function (x, s) { return x + s.perf.z; }, 0) / rated.length : 0;
     var maj = M.tro.filter(function (x) { return !x.t.sub && !x.t.nt && x.w >= 54; }), top = M.topTier, topR = M.topTierReg, topSeasons = M.pro.filter(function (s) { return s.tier === 1; });
     var topGood = topSeasons.filter(function (s) { return s.perf.sample === 'plena' && s.perf.z >= 0.7; }).length;
-    var maxTenure = M.stints.reduce(function (m, g) { return g.loan ? m : Math.max(m, g.n); }, 0), minorStints = M.stints.filter(function (g) { return g.n <= 2 && g.L.p < 25; }).length;
+    var maxTenure = M.clubTotals.reduce(function (m, c) { return Math.max(m, c.n); }, 0), minorStints = M.stints.filter(function (g) { return g.n <= 2 && g.L.p < 25; }).length;
     var awMajor = M.aw.filter(function (x) { return x.w >= 60; }).length, qTop = topSeasons.filter(function (s) { return s.q != null && s.q >= 55; }).length;
     // estrella: asciende a lo más alto y rinde por encima de lo esperable de forma sostenida, con honores de peso
     var ntW = M.nt.caps >= 40 ? 0.15 : M.nt.caps >= 15 ? 0.1 : 0, honW = Math.min(0.2, 0.1 * maj.length) + Math.min(0.2, 0.1 * awMajor);
@@ -302,7 +315,7 @@
     if (M.firstPro) add({ k: 'debut', w: M.firstPro.o, y: M.firstPro.y, wt: M.nProSeasons <= 2 ? 62 : 46, s: M.firstPro });
     if (M.nt.first) add({ k: 'ntdebut', w: M.nt.first.w, y: D.year(M.nt.first.w), wt: 58 });
     if (M.nt.abs) add({ k: 'nt', w: 0, y: M.nt.abs.y0, wt: M.nt.abs.p >= 40 ? 70 : M.nt.abs.p >= 10 ? 56 : 40, nt: M.nt.abs });
-    M.ido.forEach(function (c) { add({ k: 'legacy', w: 0, y: c.g.y1, wt: 40 + 12 * c.rank, c: c }); });
+    M.ido.forEach(function (c) { add({ k: 'legacy', w: 0, y: c.c.y1, wt: 40 + 12 * c.rank, c: c }); });
     if (M.trend.recover) add({ k: 'recover', w: M.trend.recover.to.o, y: M.trend.recover.to.y, wt: 54, r: M.trend.recover });
     if (M.trend.decline) add({ k: 'decline', w: 0, y: M.trend.decline.from.y, wt: 44, r: M.trend.decline });
     if (h.retired) add({ k: 'retire', w: h.retiredW || 0, y: D.year(h.retiredW || M.now), wt: 60 });

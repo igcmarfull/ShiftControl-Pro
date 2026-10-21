@@ -701,7 +701,8 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .wt thead th { background: var(--surface3); text-align: center; font-weight: 700; color: var(--tx); font-size: .8rem; text-transform: none; letter-spacing: 0; }
 .wt .n { text-align: right; font-variant-numeric: tabular-nums; } .wt thead .n { text-align: center; }
 .wt .tt { font-weight: 700; } .wt .wt-c { font-weight: 700; background: var(--surface2); } .wt .wt-d { color: var(--mut); }
-.wt .wt-s td { background: var(--surface2); font-weight: 700; } .wt .wt-t td { background: var(--surface3); font-weight: 700; }
+.wt .wt-s td { background: var(--surface2); font-weight: 700; }
+.wt .wt-cn { display: flex; align-items: center; gap: .45rem; } .wt .wt-cc { display: flex; align-items: center; gap: .3rem; font-weight: 400; color: var(--mut); font-size: .74rem; } .wt .wt-et { display: block; font-weight: 400; color: var(--mut); font-size: .72rem; font-style: italic; } .wt .wt-t td { background: var(--surface3); font-weight: 700; }
 .wt-v { font-family: var(--font); font-size: .8rem; color: var(--mut); margin: 0 0 .3rem; } .wt-v a { color: var(--ac2); cursor: pointer; } .wt-v b { color: var(--tx); }
 .wt-h { font-family: var(--font); font-size: .95rem; text-transform: none; letter-spacing: 0; color: var(--tx); margin: .8rem 0 .2rem; }
 .wt-n { font-family: var(--font); font-size: .78rem; color: var(--mut); text-align: left; margin: .3rem 0; }

@@ -128,6 +128,14 @@ SC.tardio = function () {
   for (var i = 0; i < 5; i++) season(h, 2027 + i, A, 24, 5 + (i % 2), 1, 6.4, { ovr: 58 + i }); sign(h, B, 2032, 60); for (i = 0; i < 3; i++) season(h, 2032 + i, B, 30, 12 + i, 2, 6.8, { ovr: 65 + i * 2 }); sign(h, Cc, 2035, 700); for (i = 0; i < 4; i++) season(h, 2035 + i, Cc, 33, 20 + i * 2, 4, 7.3, { ovr: 74 + i * 2, cup: [5, 3] });
   trophy(h, 'Campeón de ' + FP.LGDEF[Cc.lg].n, 2038, Cc); award(h, 'Bota de Oro · ' + FP.LGDEF[Cc.lg].n, 2037); return h;
 };
+SC.regreso = function () {   // vuelve a un club en el que ya era leyenda: el reconocimiento es uno solo y acumulado
+  var h = newHero({ nm: 'Tadeo Villar', pos: 'CM', b: 2012, nat: 'POR', city: 'Braga' }), A = club(1, 'POR', 0), B = club(1, 'POR', 1), tot = 0;
+  youth(h, 2027, A, 24, 4, 5, 6.8); debut(h, A, 2029);
+  for (var i = 0; i < 5; i++) { season(h, 2029 + i, A, 30 + i, 5 + i, 6, 6.9, { cup: [4, 1] }); tot += 30 + i; }
+  sign(h, B, 2034, 5000); for (i = 0; i < 4; i++) season(h, 2034 + i, B, 31, 6, 5, 6.8, {}); sign(h, A, 2038);
+  for (i = 0; i < 4; i++) { season(h, 2038 + i, A, 29 - i * 3, 5, 4, 6.8, {}); tot += 29 - i * 3; }
+  trophy(h, 'Campeón de ' + FP.LGDEF[A.lg].n, 2031, A); trophy(h, 'Campeón de ' + FP.LGDEF[A.lg].n, 2039, A); idolize(h, A, tot, 60, 9, 2); retire(h, 37, 2042); return h;
+};
 SC.desconocido = function () {
   var h = newHero({ nm: 'Tomás Rojas', pos: 'CM', b: 2012, nat: 'CHI' }), A = club(2, 'CHI', 2);
   debut(h, A, 2030); season(h, 2030, A, 6, 0, 0, 6.1, { starts: 0.4 }); season(h, 2031, A, 4, 0, 1, 6.0, { starts: 0.3 }); retire(h, 20, 2032); return h;
@@ -216,6 +224,10 @@ evalCases.forEach(function (c) { var h = newHero({ nm: 'X', pos: c.pos, b: 2012 
 // la misma cifra en una competición regional y en la máxima categoría no pesa igual (la referencia depende del nivel)
 (function () { var h = newHero({ nm: 'Y', pos: 'ST', b: 2012 }); var a = club(1, 'ESP', 0), b = club(4, 'CHI', 0); season(h, 2031, a, 36, 25, 4, 6.7); season(h, 2032, b, 36, 25, 4, 6.7); var M = FP.Narr.analyze(), s1 = M.pro[0], s2 = M.pro[1]; t('25 goles en primera y en categoría baja no se evalúan igual', s1.perf.z !== s2.perf.z, s1.perf.z.toFixed(2) + ' vs ' + s2.perf.z.toFixed(2)); })();
 
+t('regreso: el club con estatus aparece una sola vez en el legado', results.regreso.M.ido.length === 1 && results.regreso.M.ido[0].c.stages.length === 2, results.regreso.M.ido.length + ' / etapas ' + (results.regreso.M.ido[0] && results.regreso.M.ido[0].c.stages.length));
+t('regreso: «alcanzó el estatus» se dice una sola vez en todo el artículo', (results.regreso.text.match(/alcanz[óo] el estatus/g) || []).length <= 2 && (results.regreso.d.secs.filter(function (x) { return x.id === 'records'; })[0].p.join(' ').match(/estatus de/g) || []).length === 1);
+t('regreso: se describen las dos etapas con lo acumulado', /dos etapas|2 etapas/.test(results.regreso.text), results.regreso.text.match(/Récords[\s\S]{0,400}/));
+t('regreso: los totales por club suman ambas etapas', results.regreso.M.clubTotals[0].L.p === results.regreso.M.stints.filter(function (g) { return g.t === results.regreso.M.clubTotals[0].t; }).reduce(function (a, g) { return a + g.L.p; }, 0));
 // ---------- diversidad y proporción ----------
 function sentences(s) { return s.replace(/\([^)]*\)/g, '').split(/(?<=[.!?])\s+/).map(function (x) { return x.toLowerCase().replace(/\d+/g, '#').replace(/[^a-záéíóúñ# ]/g, '').trim(); }).filter(function (x) { return x.length > 25; }); }
 var sets = {}; names.forEach(function (k) { sets[k] = sentences(results[k].text); });

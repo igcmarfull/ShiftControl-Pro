@@ -112,6 +112,8 @@
     return '<b>' + esc(h.nm) + '</b> (' + born + ') ' + (ret ? 'fue' : 'es') + ' un futbolista ' + (dem ? esc(dem) : 'de ' + esc(cn(h.nat))) + ' que ' + (ret ? 'se desempeñaba' : 'se desempeña') + ' como ' + esc(pos) + (!ret && club && h.tk !== 'free' ? ' en ' + esc(club) : '') + '.';
   }
   function clubNames(M) { var seen = [], out = []; M.stints.forEach(function (g) { if (!g.loan && seen.indexOf(g.t) < 0) { seen.push(g.t); out.push(g); } }); return out; }
+  // "(2029–2033)" o "en dos etapas (2029–2033 y 2038–2041)"
+  function stageSpans(c) { return c.stages.length > 1 ? 'en ' + c.stages.length + ' etapas (' + list(c.stages.map(function (s) { return span(s.y0, s.y1); })) + ')' : '(' + span(c.y0, c.y1) + ')'; }
   function clubList(gs, max) { return list(gs.slice(0, max).map(function (g) { return nm(g.name); })); }
   function titleListShort(arr) {   // "la Champions League (2 veces)"
     var by = {}, order = []; arr.forEach(function (x) { var k = titleNoun(x.t); if (!by[k]) { by[k] = 0; order.push(k); } by[k]++; });
@@ -160,7 +162,7 @@
       if (topT != null && topT <= 2) p.push(V('lead.tier', [function () { return (ret ? 'Llegó a competir' : 'Ha llegado a competir') + ' en ' + N.tierName(topT) + '.'; }, function () { return 'Su nivel más alto fue ' + N.tierName(topT) + '.'; }]));
     }
     // 2) rasgos adicionales que surgen de los datos
-    if (A.has('idol') && !said.idolTenure) { var id = M.ido[0], g0 = id ? id.g : M.stints.filter(function (g) { return g.n === A.maxTenure; })[0]; if (g0) p.push(V('lead.idol', [function () { return 'Su vínculo más largo fue con ' + nm(g0.name) + ', donde ' + (ret ? 'jugó ' : 'lleva ') + plural(g0.n, 'temporada', 'temporadas') + ' (' + span(g0.y0, g0.y1) + ')' + (id ? ' y alcanzó el estatus de ' + esc(lcf(id.label)) : '') + '.'; }, function () { return 'En ' + nm(g0.name) + ' permaneció ' + plural(g0.n, 'temporada', 'temporadas') + ', entre ' + g0.y0 + ' y ' + g0.y1 + (id ? ', hasta alcanzar el estatus de ' + esc(lcf(id.label)) : '') + '.'; }])); }
+    if (A.has('idol') && !said.idolTenure) { var id = M.ido[0], g0 = id ? id.c : M.clubTotals.slice().sort(function (x, y) { return y.n - x.n; })[0]; if (g0) { var sp = stageSpans(g0); p.push(V('lead.idol', [function () { return 'Su vínculo más largo fue con ' + nm(g0.name) + ', donde ' + (ret ? 'jugó ' : 'lleva ') + plural(g0.n, 'temporada', 'temporadas') + ' ' + sp + (id ? ' y alcanzó el estatus de ' + esc(lcf(id.label)) : '') + '.'; }, function () { return 'En ' + nm(g0.name) + ' ' + (ret ? 'permaneció ' : 'lleva ') + plural(g0.n, 'temporada', 'temporadas') + ' ' + sp + (id ? ', hasta alcanzar el estatus de ' + esc(lcf(id.label)) : '') + '.'; }])); } }
     else if (A.has('idol') && M.ido[0]) p.push('En el club alcanzó el estatus de ' + esc(lcf(M.ido[0].label)) + '.');
     if (A.has('fail')) p.push(V('lead.fail', ['Destacó en las categorías formativas, pero no logró consolidarse en la categoría a la que aspiraba.', 'Sus buenos registros juveniles no tuvieron continuidad en su etapa profesional.']));
     if (A.has('comeback') && M.trend.recover) p.push('Tras ' + plural(M.trend.recover.len, 'temporada', 'temporadas') + ' de rendimiento bajo, recuperó su nivel desde ' + fromS(M.trend.recover.to) + '.');
@@ -207,7 +209,7 @@
     var hist = h.history || [], ev = (h.bio && h.bio.ev) || [], deb = hist.filter(function (e) { return /^Debut con el primer equipo/.test(e.t) && (M.firstPro ? e.club === M.firstPro.base : true); })[0], prom = ev.filter(function (e) { return /Ascendido al primer equipo/.test(e.t); })[0];
     var fp = M.firstPro;
     if (fp) {
-      var sig = hist.filter(function (e) { return /^Firma con/.test(e.t) && e.club === fp.base && !/juvenil\/reserva/.test(e.t); })[0], pieces = [];
+      var sig = hist.filter(function (e) { return /^Firma con/.test(e.t) && e.club === fp.base && !/juvenil\/reserva/.test(e.t) && e.w <= fp.o + 10; })[0], pieces = [];
       if (prom && deb && prom.w <= deb.w) pieces.push('Fue ascendido al primer equipo de ' + nm(fp.name) + ' en ' + mlong(prom.w) + ' y debutó el ' + dlong(deb.w) + '.');
       else if (deb && sig && sig.w >= deb.w) pieces.push('Debutó con el primer equipo de ' + nm(fp.name) + ' el ' + dlong(deb.w) + ' y firmó con el club en ' + mlong(sig.w) + '.');
       else if (deb) pieces.push('Debutó con el primer equipo de ' + nm(fp.name) + ' el ' + dlong(deb.w) + '.');
@@ -431,8 +433,9 @@
     if (ms && ms.L.g >= 8 && offense(M) && !ctx.said[ms.key]) { ctx.said[ms.key] = 1; out.push('Su mejor registro goleador en una temporada fue de ' + goals(ms.L.g) + ' ' + when(ms) + ' con ' + nm(ms.name) + ' (' + apps(ms.L.p) + ' en ' + esc(shortLg(ms.lgName)) + ').'); }
     var bs = M.bestSeason; if (bs && bs.perf.z >= 0.9 && !ctx.said[bs.key]) out.push('La temporada de mejor rendimiento relativo a su puesto fue ' + when(bs) + ' en ' + nm(bs.name) + ': ' + prod(bs, M) + '.');
     M.ido.forEach(function (c, i) {
-      if (i > 2) return; var Id = FP.Idolo, top = Id && Id.top ? Id.top(c.t, 3) : [], pos = top.map(function (x) { return x.me; }).indexOf(1);
-      out.push('En ' + nm(c.name) + ' alcanzó el estatus de ' + esc(lcf(c.label)) + ' tras ' + plural(c.g.n, 'temporada', 'temporadas') + ' (' + span(c.g.y0, c.g.y1) + ')' + (pos === 0 ? ' y figura como máximo goleador del club en el registro de la partida' : pos > 0 ? ' y figura entre los tres máximos goleadores del club en el registro de la partida' : '') + '.');
+      if (i > 2) return; var Id = FP.Idolo, top = Id && Id.top ? Id.top(c.t, 3) : [], pos = top.map(function (x) { return x.me; }).indexOf(1), k = c.c, tt = k.tro.length;
+      var det = k.stages.length > 1 ? ', donde jugó ' + stageSpans(k) + ' y acumuló ' + totals(k.all, M) + (tt ? ', además de ' + plural(tt, 'título', 'títulos') : '') + ',' : ' tras ' + plural(k.n, 'temporada', 'temporadas') + ' ' + stageSpans(k);
+      out.push('En ' + nm(c.name) + det + ' alcanzó el estatus de ' + esc(lcf(c.label)) + (k.stages.length > 1 ? '' : '') + (pos === 0 ? ' y figura como máximo goleador del club en el registro de la partida' : pos > 0 ? ' y figura entre los tres máximos goleadores del club en el registro de la partida' : '') + '.');
     });
     var hs = X.milestones(h); if (hs.length) out.push('El registro de la partida anota ' + plural(hs.length, 'hito', 'hitos') + ' en su carrera; el listado completo está en la cronología.');
     if (M.retired && h.post && h.post.legacy) out.push('Al retirarse, el juego valoró su legado como «' + esc(h.post.legacy.label) + '» (' + h.post.legacy.score + '/100).');
