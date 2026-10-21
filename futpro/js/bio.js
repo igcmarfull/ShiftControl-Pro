@@ -25,6 +25,8 @@
 
   // ---------- registro de hitos mientras se juega ----------
   var KEEP = /^(¡?Convocado a la selección absoluta|¡?Integras la nómina final|¡Ascendido al primer equipo|¡Debutas|Firmaste|¡?Prueba aprobada|Bienvenido a las divisiones|Cedido a|¡?Terminas el colegio|¡?Te recibes|Anuncias|Te retiras)/;
+  B.dem = function (code) { return DEM[code] || null; };
+  B.dlong = dlong;
   B.ensure = function () { var h = FP.S && FP.S.hero; if (!h) return null; if (!h.bio) h.bio = { ev: [] }; return h.bio; };
   B.migrate = B.ensure;
   var msg0 = Hero.msg;

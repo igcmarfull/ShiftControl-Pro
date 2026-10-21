@@ -706,3 +706,13 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .wt-h { font-family: var(--font); font-size: .95rem; text-transform: none; letter-spacing: 0; color: var(--tx); margin: .8rem 0 .2rem; }
 .wt-n { font-family: var(--font); font-size: .78rem; color: var(--mut); text-align: left; margin: .3rem 0; }
 @media (max-width: 760px) { .wt { display: block; overflow-x: auto; white-space: nowrap; } }
+
+/* ---------- ficha de jugadores seguidos (estilo enciclopedia) ---------- */
+.fi-page h1.fi-h { font: 600 1.7rem Georgia, serif; margin: 0 0 2px; }
+.fi-page h2 { font: 600 1.2rem Georgia, serif; border-bottom: 1px solid var(--line2); margin: 20px 0 8px; padding-bottom: 3px; }
+.fi-page h3 { font-size: 1rem; margin: 12px 0 4px; }
+.fi-box { float: right; width: 250px; margin: 0 0 10px 16px; border: 1px solid var(--line2); background: var(--surface2); font-size: .85rem; border-radius: 6px; }
+.fi-box .t { text-align: center; font-weight: 700; padding: 6px; border-bottom: 1px solid var(--line2); background: var(--surface3); }
+.fi-box dl { margin: 0; padding: 6px 10px; } .fi-box dt { color: var(--mut); float: left; clear: left; width: 80px; } .fi-box dd { margin: 0 0 3px 84px; }
+.fi-clr { clear: both; }
+@media (max-width: 640px) { .fi-box { float: none; width: auto; margin: 0 0 10px; } }
