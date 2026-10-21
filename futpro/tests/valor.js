@@ -62,6 +62,18 @@ var ntH = hero({ pos: 'CM' }, function (h) { var k = cl1(); season(h, 2035, k, 3
 var noNt = hero({ pos: 'CM' }, function (h) { var k = cl1(); season(h, 2035, k, 34, 3, 3, 6.4); season(h, 2036, k, 12, 1, 1, 6.4); }), noNtM = mult();
 t('jugar con la selección absoluta suma un poco', ntM > noNtM, ntM + ' vs ' + noNtM);
 
+// ---------- el sueldo de las ofertas sigue al valor (y la memoria no queda desfasada dentro de la misma semana) ----------
+(function () {
+  var h = hero({ pos: 'ST' }, function (h) { var k = cl1(); season(h, 2035, k, 34, 12, 4, 6.6); season(h, 2036, k, 12, 4, 1, 6.6); });
+  var k = cl1(), w0 = FP.Rep.wage(k, 1), v0 = M.heroValue();
+  season(h, 2035, k, 36, 30, 7, 7.4); season(h, 2036, k, 12, 10, 2, 7.4);   // misma semana, mismo número de filas, mejores cifras
+  var w1 = FP.Rep.wage(k, 1), v1 = M.heroValue();
+  t('dentro de la misma semana el valor refleja las cifras nuevas', v1 > v0, v0 + ' → ' + v1);
+  t('el sueldo de una oferta sube con el valor', w1 > w0 * 1.05, w0 + ' → ' + w1);
+  season(h, 2035, k, 30, 2, 1, 5.9); season(h, 2036, k, 10, 0, 0, 5.9);
+  t('y baja si el rendimiento cae', FP.Rep.wage(k, 1) < w0, FP.Rep.wage(k, 1) + ' vs ' + w0);
+})();
+
 // ---------- seguridad ----------
 (function () {
   var h = hero({ pos: 'ST' }, function (h) { var k = cl1(); season(h, 2035, k, 36, 30, 7, 7.4); season(h, 2036, k, 12, 9, 2, 7.4); award(h, 'Balón de Oro', 2036, 4); });
