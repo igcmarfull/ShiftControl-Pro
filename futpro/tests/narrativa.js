@@ -138,7 +138,7 @@ SC.nuevo = function () { var h = newHero({ nm: 'Joaquín Reyes', pos: 'CM', b: 2
 var BAN = /\b(hinchas?|afici[oó]n|aficionados?|periodistas?|prensa|cr[ií]ticos?|inolvidable|leyenda viviente|brillante|magistral|fabuloso|espectacular|genial|el mejor|incomparable)\b/i;
 function allowedFacts(M) {
   var nums = {}, years = {}, add = function (v) { if (v != null) nums[v] = 1; };
-  [M.tot, M.totL, M.totForm].forEach(function (T) { add(T.p); add(T.g); add(T.a); });
+  [M.tot, M.totL, M.totForm, M.totLate].forEach(function (T) { add(T.p); add(T.g); add(T.a); });
   M.all.concat([]).forEach(function (s) { [s.L, s.all, s.copa, s.cont].forEach(function (T) { add(T.p); add(T.g); add(T.a); }); years[s.y] = 1; years[s.ye] = 1; String(s.s).split('/').forEach(function (z) { if (z.length === 4) years[+z] = 1; else if (z.length === 2) years[2000 + +z] = 1; }); });
   M.stints.forEach(function (g) { [g.L, g.all].forEach(function (T) { add(T.p); add(T.g); add(T.a); }); add(g.n); years[g.y0] = 1; years[g.y1] = 1; });
   M.stints.forEach(function (g) { for (var i = 0; i < g.seasons.length; i++) { var P = 0, G = 0, Aa = 0; for (var j = i; j < g.seasons.length; j++) { P += g.seasons[j].L.p; G += g.seasons[j].L.g; Aa += g.seasons[j].L.a; add(P); add(G); add(Aa); } } });   // sumas de tramos consecutivos dentro de una etapa

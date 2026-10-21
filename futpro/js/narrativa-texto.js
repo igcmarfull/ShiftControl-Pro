@@ -299,9 +299,8 @@
     }
     if (depth >= 2) { var mo = B.moments().filter(function (m) { var yy = D.year(m.w); return !m.nat && X.baseName(m.club) === g.name && yy >= g.y0 && yy <= g.y1 + 1 && m.sc >= 5; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, depth >= 3 ? 2 : 1).sort(function (a, b) { return a.w - b.w; }); if (mo.length) out.push(cap('entre sus actuaciones destacadas figuran: ' + esc(mo.map(X.momentText).join('; '))) + '.'); }
     if (!usedPhases) injuriesAt(M, g, out);
-    var next = M.stints[g.i + 1];
-    if (next && next.foldedInto === g) { /* ya resumida en el texto de cesiones */ }
-    else if (next && next.loan && depth >= 1) out.push(V('exit.loan', ['Más tarde fue cedido a ' + nm(next.name) + '.', 'Después pasó cedido a ' + nm(next.name) + '.'], g.t));
+    var next = null; for (var kx = (g.iEnd != null ? g.iEnd : g.i) + 1; kx < M.stints.length; kx++) { if (!M.stints[kx].foldedInto && !M.stints[kx].mergedInto) { next = M.stints[kx]; break; } }
+    if (next && next.loan && depth >= 1) out.push(V('exit.loan', ['Más tarde fue cedido a ' + nm(next.name) + '.', 'Después pasó cedido a ' + nm(next.name) + '.'], g.t));
     else if (!next && !M.retired && depth >= 1) out.push(V('now', ['Continúa en el club.', 'Sigue vinculado al club.'], g.t));
     return out.filter(function (x) { return x; });
   }
@@ -357,16 +356,26 @@
   }
   function minorText(M, run) {
     var T = { p: 0, g: 0 }; run.forEach(function (g) { T.p += g.L.p; T.g += g.L.g; });
-    var names = run.map(function (g) { return nm(g.name) + (g.loan ? ' (cedido)' : '') + (g.country && g.country !== M.h.nat ? ' [' + esc(cn(g.country)) + ']' : ''); }), y0 = run[0].y0, y1 = run[run.length - 1].y1;
+    var seenN = {}, names = run.filter(function (g) { var k = g.name + (g.loan ? 'c' : ''); if (seenN[k]) return false; seenN[k] = 1; return true; }).map(function (g) { return nm(g.name) + (g.loan ? ' (cedido)' : '') + (g.country && g.country !== M.h.nat ? ' [' + esc(cn(g.country)) + ']' : ''); }), y0 = run[0].y0, y1 = run[run.length - 1].y1;
     return V('minor', [function () { return (y0 === y1 ? 'En ' + y0 : 'Entre ' + y0 + ' y ' + y1) + ' pasó sucesivamente por ' + list(names) + ', sin superar los ' + Math.max.apply(null, run.map(function (g) { return g.L.p; })) + ' partidos en ninguno de ellos.'; }, function () { return 'Durante ese tramo (' + span(y0, y1) + ') defendió a ' + list(names) + '. En conjunto disputó ' + apps(T.p) + (offense(M) && T.g ? ' y marcó ' + goals(T.g) : '') + '.'; }]);
   }
   // cesiones de poca participación: se resumen dentro de la etapa anterior en lugar de abrir una sección por cada una
+  function addSum(T, S) { for (var k in T) T[k] += S[k] || 0; }
+  function combine(a, b) {   // une dos etapas consecutivas en el mismo club (separadas solo por cesiones plegadas)
+    a.iEnd = Math.max(a.iEnd || a.i, b.iEnd || b.i); a.seasons = a.seasons.concat(b.seasons); a.n = a.seasons.length; a.y1 = b.y1; a.w1 = b.w1; addSum(a.L, b.L); addSum(a.all, b.all);
+    a.tierMin = Math.min(a.tierMin, b.tierMin); a.tierMax = Math.max(a.tierMax, b.tierMax);
+    a.tro = a.tro.concat(b.tro); a.sub = a.sub.concat(b.sub); a.aw = a.aw.concat(b.aw); a.inj = a.inj.concat(b.inj); a.moves = a.moves.concat(b.moves); a.folded = (a.folded || []).concat(b.folded || []);
+    var pl = a.seasons.filter(function (s) { return s.perf.sample === 'plena'; }); a.zN = pl.length; a.z = pl.length ? pl.reduce(function (x, s) { return x + s.perf.z; }, 0) / pl.length : null; a.best = pl.slice().sort(function (x, y) { return y.perf.z - x.perf.z; })[0] || null;
+    return a;
+  }
   function foldLoans(M) {
     var out = [];
     M.stints.forEach(function (g) {
-      var prev = out[out.length - 1];
-      if (g.loan && g.L.p < 25 && !g.tro.length && !g.aw.length && prev && !g.inj.length) { (prev.folded = prev.folded || []).push(g); g.foldedInto = prev; }
-      else out.push(g);
+      var host = null; for (var k = out.length - 1; k >= 0; k--) if (!out[k].loan) { host = out[k]; break; }
+      if (g.loan && g.L.p < 30 && !g.tro.length && !g.aw.length && host && !g.inj.length) { (host.folded = host.folded || []).push(g); g.foldedInto = host; host.iEnd = Math.max(host.iEnd || host.i, g.i); return; }
+      var last = out[out.length - 1];
+      if (!g.loan && last && !last.loan && last.t === g.t) { combine(last, g); g.mergedInto = last; return; }
+      out.push(g);
     });
     return out;
   }
