@@ -189,6 +189,7 @@
       '<p class="mut sm" style="margin-top:.6rem">La reputación sube con minutos, rendimiento, goles, títulos y convocatorias, y baja si dejas de jugar. Un club solo puede ofrecerte contrato si te conoce: marcar 20 goles en un regional te abre puertas cercanas, no necesariamente las de un club europeo.</p></div>' +
       '<div class="card"><div class="hd"><h3>' + I('target') + 'Clubes que te siguen</h3></div>' +
       (h.int.length ? h.int.slice().sort(function (a, b) { return b.v - a.v; }).slice(0, 10).map(function (e) { var c = S.clubs[e.c]; return '<div class="hrow">' + UI.crest(c.id) + '<div class="grow ell"><b>' + esc(c.nm) + '</b><div class="mut sm">' + esc(FP.LGDEF[c.lg].n) + (e.why ? ' · ' + esc(e.why) : '') + '</div></div><div style="width:90px">' + bar(e.v, e.v >= 60 ? '' : 'warn') + '</div></div>'; }).join('') : '<p class="mut">Ningún club te sigue por ahora. Juega, rinde y deja que te vean.</p>') + '</div></div>';
+    if (UI.valorCard) html2 += UI.valorCard();
     var cd = Object.keys(h.cd).filter(function (k) { return /^\d+$/.test(k) && h.cd[k] > S.week; });
     if (cd.length) html2 += '<div class="card"><div class="hd"><h3>' + I('lock') + 'Clubes que te descartaron</h3></div>' + cd.map(function (k) { return '<div class="hrow">' + UI.crest(+k) + '<b class="grow">' + esc(C.tname(+k)) + '</b><span class="mut sm">no podrás probarte hasta ' + D.fmt(h.cd[k]) + '</span></div>'; }).join('') + '</div>';
     return html2;

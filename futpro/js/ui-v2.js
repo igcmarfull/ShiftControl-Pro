@@ -95,7 +95,7 @@
       '<div class="rings">' + UI.ovrHex(h.ovr, 104) + UI.ring(h.form, 'Forma', Math.round(h.form), '#46aabd') + UI.ring(h.mor, 'Moral', Math.round(h.mor), '#2fbf71') + UI.ring(h.fat, 'Fatiga', Math.round(h.fat), h.fat > 70 ? '#e5545a' : h.fat > 45 ? '#e2a93b' : '#5d7a8c') + '</div></div>';
     html += '<div class="kpis">' + [
       ['Partidos', s.ap, s.st + ' de titular', 'ball'], ['Goles', s.g, s.ap ? (s.g / s.ap).toFixed(2) + ' por partido' : '—', 'target'], ['Asistencias', s.a, s.ap ? (s.a / s.ap).toFixed(2) + ' por partido' : '—', 'zap'],
-      ['Nota media', s.rn ? (s.rs / s.rn).toFixed(2) : '—', s.min + ' minutos', 'star'], ['Valor de mercado', UI.money(FP.Market.heroValue()), h.contract && h.contract.wage ? UI.money(h.contract.wage) + ' / año' : 'sin sueldo', 'chart']
+      ['Nota media', s.rn ? (s.rs / s.rn).toFixed(2) : '—', s.min + ' minutos', 'star'], ['Valor de mercado', UI.money(FP.Market.heroValue()), (FP.Valor ? 'forma y logros ×' + FP.Valor.get().mult.toFixed(2).replace('.', ',') + ' · ' : '') + (h.contract && h.contract.wage ? UI.money(h.contract.wage) + ' / año' : 'sin sueldo'), 'chart']
     ].map(function (k) { return '<div class="kpi"><div class="kl">' + I(k[3]) + k[0] + '</div><div class="kv2">' + k[1] + '</div><div class="ks">' + k[2] + '</div></div>'; }).join('') + '</div>';
     // pendientes
     var pend = [];
