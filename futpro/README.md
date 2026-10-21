@@ -326,3 +326,15 @@ Nueva pantalla **Finanzas personales** (menú Gestión) con cuatro pestañas:
 - Decisiones `dinero`: amigo que pide un préstamo, familiar que necesita ayuda, oferta de negocio y estafas ("inversión que no puedes perderte"); aparecen con patrimonio desde ~150 mil € (~1 vez cada 10-20 semanas como máximo).
 
 Todos los porcentajes son supuestos de diseño, sin contrastar con datos reales. La contabilidad de estos flujos va en `hero.fx`; el dinero en caja sigue siendo `hero.money`.
+
+## Retiro en profundidad (`js/retiro.js`, `js/ui-v24.js`, pantalla «Vida y legado»)
+
+Envuelve `postcareer.js`, `coaching.js` y `paths2.js` (no los reemplaza). Estado en `hero.rt`. Pestañas Vida / Carrera / Reencuentros / Cierre.
+
+- **Carrera de entrenador:** escalera de 8 peldaños (licencias y cargos). El legado acorta los cursos hasta un 35% (`score/260`) y, con legado 62+/80+, elimina la experiencia mínima de los niveles 2/Pro; con 62+ y solo la licencia 1 un club histórico ofrece ser asistente. Una buena temporada (campeón, ascenso, zona alta) ofrece el siguiente escalón (formativas → asistente → director técnico → club mayor). Como director técnico hay *confianza de la directiva* (+5 victoria, −5 derrota, vuelve a 60 cada temporada): si baja a 15 con 8+ partidos dirigidos hay destitución a mitad de temporada.
+- **Vida tras el fútbol:** salud 0-100 calculada con tus lesiones graves, semanas de baja y partidos; se desgasta cada año y con menos de 50 resta capacidad en cualquier cargo. Eventos de salud (operarse cuesta dinero) y etapas a los 45, 55 y 65 años con decisiones que cuestan, mueven la salud y quedan en la historia; el texto usa el patrimonio y el gasto de Finanzas personales.
+- **Presidencia con cuentas:** caja del club, ingresos (según el gasto salarial del plantel, finanzas del club y estadio), gastos, aportes de capital si hay déficit y dividendos si hay excedente; fichajes y ventas reales de jugadores (`Market.move`), estadio (3 niveles) y academia (2 inversiones por nivel). El precio de compra escala con el gasto salarial (mín. la fórmula anterior). Dos años seguidos de pérdidas que no puedes cubrir permiten vender el club.
+- **Reencuentros:** cada año se anotan los compañeros más fuertes de tu vestuario y los mejores rivales de tu puesto en la liga (guarda nombre y nacimiento, porque el mundo borra a los retirados). Al retirarte un rival te rinde homenaje; si diriges un club, un excompañero retirado puede pedir sitio en tu cuerpo técnico (mejora leve del equipo) y uno en activo puede pedirte fichaje.
+- **Cierre:** Salón de la Fama entre partidas (`localStorage` `futpro.hof`, solo en este navegador), tarjeta de carrera PNG y versión imprimible (PDF desde el diálogo de impresión).
+
+Límites: las partidas anteriores no tienen compañeros/rivales anotados hasta que vuelven a jugar un año (al retirarse se anota el vestuario actual). Todos los umbrales, costos y porcentajes son supuestos de diseño probados en `tests/retiro.js`, no datos reales.
