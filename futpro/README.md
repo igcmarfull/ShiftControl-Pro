@@ -398,3 +398,16 @@ Solo presentación (`js/ui-v17.js`, `js/ui-v18.js`, `js/bio.js`); no cambia el r
 - El **total profesional** ya no incluye las ligas juveniles ni amateur; la línea final muestra ambos totales por separado.
 - **Ficha lateral**: «Clubes juveniles» (solo años y club), «Clubes profesionales» (con partidos y goles, p. ej. `50 (40)`) y «Selección nacional» con una línea por categoría.
 - Las selecciones siguen en su propia tabla, sin sumarse a los clubes.
+
+## Motor narrativo de la Wiki
+
+La Biografía se redacta con un motor determinista que lee el historial real de la partida (sin conexión, sin IA). No modifica estado, partidos, contratos, fichajes ni guardado: solo interpreta y presenta registros ya existentes.
+
+- **Archivos**: `js/narrativa.js` (interpretación), `js/narrativa-texto.js` (redacción y conexión con `Bio.build`), `tests/narrativa.js` (pruebas) y `tests/narrativa-calibrar.js` (calibración). La ficha lateral, la cronología y la estructura de la pantalla se conservan.
+- **Interpretación en contexto**: cada temporada se compara con lo esperable para su posición (goles y asistencias por 90 minutos y valoración media), se encoge hacia lo normal con pocos minutos (menos de 450: «participación limitada»; hasta 900: muestra media) y se pondera por el nivel de la competición (`N.LEVEL`): lo logrado en divisiones inferiores, juveniles o amateur pesa menos y no puede llamarse «excepcional».
+- **Qué detecta**: etapas por club (cedidos y regresos incluidos), rol (titular, rotación, suplente), ascensos y descensos del club, cambios de país, lesiones de larga duración, títulos e individuales con peso, selecciones, estatus de ídolo del módulo de legado, caídas y recuperaciones, retroceso sostenido y retiro.
+- **Tipos de trayectoria** (no excluyentes, puntuados con rasgos medibles): estrella, modesto, trotamundos, ídolo de club, promesa frustrada, superación, carrera interrumpida, desarrollo tardío y precoz. Cambian qué se cuenta en la introducción, no inventan hechos.
+- **Jerarquía**: cada hecho recibe un peso y se coloca en introducción, club, selección, palmarés, récords o cronología; las etapas largas se redactan por tramos y las de pocos partidos se agrupan.
+- **Presentación**: Introducción, Primeros años y formación, Carrera profesional por clubes, Selección nacional, Estilo de juego, Estadísticas profesionales, Estadísticas juveniles, Palmarés y distinciones, Récords y legado, Vida personal, Retiro y trayectoria posterior. Las secciones sin datos aparecen en «por desbloquear».
+- **Estabilidad**: las variantes de texto se eligen con un hash del nombre y la fecha de nacimiento; la misma partida produce siempre el mismo texto, y se recalcula entera al avanzar la carrera (no se añaden párrafos sueltos).
+- **Supuestos de diseño y límites**: las referencias de rendimiento (`N.BASE`) salen de carreras simuladas del propio juego y los umbrales (`z` ≥ 0,3 / 0,9 / 1,6) son decisiones de diseño, no datos reales. No se redacta ninguna causa de salida, retiro o fracaso porque el juego no la registra; las cifras económicas son solo las registradas.
