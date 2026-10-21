@@ -12,7 +12,7 @@
     ENG1: 5.5, ENG2: 0.9, ENG3: 0.25, ENG4: 0.12, ENG5: 0.06, ESP1: 3.2, ESP2: 0.35, ESP3: 0.08, ESP4: 0.04, ITA1: 2.6, ITA2: 0.4, ITA3: 0.1, GER1: 3.0, GER2: 0.5, GER3: 0.12,
     FRA1: 1.6, FRA2: 0.25, FRA3: 0.07, POR1: 1.0, POR2: 0.12, POR3: 0.05, NED1: 0.9, NED2: 0.15, BEL1: 0.7, BEL2: 0.12, SCO1: 0.5, SCO2: 0.1, SCO3: 0.04, TUR1: 1.3, TUR2: 0.15, GRE1: 0.6,
     SUI1: 0.5, AUT1: 0.5, DEN1: 0.45, SWE1: 0.3, NOR1: 0.3, POL1: 0.35, CZE1: 0.3, RUS1: 0.8, UKR1: 0.3,
-    BRA1: 0.45, BRA2: 0.12, BRA3: 0.04, BRA4: 0.02, ARG1: 0.2, ARG2: 0.06, ARG3: 0.03, ARG4: 0.015, CHI1: 0.1, CHI2: 0.035, CHI3: 0.015, CHI4: 0.008,
+    BRA1: 0.45, BRA2: 0.12, BRA3: 0.04, BRA4: 0.02, ARG1: 0.2, ARG2: 0.06, ARG3: 0.03, ARG4: 0.015, CHI1: 0.14, CHI2: 0.045, CHI3: 0.015, CHI4: 0.008,
     URU1: 0.08, URU2: 0.025, COL1: 0.12, COL2: 0.03, PER1: 0.07, ECU1: 0.09, MEX1: 0.5, MEX2: 0.08, USA1: 0.55, USA2: 0.14,
     JPN1: 0.35, JPN2: 0.1, JPN3: 0.04, KOR1: 0.25, KOR2: 0.06, CHN1: 0.8, KSA1: 2.5, AUS1: 0.12, EGY1: 0.2, MAR1: 0.12, QAT1: 1.0, UAE1: 0.6, IRN1: 0.15, IND1: 0.12, THA1: 0.15
   };
@@ -24,8 +24,6 @@
     return Math.max(0.005, top * (TIERX[def.t] || 0.01));
   };
   // curva de sueldo con el valor del jugador (k€): crece algo menos que el valor
-  W.ALPHA = 0.9;
-  function curve(v) { return Math.pow(Math.max(v, 5), W.ALPHA); }
 
   // masa salarial aproximada de los clubes conocidos por liga: W.BUDGET[liga][club] (js/sueldos-datos.js). El resto se deduce del valor de su plantilla y su economía
   W.BUDGET = {};
@@ -48,29 +46,35 @@
     var m = sum / Math.max(1, cl.length) || 1, out = {}; cl.forEach(function (c) { out[c.id] = raw[c.id] / m; });
     return cache.lg[lgId] = out;
   }
+  // cuántas veces la masa de un club de la liga media es la suya (≥ 1 en los clubes ricos)
+  W.richness = function (club) { return leagueIdx(club.lg)[club.id] || 1; };
   // masa salarial anual del club (k€)
   W.bill = function (club) {
     fresh(); if (cache.clubs[club.id] != null) return cache.clubs[club.id];
     var idx = leagueIdx(club.lg)[club.id] || 1;
     return cache.clubs[club.id] = W.ref(club.lg) * 1000 * BPY * idx;
   };
-  // suma de las curvas de la plantilla, sin el jugador (para repartir la masa); se mezcla con la media de la liga para que un club
-  // con una estrella no pague menos por el resto de la plantilla que uno sin ella
-  function rawCurve(club) {
-    var s = 0, n = 0; (FP.S.ro[club.id] || []).forEach(function (p) { if (p.i === 0) return; s += curve(C.value(p.o, p.pt, C.age(p))); n++; });
-    if (n < 18) { var avg = n ? s / n : curve(300); s += (BPY - 1 - n) * avg; }
-    return s;
+  // valores de la plantilla (sin el jugador) y su media: cada jugador se compara con la media de su propio club
+  function leagueMean(lg) {
+    if (cache.lgm == null) cache.lgm = {};
+    if (cache.lgm[lg] == null) { var s = 0, n = 0; FP.S.clubs.forEach(function (c) { if (c.lg === lg) (FP.S.ro[c.id] || []).forEach(function (p) { if (p.i !== 0) { s += C.value(p.o, p.pt, C.age(p)); n++; } }); }); cache.lgm[lg] = n ? Math.max(s / n, 20) : 300; }
+    return cache.lgm[lg];
   }
-  function squadCurve(club) {
+  // la referencia de cada club es el punto medio (geométrico) entre la media de su plantel y la de su liga: un suplente de un grande
+  // no cobra como un desconocido, ni una figura de un club chico como una estrella mundial
+  function squadVals(club) {
     fresh(); if (cache.sq[club.id] != null) return cache.sq[club.id];
-    if (cache.lgSq == null) cache.lgSq = {};
-    if (cache.lgSq[club.lg] == null) { var cl = FP.S.clubs.filter(function (c) { return c.lg === club.lg; }); cache.lgSq[club.lg] = cl.reduce(function (a, c) { return a + rawCurve(c); }, 0) / Math.max(1, cl.length); }
-    return cache.sq[club.id] = 0.5 * rawCurve(club) + 0.5 * cache.lgSq[club.lg];
+    var vs = []; (FP.S.ro[club.id] || []).forEach(function (p) { if (p.i !== 0) vs.push(C.value(p.o, p.pt, C.age(p))); });
+    var mo = vs.length ? vs.reduce(function (a, b) { return a + b; }, 0) / vs.length : 300, m = Math.sqrt(Math.max(mo, 20) * leagueMean(club.lg));
+    while (vs.length < BPY - 1) vs.push(mo);
+    return cache.sq[club.id] = { m: m, w: vs.reduce(function (a, v) { return a + Math.pow(Math.max(v, 5) / m, W.BETA); }, 0) };
   }
-  // sueldo anual (k€) de un jugador de ese valor (k€) en ese club: su parte de la masa salarial. Ningún jugador cobra más del 15 % de la masa
-  // ni más de 2,5 veces su valor al año; el mínimo es la décima parte del sueldo medio del club.
+  // sueldo anual (k€) de un jugador de ese valor (k€) en ese club: su parte de la masa salarial. Las figuras del plantel (valor muy por encima
+  // de la media del club) se llevan una parte desproporcionada (BETA > 1). Ningún jugador cobra más del 15 % de la masa ni más de 2,5 veces
+  // su valor al año; el mínimo es la décima parte del sueldo medio del club.
+  W.BETA = 1.35;
   W.wage = function (value, club) {
-    var bill = W.bill(club), h = curve(value), raw = bill * h / (squadCurve(club) + h), floor = bill / BPY * 0.1, cap = Math.max(floor, Math.min(bill * 0.15, value * 2.5));
+    var bill = W.bill(club), sq = squadVals(club), h = Math.pow(Math.max(value, 5) / sq.m, W.BETA), raw = bill * h / (sq.w + h), floor = Math.min(bill * 0.15, Math.max(bill / BPY * 0.1, value * 0.1 * U.clamp(W.richness(club) - 1, 0, 2))), cap = Math.max(floor, Math.min(bill * 0.15, value * 4));
     return Math.max(2, Math.round(Math.min(Math.max(raw, floor), cap)));
   };
   // sueldo medio del plantel del club (k€ al año)

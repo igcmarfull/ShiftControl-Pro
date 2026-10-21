@@ -19,9 +19,14 @@ t('la Premier paga más que la Liga MX y que la MLS', avg('ENG1') > avg('MEX1') 
 
 // los clubes ricos pagan más por el mismo jugador (dentro de la misma liga)
 var cl = S.clubs.filter(function (c) { return c.lg === 'ESP1'; }).sort(function (a, b) { return W.bill(a) - W.bill(b); }), poor = cl[0], rich = cl[cl.length - 1];
-[1000, 5000, 20000].forEach(function (v) { var r = W.wage(v, rich) / W.wage(v, poor); t('un club rico paga entre 1,2 y 12 veces más por un jugador de ' + v + ' k€ (' + r.toFixed(2) + 'x)', r > 1.2 && r < 12, r); });
+// la figura de un club chico puede ganar más que un suplente de un grande, pero el jugador típico de cada plantel gana mucho más en el club rico
+var typ = function (c) { var ps = (S.ro[c.id] || []).filter(function (p) { return p.i !== 0; }); return W.wage(ps.reduce(function (a, p) { return a + C.value(p.o, p.pt, C.age(p)); }, 0) / ps.length, c); };
+t('el jugador típico de un club rico cobra al menos el doble que el de uno pobre (' + typ(rich) + ' vs ' + typ(poor) + ')', typ(rich) > typ(poor) * 2);
+[20000, 50000].forEach(function (v) { t('una figura de ' + v + ' k€ gana más en el club rico', W.wage(v, rich) > W.wage(v, poor)); });
+// concentración: las tres mayores cifras de un plantel suman entre el 20 y el 55 % de lo que se paga
+['Universidad de Chile', 'Real Madrid', 'Ñublense'].forEach(function (n) { var c = S.clubs.filter(function (x) { return x.nm === n; })[0], ws = (S.ro[c.id] || []).filter(function (p) { return p.i !== 0; }).map(function (p) { return W.wage(C.value(p.o, p.pt, C.age(p)), c); }).sort(function (a, b) { return b - a; }), tot = ws.reduce(function (a, b) { return a + b; }, 0), top = (ws[0] + ws[1] + ws[2]) / tot; t(n + ': las tres figuras se llevan ' + Math.round(top * 100) + ' % de la masa', top > 0.2 && top < 0.55); t(n + ': lo que paga el plantel completo está cerca de su masa salarial (±25 %)', tot > W.bill(c) * 0.75 && tot < W.bill(c) * 1.25, tot + ' vs ' + W.bill(c)); });
 // forma de la curva
-var md = cl[Math.floor(cl.length / 2)], prevW = 0; [100, 500, 1000, 2000, 5000, 10000, 20000, 50000].forEach(function (v) { var w = W.wage(v, md); t('el sueldo crece con el valor (' + v + ' k€ → ' + w + ' k€)', w >= prevW, prevW + ' → ' + w); t('el sueldo nunca supera 2,5 veces el valor ni baja de 2', w <= Math.max(2, v * 2.5) && w >= 2); prevW = w; });
+var md = cl[Math.floor(cl.length / 2)], prevW = 0; [100, 500, 1000, 2000, 5000, 10000, 20000, 50000].forEach(function (v) { var w = W.wage(v, md); t('el sueldo crece con el valor (' + v + ' k€ → ' + w + ' k€)', w >= prevW, prevW + ' → ' + w); t('el sueldo nunca supera 4 veces el valor ni baja de 2', w <= Math.max(2, v * 4) && w >= 2); prevW = w; });
 // el sueldo medio de un club depende de su economía y de su plantel
 t('el plantel de un club rico cobra más en promedio que el de uno pobre', W.clubAverage(rich) > W.clubAverage(poor) * 2, W.clubAverage(rich) + ' vs ' + W.clubAverage(poor));
 // conexión con ofertas: sube con el valor y depende del club

@@ -84,7 +84,7 @@
 
     // ficha
     var fin = c.fin >= 9 ? 'muy sólida' : c.fin >= 7 ? 'sólida' : c.fin >= 4 ? 'estable' : 'modesta', cant = c.ac >= 4 ? 'muy buena' : c.ac >= 3 ? 'buena' : c.ac >= 2 ? 'aceptable' : 'limitada';
-    var box = [['País', C.cname(c.c)], ['Liga', short(def.n) + ' (' + tierOrd(def.t) + ' división)'], ['Nivel de plantel', c.st ? String(Math.round(c.st)) + ' (' + ord(rank) + ' de ' + teams.length + ' en su liga)' : '—'], ['Situación económica', fin], ['Cantera', cant], ['Sueldo medio del plantel', FP.Wages ? FP.fmt.money(FP.Wages.clubAverage(c)) + ' al año (estimado)' : '—'], ['Entrenador', c.co || '—'], ['Sistema', c.fm || '—']];
+    var box = [['País', C.cname(c.c)], ['Liga', short(def.n) + ' (' + tierOrd(def.t) + ' división)'], ['Nivel de plantel', c.st ? String(Math.round(c.st)) + ' (' + ord(rank) + ' de ' + teams.length + ' en su liga)' : '—'], ['Situación económica', fin], ['Cantera', cant], ['Sueldo medio del plantel', FP.Wages ? FP.fmt.money(FP.Wages.clubAverage(c)) + ' al año (' + FP.fmt.money(FP.Wages.monthly(FP.Wages.clubAverage(c))) + ' al mes, estimado)' : '—'], ['Masa salarial', FP.Wages ? FP.fmt.money(FP.Wages.bill(c)) + ' al año (estimada)' : '—'], ['Entrenador', c.co || '—'], ['Sistema', c.fm || '—']];
     if (y0) box.push(['Temporadas registradas', String(seasons.length)]);
 
     // introducción
