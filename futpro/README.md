@@ -462,3 +462,15 @@ La Biografía se redacta con un motor determinista que lee el historial real de 
 - **Partidas anteriores**: se migran al cargar (se completan presupuestos y sueldos sin reescribir los que ya existen).
 - **Medido** (seed 555, 10 años): uso medio del presupuesto 84 %; 4 clubes de 2.113 por encima del presupuesto; 15 sin margen; 1.284 fichajes entre clubes (1.334 antes); el guardado crece 0,5 MB sobre 10,5 MB (1,9 MB comprimido al exportar). Guardar en el navegador tarda ≈ 0,25 s y el autoguardado ocurre cada 4 semanas, así que el peso del guardado no es un problema.
 - **Pendiente**: ingresos reales de los clubes, copas internacionales en la evolución del presupuesto, impuestos y derechos de imagen.
+
+## Prensa y hinchada
+
+`js/prensa.js` (`FP.Prensa`), `js/ui-prensa.js` y `tests/prensa.js`. Pantalla **Prensa** (menú «Jugador»).
+
+- **Titulares tras cada partido oficial profesional de tu club**, de dos medios distintos del país y, si destacas, un tercero sobre ti. Los medios son reales (p. ej. La Tercera, Cooperativa, Redgol, La Cuarta en Chile; Olé, Clarín, TyC Sports en Argentina; Marca, AS, Mundo Deportivo en España; BBC Sport, The Sun en Inglaterra…, unos 30 países; el resto usa nombres genéricos) y cada uno escribe con su tono: diario serio, popular, digital o radio. **Los titulares los inventa el juego**: no son notas publicadas por esos medios ni citan a personas reales; es ficción para uso personal.
+- **Situaciones**: victoria, victoria ajustada, goleada a favor o en contra, empate, derrota, derbi ganado o perdido, rachas de 4 o más victorias o derrotas, y la figura, el gol o el mal partido del protagonista.
+- **Ánimo de la hinchada** (0–100: Crisis, Tensión, Estable, Ilusión, Euforia): cada resultado lo mueve según lo esperable por el nivel de ambos equipos, el derbi y las goleadas; entre partidos vuelve poco a poco a 50. La hinchada comenta los partidos que cuentan o cuando cambia de ánimo.
+- **«Lo que se dice de ti»**: tres líneas con tus últimas ocho actuaciones y la racha del equipo.
+- **No usa el azar de la partida**: los titulares salen de un hash del partido, el medio y la semana (mismos partidos, mismos titulares), y sin evitar repeticiones en los últimos 30. Probado: con la prensa apagada, estadísticas y estado del azar son idénticos. No se publican titulares de divisiones menores ni amateur.
+- **Guardado**: `h.press` (hasta 160 titulares); las partidas anteriores lo crean al primer partido.
+- **Pendiente**: entrevistas con respuestas elegibles, asistencia al estadio, cánticos y pancartas, directivos que hablan.

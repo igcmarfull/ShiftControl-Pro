@@ -54,8 +54,8 @@
   // ---------- menú según el estado ----------
   UI.applyNav = function () {
     var r = retired(), K = FP.Coach, coaching = r && K && K.job && K.job(), G = UI.GROUPS;
-    var jug = r ? [['home', 'Inicio', 'home'], ['player', 'Mi jugador', 'user'], ['mycareer', 'Mi carrera', 'history'], ['after', 'Después del retiro', 'medal'], ['social', 'Redes', 'chat']]
-      : [['home', 'Inicio', 'home'], ['player', 'Mi jugador', 'user'], ['mycareer', 'Mi carrera', 'history'], ['social', 'Redes', 'chat']];
+    var jug = r ? [['home', 'Inicio', 'home'], ['player', 'Mi jugador', 'user'], ['mycareer', 'Mi carrera', 'history'], ['after', 'Después del retiro', 'medal'], ['social', 'Redes', 'chat'], ['press', 'Prensa', 'news']]
+      : [['home', 'Inicio', 'home'], ['player', 'Mi jugador', 'user'], ['mycareer', 'Mi carrera', 'history'], ['social', 'Redes', 'chat'], ['press', 'Prensa', 'news']];
     var temp = r ? (coaching ? [['coach', 'Banquillo', 'whistle']] : []).concat([['calendar', 'Calendario', 'calendar'], ['club', 'Mi club', 'shield']])
       : [['match', 'Partido', 'ball'], ['calendar', 'Calendario', 'calendar'], ['training', 'Entrenamientos y táctica', 'train'], ['club', 'Mi club', 'shield']];
     var mundo = [['comps', 'Competiciones', 'globe'], ['tables', 'Clasificaciones y estadísticas', 'table'], ['nations', 'Selecciones', 'flag'], ['news', 'Noticias', 'news']];
