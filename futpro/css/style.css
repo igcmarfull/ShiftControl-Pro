@@ -732,3 +732,8 @@ table.mtab { border-collapse: collapse; width: 100%; font-variant-numeric: tabul
 .fd.V { background: #1f9d57; } .fd.D { background: #d04545; }
 .mt-club { display: inline-flex; align-items: center; gap: .5rem; }
 .mt-club .crest { width: 1.35rem; height: 1.35rem; flex: none; }
+.ties { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .5rem; }
+.tie { padding: .5rem .65rem; border-radius: 10px; background: rgba(128,128,128,.08); }
+.tie.me { background: rgba(47, 191, 113, .14); }
+.tie-main .tie { padding: .7rem .8rem; }
+.tie .mt-club { font-size: .9rem; } .tie-res { margin-top: .25rem; }
