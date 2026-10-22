@@ -64,7 +64,7 @@ t('quien pide salir recibe más propuestas de clubes inferiores que quien no (' 
 
 // ---------- 3) puertas ----------
 var weakClub = pool.filter(function (c) { return c.st <= cur.st - 15; })[0], goodClub = pool.filter(function (c) { return c.st >= cur.st; })[0];
-var passW = 0, passG = 0, M2 = 2000; for (var q = 0; q < M2; q++) { if (Rep.lowerGate(weakClub)) passW++; if (Rep.lowerGate(goodClub)) passG++; }
+var passW = 0, passG = 0, M2 = 2000; if (!weakClub) weakClub = pool.slice().sort(function (a, b) { return a.st - b.st; })[0]; if (!goodClub) goodClub = pool.slice().sort(function (a, b) { return b.st - a.st; })[0]; for (var q = 0; q < M2; q++) { if (Rep.lowerGate(weakClub)) passW++; if (Rep.lowerGate(goodClub)) passG++; }
 t('un club igual o mejor siempre pasa la puerta de nivel', passG === M2);
 t('un club muy inferior pasa solo en pocas ocasiones y no nunca (' + Math.round(passW / M2 * 100) + ' %)', passW / M2 > 0.01 && passW / M2 < 0.15);
 var aW = Rep.attract(weakClub, null, { wage: 10 }), aG = Rep.attract(goodClub, null, { wage: 600 });
