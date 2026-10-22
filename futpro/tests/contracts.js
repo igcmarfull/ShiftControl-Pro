@@ -59,7 +59,8 @@ if (rl.ok && h.tk === 'loan') { check(h.loan && h.loan.ct === owner && h.loan.fr
 else check(true, 'cesión en trámite');
 // 6) bonos: pago único
 h.loan = null; h.tk = 'pro'; h.club = ownerClub; h.team = ownerClub; h.contract = owner; owner.status = 'activo';
-owner.bonuses = { goals: { n: 3, amt: 50 } }; var m0 = h.money; h.season.g = 3; K.bonusWeekly(S.week); var m1 = h.money; K.bonusWeekly(S.week); K.bonusWeekly(S.week + 1);
+owner.bonuses = { goals: { n: 3, amt: 50 } }; delete K.ensure().paid[owner.cid + '|' + M.seasonLabel() + '|goals'];      // si el protagonista ya cobró este bono antes en la prueba, se reinicia
+var m0 = h.money; h.season.g = 3; K.bonusWeekly(S.week); var m1 = h.money; K.bonusWeekly(S.week); K.bonusWeekly(S.week + 1);
 check(m1 > m0, 'el bono por goles se paga'); check(h.money === m1, 'el bono no se paga dos veces');
 check(K.ensure().fin.some(function (e) { return e.k === 'bono'; }), 'el pago queda en el libro económico');
 // 7) persistencia
