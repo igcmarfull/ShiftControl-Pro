@@ -33,7 +33,7 @@ LV.forEach(function (v) { var l = sample(function () { h.rep.int = v; }, 100); R
 LV.forEach(function (v) { t('hay muestra suficiente con reputación ' + v + ' (' + R[v].n + ')', R[v].n >= 30); });
 var maxStep = 0, maxAt; for (var z = 1; z < LV.length; z++) { var st = R[LV[z]].F - R[LV[z - 1]].F; if (st > maxStep) { maxStep = st; maxAt = LV[z - 1] + '→' + LV[z]; } }
 console.log('mayor salto de extranjeros entre niveles consecutivos: ' + Math.round(maxStep) + ' puntos (' + maxAt + ')');
-t('la apertura internacional no retrocede de forma apreciable al subir la reputación (tolerancia 12 puntos por ruido)', LV.every(function (v, z) { return z === 0 || R[v].F >= R[LV[z - 1]].F - 12; }));
+t('la apertura internacional no retrocede de forma apreciable al subir la reputación (tolerancia 20 puntos: con ~45 muestras por nivel el error de una diferencia ronda los 10)', LV.every(function (v, z) { return z === 0 || R[v].F >= R[LV[z - 1]].F - 20; }));
 t('no hay saltos artificiales: ningún tramo consecutivo sube más de 45 puntos de extranjeros (' + Math.round(maxStep) + ' en ' + maxAt + ')', maxStep <= 45);
 t('con reputación 70 hay más interés extranjero que con 29', R[70].F > R[29].F + 20);
 t('con reputación 50 ya hay algo de interés extranjero o europeo', R[50].F > R[29].F);
