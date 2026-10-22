@@ -12,5 +12,12 @@ function t(name, cond, info) { if (cond) ok++; else { bad++; console.log('FALLA'
   var eng = foreign('ENG1'); t('seed ' + seed + ': la Premier sigue siendo la más abierta (>30 % de extranjeros)', eng.f / eng.n > 0.3, eng.f / eng.n);
   var chiShare = chi.f / chi.n; t('seed ' + seed + ': la proporción de extranjeros en Chile se mantiene (8–20 %)', chiShare > 0.08 && chiShare < 0.2, chiShare);
 });
+// después de seis temporadas de fichajes, agentes libres y cantera, los clubes chilenos siguen sin recibir jugadores de países lejanos
+(function () {
+  var S = H.restore(H.buildWorld(555)), g = 0; while (g++ < 300) FP.Sim.step();
+  var far = 0, fr = 0, n = 0; S.clubs.filter(function (c) { return c.lg === 'CHI1'; }).forEach(function (c) { (S.ro[c.id] || []).forEach(function (p) { n++; if (p.nat !== c.c) { fr++; if (FP.NATBY[p.nat].conf !== 'CONMEBOL' && p.nat !== 'ESP' && p.nat !== 'MEX') far++; } }); });
+  t('tras seis temporadas ningún club chileno tiene extranjeros de países lejanos (' + far + ' de ' + fr + ')', far === 0, far);
+  t('tras seis temporadas la proporción de extranjeros en Chile sigue entre 5 y 22 % (' + Math.round(fr / n * 100) + ' %)', fr / n > 0.05 && fr / n < 0.22);
+})();
 console.log('ok', ok, 'fallas', bad);
 process.exit(bad ? 1 : 0);

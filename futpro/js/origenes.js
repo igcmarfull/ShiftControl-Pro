@@ -29,7 +29,7 @@
     if (linked(dest, from)) return rich ? 4 : 6;
     var cd = FP.DATA.countries[dest], cf = FP.NATBY && FP.NATBY[from];
     if (cd && cf && cd.conf === cf.conf) return 1.5;
-    return rich ? 1 : 0.02;
+    return rich ? 1 : 0.002;     // una liga modesta casi no recibe jugadores de otros continentes
   };
 
   // mismo uso del azar que la versión original (una tirada para «misma confederación» y una para elegir), solo cambian los pesos
@@ -38,4 +38,28 @@
     var arr = pool.filter(function (n) { return n.c !== club.c && (same ? n.conf === conf : true); });
     return U.wpick(arr, function (n) { return Math.exp(n.r / 14) * O.affinity(club.c, n.c, rich); }).c;
   };
+
+  // los agentes libres: un club de una liga modesta prefiere a quien viene de un país cercano (la elección sigue siendo por nivel; se descartan los de países lejanos)
+  var Sim = FP.Sim;
+  if (Sim && Sim.pickFreeAgent) Sim.pickFreeAgent = function (club, pos) {
+    var lg = FP.LGDEF[club.lg], mu = lg.q + club.ra, best = null, bv = -1, tries = 0, rich = C.foreignP(club.c) >= 0.3, pool = Sim.faPool();
+    for (var i = 0; i < pool.length && tries < 400; i++, tries++) {
+      var p = pool[i]; if (p.c !== -1 || p.p !== pos) continue;
+      if (p.o < mu - 8 || p.o > mu + 4) continue;
+      if (p.nat && p.nat !== club.c && O.affinity(club.c, p.nat, rich) < 1) continue;       // un club modesto no ficha a un agente libre de un país lejano
+      var v = p.o + R() * 3;
+      if (v > bv) { bv = v; best = p; }
+    }
+    return best;
+  };
+
+  // fichajes entre clubes de la IA: un club de una liga modesta casi no ficha a quien viene de un país lejano
+  var Rep = FP.Rep;
+  if (Rep && Rep.aiForeignOK) {
+    var ok0 = Rep.aiForeignOK;
+    Rep.aiForeignOK = function (club, p) {
+      if (p && p.nat && p.nat !== club.c && C.foreignP(club.c) < 0.3 && O.affinity(club.c, p.nat, false) < 1 && R() < 0.97) return false;
+      return ok0.apply(this, arguments);
+    };
+  }
 })();
