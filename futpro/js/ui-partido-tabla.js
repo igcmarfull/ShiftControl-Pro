@@ -26,7 +26,7 @@
       if (last >= 0 && i - last > 1) h += '<tr class="gap"><td colspan="9">···</td></tr>';
       last = i;
       var cls = r.id === me ? 'me' : r.id === opp ? 'opp' : '';
-      h += '<tr class="' + cls + '"><td>' + r.pos + '</td><td>' + UI.club(r.id) + (r.id === me ? ' <span class="tag">Tú</span>' : r.id === opp ? ' <span class="tag">Rival</span>' : '') + '</td><td class="n">' + r.p + '</td><td class="n">' + r.w + '</td><td class="n">' + r.d + '</td><td class="n">' + r.l + '</td><td class="n">' + (r.gd > 0 ? '+' : '') + r.gd + '</td><td class="n"><b>' + r.pts + '</b></td><td>' + ((r.id === me || r.id === opp) ? dots(form(comp, r.id)) : '') + '</td></tr>';
+      h += '<tr class="' + cls + '"><td>' + r.pos + '</td><td><span class="mt-club">' + (UI.crest ? UI.crest(r.id) : '') + UI.club(r.id) + (r.id === me ? ' <span class="tag">Tú</span>' : r.id === opp ? ' <span class="tag">Rival</span>' : '') + '</span></td><td class="n">' + r.p + '</td><td class="n">' + r.w + '</td><td class="n">' + r.d + '</td><td class="n">' + r.l + '</td><td class="n">' + (r.gd > 0 ? '+' : '') + r.gd + '</td><td class="n"><b>' + r.pts + '</b></td><td>' + ((r.id === me || r.id === opp) ? dots(form(comp, r.id)) : '') + '</td></tr>';
     });
     return h + '</tbody></table></div></div>';
   };

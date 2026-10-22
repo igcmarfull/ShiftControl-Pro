@@ -730,3 +730,5 @@ table.mtab { border-collapse: collapse; width: 100%; font-variant-numeric: tabul
 .mtab .tag { font-size: .65rem; padding: .05rem .35rem; border-radius: 999px; background: rgba(128,128,128,.2); color: var(--dim); margin-left: .3rem; }
 .fd { display: inline-block; width: 1.05rem; height: 1.05rem; line-height: 1.05rem; text-align: center; font-style: normal; font-size: .62rem; font-weight: 700; border-radius: 4px; margin-right: 2px; color: #fff; background: #7a8591; }
 .fd.V { background: #1f9d57; } .fd.D { background: #d04545; }
+.mt-club { display: inline-flex; align-items: center; gap: .5rem; }
+.mt-club .crest { width: 1.35rem; height: 1.35rem; flex: none; }
