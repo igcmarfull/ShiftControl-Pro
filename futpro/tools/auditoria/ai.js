@@ -1,0 +1,6 @@
+// goleadores de la IA (simulación rápida): máximos de cada liga y proporción de goles del máximo goleador
+var H = require('' + require('path').join(__dirname, '..', '..') + '/tests/harness.js'), FP = H.FP;
+var S = H.restore(H.buildWorld(555)), g = 0; while (g++ < 52 * 4) FP.Sim.step();
+var by = {};
+Object.keys(S.lgs).forEach(function (id) { var l = S.lgs[id], d = FP.LGDEF[id]; (l.hist || []).forEach(function (e) { if (!e.sc || !e.sc.length) return; var n = e.tab ? e.tab.length : 0, games = (n - 1) * 2; var top = e.sc[0][1]; var k = d.t === 1 ? 'T1 q' + (d.q >= 70 ? '70+' : d.q >= 60 ? '60-69' : d.q >= 50 ? '50-59' : '<50') : 'T' + d.t; (by[k] = by[k] || []).push({ g: top, per: top / games, id: id, y: e.y, n: n, second: e.sc[1] ? e.sc[1][1] : 0, tenth: e.sc[9] ? e.sc[9][1] : 0 }); }); });
+Object.keys(by).sort().forEach(function (k) { var a = by[k], m = a.reduce(function (x, y) { return x + y.g; }, 0) / a.length, mx = Math.max.apply(null, a.map(function (y) { return y.g; })), pm = a.reduce(function (x, y) { return x + y.per; }, 0) / a.length, t10 = a.reduce(function (x, y) { return x + y.tenth; }, 0) / a.length; console.log(k, 'n=' + a.length, 'máximo goleador medio', m.toFixed(1), 'por partido', pm.toFixed(2), 'récord', mx, '10º goleador medio', t10.toFixed(1)); });
