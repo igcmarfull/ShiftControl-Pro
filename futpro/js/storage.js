@@ -53,6 +53,7 @@
     // reindexa cada ko (los índices t.f no se guardan fiables tras ordenar)
     Object.keys(S.comps).forEach(function (id) { var c = S.comps[id]; if (c.ko) FP.Comp.reindex(c); });
     S.clubs.forEach(function (c) { FP.Core.calcStr(c); });
+    if (FP.Wages && FP.Wages.ensureAll) FP.Wages.ensureAll();      // partidas anteriores: completa presupuestos y sueldos sin tocar los que ya existen
     return S;
   };
   Store.fixRo = function (c) {

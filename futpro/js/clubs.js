@@ -49,6 +49,7 @@
   K.exec = function (d, official) {
     var S = FP.S, p = S.pl[d.p]; if (!p || p.c !== d.from) return false;
     var buyer = S.clubs[d.to], seller = S.clubs[d.from]; if (!buyer || !seller) return false;
+    if (FP.Wages && !FP.Wages.canSignNpc(p, buyer)) return false;
     var from = M.move(p, buyer.id, d.fee, U.int(2, 4)); C.calcStr(seller); C.calcStr(buyer);
     M.rec(p, from, buyer.id, Math.round(d.fee));
     K.profile(buyer).b -= Math.round(d.fee * 0.8); K.profile(seller).b += Math.round(d.fee * 0.9);

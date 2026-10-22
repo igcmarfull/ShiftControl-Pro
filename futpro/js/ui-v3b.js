@@ -224,16 +224,23 @@
 
   // ---------- MI CLUB ----------
   UI.squadTable = function (cid, id) {
-    var rows = (FP.S.ro[cid] || []).map(function (p) { var age = C.age(p); return { p: p, nm: p.i === 0 ? FP.S.hero.nm : p.n, pos: p.p, age: age, o: p.o, nat: p.nat, v: C.value(p.o, p.pt, age), ce: p.ce, g: p.g || 0, a: p.as || 0, inj: p.inj || 0 }; });
+    var rows = (FP.S.ro[cid] || []).map(function (p) { var age = C.age(p); return { p: p, nm: p.i === 0 ? FP.S.hero.nm : p.n, pos: p.p, age: age, o: p.o, nat: p.nat, v: C.value(p.o, p.pt, age), ce: p.ce, wg: p.i === 0 ? ((FP.S.hero.contract || {}).wage || 0) : (p.wg || 0), g: p.g || 0, a: p.as || 0, inj: p.inj || 0 }; });
     var posOrd = { GK: 0, CB: 1, LB: 2, RB: 3, DM: 4, CM: 5, AM: 6, LW: 7, RW: 8, ST: 9 };
     rows.forEach(function (r) { r.po = posOrd[r.pos]; });
     return UI.table(id, [
       { k: 'po', t: 'Pos', f: function (r) { return UI.posb(r.pos); } },
       { k: 'nm', t: 'Jugador', f: function (r) { return UI.player(r.p) + (r.p.i !== 0 ? '' : ' <span class="pill g">tú</span>'); } },
       { k: 'age', t: 'Edad', n: 1 }, { k: 'o', t: 'Media', n: 1, f: function (r) { return UI.ovr(r.o); } }, { k: 'nat', t: 'Nac.', f: function (r) { return UI.nation(r.nat); } },
-      { k: 'v', t: 'Valor', n: 1, f: function (r) { return UI.money(r.v); } }, { k: 'ce', t: 'Contrato', n: 1 }, { k: 'g', t: 'G', n: 1 }, { k: 'a', t: 'A', n: 1 },
+      { k: 'v', t: 'Valor', n: 1, f: function (r) { return UI.money(r.v); } }, { k: 'wg', t: 'Sueldo/año', n: 1, f: function (r) { return r.wg ? UI.money(r.wg) : '—'; } }, { k: 'ce', t: 'Contrato', n: 1 }, { k: 'g', t: 'G', n: 1 }, { k: 'a', t: 'A', n: 1 },
       { k: 'inj', t: 'Estado', f: function (r) { return r.inj ? '<span class="pill r">' + I('inj') + r.inj + ' sem.</span>' : ''; } }
     ], rows, { sort: ['po', 'a'], cls: function (r) { return r.p.i === 0 ? 'me' : ''; } });
+  };
+  // presupuesto salarial del club: cifras estimadas del juego, no cuentas reales
+  UI.wageCard = function (club) {
+    var W = FP.Wages; if (!W) return '';
+    var b = W.bill(club), c = W.committed(club), a = W.available(club), src = W.source(club);
+    return '<div class="card"><div class="hd"><h3>Economía salarial del club</h3></div><div class="grid g3"><div><span class="mut sm">Presupuesto anual</span><h3>' + UI.money(b) + '</h3></div><div><span class="mut sm">Nómina comprometida</span><h3>' + UI.money(c) + '</h3></div><div><span class="mut sm">Margen disponible</span><h3>' + UI.money(a) + '</h3></div></div>' +
+      '<p class="mut sm">' + (src === 'estimacion_manual' ? 'Presupuesto inicial estimado a mano' : 'Presupuesto inicial deducido por el modelo') + ' y actualizado con los resultados del club. Importes brutos anuales; son estimaciones del juego, no cuentas oficiales.</p></div>';
   };
   var oldClub = SC.club;
   SC.club = function () {
@@ -241,6 +248,7 @@
     if (h.tk === 'amat' || cid == null) return hdr('shield', h.tk === 'amat' ? 'Mi club' : 'Sin club', 'Fútbol amateur y agencia libre') + oldClub().replace(/^<h1>[\s\S]*?<\/h1>/, '');
     var club = S.clubs[cid], lg = FP.LGDEF[club.lg], comp = UI.myLeagueComp(), cols = UI.clubColors ? UI.clubColors(club.nm) : [];
     var html = '<div class="club-h" style="--c1:' + (cols[0] || '#17424d') + '66">' + UI.crest(cid, 'xl') + '<div style="min-width:0"><h1>' + esc(club.nm) + '</h1><div class="mut" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">' + UI.flag(club.c) + esc(C.cname(club.c)) + ' · ' + esc(lg.n) + ' ' + UI.verBadge(lg.v) + '</div></div><div class="terms" style="grid-template-columns:repeat(4,auto);margin:0"><div><span>Entrenador</span><b>' + esc(club.co) + '</b></div><div><span>Fuerza</span><b>' + club.st + '</b></div><div><span>Cantera</span><b class="rep">' + UI.stars(club.ac * 20) + '</b></div><div><span>Economía</span><b>' + club.fin + '/10</b></div></div></div>';
+    if (FP.Wages && h.tk !== 'academy') html += UI.wageCard(club);
     if (h.tk === 'academy') html += '<div class="info">Juegas en las divisiones inferiores. Cuando tu nivel se acerque al del primer equipo serás promovido. Abajo ves el plantel profesional de referencia.</div>';
     html += '<div class="md" style="grid-template-columns:minmax(0,300px) minmax(0,1fr)"><div class="card" style="margin:0"><div class="hd"><h3>' + I('table') + (comp ? esc(comp.nm) : 'Competición') + '</h3></div>' + (comp ? UI.miniTable(comp) : '<p class="mut">Sin competición.</p>') + '</div><div class="card" style="margin:0"><div class="hd"><h3>' + I('user') + 'Plantel</h3></div>' + UI.squadTable(cid, 'squad') + '</div></div>';
     return html;

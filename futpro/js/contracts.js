@@ -124,6 +124,7 @@
     if (kind === 'formacion') wage = o.type === 'academy' ? Math.round(Math.min(wage, 1 + 3 * cw)) : 0;
     if (kind === 'juvenil') wage = Math.round(Math.min(wage, 12 + 55 * cw));
     if (kind === 'cesion') wage = o.base ? o.base.wage : (h.contract ? h.contract.wage : 0);
+    if (club && FP.Wages && kind !== 'cesion') wage = Math.min(wage, FP.Wages.maxOffer(club, o.type === 'renew' && o.base ? o.base.wage : 0));       // nunca más de lo que el club puede pagar
     t.wage = Math.max(0, wage);
     // duración (menores: máximo 3 años por la normativa de contratos a menores)
     var yrs = age < 18 ? U.int(1, 3) : age < 21 ? U.int(3, 5) : age < 30 ? U.int(2, 5) : age < 33 ? U.int(1, 3) : U.int(1, 2);
@@ -173,6 +174,7 @@
     var fin = club ? club.fin : 4, urg = (sit.need >= 1 ? 0.12 : 0) + (o.urgent ? 0.1 : 0);
     var head = 0.06 + 0.026 * fin + urg + Math.min(0.15, inter * 0.04) + (small ? -0.02 : 0.03);
     t.lim = { wage: Math.round(t.wage * (1 + head)), sign: Math.round(t.signBonus * (1 + head * 2) + t.wage * 0.04), bonus: 1 + head * 2.2, rmax: Math.min(6, ri + (small ? 1 : 1 + (urg > 0 ? 1 : 0))), ymin: kind === 'juvenil' ? 1 : 1, ymax: age < 18 ? 3 : 5, relMin: t.release ? Math.round(t.release * 0.7) : Math.round(M.heroValue() * 2.4), clause: kind === 'prof' && age >= 18 && (pClause > 0.15 || !small) };
+    if (club && FP.Wages && kind !== 'cesion') t.lim.wage = Math.min(t.lim.wage, FP.Wages.maxOffer(club, o.type === 'renew' && o.base ? o.base.wage : 0));       // el máximo negociable también respeta el presupuesto del club
     if (kind === 'formacion' || kind === 'juvenil') { t.lim.rmax = Math.min(t.lim.rmax, 2); t.lim.clause = false; }
     return t;
   };
@@ -365,6 +367,14 @@
   K.finish = function (o) {
     var S = FP.S, h = S.hero, cx = K.ensure(), t = o.t, club = o.club != null ? S.clubs[o.club] : null, res;
     if (cx.pend && cx.pend.oid === o.id) cx.pend = null;
+    // una operación nunca compromete dinero que el club no tiene
+    if (club && FP.Wages && (o.type === 'transfer' || o.type === 'pro' || o.type === 'renew')) {
+      var prevW = o.type === 'renew' && h.contract && h.club === club.id ? h.contract.wage : 0;
+      if (t.kind === 'prof' && !FP.Wages.canAfford(club, t.wage, prevW)) {
+        K.reject(o, 'presupuesto salarial insuficiente', 'fracasada');
+        return { ok: false, msg: club.nm + ' no tiene presupuesto salarial disponible para completar el contrato.' };
+      }
+    }
     // examen médico: una lesión importante o un historial pesado puede frustrar el fichaje
     if ((o.type === 'transfer' || o.type === 'pro') && club && club.id !== h.club) {
       var injW = h.inj ? h.inj.n : 0, pf = injW >= 10 ? 0.65 : injW >= 5 ? 0.2 : 0.01 + K.injLoad() * 0.0012;
@@ -488,6 +498,11 @@
   K.joinPre = function () {
     var S = FP.S, h = S.hero, cx = K.ensure(), p = cx.pre; cx.pre = null;
     var club = S.clubs[p.club], t = p.terms;
+    if (club && FP.Wages && p.terms && p.terms.kind === 'prof' && !FP.Wages.canAfford(club, p.terms.wage)) {
+      K.log('fracasada', { club: club.id, wage: p.terms.wage, why: 'presupuesto insuficiente al comienzo del precontrato' });
+      FP.Hero.msg(club.nm + ' no puede inscribir tu precontrato porque ya no tiene margen salarial.', 'warn');
+      return;
+    }
     var o = { id: -1, type: 'transfer', club: club.id, fee: 0, t: t, wage: t.wage, years: t.years, role: t.role };
     if (h.tk === 'loan') M.endLoan();
     if (h.contract) K.endCurrent('fin de contrato (precontrato con ' + club.nm + ')', 'finalizado');

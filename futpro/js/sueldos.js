@@ -56,9 +56,13 @@
     return cache.lg[lgId] = out;
   }
   // cuántas veces la masa de un club de la liga media es la suya (≥ 1 en los clubes ricos)
-  W.richness = function (club) { return leagueIdx(club.lg)[club.id] || 1; };
+  W.richness = function (club) {
+    fresh(); if (cache.lgBill == null) cache.lgBill = {};
+    if (cache.lgBill[club.lg] == null) { var cl = FP.S.clubs.filter(function (c) { return c.lg === club.lg; }); cache.lgBill[club.lg] = cl.reduce(function (a, c) { return a + W.bill(c); }, 0) / Math.max(1, cl.length) || 1; }
+    return W.bill(club) / cache.lgBill[club.lg];
+  };
   // masa salarial anual del club (k€)
-  W.bill = function (club) {
+  W.bill0 = function (club) {       // presupuesto inicial, deducido del peso del club en su liga
     fresh(); if (cache.clubs[club.id] != null) return cache.clubs[club.id];
     var idx = leagueIdx(club.lg)[club.id] || 1;
     return cache.clubs[club.id] = W.ref(club.lg) * 1000 * BPY * idx;
@@ -92,6 +96,84 @@
   // «850 mil € al año (71 mil € al mes)»
   W.fmt = function (annual) { return FP.fmt.money(annual) + ' al año (' + FP.fmt.money(W.monthly(annual)) + ' al mes)'; };
 
+
+  // ---------- economía v2: presupuesto vivo y nómina persistente ----------
+  // club.wb = presupuesto salarial anual vivo (k€); club.w0 = su nivel de partida (referencia para volver a la media); club.wlg = liga con la que se calculó;
+  // club.wsrc = procedencia de la cifra. p.wg = sueldo anual vigente de cada jugador de la plantilla (k€): cambia solo al fichar o renovar.
+  W.INFL = 0.02;           // inflación anual de los presupuestos
+  W.source = function (club) { return club.wsrc || ((W.BUDGET[club.lg] || {})[club.nm] != null ? 'estimacion_manual' : 'estimacion_modelo'); };
+  W.bill = function (club) { return club.wb != null ? club.wb : Math.max(60, Math.round(W.bill0(club))); };
+  W.NPC_SHARE = 0.89;      // parte del presupuesto que la nómina inicial compromete (el resto queda para fichajes)
+  W.committed = function (club) {
+    var sum = 0, hero = FP.S.hero;
+    (FP.S.ro[club.id] || []).forEach(function (p) { if (p.i === 0) { if (hero && hero.contract && hero.tk === 'pro') sum += hero.contract.wage || 0; } else sum += Math.max(0, p.wg || 0); });
+    return Math.round(sum);
+  };
+  W.available = function (club) { return Math.max(0, Math.round(W.bill(club) - W.committed(club))); };
+  // lo máximo que el club puede ofrecer a un jugador (la parte máxima por jugador y el margen, contando el sueldo que sustituye)
+  W.maxOffer = function (club, existingWage) { return Math.max(0, Math.floor(Math.min(W.bill(club) * W.capShare(club), W.available(club) + (existingWage || 0)))); };
+  W.canAfford = function (club, wage, existingWage) { return wage <= W.maxOffer(club, existingWage); };
+  W.npcOffer = function (p, club) { return W.wage(C.value(p.o, p.pt, C.age(p)), club); };
+  W.canSignNpc = function (p, club) { return W.canAfford(club, W.npcOffer(p, club)); };
+  // renovación de un jugador de la IA: el sueldo se acerca al del mercado sin pasar del margen del club
+  W.renew = function (p, club) {
+    var old = p.wg != null ? p.wg : W.npcOffer(p, club), mkt = W.npcOffer(p, club);
+    p.wg = Math.max(1, Math.min(W.maxOffer(club, old), Math.round(old * 0.5 + mkt * 0.5)));
+  };
+  // reparte entre los jugadores sin sueldo lo que falta para llegar al 89 % del presupuesto, según su valor
+  W.initialRoster = function (club) {
+    var ro = (FP.S.ro[club.id] || []).filter(function (p) { return p && p.i !== 0; }), miss = ro.filter(function (p) { return p.wg == null; });
+    if (!miss.length) return;
+    var bill = W.bill(club), have = ro.reduce(function (a, p) { return a + (p.wg || 0); }, 0), base = miss.map(function (p) { return W.npcOffer(p, club); }), tot = base.reduce(function (a, b) { return a + b; }, 0);
+    var k = tot > 0 ? Math.max(0, bill * W.NPC_SHARE - have) / tot : 0, top = bill * W.capShare(club);
+    miss.forEach(function (p, i) { p.wg = Math.max(1, Math.round(Math.min(top, base[i] * k))); });
+  };
+  W.ensureAll = function () {
+    if (!FP.S || !FP.S.clubs) return;
+    FP.S.clubs.forEach(function (c) { if (c.wb == null) { c.wsrc = W.source(c); c.wb = Math.max(60, Math.round(W.bill0(c))); c.w0 = c.wb; c.wlg = c.lg; } });
+    cache.lgBill = null;
+    FP.S.clubs.forEach(W.initialRoster);
+  };
+  // al cambiar de jugador de club, su sueldo es el del nuevo club
+  var move0 = M.move;
+  M.move = function (p, to) {
+    var r = move0.apply(this, arguments), club = FP.S.clubs[to];
+    if (p && p.i !== 0 && club) p.wg = W.npcOffer(p, club);
+    return r;
+  };
+  // fin de temporada: el presupuesto sigue a los resultados, sube con la inflación y vuelve poco a poco a su nivel de partida
+  var roll0 = FP.Sim.onRollover;
+  FP.Sim.onRollover = function (cc) { if (roll0) roll0(cc); try { W.seasonUpdate(cc); } catch (e) { if (window.console) console.warn('sueldos', e); } };
+  W.seasonUpdate = function (cc) {
+    var S = FP.S, yrs = D.year(S.week) - (S.y0 || 2026), infl = Math.pow(1 + W.INFL, Math.max(0, yrs)), byOld = {};
+    S.clubs.forEach(function (c) { if (c.c !== cc || c.wb == null) return; var o = c.wlg || c.lg; (byOld[o] = byOld[o] || []).push(c); });
+    Object.keys(byOld).forEach(function (old) {
+      var cl = byOld[old], hist = S.lgs[old] && S.lgs[old].hist, e = hist && hist[hist.length - 1], n = e && e.tab ? e.tab.length : 0;
+      var exp = cl.slice().sort(function (a, b) { return b.wb - a.wb; });
+      cl.forEach(function (c) {
+        var g = W.INFL;
+        if (e && n) {
+          var pos = e.tab.indexOf(c.id), ex = exp.indexOf(c);
+          if (pos >= 0) g += 0.12 * U.clamp((ex - pos) / Math.max(1, n - 1), -1, 1);
+          if (e.ch === c.id) g += 0.05;
+          if (e.up && e.up.indexOf(c.id) >= 0) g += 0.08;
+          if (e.dn && e.dn.indexOf(c.id) >= 0) g -= 0.06;
+        }
+        var b = c.wb * (1 + U.clamp(g, -0.15, 0.25));
+        if (c.lg !== old) b *= U.clamp(Math.pow(W.ref(c.lg) / Math.max(0.001, W.ref(old)), 0.4), 0.55, 1.85);      // ascenso o descenso: se ajusta a su nueva categoría
+        var base = (c.w0 || c.wb) * infl * (c.lg !== old ? U.clamp(Math.pow(W.ref(c.lg) / Math.max(0.001, W.ref(old)), 0.4), 0.55, 1.85) : 1);
+        if (c.lg !== old) {
+          var f = U.clamp(Math.pow(W.ref(c.lg) / Math.max(0.001, W.ref(old)), 0.4), 0.55, 1.85);
+          c.w0 = Math.round((c.w0 || c.wb) * f);
+          if (f < 1) (S.ro[c.id] || []).forEach(function (p) { if (p.i !== 0 && p.wg != null) p.wg = Math.max(1, Math.round(p.wg * f)); });      // cláusula de descenso: los contratos bajan con la categoría
+        }
+        c.wb = Math.round(U.clamp(0.85 * b + 0.15 * base, base * 0.5, base * 3));
+        c.wlg = c.lg;
+      });
+    });
+    cache.lgBill = null; cache.clubs = {};
+  };
+
   // ---------- conexión: ofertas, renovaciones y representados ----------
   var rep0 = Rep && Rep.wage;
   W.off = false;      // true restaura el cálculo anterior (para comparar en pruebas)
@@ -100,8 +182,12 @@
     var val = M.heroValue(), lg = FP.LGDEF[club.lg];
     var gulf = { KSA: 1, QAT: 1, UAE: 1, CHN: 1 }[club.c] && lg.t === 1 && FP.Hero.age() >= 30 ? 1.25 : 1;   // la liga ya paga más; el «retiro dorado» de los veteranos suma algo
     // el techo por jugador también vale con los factores de rol y de agente: un club no paga a una sola persona más de su parte máxima de la masa
-    return Math.max(2, Math.round(Math.min(W.wage(val, club) * gulf * (factor || 1) * M.agentMult(), Math.max(W.bill(club) * W.capShare(club) * gulf, 2))));
+    // ni más de lo que le queda disponible (contando el sueldo que sustituye, si es el club actual)
+    var h0 = FP.S.hero, old = h0 && h0.club === club.id && h0.contract ? h0.contract.wage || 0 : 0;
+    return Math.max(2, Math.round(Math.min(W.wage(val, club) * gulf * (factor || 1) * M.agentMult(), Math.max(W.bill(club) * W.capShare(club) * gulf, 2), Math.max(W.maxOffer(club, old), 2))));
   };
+  // un club sin margen salarial no hace ofertas (el mínimo es la décima parte del sueldo medio del club)
+  if (Rep) { var exp0 = Rep.exposure; Rep.exposure = function (club) { var r = exp0.apply(this, arguments); if (r && r.ok && !W.off && W.maxOffer(club, 0) < Math.max(2, W.bill(club) / BPY * 0.1)) { r = { ok: false, need: r.need, have: r.have, money: true }; } return r; }; }
   if (FP.Agency) FP.Agency.comm = function (q, club, fee) { return Math.round(W.wage(C.value(q.o, q.pt, C.age(q)), club) * 0.15 + (fee || 0) * 0.02); };
   if (FP.Post) { var ps0 = FP.Post.wageEst; FP.Post.wageEst = function (pl) { var club = FP.S.clubs[pl.c]; return club ? W.wage(C.value(pl.o, pl.pt, C.age(pl)), club) : ps0.apply(this, arguments); }; }
 })();

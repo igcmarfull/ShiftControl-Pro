@@ -108,6 +108,7 @@
       S.clubs.forEach(function (club) { Core.fillSquad(club); });
       Core.rebuildRoster();
       S.clubs.forEach(Core.calcStr);
+      if (FP.Wages && FP.Wages.ensureAll) FP.Wages.ensureAll();
       return S;
     },
     // crea los clubes de una liga (sin plantillas: ver fillSquad)

@@ -380,6 +380,7 @@
     var can = age <= 19 && h.tk !== 'pro' && h.tk !== 'loan' && lg.t <= 3 && (c.c === FP.Market.heroCountry() || age >= 18);
     var html = '<h2>' + esc(c.nm) + '</h2><div class="row"><span class="pill">' + esc(C.cname(c.c)) + '</span><span class="pill b">' + esc(lg.n) + '</span>' + UI.verBadge(lg.v) + '</div><div class="grid g3" style="margin:.8rem 0"><div class="card" style="margin:0"><h4>Club</h4><dl class="kv"><dt>Entrenador</dt><dd>' + esc(c.co) + '</dd><dt>Fuerza</dt><dd>' + c.st + '</dd><dt>Cantera</dt><dd>' + UI.stars(c.ac * 20) + '</dd><dt>Economía</dt><dd>' + c.fin + '/10</dd></dl></div>' + (pos ? '<div class="card" style="margin:0"><h4>Temporada</h4><dl class="kv"><dt>Puesto</dt><dd>' + pos.pos + '°</dd><dt>Puntos</dt><dd>' + pos.pts + '</dd><dt>PJ</dt><dd>' + pos.p + '</dd><dt>Goles</dt><dd>' + pos.gf + ':' + pos.ga + '</dd></dl></div>' : '') + '<div class="card" style="margin:0"><h4>Acciones</h4>' + (can ? '<button class="btn sm pri" data-act="trial" data-id="' + c.id + '">Pedir prueba en inferiores</button>' : '<span class="mut sm">—</span>') + '</div></div>';
     html += '<div class="row" style="margin:.4rem 0"><button class="btn" data-act="cwiki" data-id="' + c.id + '">Ver artículo del club</button></div>';
+    if (FP.Wages && UI.wageCard) html += UI.wageCard(c);
     html += '<h3>Plantel</h3>' + UI.squadTable(c.id, 'mc_' + c.id);
     UI.modal(html, true);
   };

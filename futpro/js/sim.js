@@ -259,7 +259,7 @@
         else if (p.ce <= endY) {
           var keep = age < 30 ? 0.82 : age < 33 ? 0.6 : 0.35;
           if (p.o < lg.q + club.ra - 9 && age > 24) keep -= 0.35;
-          if (R() < keep) p.ce = endY + U.int(1, 4);
+          if (R() < keep) { p.ce = endY + U.int(1, 4); if (FP.Wages) FP.Wages.renew(p, club); }
           else { p.c = -1; leave = true; p.ce = 0; }
         }
         if (leave) delete S.ro[cid][S.ro[cid].indexOf(p)];
@@ -282,11 +282,11 @@
         while ((cnt[pos] || 0) < MINPOS[pos]) {
           var fa = Sim.pickFreeAgent(club, pos);
           if (!fa) fa = C.genPlayer(club, pos, 1);
-          else { fa.c = cid; fa.ce = endY + U.int(1, 3); }
+          else { fa.c = cid; fa.ce = endY + U.int(1, 3); delete fa.wg; }
           rr.push(fa); cnt[pos] = (cnt[pos] || 0) + 1;
         }
       });
-      while (rr.length < sz) { var pos = C.TEMPLATE[rr.length % C.TEMPLATE.length]; var q = Sim.pickFreeAgent(club, pos) || C.genPlayer(club, pos, 1); if (q.c < 0 || q.c !== cid) { q.c = cid; q.ce = endY + U.int(1, 3); } if (rr.indexOf(q) < 0) rr.push(q); }
+      while (rr.length < sz) { var pos = C.TEMPLATE[rr.length % C.TEMPLATE.length]; var q = Sim.pickFreeAgent(club, pos) || C.genPlayer(club, pos, 1); if (q.c < 0 || q.c !== cid) { q.c = cid; q.ce = endY + U.int(1, 3); delete q.wg; } if (rr.indexOf(q) < 0) rr.push(q); }
       // recortar sobrantes: los peores / más veteranos salen
       if (rr.length > sz + 3) {
         rr.sort(function (a, b) { return (b.o + (b.pt - b.o) * 0.3) - (a.o + (a.pt - a.o) * 0.3); });
@@ -296,6 +296,7 @@
         if (S.hero && extra.length !== rr.length) { /* el héroe nunca se libera aquí */ }
       }
       S.ro[cid] = rr;
+      if (FP.Wages) FP.Wages.initialRoster(club);
       delete FP.Match.cache[cid];
       C.calcStr(club);
     });

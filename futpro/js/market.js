@@ -59,6 +59,7 @@
         var p = S.pl[1 + Math.floor(R() * (S.pl.length - 1))];
         if (!p || p.c < 0 || p.c === buyer.id || p.p !== pos) continue;
         if (FP.Rep && !FP.Rep.aiForeignOK(buyer, p)) continue;
+        if (FP.Wages && !FP.Wages.canSignNpc(p, buyer)) continue;       // el club tiene que poder pagar el sueldo
         var seller = S.clubs[p.c]; if (!seller) continue;
         var age = C.age(p);
         if (p.o < mu - 3 || p.o > mu + 7) continue;
@@ -102,7 +103,7 @@
       if (ro.length >= sz) continue;
       var cnt = {}; ro.forEach(function (p) { cnt[p.p] = (cnt[p.p] || 0) + 1; });
       var pos = C.POS.slice().sort(function (a, b) { return (cnt[a] || 0) - (cnt[b] || 0); })[0];
-      var fa = FP.Sim.pickFreeAgent(club, pos); if (!fa) continue;
+      var fa = FP.Sim.pickFreeAgent(club, pos); if (!fa) continue; if (FP.Wages && !FP.Wages.canSignNpc(fa, club)) continue;
       Market.move(fa, club.id, 0, U.int(1, 3)); C.calcStr(club); n++;
     }
     return n;
