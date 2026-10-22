@@ -38,9 +38,17 @@ t('no hay saltos artificiales: ningún tramo consecutivo sube más de 45 puntos 
 t('con reputación 70 hay más interés extranjero que con 29', R[70].F > R[29].F + 20);
 t('con reputación 50 ya hay algo de interés extranjero o europeo', R[50].F > R[29].F);
 // ---------- B) el mercado nacional sigue vivo con reputación alta ----------
-t('con reputación 85 siguen llegando ofertas de clubes del país (' + Math.round(R[85].H) + ' %)', R[85].H >= 10);
-t('con reputación 85 siguen llegando ofertas de clubes del país de nivel parecido o mejor (' + Math.round(R[85].HB) + ' %)', R[85].HB >= 8);
-t('con reputación 70 el interés del país no desaparece (' + Math.round(R[70].H) + ' %)', R[70].H >= 10);
+// un delantero de 77 en un club mediano tiene pocos clubes nacionales que puedan mejorarle: las ofertas son sobre todo extranjeras, pero los clubes del país no dejan de observarlo
+t('con reputación 85 siguen llegando algunas ofertas de clubes del país (' + Math.round(R[85].H) + ' %)', R[85].H >= 5);
+t('con reputación 70 siguen llegando algunas ofertas de clubes del país (' + Math.round(R[70].H) + ' %)', R[70].H >= 5);
+t('con reputación 70 la mayoría de las ofertas sigue siendo extranjera (' + Math.round(R[70].F) + ' %)', R[70].F >= 60);
+[50, 70, 85].forEach(function (v) {
+  h.rep.int = v; var dI = 0, tI = 0, cov = 0, RUNS = 30, better = S.clubs.filter(function (c) { return c !== cur && hc(c) && c.st >= cur.st - 3; });
+  for (var r = 0; r < RUNS; r++) { h.int = []; h.cd = {}; for (var w = 0; w < 40; w++) { Rep.scoutWeek(S.week); if (U.R() < 0.2) Rep.spark({ played: true, rating: 8.5, g: 2 }); } h.int.forEach(function (e) { tI++; if (hc(S.clubs[e.c])) dI++; }); cov += better.length ? better.filter(function (c) { return Rep.interestOf(c.id) >= 20; }).length / better.length : 1; }
+  console.log('interés nacional con reputación ' + v + ': ' + Math.round(dI / Math.max(tI, 1) * 100) + ' % del interés | clubes del país de nivel parecido o mejor que lo siguen (interés ≥20) ' + Math.round(cov / RUNS * 100) + ' % (' + better.length + ' clubes)');
+  t('con reputación ' + v + ' los clubes del país siguen observándolo: al menos 8 % del interés (' + Math.round(dI / Math.max(tI, 1) * 100) + ' %)', dI / Math.max(tI, 1) >= 0.08);
+  t('con reputación ' + v + ' los clubes del país que pueden mejorarlo lo siguen en al menos 30 % de los casos (' + Math.round(cov / RUNS * 100) + ' %)', !better.length || cov / RUNS >= 0.3);
+});
 // ---------- C) bajar de división: razones deportivas o económicas ----------
 var s0 = Rep.situation(), wk = pool.filter(function (c) { return c.st <= cur.st - 12 && c.c === cc; }), N2 = 3000;
 function gate(club, s, opts) { var n = 0; for (var q = 0; q < N2; q++) if (Rep.lowerGate(club, s, null, opts ? Object.assign({}, opts) : null)) n++; return n / N2 * 100; }

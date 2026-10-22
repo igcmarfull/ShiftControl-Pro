@@ -123,7 +123,7 @@
 
   // ---------- atracción: qué clubes se fijan en el jugador y qué tan atractivas son sus propuestas ----------
   // Los pesos son supuestos de diseño (ver tests/precontratos.js): cercanía geográfica y cultural, nivel del club frente al actual, encaje, visibilidad y prestigio de la liga.
-  Rep.PULL = { home: 2.6, conf: 1.5, far: 0.7, prestige: 0.8, surprise: 0.06, lowerStar: 0.05, lowerBase: 0.12, lowerWant: 0.55, domestic: 0.3 };
+  Rep.PULL = { home: 2.6, conf: 1.5, far: 0.7, prestige: 0.8, surprise: 0.06, lowerStar: 0.05, lowerBase: 0.12, lowerWant: 0.55, domestic: 0.15 };
   Rep.situation = function () {
     var h = Rep.ensure(), age = FP.Hero.age(), pro = h.tk === 'pro' || h.tk === 'loan', role = pro ? FP.Hero.roleLabel() : 'Titular';
     return { h: h, age: age, role: role, star: role === 'Estrella' || role === 'Titular indiscutido', wantMove: role === 'Suplente' || role === 'Rotación' || h.tk === 'free' || !!(h.flags && h.flags.transferReq), cur: h.club != null ? FP.S.clubs[h.club] : null };
