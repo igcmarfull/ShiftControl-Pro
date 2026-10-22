@@ -1,4 +1,4 @@
-/* Precontratos 2: apertura progresiva, mercado nacional y bajadas de nivel de los clubes (js/scouting.js: Rep.pull / pickClub / lowerGate / offerGate; js/contracts.js: K.preOffers).
+/* Precontratos 2: apertura progresiva con la reputación internacional, mercado nacional con fama alta y bajadas de división (js/scouting.js, js/contracts.js).
    Uso: node tests/precontratos2.js   (≈ 8 minutos). Los porcentajes son supuestos de diseño. */
 var H = require('./harness.js'), FP = H.FP, ok = 0, bad = 0;
 function t(name, cond, info) { if (cond) ok++; else { bad++; console.log('FALLA', name, info !== undefined ? info : ''); } }
@@ -14,18 +14,17 @@ t('hay un pool amplio de clubes elegibles (' + pool.length + ')', pool.length > 
 t('no se pone un límite inferior global: el pool incluye clubes muy inferiores', pool.some(function (c) { return c.st <= cur.st - 15; }));
 
 // ---------- 1) reparto del interés ----------
-var mid = sample(function () { h.rep.int = 60; }, 100);
-var mF = frac(mid, function (c) { return c.c !== cc; }), mE = frac(mid, function (c) { return conf(c) === 'UEFA'; }), mS = frac(mid, function (c) { return c.st - cur.st > -6; }), mH = frac(mid, function (c) { return lgq(c) > lgq(cur); });
-console.log('reputación internacional 60: n ' + mid.length + ' | extranjeros ' + Math.round(mF) + ' % | Europa ' + Math.round(mE) + ' % | parecido o mejor ' + Math.round(mS) + ' % | de ligas de mayor calidad ' + Math.round(mH) + ' %');
-t('con fama internacional se generan precontratos (' + mid.length + ')', mid.length >= 30);
-t('con fama internacional llegan ofertas desde Europa (' + Math.round(mE) + ' %)', mE >= 15);
-t('con fama internacional el interés extranjero aparece sin cuotas: al menos 30 % (' + Math.round(mF) + ' %)', mF >= 30);
-t('con fama internacional casi todas las ofertas son de nivel parecido o mejor (' + Math.round(mS) + ' %)', mS >= 85);
-t('con fama internacional una parte importante viene de ligas de mayor calidad (' + Math.round(mH) + ' %)', mH >= 40);
-// quien pide salir recibe más propuestas de clubes inferiores que quien no
-h.flags.transferReq = true; var want = sample(function () { h.rep.int = 50; }, 100); h.flags.transferReq = false; var base50 = sample(function () { h.rep.int = 50; }, 100);
-var wW = frac(want, function (c) { return c.st - cur.st <= -6; }), bW = frac(base50, function (c) { return c.st - cur.st <= -6; });
-console.log('pide salir (int 50): ≥6 por debajo ' + Math.round(wW) + ' % | no pide salir: ' + Math.round(bW) + ' %');
+function sample(setup, runs) {
+  var out = []; h.contract = h.contract || {}; h.contract.endW = S.week + 20;
+  for (var run = 0; run < runs && out.length < 100; run++) {
+    h.int = []; h.cd = {}; h.offers = []; var n = 0; setup();
+    while (n++ < 60 && h.int.filter(function (e) { return e.v >= 40; }).length < 4) { Rep.scoutWeek(S.week); if (U.R() < 0.2) Rep.spark({ played: true, rating: 8.5, g: 2 }); }
+    K.preOffers(); h.offers.filter(function (x) { return x.type === 'precontract'; }).forEach(function (x) { out.push(S.clubs[x.club]); });
+  }
+  return out;
+}
+function frac(list, f) { return list.length ? list.filter(f).length / list.length * 100 : 0; }
+var lgq = function (c) { return FP.LGDEF[c.lg].q; };
 var hc = function (c) { return c.c === cc; };
 // ---------- A) apertura progresiva ----------
 var LV = [29, 35, 40, 45, 50, 60, 70, 85], R = {};
