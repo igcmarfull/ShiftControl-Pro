@@ -29,32 +29,38 @@ t('al menos 30 % del interés viene de clubes de nivel parecido o mejor (' + Mat
 t('hay sorpresas: algún interés viene de clubes muy inferiores (' + Math.round(weak * 10) / 10 + ' %)', weak > 0.3);
 t('los pesos son positivos y finitos', pool.every(function (c) { var w = Rep.pull(c, null, sit); return w > 0 && isFinite(w); }));
 
-// ---------- 2) precontratos ----------
-function sample(sitSetup, runs) {
-  var out = [], cx = K.ensure(); h.contract = h.contract || {}; h.contract.endW = S.week + 20;
-  for (var run = 0; run < runs && out.length < 120; run++) {
-    h.int = []; h.cd = {}; h.offers = []; var n = 0; sitSetup();
+// ---------- 2) precontratos según la reputación internacional ----------
+function sample(setup, runs) {
+  var out = []; h.contract = h.contract || {}; h.contract.endW = S.week + 20;
+  for (var run = 0; run < runs && out.length < 100; run++) {
+    h.int = []; h.cd = {}; h.offers = []; var n = 0; setup();
     while (n++ < 60 && h.int.filter(function (e) { return e.v >= 40; }).length < 4) { Rep.scoutWeek(S.week); if (U.R() < 0.2) Rep.spark({ played: true, rating: 8.5, g: 2 }); }
     K.preOffers(); h.offers.filter(function (x) { return x.type === 'precontract'; }).forEach(function (x) { out.push(S.clubs[x.club]); });
   }
   return out;
 }
 function frac(list, f) { return list.length ? list.filter(f).length / list.length * 100 : 0; }
-var pre = sample(function () { }, 500);
-t('se generan precontratos suficientes para medir (' + pre.length + ')', pre.length >= 60);
-var pF = frac(pre, function (c) { return c.c !== cc; }), pW = frac(pre, function (c) { return c.st - cur.st <= -6; }), pWW = frac(pre, function (c) { return c.st - cur.st <= -15; }), pE = frac(pre, function (c) { return conf(c) === 'UEFA'; }), pS = frac(pre, function (c) { return c.st - cur.st > -6; });
-console.log('precontratos (titular): extranjeros ' + Math.round(pF) + ' % | ≥6 por debajo ' + Math.round(pW) + ' % | ≥15 por debajo ' + Math.round(pWW) + ' % | Europa ' + Math.round(pE) + ' % | parecido o mejor ' + Math.round(pS) + ' %');
-t('precontratos: como mucho 30 % de clubes ≥6 puntos inferiores al actual (antes 65 %) (' + Math.round(pW) + ' %)', pW <= 30);
-t('precontratos: como mucho 8 % de clubes ≥15 puntos inferiores (antes 19 %) (' + Math.round(pWW) + ' %)', pWW <= 8);
-t('precontratos: al menos 55 % de clubes de nivel parecido o mejor (' + Math.round(pS) + ' %)', pS >= 55);
-t('precontratos: siguen llegando de fuera (10-55 %) (' + Math.round(pF) + ' %)', pF >= 10 && pF <= 55);
-t('precontratos: llegan algunos desde Europa (' + Math.round(pE) + ' %)', pE >= 5);
-
-// quien quiere irse recibe más propuestas de clubes inferiores que un titular indiscutido
-var sitStar = Rep.situation; var want = sample(function () { h.flags.transferReq = true; }, 500); h.flags.transferReq = false;
-var wW = frac(want, function (c) { return c.st - cur.st <= -6; });
-console.log('precontratos (quiere irse): ≥6 por debajo ' + Math.round(wW) + ' %');
-t('quien pide salir recibe más propuestas de clubes inferiores que quien no (' + Math.round(wW) + ' % frente a ' + Math.round(pW) + ' %)', want.length < 20 || wW > pW);
+var lgq = function (c) { return FP.LGDEF[c.lg].q; };
+var low = sample(function () { h.rep.int = 29; }, 100);
+var pF = frac(low, function (c) { return c.c !== cc; }), pW = frac(low, function (c) { return c.st - cur.st <= -6; }), pWW = frac(low, function (c) { return c.st - cur.st <= -15; }), pS = frac(low, function (c) { return c.st - cur.st > -6; });
+console.log('reputación internacional 29: n ' + low.length + ' | extranjeros ' + Math.round(pF) + ' % | ≥6 por debajo ' + Math.round(pW) + ' % | ≥15 por debajo ' + Math.round(pWW) + ' % | parecido o mejor ' + Math.round(pS) + ' %');
+t('con poca fama fuera se generan precontratos suficientes para medir (' + low.length + ')', low.length >= 40);
+t('con poca fama fuera: como mucho 15 % de clubes ≥6 puntos inferiores (antes 65 %) (' + Math.round(pW) + ' %)', pW <= 15);
+t('con poca fama fuera: como mucho 5 % de clubes ≥15 puntos inferiores (antes 19 %) (' + Math.round(pWW) + ' %)', pWW <= 5);
+t('con poca fama fuera los precontratos son sobre todo del país (extranjeros ' + Math.round(pF) + ' %): ningún club europeo competitivo puede observarlo', pF <= 25);
+var mid = sample(function () { h.rep.int = 60; }, 100);
+var mF = frac(mid, function (c) { return c.c !== cc; }), mE = frac(mid, function (c) { return conf(c) === 'UEFA'; }), mS = frac(mid, function (c) { return c.st - cur.st > -6; }), mH = frac(mid, function (c) { return lgq(c) > lgq(cur); });
+console.log('reputación internacional 60: n ' + mid.length + ' | extranjeros ' + Math.round(mF) + ' % | Europa ' + Math.round(mE) + ' % | parecido o mejor ' + Math.round(mS) + ' % | de ligas de mayor calidad ' + Math.round(mH) + ' %');
+t('con fama internacional se generan precontratos (' + mid.length + ')', mid.length >= 30);
+t('con fama internacional llegan ofertas desde Europa (' + Math.round(mE) + ' %)', mE >= 15);
+t('con fama internacional el interés extranjero aparece sin cuotas: al menos 30 % (' + Math.round(mF) + ' %)', mF >= 30);
+t('con fama internacional casi todas las ofertas son de nivel parecido o mejor (' + Math.round(mS) + ' %)', mS >= 85);
+t('con fama internacional una parte importante viene de ligas de mayor calidad (' + Math.round(mH) + ' %)', mH >= 40);
+// quien pide salir recibe más propuestas de clubes inferiores que quien no
+h.flags.transferReq = true; var want = sample(function () { h.rep.int = 50; }, 100); h.flags.transferReq = false; var base50 = sample(function () { h.rep.int = 50; }, 100);
+var wW = frac(want, function (c) { return c.st - cur.st <= -6; }), bW = frac(base50, function (c) { return c.st - cur.st <= -6; });
+console.log('pide salir (int 50): ≥6 por debajo ' + Math.round(wW) + ' % | no pide salir: ' + Math.round(bW) + ' %');
+t('quien pide salir recibe más propuestas de clubes inferiores que quien no (' + Math.round(wW) + ' % frente a ' + Math.round(bW) + ' %)', want.length >= 20 && wW > bW);
 
 // ---------- 3) puertas ----------
 var weakClub = pool.filter(function (c) { return c.st <= cur.st - 15; })[0], goodClub = pool.filter(function (c) { return c.st >= cur.st; })[0];
