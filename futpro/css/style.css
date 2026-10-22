@@ -717,3 +717,16 @@ html[data-skin="claro"] .moment-ov { background: radial-gradient(circle at 50% 4
 .fi-box dl { margin: 0; padding: 6px 10px; } .fi-box dt { color: var(--mut); float: left; clear: left; width: 80px; } .fi-box dd { margin: 0 0 3px 84px; }
 .fi-clr { clear: both; }
 @media (max-width: 640px) { .fi-box { float: none; width: auto; margin: 0 0 10px; } }
+
+/* clasificación en la pantalla de partido */
+.mt-wrap { overflow-x: auto; }
+table.mtab { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: .88rem; }
+.mtab th { text-align: left; font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; color: var(--dim); font-weight: 600; padding: .35rem .5rem; border-bottom: 1px solid var(--bd, rgba(128,128,128,.25)); }
+.mtab td { padding: .32rem .5rem; border-bottom: 1px solid var(--bd, rgba(128,128,128,.12)); }
+.mtab th.n, .mtab td.n { text-align: right; }
+.mtab tr.me td { background: rgba(47, 191, 113, .14); }
+.mtab tr.opp td { background: rgba(230, 160, 50, .13); }
+.mtab tr.gap td { text-align: center; color: var(--dim); padding: .1rem; border-bottom: 0; }
+.mtab .tag { font-size: .65rem; padding: .05rem .35rem; border-radius: 999px; background: rgba(128,128,128,.2); color: var(--dim); margin-left: .3rem; }
+.fd { display: inline-block; width: 1.05rem; height: 1.05rem; line-height: 1.05rem; text-align: center; font-style: normal; font-size: .62rem; font-weight: 700; border-radius: 4px; margin-right: 2px; color: #fff; background: #7a8591; }
+.fd.V { background: #1f9d57; } .fd.D { background: #d04545; }

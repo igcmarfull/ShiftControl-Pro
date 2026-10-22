@@ -474,3 +474,7 @@ La Biografía se redacta con un motor determinista que lee el historial real de 
 - **No usa el azar de la partida**: los titulares salen de un hash del partido, el medio y la semana (mismos partidos, mismos titulares), y sin evitar repeticiones en los últimos 30. Probado: con la prensa apagada, estadísticas y estado del azar son idénticos. No se publican titulares de divisiones menores ni amateur.
 - **Guardado**: `h.press` (hasta 160 titulares); las partidas anteriores lo crean al primer partido.
 - **Pendiente**: entrevistas con respuestas elegibles, asistencia al estadio, cánticos y pancartas, directivos que hablan.
+
+## Clasificación en la pantalla de partido
+
+`js/ui-partido-tabla.js` y reglas `.mtab` en `css/style.css`. Antes de jugar y al terminar, la pantalla «Partido» muestra la clasificación de la competición (PJ, G, E, P, DG, Pts) con tu equipo («Tú») y su rival («Rival») resaltados y la forma reciente de ambos. Si la tabla tiene más de 22 equipos, se recorta a los tres primeros, los tres últimos y el entorno de los dos equipos. Solo cambia la interfaz.
