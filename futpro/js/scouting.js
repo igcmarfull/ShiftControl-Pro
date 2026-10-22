@@ -120,6 +120,65 @@
     return { kind: 'none', gap: gap, need: need, ok: false, eff: eff, top: top };
   };
 
+
+  // ---------- atracción: qué clubes se fijan en el jugador y qué tan atractivas son sus propuestas ----------
+  // Los pesos son supuestos de diseño (ver tests/precontratos.js): cercanía geográfica y cultural, nivel del club frente al actual, encaje, visibilidad y prestigio de la liga.
+  Rep.PULL = { home: 2.6, conf: 1.5, far: 0.7, prestige: 0.8, surprise: 0.06, lowerStar: 0.05, lowerBase: 0.12, lowerWant: 0.55 };
+  Rep.situation = function () {
+    var h = Rep.ensure(), age = FP.Hero.age(), pro = h.tk === 'pro' || h.tk === 'loan', role = pro ? FP.Hero.roleLabel() : 'Titular';
+    return { h: h, age: age, role: role, star: role === 'Estrella' || role === 'Titular indiscutido', wantMove: role === 'Suplente' || role === 'Rotación' || h.tk === 'free' || !!(h.flags && h.flags.transferReq), cur: h.club != null ? FP.S.clubs[h.club] : null };
+  };
+  // cercanía del club: mismo país, misma confederación o vínculo de idioma/historia (js/origenes.js); el resto del mundo sigue siendo posible
+  Rep.proximity = function (club) {
+    var P = Rep.PULL, cc = M.heroCountry(), d = FP.DATA.countries, mine = d[cc], theirs = d[club.c];
+    var w = club.c === cc ? P.home : (mine && theirs && mine.conf === theirs.conf) ? P.conf : P.far;
+    if (club.c !== cc && FP.Origenes && FP.Origenes.affinity(cc, club.c, true) >= 4) w = Math.max(w, P.conf);
+    return w;
+  };
+  // peso con el que un club capta el interés: encaje deportivo × nivel frente al club actual × cercanía × prestigio de la liga × visibilidad del jugador
+  Rep.pull = function (club, f, s) {
+    var P = Rep.PULL; s = s || Rep.situation(); f = f || Rep.fit(club);
+    var w = f.need * Math.exp(-Math.abs(f.gap) / 6);
+    if (s.cur) { var d = club.st - s.cur.st; w *= d >= 0 ? 1 + Math.min(d, 10) * 0.04 : Math.exp(d / (s.wantMove ? 14 : 9)); }
+    w *= Rep.proximity(club);
+    w *= 1 + P.prestige * U.clamp((clubTier(club).q - 55) / 20, 0, 1);
+    var ex = Rep.exposure(club); w *= 0.7 + 0.5 * U.clamp((ex.have - ex.need) / 30, 0, 1);
+    return Math.max(w, 1e-6);
+  };
+  // elección ponderada con una pequeña probabilidad de «sorpresa» (elige entre todos los elegibles sin pesos)
+  Rep.pickClub = function (cand, s) {
+    s = s || Rep.situation();
+    if (R() < Rep.PULL.surprise) return U.pick(cand);
+    return U.wpick(cand, function (c) { return Rep.pull(c, null, s); });
+  };
+  // un club claramente inferior solo propone con poca frecuencia: menos si eres titular o estrella, más si quieres irte o ya eres veterano
+  Rep.lowerGate = function (club, s) {
+    var P = Rep.PULL; s = s || Rep.situation();
+    if (!s.cur || club.st >= s.cur.st - 3) return true;
+    var p = s.wantMove ? P.lowerWant : s.star ? P.lowerStar : P.lowerBase;
+    if (s.age >= 31) p += 0.1;
+    if (club.st < s.cur.st - 12) p *= 0.5;
+    return R() < Math.max(p, P.surprise);
+  };
+  // atractivo de la propuesta para el jugador (0 a 1): sueldo frente al actual, minutos esperados, prestigio de la liga y situación contractual
+  Rep.attract = function (club, f, opts) {
+    var s = (opts && opts.s) || Rep.situation(), h = s.h; f = f || Rep.fit(club); opts = opts || {};
+    var cw = h.contract && h.contract.wage ? h.contract.wage : 0, est = opts.wage != null ? opts.wage : Rep.wage(club, 1);
+    var sw = cw > 0 ? U.clamp((est / cw - 0.7) / 1.0, 0, 1) : 0.6;
+    var sm = f.kind === 'project' ? 0.35 : f.gap >= 3 ? 1 : f.gap >= -1 ? 0.55 : 0.2;
+    var sl = s.cur ? U.clamp(0.5 + (clubTier(club).q - clubTier(s.cur).q) / 24, 0, 1) : 0.6;
+    var left = h.contract && h.contract.endW != null ? h.contract.endW - FP.S.week : 999;
+    var sc = opts.pre ? ((FP.Contracts && FP.Contracts.ensure && FP.Contracts.ensure().noRenew) || (FP.Contracts && FP.Contracts.importance && FP.Contracts.importance() < 0.4) ? 1 : 0.7) : (left > 104 && !s.wantMove ? 0.6 : 1);
+    var a = 0.35 * sw + 0.30 * sm + 0.25 * sl + 0.10 * sc;
+    if (s.age >= 31) a = Math.min(1, a + 0.08);          // un veterano acepta propuestas menos brillantes
+    return a;
+  };
+  // ¿el club llega a presentar la propuesta? las poco atractivas son menos frecuentes, pero siempre queda margen para la sorpresa
+  Rep.offerGate = function (club, f, opts) {
+    var a = Rep.attract(club, f, opts);
+    return R() < Math.max(0.5 + 0.5 * a, Rep.PULL.surprise);
+  };
+
   // ---------- seguimiento: ojeadores ----------
   Rep.interestOf = function (clubId) { var e = FP.S.hero.int.filter(function (x) { return x.c === clubId; })[0]; return e ? e.v : 0; };
   Rep.addInterest = function (club, dv, why) {
@@ -147,7 +206,7 @@
       var f = Rep.fit(c); return f.kind !== 'none' && f.ok;
     });
     if (!cand.length) return;
-    var club = U.wpick(cand, function (c) { var f = Rep.fit(c); return f.need * Math.exp(-Math.abs(f.gap) / 6) * (c.c === M.heroCountry() ? 1.5 : 0.8); });
+    var club = Rep.pickClub(cand);
     var why = gr >= 0.5 ? 'por tus goles' : perf >= 7 ? 'por tu rendimiento' : age <= 17 ? 'por tu proyección' : 'por tu nivel';
     var sup = U.clamp((Rep.fit(club).eff - (club.st - 5)) / 18, 0, 1);        // cuanto mejor es el jugador respecto al club, más rápido crece el interés
     Rep.addInterest(club, Math.round(U.int(10, 24) * (1 + sup * 0.8) * (sr && sr <= 3 ? 1.35 : 1)), sr && sr <= 3 ? 'por ser de los máximos goleadores' : why);
@@ -158,7 +217,7 @@
     var S = FP.S, h = Rep.ensure(), age = FP.Hero.age();
     var cand = S.clubs.filter(function (c) { var ex = Rep.exposure(c); if (!ex.ok || !Rep.foreignOK(c, h.nat, age)) return false; var f = Rep.fit(c); return f.ok && f.kind !== 'none'; });
     if (!cand.length) return;
-    Rep.addInterest(U.pick(cand), U.int(6, 16), hm.g >= 2 ? 'tras tu actuación goleadora' : 'tras tu gran partido');
+    Rep.addInterest(Rep.pickClub(cand), U.int(6, 16), hm.g >= 2 ? 'tras tu actuación goleadora' : 'tras tu gran partido');
   };
 
   // ---------- ofertas ----------
@@ -186,11 +245,12 @@
       var f = Rep.fit(club); if (f.kind === 'none' || !f.ok) return;
       // un club que no mejora el nivel actual solo interesa si hay más minutos o más dinero
       var lower = cur && club.st < cur.st - 3, better = !cur || club.st >= cur.st - 1;
-      if (lower && !wantMove && R() > 0.25) return;
+      if (!Rep.lowerGate(club)) return;       // un club claramente inferior propone con poca frecuencia
+      if (!Rep.offerGate(club, f)) return;    // y las propuestas poco atractivas (sueldo, minutos, prestigio) son menos frecuentes
       if (R() > (e.v - 20) / 50) return;
       made++;
       var role = f.kind === 'project' ? 'Proyecto / suplente' : f.gap >= 3 ? 'Titular' : f.gap >= -1 ? 'Rotación' : 'Suplente';
-      var money = lower ? 1.35 + R() * 0.3 : 1;             // un club menor puede ofrecer mejor sueldo
+      var money = lower ? (wantMove ? 1.2 + R() * 0.25 : 1.05 + R() * 0.1) : 1;             // un club menor solo mejora algo el sueldo; más si quieres irte
       var wage = Rep.wage(club, (role === 'Titular' ? 1.15 : role === 'Rotación' ? 1 : 0.75) * money);
       var years = age < 20 ? U.int(3, 5) : age < 30 ? U.int(2, 4) : U.int(1, 2);
       var fee = Math.round(val * (0.8 + R() * 0.45));

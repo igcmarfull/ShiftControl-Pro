@@ -728,6 +728,7 @@
       if (made >= 2) return; var club = S.clubs[e.c]; if (!club) return;
       if (!FP.Rep.exposure(club).ok || !FP.Rep.foreignOK(club, h.nat, age) || !FP.Rep.permit(club)) return;
       var f = FP.Rep.fit(club); if (f.kind === 'none' || !f.ok || f.kind === 'academy') return;
+      if (!FP.Rep.lowerGate(club) || !FP.Rep.offerGate(club, f, { pre: true })) return;       // mismos criterios que las ofertas de traspaso: nivel, sueldo, minutos, liga y situación contractual
       if (R() > (e.v - 30) / 70) return; made++;
       M.addOffer({ type: 'precontract', club: club.id, fee: 0, pre: ct.endW + 1, exp: ct.endW - 2, why: e.why });
     });
