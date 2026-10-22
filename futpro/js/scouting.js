@@ -151,14 +151,17 @@
     if (R() < Rep.PULL.surprise) return U.pick(cand);
     return U.wpick(cand, function (c) { return Rep.pull(c, null, s); });
   };
-  // un club claramente inferior solo propone con poca frecuencia: menos si eres titular o estrella, más si quieres irte o ya eres veterano
-  Rep.lowerGate = function (club, s) {
+  // un club de menor nivel deportivo solo llega a proponer con poca frecuencia: menos si eres titular o estrella, más si quieres irte o eres veterano.
+  // Pero el nivel del equipo no es lo único que cuenta: si la propuesta es muy atractiva (mejor liga, mejor sueldo, más minutos) la puerta se abre más.
+  Rep.lowerGate = function (club, s, f, opts) {
     var P = Rep.PULL; s = s || Rep.situation();
     if (!s.cur || club.st >= s.cur.st - 3) return true;
     var p = s.wantMove ? P.lowerWant : s.star ? P.lowerStar : P.lowerBase;
     if (s.age >= 31) p += 0.1;
-    if (club.st < s.cur.st - 12) p *= 0.5;
-    return R() < Math.max(p, P.surprise);
+    var o = opts || {}; o.s = s; var att = Rep.attract(club, f || Rep.fit(club), o);
+    p += Math.max(0, att - 0.45) * 0.8;                    // ventaja de la propuesta: hasta +0,44
+    if (club.st < s.cur.st - 12) p *= att >= 0.75 ? 0.8 : 0.5;
+    return R() < Math.max(Math.min(p, 0.9), P.surprise);
   };
   // atractivo de la propuesta para el jugador (0 a 1): sueldo frente al actual, minutos esperados, prestigio de la liga y situación contractual
   Rep.attract = function (club, f, opts) {
@@ -245,7 +248,7 @@
       var f = Rep.fit(club); if (f.kind === 'none' || !f.ok) return;
       // un club que no mejora el nivel actual solo interesa si hay más minutos o más dinero
       var lower = cur && club.st < cur.st - 3, better = !cur || club.st >= cur.st - 1;
-      if (!Rep.lowerGate(club)) return;       // un club claramente inferior propone con poca frecuencia
+      if (!Rep.lowerGate(club, null, f)) return;       // un club de menor nivel propone con poca frecuencia, salvo que la propuesta sea muy atractiva
       if (!Rep.offerGate(club, f)) return;    // y las propuestas poco atractivas (sueldo, minutos, prestigio) son menos frecuentes
       if (R() > (e.v - 20) / 50) return;
       made++;
