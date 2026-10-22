@@ -6,11 +6,14 @@
   var NAT_ADV = 2.2;
   // parámetros de realismo del partido (calibrados en tests/partidos.js): ventaja de local, penales, tarjetas, VAR y goles de jugada
   var SW_POS = { ST: 10, LW: 6, RW: 6, AM: 5, CM: 2.4, DM: 1, LB: 1, RB: 1, CB: 1.3, GK: 0.02 };
+  // reparto de remates del partido detallado (el de la IA usa SW_POS en la simulación rápida; son calibraciones distintas, ver tests/equilibrio.js):
+  // el delantero único se lleva ≈ 27-36 % de los goles de su equipo, los extremos ≈ 25 %, la mediapunta y el mediocampo ≈ 20-25 %, los defensas ≈ 10 %
+  var SW_FULL = { ST: 6, LW: 4.5, RW: 4.5, AM: 4.5, CM: 3.4, DM: 2.2, LB: 1.6, RB: 1.6, CB: 2.2, GK: 0.02 };
   var AS_POS = { ST: 3.6, LW: 6, RW: 6, AM: 6, CM: 4, DM: 1.5, LB: 3.2, RB: 3.2, CB: 0.7, GK: 0.05 };
-  var SHOT_BONUS = { ST: 4, LW: 1, RW: 1, AM: 0, CM: -7, DM: -12, LB: -20, RB: -20, CB: -22, GK: -40 };
+  var SHOT_BONUS = { ST: 2, LW: 0, RW: 0, AM: -1, CM: -5, DM: -9, LB: -14, RB: -14, CB: -14, GK: -40 };
 
   var Match = FP.Match = { cache: {} };
-  Match.RL = { homeAdv: 2.0, pen: 0.014, pgMul: 1.28, card: 0.30, pRed: 0.018, varAnnul: 0.04, varFrom: 2018, fullHome: 5.5, lamMul: 1.04 };
+  Match.RL = { homeAdv: 2.0, pen: 0.014, pgMul: 1.30, shotExp: 2.0, card: 0.30, pRed: 0.018, varAnnul: 0.04, varFrom: 2018, fullHome: 5.5, lamMul: 1.04 };
   var HV = null; // vista del jugador durante un partido detallado
 
   function strFor(comp, id) {
@@ -39,7 +42,7 @@
   };
 
   // ----- cachés de goleadores por club -----
-  Match.SCT = { exp: 8, xi: 12, bench: 0.2, rest: 0.03 };       // reparto de goles de la IA entre el plantel (calibrado en tests/goleadores.js)
+  Match.SCT = { exp: 6, xi: 12, bench: 0.2, rest: 0.03 };       // reparto de goles de la IA entre el plantel (calibrado en tests/goleadores.js)
   function swFor(clubId) {
     var c = Match.cache[clubId];
     if (c && c.ro === FP.S.ro[clubId] && c.n === (FP.S.ro[clubId] || []).length) return c;
@@ -263,8 +266,8 @@
     function chooseShooter(sd) {
       var arr = xi[sd].filter(function (e) { return !sent[sd][e.p.i]; });
       return U.wpick(arr, function (e) {
-        var base = SW_POS[e.slot], q = shooterFin(e, sd) / 60;
-        return base * Math.pow(q, 2.5);
+        var base = SW_FULL[e.slot], q = shooterFin(e, sd) / 60;
+        return base * Math.pow(q, RL.shotExp);
       });
     }
     function chooseAssist(sd, shooter) {
@@ -504,7 +507,7 @@
         hm.min = hm.out ? hm.min : (hm.subIn ? Math.max(1, finalMin - hm.subIn + 1) : finalMin);
         if (hm.subOut) hm.min = hm.subOut - (hm.subIn || 0);
         else if (hm.rc && !hm.subOut) hm.min = hm.min - (hm.subIn || 0);
-        if (needW) hm.min += 30;
+        if (needW && !hm.out) hm.min += 30;      // solo suma la prórroga si seguía en el campo (sustituido, lesionado o expulsado no juega los 30 minutos)
         hm.min = U.clamp(hm.min, 1, needW ? 120 : finalMin);
       }
       hm.stam = heroStam;

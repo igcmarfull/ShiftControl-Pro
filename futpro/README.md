@@ -478,3 +478,13 @@ La Biografía se redacta con un motor determinista que lee el historial real de 
 ## Clasificación en la pantalla de partido
 
 `js/ui-partido-tabla.js` y reglas `.mtab` en `css/style.css`. Antes de jugar y al terminar, la pantalla «Partido» muestra la clasificación de la competición (PJ, G, E, P, DG, Pts) con tu equipo («Tú») y su rival («Rival») resaltados y la forma reciente de ambos. Si la tabla tiene más de 22 equipos, se recorta a los tres primeros, los tres últimos y el entorno de los dos equipos. Según el tipo de partido: **liga** y fase de liga continental → tabla; **grupos** de torneos de selecciones → tabla de tu grupo; **eliminatorias** (copas nacionales y continentales) → tu cruce (ida y vuelta con global, fechas y resultados), tu camino hasta aquí y el resto de la ronda. Cada fila lleva escudo o bandera. Solo cambia la interfaz.
+
+## Equilibrio de goles del motor detallado
+
+Resultado de la auditoría (`docs/AUDITORIA_GOLES_MERCADO.md`). Cambios en `js/match.js` y pruebas en `tests/equilibrio.js`:
+
+- **Reparto de goles propio del partido detallado.** El motor detallado (el que juega el protagonista) usa ahora `SW_FULL` y `RL.shotExp` (2,0) en lugar de compartir `SW_POS` con la simulación rápida de la IA, y `SHOT_BONUS` es más suave. Antes el delantero único de cada equipo marcaba el 37-50 % de los goles de su equipo (nivel de máximo goleador para todos) y los defensas casi nada; ahora el delantero marca ≈ 27-36 %, los defensas ≈ 7-13 % y el mediocampo ≈ 12-18 %, con 2,6-2,7 goles por partido (`RL.pgMul` 1,30 mantiene el total). El delantero de la IA pasa de 0,43-0,75 a 0,3-0,5 goles por partido.
+- **Exponente 6 en el reparto de goles de la IA** (`Match.SCT.exp`, antes 8): elimina los goleadores de más de 40 goles (con 6 semillas de 528 temporadas: 3 casos con exponente 8 y 0 con 6) a cambio de ≈ 1,3 goles en el promedio del máximo goleador. `tests/goleadores.js` vuelve a pasar (fallaba con un máximo de 50).
+- **Prórroga**: el protagonista ya no suma los 30 minutos de la prórroga si fue sustituido, lesionado o expulsado antes.
+- **Pruebas nuevas** (`tests/equilibrio.js`, ≈ 10 s): goles por partido, cuota del delantero, defensas y mediocampo en cuatro ligas; delantero de la IA; goles del protagonista por nivel en una liga media, una débil y una fuerte; minutos de prórroga (la prueba detecta el error anterior: 45 de 45 sustituidos mal contados).
+- **No incluido** (propuesto en la auditoría, pendiente): tope a la ventaja del tirador estrella, mezcla del remate con el nivel general, más asistencias del delantero, reputación internacional por calidad de liga y valor escalado por calidad de liga.
