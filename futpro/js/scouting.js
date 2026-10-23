@@ -436,7 +436,7 @@
     (h.trials || []).slice().forEach(function (t) { if (t.w <= w) { M.resolveTrial(t); h.trials.splice(h.trials.indexOf(t), 1); } });
     Rep.weekly();
     Rep.scoutWeek(w);
-    if (FP.Agents && FP.Agents.weekly) FP.Agents.weekly();       // gestión semanal del representante según sus instrucciones (js/agentes.js)
+    if (FP.Agents && FP.Agents.weekly) { FP.Agents.weekly(); FP.Agents.tripWeekly(); }       // gestión semanal del representante según sus instrucciones (js/agentes.js)
     if (h.tk === 'amat' || h.tk === 'free') {
       M.scouting(w); Rep.semiOffers();
       if (h.tk === 'free') Rep.seniorTrials();

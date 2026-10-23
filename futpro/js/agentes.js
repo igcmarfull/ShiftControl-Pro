@@ -273,6 +273,107 @@
     }
     return recoCache.val.slice(0, limit || 5);
   };
+  // ---------- pruebas internacionales gestionadas por el representante (fase 4) ----------
+  // Reutiliza el motor de pruebas (js/tryouts.js: T.tripClubs / T.startTrip / T.finishTrip y M.resolveTrial). El agente NO mejora la probabilidad de superar la prueba:
+  // sus contactos solo influyen en que el club acepte la invitación. Con contrato hace falta la autorización del club del jugador. Valores: supuestos de diseño.
+  Agents.CFG.trip = { perYear: 2, gap: 13, reply: 2, window: 4, decline: 26, authCd: 20, base: 0.10, needW: 0.25, gapW: 0.04, contactW: 0.50, pMax: 0.9, pMin: 0.05 };
+  var T = FP.Tryouts;
+  function hasContract(h) { return (h.tk === 'pro' || h.tk === 'loan' || h.tk === 'academy') && h.club != null; }
+  function tripsLast(b, w) { return (b.trips || []).filter(function (x) { return w - x < 52; }); }
+  // autorización del club para ausentarse: depende de lo importante que eres, del tiempo de contrato que queda y de si ya te negaste a renovar
+  Agents.tripAuthChance = function () {
+    var S = FP.S, h = S.hero, K = FP.Contracts, imp = K.importance(), left = h.contract && h.contract.endW != null ? h.contract.endW - S.week : 999, nr = K.ensure().noRenew;
+    return Math.max(0.05, Math.min(0.95, 0.9 - 0.65 * imp + (left <= 26 ? 0.2 : 0) + (nr ? 0.2 : 0)));
+  };
+  // probabilidad de que un club acepte recibirte: encaje y necesidad del club + contactos del agente en ese país y división (no cambia el resultado de la prueba)
+  Agents.inviteChance = function (club) {
+    var C = Agents.CFG.trip, f = Rep.fit(club), need = Math.max(0, Math.min(1, f.need)), gap = Math.max(-3, Math.min(4, f.gap));
+    return Math.max(C.pMin, Math.min(C.pMax, C.base + C.needW * need + C.gapW * gap + C.contactW * Agents.strength(club)));
+  };
+  // estado y límites para la pantalla
+  Agents.tripStatus = function () {
+    var S = FP.S, h = S.hero, b = agb(), C = Agents.CFG.trip, w = S.week; if (!h.agent || !b) return null;
+    var tr = tripsLast(b, w), last = tr.length ? Math.max.apply(null, tr) : null;
+    return { used: tr.length, cap: C.perYear, nextIn: last != null ? Math.max(0, last + C.gap - w) : 0, req: b.tr || null, authCd: Math.max(0, (b.authCd || 0) - w), contract: hasContract(h), trip: h.ty && h.ty.trip && h.ty.trip.agent ? h.ty.trip : null };
+  };
+  // países y clubes con los que se puede intentar una prueba (mismas reglas del viaje de siempre: nivel, cupos, edad y permisos), ordenados por los contactos del agente
+  Agents.tripOptions = function () {
+    var S = FP.S, h = S.hero, a = Agents.current(), b = agb(), w = S.week; if (!T || !h.agent) return [];
+    return T.tripCountries().map(function (cc) {
+      var clubs = T.tripClubs(cc).filter(function (o) { return o.ok && !((b.declined || {})[o.c.id] > w); });
+      return { c: cc, name: cname(cc), n: clubs.length, contact: a ? a.contacts[cc] || 0 : 0, clubs: clubs.map(function (o) { return { id: o.c.id, nm: o.c.nm, tier: FP.LGDEF[o.c.lg].t, p: o.p, inv: Agents.inviteChance(o.c) }; }) };
+    }).filter(function (x) { return x.n > 0; }).sort(function (x, y) { return y.contact - x.contact || y.n - x.n || x.name.localeCompare(y.name, 'es'); });
+  };
+  // paso 1: el jugador pide pruebas en clubes de un país. Con contrato, primero el club decide si autoriza; después el agente gestiona (consume una gestión efectiva) y los clubes responden
+  Agents.requestTrip = function (cc, ids) {
+    var S = FP.S, h = S.hero, w = S.week, c = Agents.canInstruct(); if (!c.ok) return c;
+    var b = agb(), C = Agents.CFG.trip, age = FP.Hero.age(), BC = Agents.CFG.brief;
+    if (!T) return { ok: false, msg: 'Las pruebas no están disponibles.' };
+    if (age < T.TRIP_MIN_AGE) return { ok: false, msg: 'Los viajes de prueba al extranjero son desde los ' + T.TRIP_MIN_AGE + ' años.' };
+    if (b.tr) return { ok: false, msg: b.tr.acc ? 'Ya tienes invitaciones pendientes de confirmar.' : 'Tu agente ya está gestionando unas pruebas: espera la respuesta de los clubes.' };
+    if (h.ty && h.ty.trip) return { ok: false, msg: 'Ya estás de viaje de prueba.' };
+    if (h.inj && h.inj.n > 0) return { ok: false, msg: 'Estás lesionado.' };
+    var tr = tripsLast(b, w); if (tr.length >= C.perYear) return { ok: false, msg: 'Máximo ' + C.perYear + ' viajes de prueba al año con tu agente.' };
+    var last = tr.length ? Math.max.apply(null, tr) : -999; if (w - last < C.gap) return { ok: false, msg: 'Debes esperar ' + (C.gap - (w - last)) + ' semanas desde tu último viaje.' };
+    if (h.ty && h.ty.tripCd > w) return { ok: false, msg: 'Necesitas recuperarte del viaje: podrás volver a viajar dentro de ' + (h.ty.tripCd - w) + ' semanas.' };
+    b.hist = (b.hist || []).filter(function (x) { return w - x < 52; });
+    if (b.hist.length >= BC.perYear) return { ok: false, msg: 'Tu agente ya agotó sus ' + BC.perYear + ' gestiones de este año.' };
+    ids = (ids || []).filter(function (x, i, arr) { return arr.indexOf(x) === i; });
+    if (!ids.length) return { ok: false, msg: 'Elige al menos un club.' };
+    if (ids.length > T.TRIP_MAX_CLUBS) return { ok: false, msg: 'Máximo ' + T.TRIP_MAX_CLUBS + ' clubes por viaje.' };
+    var opts = T.tripClubs(cc);
+    for (var i = 0; i < ids.length; i++) { var o = opts.filter(function (x) { return x.c.id === ids[i]; })[0]; if (!o) return { ok: false, msg: 'Ese club no está disponible para una prueba con tu nivel.' }; if (!o.ok) return { ok: false, msg: o.c.nm + ' no puede recibirte (' + o.why + ').' }; if ((b.declined || {})[ids[i]] > w) return { ok: false, msg: o.c.nm + ' rechazó hace poco tu solicitud: espera unas semanas.' }; if (o.cool) return { ok: false, msg: o.c.nm + ' te descartó hace poco.' }; }
+    var auth = false;
+    if (hasContract(h)) {
+      if ((b.authCd || 0) > w) return { ok: false, msg: 'Tu club denegó hace poco una ausencia: podrás volver a pedirla dentro de ' + (b.authCd - w) + ' semanas.' };
+      var pa = Agents.tripAuthChance();
+      if (U.R() > pa) { b.authCd = w + C.authCd; h.mor = Math.max(0, h.mor - 2); var why = FP.Contracts.importance() >= 0.6 ? 'te considera importante para el equipo en este momento' : 'prefiere que no te ausentes ahora'; say('tu club no autorizó el viaje de prueba: ' + S.clubs[h.club].nm + ' ' + why + '. Podrás volver a pedirlo dentro de ' + C.authCd + ' semanas.', 'warn', false); return { ok: false, msg: S.clubs[h.club].nm + ' no autoriza que te ausentes.' }; }
+      auth = true;
+    }
+    b.hist.push(w);                                                    // la gestión con los clubes sí cuenta
+    b.tr = { cc: cc, ids: ids.slice(), w: w, resp: w + C.reply, auth: auth, acc: null };
+    say((auth ? S.clubs[h.club].nm + ' autorizó el viaje; ' : '') + 'contactó con ' + ids.length + (ids.length === 1 ? ' club' : ' clubes') + ' de ' + cname(cc) + '. Responderán en ' + C.reply + ' semanas.', 'ok', true);
+    return { ok: true, msg: 'Tu agente está gestionando las pruebas.' };
+  };
+  // paso 2: respuesta de los clubes (semanal). Cada club acepta o no según Agents.inviteChance
+  Agents.tripWeekly = function () {
+    var S = FP.S, h = S.hero, b = h && h.agb; if (!b || !h.agent) { if (b && b.tr) b.tr = null; return; }
+    var C = Agents.CFG.trip, w = S.week, tr = b.tr; if (!tr) return;
+    if (tr.acc) { if (w >= tr.until) { b.tr = null; say('la ventana para viajar a ' + cname(tr.cc) + ' venció sin que confirmaras.', 'i', false); } return; }
+    if (w < tr.resp) return;
+    var acc = [], no = [];
+    tr.ids.forEach(function (id) { var c = S.clubs[id]; if (U.R() < Agents.inviteChance(c)) acc.push(id); else { no.push(c.nm); (b.declined = b.declined || {})[id] = w + C.decline; } });
+    if (!acc.length) { b.tr = null; say('ningún club de ' + cname(tr.cc) + ' aceptó recibirte por ahora (' + no.join(', ') + ').', 'i', false); return; }
+    tr.acc = acc; tr.until = w + C.window;
+    var cost = T.tripCost(tr.cc, acc.length);
+    say(acc.map(function (id) { return S.clubs[id].nm; }).join(', ') + (acc.length === 1 ? ' te invita' : ' te invitan') + ' a probarte' + (no.length ? '; ' + no.join(', ') + ' no ' + (no.length === 1 ? 'aceptó' : 'aceptaron') : '') + '. Viaje de ' + (1 + acc.length) + ' semanas' + (cost ? ' (costo ' + FP.fmt.money(cost) + ')' : '') + '. Confirma en las próximas ' + C.window + ' semanas. Superar la prueba no está garantizado.', 'ok', true);
+  };
+  // paso 3: el jugador confirma o rechaza las invitaciones
+  Agents.confirmTrip = function () {
+    var S = FP.S, h = S.hero, b = agb(), tr = b.tr; if (!tr || !tr.acc) return { ok: false, msg: 'No hay invitaciones pendientes.' };
+    var r = T.startTrip(tr.cc, tr.acc, { agent: true }); if (!r.ok) return r;
+    (b.trips = b.trips || []).push(S.week); b.tr = null; return { ok: true, msg: 'Viaje confirmado.' };
+  };
+  Agents.declineTrip = function () { var b = agb(); if (b.tr) { b.tr = null; say('anuló la gestión de pruebas a petición tuya.', 'i', false); } return { ok: true, msg: 'Pruebas canceladas.' }; };
+  // al salir de viaje con contrato: ausencia autorizada (el jugador no juega esas semanas) y control de lo que se pierde
+  Agents.tripStarted = function (tr) {
+    var S = FP.S, h = S.hero; if (!hasContract(h)) return;
+    var role = FP.Hero.roleLabel(); h.away = { until: tr.w1, starter: role === 'Estrella' || role === 'Titular indiscutido' || role === 'Titular', missed: 0 };
+  };
+  Agents.onAbsence = function (official) { var h = FP.S.hero; if (h.away && official) h.away.missed++; };
+  // consecuencias: la confianza del míster baja solo si eras titular y te perdiste partidos oficiales; sin ausencias no hay consecuencias. Con contrato, las ofertas llevan una indemnización
+  Agents.tripFinished = function (tr, newOffers) {
+    var S = FP.S, h = S.hero, aw = h.away; h.away = null;
+    if (!hasContract(h)) return;
+    if (aw) {
+      var pen = aw.starter ? Math.min(6, 2 * aw.missed) : 0;
+      if (pen) { h.ct = Math.max(5, (h.ct == null ? 50 : h.ct) - pen); say('el viaje te hizo perder ' + aw.missed + (aw.missed === 1 ? ' partido oficial' : ' partidos oficiales') + ' como titular: la confianza del míster baja ' + pen + ' puntos.', 'warn', false); }
+      else say(aw.missed ? 'el viaje te hizo perder ' + aw.missed + (aw.missed === 1 ? ' partido' : ' partidos') + ', pero no eras titular indiscutible: el míster no lo tiene en cuenta.' : 'el viaje no te hizo perder ningún partido oficial: el míster no lo tiene en cuenta.', 'i', true);
+    }
+    var val = FP.Market.heroValue();
+    (newOffers || []).forEach(function (o) { if (o.type === 'transfer' && !o.fee) o.fee = Math.round(val * (0.8 + U.R() * 0.45)); });     // con contrato vigente el club comprador debe pagar un traspaso
+  };
+
   // petición puntual de cesión: el mercado de cesiones existente la considera durante 26 semanas (siguen mandando la ventana, el nivel y los cupos)
   Agents.loanRequested = function () { var h = FP.S && FP.S.hero, b = h && h.agb; return !!(b && h.agent && b.loan > FP.S.week); };
   Agents.askLoan = function () {

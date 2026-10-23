@@ -208,6 +208,7 @@
     var S = FP.S, h = S.hero;
     if (h.inj && h.inj.n > 0) return { role: 'out', why: 'lesionado' };
     if (h.susp > 0) return { role: 'out', why: 'suspendido' };
+    if (h.away && h.away.until > S.week) return { role: 'out', why: 'viaje de prueba autorizado' };      // js/agentes.js: ausencia autorizada por el club
     var tk = h.tk;
     var base = C.ovrOf(h.at, h.pos) - (FP.Tac ? FP.Tac.pen() : 0);
     var fatPen = h.fat > 75 ? (h.fat - 75) * 0.08 : 0;
@@ -474,7 +475,8 @@
       if (hm.rc) { var n = hm.yc && hm.rc && hm.yc >= 2 ? 1 : U.int(1, 3); h.susp = n; h.suspHeld = true; Hero.msg('Expulsado: suspendido ' + n + ' partido' + (n > 1 ? 's' : '') + '.', 'warn'); }
       else if (official && h.season.yc > 0 && h.season.yc % 5 === 0 && hm.yc) { h.susp = 1; h.suspHeld = true; Hero.msg('Acumulación de tarjetas amarillas: 1 partido de suspensión.', 'warn'); }
     } else if (prep.status.role === 'bench' || prep.status.role === 'out') {
-      h.mor = U.clamp(h.mor - (h.tk === 'amat' ? 0 : prep.status.role === 'out' && !prep.status.why.match(/lesion|suspend/) ? 3 : 1), 0, 100);
+      h.mor = U.clamp(h.mor - (h.tk === 'amat' || prep.status.why === 'viaje de prueba autorizado' ? 0 : prep.status.role === 'out' && !prep.status.why.match(/lesion|suspend|viaje/) ? 3 : 1), 0, 100);
+      if (prep.status.why === 'viaje de prueba autorizado' && FP.Agents) FP.Agents.onAbsence(official);
       h.fat = U.clamp(h.fat - 4, 0, 100);
     }
     if (official && h.susp > 0 && !h.suspHeld && prep.status.why === 'suspendido') { h.susp--; }
