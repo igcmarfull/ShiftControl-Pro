@@ -549,3 +549,25 @@ Resultado de la auditoría (`docs/AUDITORIA_GOLES_MERCADO.md`). Cambios en `js/m
 - **Salida**: buscar titularidad con el agente **no** activa `transferReq`. Declarar la salida es un botón aparte (`Market.requestTransfer`: más receptivos los clubes, pero −5 de ánimo).
 - **Sin cambios**: `Rep.fit`, `lowerGate`, `offerGate`, sueldos, visibilidad (solo contactos) y `Rep.PULL.domestic = 0,10`. Sin instrucciones el juego es idéntico a la fase 2 (huella de 104 semanas igual en dos semillas, mismo RNG).
 - **Medición** (30 temporadas de 40 semanas por celda, instrucción «Inglaterra» + titular, agente inglés de divisiones inferiores): clubes ingleses que lo siguen por temporada 0,9 → 4,3 (nivel 55), 0,7 → 3,8 (nivel 70), 0,8 → 3,7 (nivel 85); ofertas totales 0,03 → 0,03, 0,13 → 0,03 y 0,63 → 0,97; ofertas inglesas ≈ 0 → ≈ 0. El interés sube mucho porque la gestión añade entradas pequeñas; las ofertas no, porque las puertas siguen igual.
+
+## Continuidad de la búsqueda del representante (fase 3b)
+
+Cambios en `Agents.weekly` y `Agents.decay` (`js/agentes.js`) y una línea en `Rep.weekly` (`js/scouting.js`). Estado: `h.agb.tg` (lista de objetivos). Herramientas: `tools/auditoria/agentes-continuidad.js` (y `-traza.js`). Pruebas nuevas en `tests/agentes3.js` (67).
+
+- **Problema medido**: con gestiones repartidas entre clubes distintos, el interés de cada club apenas pasaba de ~20 (el umbral para que el mercado considere una oferta es 38) y se enfriaba (0,7 por semana) antes de la siguiente gestión: con nivel 70 solo el 3 % de las temporadas tenía algún club de la 3.ª inglesa con interés ≥ 38 y el 2 % ofertas de esa división.
+- **Lista de objetivos**: el agente cultiva 2 clubes (a veces 3). Una gestión es contacto nuevo (con la tirada de éxito de siempre) o insistencia con un objetivo; la tirada solo decide si aparece un contacto nuevo, de modo que una tirada fallida no desperdicia la gestión. La insistencia suma 12–24 puntos y el interés de un objetivo se enfría a 0,35 por semana en lugar de 0,7 mientras duran las instrucciones.
+- **Cierre y abandono**: cuando el club ya lo sigue de cerca (≥ 38) el objetivo se cierra y el agente lo informa («ahora depende de que el club presente una propuesta»); si un objetivo deja de ser posible (no te conoce, cupos/edad, te descartó, ya no encaja) se abandona explicando el motivo. Cambiar las instrucciones o de agente vacía la lista. Se mantienen 6 gestiones en 52 semanas, 1 cada 4.
+- **No cambia**: las puertas (`Rep.fit`, `lowerGate`, `offerGate`), la visibilidad, los sueldos ni `Rep.PULL.domestic`. Una oferta sigue necesitando interés ≥ 38 y superar todas esas puertas. Sin instrucciones el enfriamiento y todo lo demás son los de la fase 3.
+- **Medición** (60 temporadas de 52 semanas por celda, instrucción «3.ª división inglesa + titular», agente inglés de divisiones inferiores, reputación fija, misma semilla en cada brazo; supuestos de diseño):
+
+| Nivel | Brazo | Interés máx. en la 3.ª inglesa | Temporadas con algún club ≥ 38 | Temporadas con oferta de la 3.ª inglesa | Ofertas totales por temporada |
+|---|---|---|---|---|---|
+| 70 | sin agente | 8,9 | 0 % | 0 % | 0,08 |
+| 70 | gestiones sueltas | 21,3 | 3 % | 2 % | 0,10 |
+| 70 | lista de objetivos | 40,6 | 63 % | 53 % | 0,72 |
+| 85 | sin agente | 11,3 | 7 % | 5 % | 1,00 |
+| 85 | gestiones sueltas | 22,7 | 15 % | 7 % | 1,03 |
+| 85 | lista de objetivos | 40,2 | 65 % | 58 % | 1,82 |
+
+  El resultado es el mismo con el rol forzado a Titular o a Estrella. Es un efecto fuerte para quien pide explícitamente un destino y no garantiza nada (en cerca de la mitad de las temporadas no llega ninguna oferta de esa división). Para suavizarlo, los parámetros son `CFG.brief.dvInsist`, `warm`, `fill` y `third`.
+- **Error de medición corregido**: una primera versión del script llamaba a `Rep.weekly()` cada semana y la reputación del jugador de prueba se arrastraba hasta perder visibilidad en Inglaterra; los resultados mostraban un agente aparentemente inútil. El script ahora solo enfría el interés.

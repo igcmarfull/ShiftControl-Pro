@@ -226,6 +226,7 @@
     var t = tg.filter(function (x) { return x.c === club.id; })[0]; if (t) { t.push++; t.last = w; }
     Rep.addInterest(club, dv, 'gestión de tu representante');
     var v = Math.round(Rep.interestOf(club.id));
+    if (v >= C.close) { b.tg = tg.filter(function (x) { return x.c !== club.id; }); say(club.nm + ' (' + cname(club.c) + ') ya te sigue de cerca (interés ' + v + '): ahora depende de que el club presente una propuesta.', 'ok', true); return; }
     say(isNew && !(t && t.push > 1) ? 'movió tu perfil en ' + club.nm + ' (' + cname(club.c) + '). Todavía no es una oferta.' : 'insistió con ' + club.nm + ' (' + cname(club.c) + '): su interés sube a ' + v + ' de ' + C.close + '.', 'ok', true);
   };
   // petición puntual de cesión: el mercado de cesiones existente la considera durante 26 semanas (siguen mandando la ventana, el nivel y los cupos)

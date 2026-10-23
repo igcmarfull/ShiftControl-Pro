@@ -81,6 +81,23 @@ t('un nivel muy inferior explica que ningún club lo necesita (' + m3 + ')', /si
 setOvr(70);
 // precontrato: no hay gestión
 h.agb = null; h.rep.int = 45; hire(engLow); A.setBrief('pais:ENG', ''); K.ensure().pre = { club: 1, w: S.week + 10 }; var bb = A.brief(), last0 = bb.last; S.week += 6; A.weekly(); t('con un precontrato firmado el agente no gestiona', bb.last === last0); K.ensure().pre = null;
+// ---------- 4b) continuidad: lista de objetivos ----------
+S.week = sw0 + 800; setAge(23); h.rep.int = 45; h.int = []; h.cd = {}; h.offers = []; h.agb = null; hire(engLow); A.setBrief('liga:ENG3', 'titular'); var bt = A.brief(), warm = true, offT = h.offers.length, maxT = 0, pushes = {}, closed = 0, gests = 0;
+for (w = 0; w < 52; w++) { S.week++; var nh = bt.hist.length; A.weekly(); if (bt.hist.length > nh) gests++; h.int.forEach(function (e) { e.v -= A.decay(e.c); }); h.int = h.int.filter(function (e) { return e.v >= 5; }); if (bt.tg.length && S.week < bt.until) warm = warm && A.decay(bt.tg[0].c) === 0.35; maxT = Math.max(maxT, bt.tg.length); bt.tg.forEach(function (x) { pushes[x.c] = Math.max(pushes[x.c] || 0, x.push); }); }
+t('la lista de objetivos nunca supera 3 clubes (máximo ' + maxT + ')', maxT <= 3 && maxT >= 1);
+t('el agente insiste con el mismo club más de una vez', Object.keys(pushes).some(function (k) { return pushes[k] >= 2; }), JSON.stringify(pushes));
+t('las seis gestiones se reparten en objetivos, no en clubes siempre distintos (' + gests + ' gestiones, ' + Object.keys(pushes).length + ' clubes)', gests <= 6 && Object.keys(pushes).length <= gests);
+t('un objetivo cultivado se enfría más despacio (0,35) mientras duran las instrucciones', warm);
+t('un club que no es objetivo se enfría al ritmo de siempre (0,7)', A.decay(-5) === 0.7);
+t('la insistencia no crea ofertas', h.offers.length === offT);
+t('los informes explican la insistencia o el cierre', h.agb.log.some(function (x) { return /insistió|ya te sigue de cerca/.test(x.t); }));
+t('ningún informe dice «interés N de 38» con N ≥ 38', h.agb.log.every(function (x) { var m = /interés sube a (\d+) de 38/.exec(x.t); return !m || +m[1] < 38; }));
+// un objetivo que deja de ser posible se abandona con su motivo
+h.agb = null; hire(engLow); A.setBrief('liga:ENG3', 'titular'); var bd = A.brief(); S.week += 8; h.int = []; h.cd = {}; h.rep.int = 45; for (w = 0; w < 6 && !bd.tg.length; w++) { S.week += 4; A.weekly(); }
+var tgc = bd.tg[0] && bd.tg[0].c; if (tgc != null) { h.cd[tgc] = S.week + 50; S.week += 4; A.weekly(); t('un objetivo que te descarta se abandona y el agente lo explica', !bd.tg.some(function (x) { return x.c === tgc; }) && h.agb.log.some(function (x) { return /dejó de insistir con/.test(x.t); })); } else t('hubo un objetivo para probar el abandono', false);
+// cambiar de instrucciones o de agente vacía los objetivos
+S.week += 30; A.setBrief('liga:ENG4', ''); t('cambiar las instrucciones vacía la lista de objetivos', A.brief().tg.length === 0);
+A.brief().tg.push({ c: 1, since: 0, push: 1, last: 0 }); A.hire({ nm: loc.nm, lvl: loc.lvl, com: loc.com, id: loc.id }); t('cambiar de agente vacía la lista de objetivos', h.agb.tg.length === 0);
 // ---------- 5) cesión y renovación ----------
 setAge(20); h.tk = 'pro'; h.club = cur.id; h.team = cur.id; h.agb = null; hire(engLow);
 var rl = A.askLoan(); t('pedir una cesión a los 20 años funciona (' + rl.msg + ')', rl.ok);
