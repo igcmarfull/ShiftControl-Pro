@@ -68,7 +68,7 @@
     var h = Rep.ensure(); if (!h) return;
     var t = Rep.targets(), r = h.rep;
     ['loc', 'nat', 'int'].forEach(function (k) { r[k] += (t[k] - r[k]) * (t[k] > r[k] ? 0.05 : 0.025); r[k] = Math.round(r[k] * 100) / 100; });
-    h.int.forEach(function (e) { e.v -= 0.7; });
+    h.int.forEach(function (e) { e.v -= FP.Agents ? FP.Agents.decay(e.c) : 0.7; });       // un club que el representante cultiva se enfría más despacio (js/agentes.js)
     h.int = h.int.filter(function (e) { return e.v >= 5; });
   };
   // exposición del jugador frente a un club (qué tan conocido es allí)
