@@ -125,7 +125,7 @@
     if (h.agent) html += '<div class="terms" style="grid-template-columns:repeat(3,1fr)"><div><span>Nombre</span><b>' + esc(h.agent.nm) + '</b></div><div><span>Nivel</span><b class="rep">' + UI.stars(h.agent.lvl * 20) + '</b></div><div><span>Comisión</span><b>' + h.agent.com + '% de sueldo y bonos</b></div></div><p class="mut sm" style="margin:.6rem 0">Más nivel: más ofertas y mejores condiciones.</p>' + (FP.Agents && FP.Agents.current() ? '<p class="mut sm">' + esc(FP.Agents.current().desc) + '</p>' : '') + '<button class="btn sm" data-act="dropagent">Despedir</button>';
     else if (FP.Hero.age() < 15) html += '<p class="mut">Podrás contratar un representante desde los 15 años.</p>';
     else html += '<p class="mut sm">Un representante consigue más y mejores ofertas, a cambio de una comisión.</p>' + M.agentCandidates().map(function (a, i) { return '<div class="hrow"><div class="grow"><b>' + esc(a.nm) + '</b> <span class="tag-gen">generado</span><br><span class="rep">' + UI.stars(a.lvl * 20) + '</span> <span class="mut sm">comisión ' + a.com + '%</span>' + (a.desc ? '<br><span class="mut sm">' + esc(a.desc) + '</span>' : '') + '</div><button class="btn sm pri" data-act="hire" data-i="' + i + '">Contratar</button></div>'; }).join('');
-    return html + '</div>';
+    return html + (UI.agentBrief ? UI.agentBrief() : '') + '</div>';
   }
 
   // ---------- historial ----------

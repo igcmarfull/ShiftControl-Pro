@@ -145,7 +145,7 @@
     w *= Rep.proximity(club);
     w *= 1 + P.prestige * U.clamp((clubTier(club).q - 55) / 20, 0, 1);
     var ex = Rep.exposure(club); w *= 0.7 + 0.5 * U.clamp((ex.have - ex.need) / 30, 0, 1);
-    if (FP.Agents) w *= FP.Agents.pullBoost(club);              // los clubes donde el representante tiene contactos siguen más de cerca al jugador
+    if (FP.Agents) w *= FP.Agents.pullBoost(club) * FP.Agents.briefWeight(club, f);              // los clubes donde el representante tiene contactos siguen más de cerca al jugador
     return Math.max(w, 1e-6);
   };
   // elección ponderada con una pequeña probabilidad de «sorpresa» (elige entre todos los elegibles sin pesos).
@@ -275,19 +275,23 @@
     });
     // cesiones: jugadores jóvenes sin minutos en clubes de mayor nivel (del país o del extranjero cuando es legal)
     var few = h.season && h.season.ap < 8 && w - (h.startW || 0) > 30;
-    if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur && !Rep.coolOn(w) && (roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'academy' && age >= 17 || age <= 21 && few || age <= 20 && cur.st >= h.ovr + 3) && M.isWindow(w) && R() < 0.3) {
-      var cc = M.heroCountry(), eff = h.ovr - FP.Youth.adultPenalty(age);
-      var opts = S.clubs.filter(function (c) {
-        if (c === cur || !Rep.exposure(c).ok) return false;
-        if (c.c === cc) return c.st <= h.ovr + 4 && c.st >= h.ovr - 14 && clubTier(c).t >= clubTier(cur).t;
-        return age >= 18 && clubTier(c).t <= 2 && c.st <= eff + 2 && c.st >= eff - 10 && Rep.foreignOK(c, h.nat, age) && Rep.permit(c);
-      });
+    if ((h.tk === 'pro' || h.tk === 'academy') && age <= 23 && cur && !Rep.coolOn(w) && (roleNow === 'Suplente' || roleNow === 'Rotación' || h.tk === 'academy' && age >= 17 || age <= 21 && few || age <= 20 && cur.st >= h.ovr + 3 || FP.Agents && FP.Agents.loanRequested()) && M.isWindow(w) && R() < 0.3) {
+      var cc = M.heroCountry(), opts = Rep.loanClubs(cur, age);
       if (opts.length && !h.offers.some(function (o) { return o.type === 'loan'; })) {
-        var lc = U.pick(opts);
+        var lc = FP.Agents && FP.Agents.loanRequested() ? U.wpick(opts, function (c) { return FP.Agents.briefWeight(c, null); }) : U.pick(opts);
         M.addOffer({ type: 'loan', club: lc.id, years: 1, wage: 0, role: 'Con minutos', text: lc.nm + (lc.c !== cc ? ' (' + C.cname(lc.c) + ')' : '') + ' solicita tu cesión por una temporada para darte minutos. Regresas a ' + cur.nm + ' al terminar.', exp: w + 5 });
       }
     }
     return made;
+  };
+  // clubes que pueden recibir al jugador cedido (mismas reglas de siempre; también las usa el representante para explicar por qué no hay cesiones)
+  Rep.loanClubs = function (cur, age) {
+    var S = FP.S, h = S.hero, cc = M.heroCountry(), eff = h.ovr - FP.Youth.adultPenalty(age);
+    return S.clubs.filter(function (c) {
+      if (c === cur || !Rep.exposure(c).ok) return false;
+      if (c.c === cc) return c.st <= h.ovr + 4 && c.st >= h.ovr - 14 && clubTier(c).t >= clubTier(cur).t;
+      return age >= 18 && clubTier(c).t <= 2 && c.st <= eff + 2 && c.st >= eff - 10 && Rep.foreignOK(c, h.nat, age) && Rep.permit(c);
+    });
   };
   M.transferOffers = function (freeAgent) { return Rep.offers(freeAgent); };
   // Durante toda la ventana de fichajes (no solo la primera semana) los clubes interesados pueden presentar oferta; tope de 3 por ventana.
@@ -432,6 +436,7 @@
     (h.trials || []).slice().forEach(function (t) { if (t.w <= w) { M.resolveTrial(t); h.trials.splice(h.trials.indexOf(t), 1); } });
     Rep.weekly();
     Rep.scoutWeek(w);
+    if (FP.Agents && FP.Agents.weekly) FP.Agents.weekly();       // gestión semanal del representante según sus instrucciones (js/agentes.js)
     if (h.tk === 'amat' || h.tk === 'free') {
       M.scouting(w); Rep.semiOffers();
       if (h.tk === 'free') Rep.seniorTrials();
