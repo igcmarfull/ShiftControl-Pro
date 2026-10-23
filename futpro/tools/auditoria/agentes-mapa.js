@@ -23,7 +23,7 @@ function mapa(ovr, intv, agentObj) {
   return by;
 }
 function tot(by, k) { return Object.keys(by).reduce(function (a, c) { return a + by[c][k]; }, 0); }
-[[58, 25], [58, 45], [70, 25], [70, 45]].forEach(function (p) {
+(process.env.CASOS ? JSON.parse(process.env.CASOS) : [[58, 25], [58, 45], [70, 25], [70, 45]]).forEach(function (p) {
   var base = mapa(p[0], p[1], null), n = tot(base, 'n');
   console.log('\n=== jugador chileno de 21 años, nivel ' + h.ovr + ', reputación internacional ' + p[1] + ' (sin representante) ===');
   console.log('clubes del mundo ' + n + ' → que lo conocen (visibilidad) ' + tot(base, 'vis') + ' → que pueden ficharlo (cupos, edad, permiso) ' + tot(base, 'ok') + ' → que además encajan deportivamente ' + tot(base, 'fit'));
