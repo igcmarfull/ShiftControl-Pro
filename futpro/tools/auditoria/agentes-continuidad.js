@@ -15,7 +15,7 @@ var engLow = agent('lowerdiv', 'ENG'), elite = agent('elite'), loc = agent('loca
 function hire(a) { h.agent = a ? { nm: a.nm, lvl: a.lvl, com: a.com, id: a.id, since: S.week } : null; if (a && h.agb) { h.agb.dest = null; h.agb.prio = null; h.agb.loan = 0; } }
 
 function setAge(n) { h.b = Math.round(S.week - (n + 0.4) * 52.1775); S.pl[0].b = h.b; }
-h.tk = 'pro'; h.club = cur.id; h.team = cur.id; var CB = A.CFG.brief, RUNS = +process.env.RUNS || 60; if (process.env.CFG) Object.assign(CB, JSON.parse(process.env.CFG)); var LV = (process.env.LEVELS || '55,70,85').split(',').map(Number), ARMS = (process.env.ARMS || 'none,legacy,objetivos').split(','), TAG = process.env.TAG || '';
+h.tk = 'pro'; h.club = cur.id; h.team = cur.id; if (process.env.ROLE) FP.Hero.roleLabel = function () { return process.env.ROLE; }; console.log('rol del jugador de prueba: ' + FP.Hero.roleLabel()); var CB = A.CFG.brief, RUNS = +process.env.RUNS || 60; if (process.env.CFG) Object.assign(CB, JSON.parse(process.env.CFG)); var LV = (process.env.LEVELS || '55,70,85').split(',').map(Number), ARMS = (process.env.ARMS || 'none,legacy,objetivos').split(','), TAG = process.env.TAG || '';
 function season(ovr, arm, r) {
   setAge(23); setOvr(ovr); h.rep.int = 45; var w0 = S.week; S.rs = 5000 + r * 7;
   h.agb = null; hire(arm === 'none' ? null : engLow); if (arm !== 'none') { CB.maxTargets = arm === 'objetivos' ? 3 : 0; A.setBrief('liga:ENG3', 'titular'); }
