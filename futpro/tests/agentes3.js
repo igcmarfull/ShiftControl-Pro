@@ -101,6 +101,22 @@ var tgc = bd.tg[0] && bd.tg[0].c; if (tgc != null) { h.cd[tgc] = S.week + 50; S.
 // cambiar de instrucciones o de agente vacía los objetivos
 S.week += 30; A.setBrief('liga:ENG4', ''); t('cambiar las instrucciones vacía la lista de objetivos', A.brief().tg.length === 0);
 A.brief().tg.push({ c: 1, since: 0, push: 1, last: 0 }); A.hire({ nm: loc.nm, lvl: loc.lvl, com: loc.com, id: loc.id }); t('cambiar de agente vacía la lista de objetivos', h.agb.tg.length === 0);
+// ---------- 4c) recomendación de destinos ----------
+S.week = sw0 + 900; setAge(23); setOvr(60); h.rep.int = 30; h.cd = {}; h.agb = null; hire(engLow);
+var rs2 = S.rs, rec = A.recommend(5), rec2 = A.recommend(5);
+t('la recomendación de destinos no consume el RNG', S.rs === rs2);
+t('la recomendación es determinista y cacheada para el mismo estado', JSON.stringify(rec) === JSON.stringify(rec2));
+t('recomienda como mucho 5 destinos, ordenados por clubes de nivel parecido o superior', rec.length > 0 && rec.length <= 5 && rec.every(function (x, i) { return i === 0 || rec[i - 1].up >= x.up; }), JSON.stringify(rec.map(function (x) { return x.name + x.up; })));
+var curC = S.clubs[h.club], ageR = FP.Hero.age();
+function possible(country) { return S.clubs.filter(function (c) { if (c === curC || c.c !== country || !Rep.exposure(c).ok || h.cd[c.id] > S.week || !Rep.foreignOK(c, h.nat, ageR) || !Rep.permit(c)) return false; var f = Rep.fit(c); return f.kind !== 'none' && f.ok; }); }
+t('cada destino recomendado cuenta exactamente los clubes que cumplen visibilidad, cupos, edad, permiso y encaje', rec.every(function (x) { var l = possible(x.c); return l.length === x.n && l.filter(function (c) { return c.st >= curC.st - 3; }).length === x.up; }));
+t('el tipo de contacto del agente aparece en cada destino', rec.every(function (x) { return /^(alta|media|baja|ninguno)$/.test(x.contact); }));
+var allCountries = {}; S.clubs.forEach(function (c) { if (possible(c.c).length) allCountries[c.c] = 1; });
+t('no se omite ningún país con clubes posibles que sea mejor que el último recomendado', (function () { var last = rec[rec.length - 1]; return Object.keys(allCountries).every(function (c) { if (rec.some(function (x) { return x.c === c; })) return true; var l = possible(c), up = l.filter(function (k) { return k.st >= curC.st - 3; }).length; return up < last.up || (up === last.up && l.length <= last.n); }); })());
+hire(null); h.agent = null; t('sin representante no hay recomendaciones', A.recommend(5).length === 0);
+hire(engLow); h.agb = null; var rb = A.setBrief('pais:' + rec[0].c, 'titular'); t('«Buscar aquí» fija el destino recomendado como instrucción', rb.ok && A.brief().dest.arg === rec[0].c);
+var repSave = { i: h.rep.int, l: h.rep.loc, n: h.rep.nat }; h.rep.int = 3; h.rep.loc = 3; h.rep.nat = 3; var lowRec = A.recommend(5); t('con reputación mínima la recomendación no inventa destinos (' + lowRec.length + ')', lowRec.every(function (x) { return x.n === possible(x.c).length; }));
+h.rep.int = repSave.i; h.rep.loc = repSave.l; h.rep.nat = repSave.n; A.setBrief('any', ''); S.week = sw0;
 // ---------- 5) cesión y renovación ----------
 setAge(20); h.tk = 'pro'; h.club = cur.id; h.team = cur.id; h.agb = null; hire(engLow);
 var rl = A.askLoan(); t('pedir una cesión a los 20 años funciona (' + rl.msg + ')', rl.ok);

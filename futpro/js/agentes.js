@@ -251,6 +251,28 @@
     }
     return st;
   };
+  // recomendación de destinos: dónde hay hoy clubes que pueden ficharte (visibilidad con tus contactos, cupos, edad, permisos y encaje deportivo).
+  // Solo lee el mercado (no consume el RNG ni cambia nada); se ordena primero por los clubes de nivel parecido o superior, que son los que de verdad suelen hacer ofertas.
+  var recoCache = { key: null, val: null };
+  Agents.recommend = function (limit) {
+    var S = FP.S, h = S && S.hero; if (!h || !h.agent) return [];
+    var cur = h.club != null ? S.clubs[h.club] : null, age = FP.Hero.age(), r = h.rep || {};
+    var key = [S.week, h.ovr, r.loc, r.nat, r.int, h.agent.id, h.club, h.tk].join('|');
+    if (recoCache.key !== key) {
+      var by = {}, a = Agents.current();
+      S.clubs.forEach(function (c) {
+        if (c === cur || !Rep.exposure(c).ok || h.cd[c.id] > S.week || !Rep.foreignOK(c, h.nat, age) || !Rep.permit(c)) return;
+        var f = Rep.fit(c); if (f.kind === 'none' || !f.ok) return;
+        var o = by[c.c] || (by[c.c] = { c: c.c, n: 0, up: 0 }); o.n++; if (!cur || c.st >= cur.st - 3) o.up++;
+      });
+      recoCache.val = Object.keys(by).map(function (c) {
+        var ct = a ? a.contacts[c] || 0 : 0, o = by[c];
+        return { c: c, name: cname(c), n: o.n, up: o.up, contact: ct >= 0.6 ? 'alta' : ct >= 0.3 ? 'media' : ct > 0 ? 'baja' : 'ninguno' };
+      }).sort(function (x, y) { return y.up - x.up || y.n - x.n || x.name.localeCompare(y.name, 'es'); });
+      recoCache.key = key;
+    }
+    return recoCache.val.slice(0, limit || 5);
+  };
   // petición puntual de cesión: el mercado de cesiones existente la considera durante 26 semanas (siguen mandando la ventana, el nivel y los cupos)
   Agents.loanRequested = function () { var h = FP.S && FP.S.hero, b = h && h.agb; return !!(b && h.agent && b.loan > FP.S.week); };
   Agents.askLoan = function () {
