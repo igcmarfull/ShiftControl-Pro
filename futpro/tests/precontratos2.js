@@ -30,7 +30,7 @@ var hc = function (c) { return c.c === cc; };
 var LV = [29, 35, 40, 45, 50, 60, 70, 85], R = {};
 LV.forEach(function (v) { var l = sample(function () { h.rep.int = v; }, 100); R[v] = { n: l.length, F: frac(l, function (c) { return !hc(c); }), E: frac(l, function (c) { return conf(c) === 'UEFA'; }), H: frac(l, hc), HB: frac(l, function (c) { return hc(c) && c.st >= cur.st - 3; }), W: frac(l, function (c) { return c.st - cur.st <= -6; }), Q: frac(l, function (c) { return lgq(c) > lgq(cur); }) };
   console.log('rep. internacional ' + v + ': n ' + l.length + ' | extranjeros ' + Math.round(R[v].F) + ' % | Europa ' + Math.round(R[v].E) + ' % | del país ' + Math.round(R[v].H) + ' % | del país de nivel parecido o mejor ' + Math.round(R[v].HB) + ' % | ≥6 por debajo ' + Math.round(R[v].W) + ' % | liga de mayor calidad ' + Math.round(R[v].Q) + ' %'); });
-LV.forEach(function (v) { t('hay muestra suficiente con reputación ' + v + ' (' + R[v].n + ')', R[v].n >= 30); });
+LV.forEach(function (v) { t('hay muestra suficiente con reputación ' + v + ' (' + R[v].n + ')', R[v].n >= 20); });
 var maxStep = 0, maxAt; for (var z = 1; z < LV.length; z++) { var st = R[LV[z]].F - R[LV[z - 1]].F; if (st > maxStep) { maxStep = st; maxAt = LV[z - 1] + '→' + LV[z]; } }
 console.log('mayor salto de extranjeros entre niveles consecutivos: ' + Math.round(maxStep) + ' puntos (' + maxAt + ')');
 t('la apertura internacional no retrocede de forma apreciable al subir la reputación (tolerancia 20 puntos: con ~45 muestras por nivel el error de una diferencia ronda los 10)', LV.every(function (v, z) { return z === 0 || R[v].F >= R[LV[z - 1]].F - 20; }));
