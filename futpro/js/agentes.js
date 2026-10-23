@@ -179,7 +179,7 @@
   // gestión semanal: como mucho una cada 4 semanas y 6 en 52 semanas.
   // El agente cultiva una lista corta de clubes objetivo (2 y, a veces, 3): primero contacta, después insiste con los mismos clubes (la insistencia pesa más y el interés de
   // un objetivo se enfría más despacio) hasta que el club lo sigue de cerca o deja de ser posible. Con maxTargets = 0 vuelve a repartir cada gestión en un club distinto.
-  Agents.CFG.brief.maxTargets = 3; Agents.CFG.brief.fill = 2; Agents.CFG.brief.third = 0.3; Agents.CFG.brief.dvInsist = [12, 24]; Agents.CFG.brief.warm = 0.35; Agents.CFG.brief.close = 38; Agents.CFG.brief.pInsist = 0;
+  Agents.CFG.brief.maxTargets = 3; Agents.CFG.brief.fill = 2; Agents.CFG.brief.third = 0.3; Agents.CFG.brief.dvInsist = [12, 24]; Agents.CFG.brief.warm = 0.35; Agents.CFG.brief.close = 38;
   // ritmo al que se enfría el interés de un club (0,7 por semana; la mitad si es objetivo activo del representante)
   Agents.decay = function (clubId) {
     var b = Agents.brief(), C = Agents.CFG.brief; if (!b || !C.maxTargets || !b.tg) return 0.7;
@@ -214,23 +214,19 @@
     if (!st.cand.length && !tg.length) { say('sin oportunidades por ahora: ' + reason(st.n, b.dest) + '.', 'i', false); return; }
     var a = Agents.current(), cs = 0; st.cand.forEach(function (c) { cs += Agents.strength(c); }); cs /= Math.max(1, st.cand.length);
     var p = Math.min(0.75, C.p0 + C.pl * (a ? a.lvl : h.agent.lvl) + 0.2 * cs);
-    var fresh = C.maxTargets && tg.length && !(tg.length < C.fill || tg.length < C.maxTargets && U.R() < C.third) ? null : true;     // ¿contacto nuevo o insistencia?
-    if (C.maxTargets && tg.length && !fresh) p = Math.min(0.9, p + C.pInsist);           // con un club que ya conoce el caso, el agente tiene más probabilidades de ser escuchado
-    if (U.R() > p) { say(fresh || !tg.length ? 'sondeó ' + st.n[3] + ' clubes de ' + Agents.destLabel(b.dest) + ' que podrían ficharte, pero ninguno se movió esta vez.' : 'insistió con ' + S.clubs[tg[0].c].nm + ', pero no obtuvo respuesta por ahora.', 'i', false); return; }
-    var club, dv;
-    if (!C.maxTargets || fresh) {
+    // la tirada solo decide si aparece un contacto nuevo; insistir con un club objetivo ya abierto no depende de la suerte (y una tirada fallida no desperdicia la gestión)
+    var needNew = !C.maxTargets || !tg.length || tg.length < C.fill || (tg.length < C.maxTargets && U.R() < C.third), club = null, dv = 0, isNew = false;
+    if (needNew && st.cand.length && U.R() <= p) {
       var free = st.cand.filter(function (c) { return !tg.some(function (t) { return t.c === c.id; }); });
-      club = Rep.pickClub(free.length ? free : st.cand); if (!club) return;
-      dv = U.int(C.dv[0], C.dv[1]);
-      if (C.maxTargets && !tg.some(function (t) { return t.c === club.id; })) tg.push({ c: club.id, since: w, push: 0, last: w });
-    } else {
-      tg.sort(function (x, y) { return x.last - y.last; });
-      club = S.clubs[tg[0].c]; dv = U.int(C.dvInsist[0], C.dvInsist[1]);
+      club = Rep.pickClub(free.length ? free : st.cand); isNew = !!club;
+      if (club) { dv = U.int(C.dv[0], C.dv[1]); if (C.maxTargets && !tg.some(function (t) { return t.c === club.id; })) tg.push({ c: club.id, since: w, push: 0, last: w }); }
     }
+    if (!club && tg.length) { tg.sort(function (x, y) { return x.last - y.last; }); club = S.clubs[tg[0].c]; dv = U.int(C.dvInsist[0], C.dvInsist[1]); }
+    if (!club) { say('sondeó ' + st.n[3] + ' clubes de ' + Agents.destLabel(b.dest) + ' que podrían ficharte, pero ninguno se movió esta vez.', 'i', false); return; }
     var t = tg.filter(function (x) { return x.c === club.id; })[0]; if (t) { t.push++; t.last = w; }
     Rep.addInterest(club, dv, 'gestión de tu representante');
     var v = Math.round(Rep.interestOf(club.id));
-    say(t && t.push > 1 ? 'insistió con ' + club.nm + ' (' + cname(club.c) + '): su interés sube a ' + v + ' de ' + C.close + '.' : 'movió tu perfil en ' + club.nm + ' (' + cname(club.c) + '). Todavía no es una oferta.', 'ok', true);
+    say(isNew && !(t && t.push > 1) ? 'movió tu perfil en ' + club.nm + ' (' + cname(club.c) + '). Todavía no es una oferta.' : 'insistió con ' + club.nm + ' (' + cname(club.c) + '): su interés sube a ' + v + ' de ' + C.close + '.', 'ok', true);
   };
   // petición puntual de cesión: el mercado de cesiones existente la considera durante 26 semanas (siguen mandando la ventana, el nivel y los cupos)
   Agents.loanRequested = function () { var h = FP.S && FP.S.hero, b = h && h.agb; return !!(b && h.agent && b.loan > FP.S.week); };

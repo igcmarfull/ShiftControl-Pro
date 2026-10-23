@@ -21,7 +21,7 @@ function season(ovr, arm, r) {
   h.agb = null; hire(arm === 'none' ? null : engLow); if (arm !== 'none') { CB.maxTargets = arm === 'objetivos' ? 3 : 0; A.setBrief('liga:ENG3', 'titular'); }
   h.int = []; h.cd = {}; h.offers = []; var maxV = 0, reach = 0, oe = 0, ot = 0, oAny = 0;
   for (var k = 0; k < 52; k++) {
-    S.week++; Rep.scoutWeek(S.week); A.weekly(); if (U.R() < 0.2) Rep.spark({ played: true, rating: 8.5, g: 2 }); Rep.weekly();
+    S.week++; Rep.scoutWeek(S.week); A.weekly(); if (U.R() < 0.2) Rep.spark({ played: true, rating: 8.5, g: 2 }); h.int.forEach(function (e) { e.v -= A.decay(e.c); }); h.int = h.int.filter(function (e) { return e.v >= 5; });       // solo el enfriamiento del interés: la reputación se mantiene fija
     var best = 0; h.int.forEach(function (e) { var c = S.clubs[e.c]; if (c.lg === 'ENG3' && e.v > best) best = e.v; }); if (best > maxV) maxV = best; if (best >= 38) reach = 1;
     if (k >= 12 && k % 2 === 0) { h.contract = { wage: 40, endW: S.week + 80, role: 'Titular' }; h.offers = []; Rep.offers(false, 3); var os = h.offers.filter(function (x) { return x.club != null; }); ot += os.length; var e2 = os.filter(function (x) { return S.clubs[x.club].lg === 'ENG3'; }).length; oe += e2; if (e2) oAny = 1; }
   }
