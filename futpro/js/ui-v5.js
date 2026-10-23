@@ -121,6 +121,7 @@
     return html + '</div>';
   }
   function agentCard() {
+    if (FP.S.hero.agent && UI.agentCenter) return UI.agentCenter();           // centro de gestión (js/ui-agentes.js)
     var h = FP.S.hero, html = '<div class="card"><div class="hd"><h3>' + I('user') + 'Representante</h3></div>';
     if (h.agent) html += '<div class="terms" style="grid-template-columns:repeat(3,1fr)"><div><span>Nombre</span><b>' + esc(h.agent.nm) + '</b></div><div><span>Nivel</span><b class="rep">' + UI.stars(h.agent.lvl * 20) + '</b></div><div><span>Comisión</span><b>' + h.agent.com + '% de sueldo y bonos</b></div></div><p class="mut sm" style="margin:.6rem 0">Más nivel: más ofertas y mejores condiciones.</p>' + (FP.Agents && FP.Agents.current() ? '<p class="mut sm">' + esc(FP.Agents.current().desc) + '</p>' : '') + '<button class="btn sm" data-act="dropagent">Despedir</button>';
     else if (FP.Hero.age() < 15) html += '<p class="mut">Podrás contratar un representante desde los 15 años.</p>';

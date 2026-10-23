@@ -155,7 +155,7 @@
     var pr = PRIO.indexOf(prio) >= 0 ? prio : null;
     if (!d && !pr) { b.dest = null; b.prio = null; b.until = 0; return { ok: true, msg: 'Retiraste las instrucciones: tu agente vuelve a mirar todo el mercado.' }; }
     if (S.week - b.set < C.change) return { ok: false, msg: 'Acabas de dar instrucciones: tu agente pide esperar ' + (C.change - (S.week - b.set)) + ' semanas antes de cambiarlas.' };
-    b.dest = d; b.prio = pr; b.set = S.week; b.until = S.week + C.dur; b.tg = [];
+    b.dest = d; b.prio = pr; b.set = S.week; b.until = S.week + C.dur; b.tg = []; b.won = []; b.drops = [];
     return { ok: true, msg: 'Instrucciones dadas: ' + (d ? 'destino ' + Agents.destLabel(d) : 'cualquier destino') + (pr ? ', prioridad: ' + Agents.PRIO_LABEL[pr] : '') + '. Duran ' + C.dur + ' semanas. No garantizan ofertas.' };
   };
   // diagnóstico por etapas de los clubes del destino: por qué no hay oportunidades
@@ -201,17 +201,19 @@
     b.hist = b.hist.filter(function (x) { return w - x < 52; });
     if (b.hist.length >= C.perYear) return;
     if (FP.Contracts && FP.Contracts.ensure().pre) return;           // con un precontrato firmado no se aceptan más propuestas
-    b.last = w; b.hist.push(w);
+    b.last = w;                                                       // ritmo: un intento cada 4 semanas; solo cuenta como gestión efectiva si hay algo que hacer (más abajo)
     var cur = h.club != null ? S.clubs[h.club] : null, pool = S.clubs.filter(function (c) { return Agents.matches(c, b.dest); }), st = stages(pool, cur, age);
     var tg = b.tg = C.maxTargets ? (b.tg || []) : [];
     // revisión de objetivos: los que ya te siguen de cerca pasan al club; los que dejaron de ser posibles se abandonan con su motivo
     tg = b.tg = tg.filter(function (t) {
       var c = S.clubs[t.c], why = whyNot(c, cur, age);
-      if (why) { say('dejó de insistir con ' + c.nm + ': ' + why + '.', 'i', false); return false; }
-      if (Rep.interestOf(c.id) >= C.close) { say(c.nm + ' ya te sigue de cerca (interés ' + Math.round(Rep.interestOf(c.id)) + '): ahora depende de que el club presente una propuesta.', 'ok', true); return false; }
+      if (why) { say('dejó de insistir con ' + c.nm + ': ' + why + '.', 'i', false); (b.drops = b.drops || []).unshift({ c: c.id, w: w, why: why }); if (b.drops.length > 8) b.drops.length = 8; return false; }
+      if (Rep.interestOf(c.id) >= C.close) { (b.won = b.won || []).unshift({ c: c.id, w: w, v: Math.round(Rep.interestOf(c.id)) }); if (b.won.length > 6) b.won.length = 6; say(c.nm + ' ya te sigue de cerca (interés ' + Math.round(Rep.interestOf(c.id)) + '): ahora depende de que el club presente una propuesta.', 'ok', true); return false; }
       return true;
     });
-    if (!st.cand.length && !tg.length) { say('sin oportunidades por ahora: ' + reason(st.n, b.dest) + '.', 'i', false); return; }
+    b.diag = { w: w, n: st.n.slice() };                                // para la pantalla: cuántos clubes del destino pasan cada etapa
+    if (!st.cand.length && !tg.length) { say('sin oportunidades por ahora: ' + reason(st.n, b.dest) + '. No cuenta como gestión.', 'i', false); return; }
+    b.hist.push(w);                                                    // contacto, insistencia o contacto rechazado: sí es una gestión efectiva
     var a = Agents.current(), cs = 0; st.cand.forEach(function (c) { cs += Agents.strength(c); }); cs /= Math.max(1, st.cand.length);
     var p = Math.min(0.75, C.p0 + C.pl * (a ? a.lvl : h.agent.lvl) + 0.2 * cs);
     // la tirada solo decide si aparece un contacto nuevo; insistir con un club objetivo ya abierto no depende de la suerte (y una tirada fallida no desperdicia la gestión)
@@ -226,8 +228,28 @@
     var t = tg.filter(function (x) { return x.c === club.id; })[0]; if (t) { t.push++; t.last = w; }
     Rep.addInterest(club, dv, 'gestión de tu representante');
     var v = Math.round(Rep.interestOf(club.id));
-    if (v >= C.close) { b.tg = tg.filter(function (x) { return x.c !== club.id; }); say(club.nm + ' (' + cname(club.c) + ') ya te sigue de cerca (interés ' + v + '): ahora depende de que el club presente una propuesta.', 'ok', true); return; }
+    if (v >= C.close) { b.tg = tg.filter(function (x) { return x.c !== club.id; }); (b.won = b.won || []).unshift({ c: club.id, w: w, v: v }); if (b.won.length > 6) b.won.length = 6; say(club.nm + ' (' + cname(club.c) + ') ya te sigue de cerca (interés ' + v + '): ahora depende de que el club presente una propuesta.', 'ok', true); return; }
     say(isNew && !(t && t.push > 1) ? 'movió tu perfil en ' + club.nm + ' (' + cname(club.c) + '). Todavía no es una oferta.' : 'insistió con ' + club.nm + ' (' + cname(club.c) + '): su interés sube a ' + v + ' de ' + C.close + '.', 'ok', true);
+  };
+  // resumen para la pantalla del representante: todo sale del estado guardado (h.agb) y de los datos del juego
+  Agents.status = function () {
+    var S = FP.S, h = S.hero, b = h && h.agb, a = Agents.current(); if (!h || !h.agent) return null;
+    var C = Agents.CFG.brief, w = S.week, act = Agents.brief(), hist = ((b && b.hist) || []).filter(function (x) { return w - x < 52; });
+    var st = { active: !!act, left: act ? Math.max(0, act.until - w) : 0, effective: hist.length, cap: C.perYear, targets: [], won: [], drops: [], max: C.maxTargets, next: null, fit: null, diag: null, agent: a };
+    if (act) {
+      st.next = hist.length >= C.perYear ? { capped: Math.max(1, Math.min.apply(null, hist) + 52 - w) } : { weeks: Math.max(0, b.last + C.every - w) };
+      (act.tg || []).forEach(function (t) { st.targets.push({ club: S.clubs[t.c], v: Rep.interestOf(t.c), push: t.push }); });
+      st.won = (act.won || []).slice(0, 4).map(function (d) { return { club: S.clubs[d.c], w: d.w, v: d.v }; });
+      st.drops = (act.drops || []).slice(0, 4).map(function (d) { return { club: S.clubs[d.c], w: d.w, why: d.why }; });
+      if (act.diag) st.diag = { n: act.diag.n, w: act.diag.w };
+      if (act.dest) {
+        var pool = S.clubs.filter(function (c) { return Agents.matches(c, act.dest); }), sum = 0, known = 0;
+        pool.forEach(function (c) { var x = Agents.strength(c); sum += x; if (x > 0) known++; });
+        var avg = pool.length ? sum / pool.length : 0;
+        st.fit = { label: avg >= 0.4 ? 'alta' : avg >= 0.15 ? 'media' : avg > 0 ? 'baja' : 'sin contactos', known: known, total: pool.length };
+      }
+    }
+    return st;
   };
   // petición puntual de cesión: el mercado de cesiones existente la considera durante 26 semanas (siguen mandando la ventana, el nivel y los cupos)
   Agents.loanRequested = function () { var h = FP.S && FP.S.hero, b = h && h.agb; return !!(b && h.agent && b.loan > FP.S.week); };
@@ -268,7 +290,7 @@
     pickFrom(function (a) { return a.kind === 'joven' || a.kind === 'local'; });
     return out.sort(function (a, b) { return a.lvl - b.lvl || a.id.localeCompare(b.id); }).map(function (a) { return { id: a.id, nm: a.nm + ' (agente)', lvl: a.lvl, com: a.com, desc: a.desc, spec: a.spec, kind: a.kind }; });
   };
-  Agents.hire = function (c) { var h = FP.S.hero; h.agent = { nm: c.nm, lvl: c.lvl, com: c.com, id: c.id, since: FP.S.week }; if (h.agb) { h.agb.dest = null; h.agb.prio = null; h.agb.loan = 0; h.agb.tg = []; } };
+  Agents.hire = function (c) { var h = FP.S.hero; h.agent = { nm: c.nm, lvl: c.lvl, com: c.com, id: c.id, since: FP.S.week }; if (h.agb) { h.agb.dest = null; h.agb.prio = null; h.agb.loan = 0; h.agb.tg = []; h.agb.won = []; h.agb.drops = []; } };
 
   // ---------- migración de partidas anteriores ----------
   // el representante antiguo {nm, lvl, com} se conserva tal cual y se enlaza con una entrada del mundo

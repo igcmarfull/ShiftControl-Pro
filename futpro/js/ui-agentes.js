@@ -28,6 +28,27 @@
     if (h.agb && h.agb.log.length) html += '<div class="sm"><b>Últimos informes</b>' + h.agb.log.slice(0, 5).map(function (x) { return '<div class="mut">' + esc(FP.Date.fmt ? FP.Date.fmt(x.w) : 'sem. ' + x.w) + ' · ' + esc(x.t) + '</div>'; }).join('') + '</div>';
     return html + '</div>';
   };
+  // centro de gestión: el representante a la izquierda y su actividad a la derecha
+  function tile(v, label) { return '<div class="card" style="padding:.6rem;text-align:center"><b style="font-size:1.25rem">' + v + '</b><div class="mut sm">' + label + '</div></div>'; }
+  function clubLine(c) { return esc(c.nm) + ' <span class="mut sm">(' + esc(FP.DATA.countries[c.c].n) + ')</span>'; }
+  UI.agentCenter = function () {
+    var S = FP.S, h = S.hero, st = Ag.status(), a = st.agent, ag = h.agent, fx = FP.Hero.age() < 15;
+    var info = a ? '<p class="mut sm" style="margin:.4rem 0">' + esc(a.desc) + '</p>' : '';
+    var left = '<div><div class="terms" style="grid-template-columns:1fr;gap:.4rem"><div><span>Nombre</span><b>' + esc(ag.nm) + '</b></div><div><span>Nivel</span><b class="rep">' + UI.stars(ag.lvl * 20) + '</b></div><div><span>Comisión</span><b>' + ag.com + '% de sueldo y bonos</b></div></div>' + info +
+      (a ? '<div class="sm mut">Contactos: ' + Object.keys(a.contacts).sort(function (x, y) { return a.contacts[y] - a.contacts[x]; }).slice(0, 4).map(function (c) { return esc(FP.DATA.countries[c].n); }).join(', ') + '</div>' : '') +
+      '<p class="mut sm" style="margin:.6rem 0">Más nivel: más ofertas y mejores condiciones.</p><button class="btn sm" data-act="dropagent">Despedir</button></div>';
+    var chip = st.active ? '<span class="chip" style="background:rgba(34,197,94,.14)">Buscando oportunidades</span>' : '<span class="chip">Sin instrucciones</span>';
+    var next = !st.active ? '—' : st.next.capped ? 'sin gestiones hasta dentro de ' + st.next.capped + ' sem.' : st.next.weeks > 0 ? 'en ' + st.next.weeks + ' sem.' : 'esta semana';
+    var right = '<div><div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.6rem"><b>Actividad</b>' + chip + '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">' + tile(st.targets.length + '/' + st.max, 'clubes objetivo') + tile(st.effective + '/' + st.cap, 'gestiones efectivas') + tile(st.active ? st.left + ' sem.' : '—', 'instrucción vigente') + '</div>' +
+      '<div class="sm" style="margin:.6rem 0"><span class="mut">Próxima gestión:</span> ' + next + '</div>';
+    if (st.fit) right += '<div class="sm" style="margin-bottom:.4rem"><span class="mut">Especialidad y destino:</span> contactos <b>' + st.fit.label + '</b> (' + st.fit.known + ' de ' + st.fit.total + ' clubes de ' + esc(Ag.destLabel(Ag.brief().dest)) + ')</div>';
+    if (st.diag) right += '<div class="sm" style="margin-bottom:.4rem"><span class="mut">Clubes que hoy cumplen tus requisitos en el destino:</span> ' + st.diag.n[3] + ' de ' + st.diag.n[0] + ' <span class="mut">(visibles ' + st.diag.n[1] + ', pueden ficharte ' + st.diag.n[2] + ')</span></div>';
+    right += '<div class="tag" style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;margin:.6rem 0 .2rem" >Clubes que sigue</div>' + (st.targets.length ? st.targets.map(function (t) { var pct = Math.min(100, Math.round(t.v / 38 * 100)); return '<div class="sm" style="margin:.3rem 0"><div style="display:flex;justify-content:space-between"><span>' + clubLine(t.club) + '</span><span class="mut">interés ' + Math.round(t.v) + ' de 38 · ' + t.push + (t.push === 1 ? ' contacto' : ' contactos') + '</span></div><div style="height:.35rem;border-radius:.3rem;background:rgba(127,127,127,.25);overflow:hidden"><i style="display:block;height:100%;width:' + pct + '%;background:#2aa3a0"></i></div></div>'; }).join('') : '<div class="mut sm">Todavía ninguno.</div>') +
+      '<div class="tag" style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;margin:.6rem 0 .2rem">Ya te siguen de cerca</div>' + (st.won.length ? st.won.map(function (d) { return '<div class="sm">' + clubLine(d.club) + ' <span class="mut">· interés ' + d.v + ' (' + esc(FP.Date.fmt(d.w)) + '): depende de que el club presente propuesta</span></div>'; }).join('') : '<div class="mut sm">Todavía ninguno.</div>') +
+      '<div class="tag" style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;margin:.6rem 0 .2rem">Clubes que se alejaron</div>' + (st.drops.length ? st.drops.map(function (d) { return '<div class="sm">' + clubLine(d.club) + ' <span class="mut">· ' + esc(d.why) + ' (' + esc(FP.Date.fmt(d.w)) + ')</span></div>'; }).join('') : '<div class="mut sm">Ninguno por ahora.</div>') + '</div>';
+    return '<div class="card"><div class="hd"><h3>' + UI.icon('user') + 'Representante</h3></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem">' + left + right + '</div>' + UI.agentBrief() + '</div>';
+  };
   A.agdest = function (d, t) { (UI.filt.ag = UI.filt.ag || {}).dest = t.value; };
   A.agprio = function (d, t) { (UI.filt.ag = UI.filt.ag || {}).prio = t.value; };
   function done(r) { UI.toast(esc(r.msg), r.ok ? 'ok' : 'warn'); UI.filt.ag = null; UI.render(); }

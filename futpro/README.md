@@ -571,3 +571,11 @@ Cambios en `Agents.weekly` y `Agents.decay` (`js/agentes.js`) y una línea en `R
 
   El resultado es el mismo con el rol forzado a Titular o a Estrella. Es un efecto fuerte para quien pide explícitamente un destino y no garantiza nada (en cerca de la mitad de las temporadas no llega ninguna oferta de esa división). Para suavizarlo, los parámetros son `CFG.brief.dvInsist`, `warm`, `fill` y `third`.
 - **Error de medición corregido**: una primera versión del script llamaba a `Rep.weekly()` cada semana y la reputación del jugador de prueba se arrastraba hasta perder visibilidad en Inglaterra; los resultados mostraban un agente aparentemente inútil. El script ahora solo enfría el interés.
+
+## Gestiones efectivas y centro de gestión del representante (fase 3c)
+
+`Agents.weekly`, `Agents.status` (`js/agentes.js`) y `UI.agentCenter` (`js/ui-agentes.js`, llamado desde la tarjeta «Representante» de `js/ui-v5.js`).
+
+- **Regla de gestiones** (corrige un fallo de la fase 3b): antes cada intento semanal se contabilizaba aunque no hubiera ningún club elegible. Ahora el ritmo (un intento cada 4 semanas) y la **gestión efectiva** (máximo 6 en 52 semanas) están separados. Una búsqueda sin candidatos informa («No cuenta como gestión») y no gasta ninguna; un contacto, aunque no obtenga respuesta, y una insistencia con un club objetivo sí cuentan.
+- **Centro de gestión**: el representante a la izquierda (nombre, nivel, comisión, especialidad y contactos) y su actividad a la derecha: clubes objetivo (n/3), gestiones efectivas (n/6), semanas de instrucción vigentes, próxima gestión (o «sin gestiones hasta dentro de N semanas» si llegó al máximo), cuánto encaja su especialidad con el destino (contactos alta/media/baja/sin contactos) y cuántos clubes del destino cumplen hoy tus requisitos (visibles, pueden ficharte, encajan deportivamente), los clubes que sigue (con barra de interés hacia 38), los que ya te siguen de cerca y los que se alejaron con su motivo. Todo sale del estado guardado (`h.agb`: `tg`, `won`, `drops`, `diag`, `hist`).
+- **Pruebas**: `tests/agentes3.js` (70): sin candidatos no consume, no reintenta antes de 4 semanas y el resumen coincide con el estado guardado.

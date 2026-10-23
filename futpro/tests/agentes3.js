@@ -73,6 +73,8 @@ t('sin instrucciones el representante no gestiona nada ni consume el RNG', S.rs 
 function reasonFor(setup, dest, prio) { S.week += 60; setAge(23); h.agb = null; h.int = []; h.cd = {}; setup(); hire(engLow); A.setBrief(dest, prio); var b = A.brief(); S.week += 5; A.weekly(); return h.agb.log[0] && h.agb.log[0].t; }
 var m1 = reasonFor(function () { h.rep.int = 5; }, 'pais:ENG', '');
 t('sin reputación suficiente explica que ningún club lo conoce (' + m1 + ')', /sin oportunidades/.test(m1) && /te conoce|reputación/.test(m1));
+t('una búsqueda sin candidatos informa pero NO consume una gestión efectiva (' + h.agb.hist.length + ')', h.agb.hist.length === 0 && /No cuenta como gestión/.test(m1));
+var lastNo = h.agb.last; S.week += 3; A.weekly(); t('sin candidatos el agente no reintenta antes de 4 semanas', h.agb.last === lastNo && h.agb.hist.length === 0);
 var m2 = reasonFor(function () { h.rep.int = 80; setAge(16); }, 'pais:ENG', '');
 t('un menor sin traslado permitido: explica cupos o edad (' + m2 + ')', /sin oportunidades/.test(m2) && /cupos|edad/.test(m2));
 setAge(23);
@@ -83,7 +85,8 @@ setOvr(70);
 h.agb = null; h.rep.int = 45; hire(engLow); A.setBrief('pais:ENG', ''); K.ensure().pre = { club: 1, w: S.week + 10 }; var bb = A.brief(), last0 = bb.last; S.week += 6; A.weekly(); t('con un precontrato firmado el agente no gestiona', bb.last === last0); K.ensure().pre = null;
 // ---------- 4b) continuidad: lista de objetivos ----------
 S.week = sw0 + 800; setAge(23); h.rep.int = 45; h.int = []; h.cd = {}; h.offers = []; h.agb = null; hire(engLow); A.setBrief('liga:ENG3', 'titular'); var bt = A.brief(), warm = true, offT = h.offers.length, maxT = 0, pushes = {}, closed = 0, gests = 0;
-for (w = 0; w < 52; w++) { S.week++; var nh = bt.hist.length; A.weekly(); if (bt.hist.length > nh) gests++; h.int.forEach(function (e) { e.v -= A.decay(e.c); }); h.int = h.int.filter(function (e) { return e.v >= 5; }); if (bt.tg.length && S.week < bt.until) warm = warm && A.decay(bt.tg[0].c) === 0.35; maxT = Math.max(maxT, bt.tg.length); bt.tg.forEach(function (x) { pushes[x.c] = Math.max(pushes[x.c] || 0, x.push); }); }
+for (w = 0; w < 52; w++) { S.week++; var nh = bt.hist.length; A.weekly(); if (bt.hist.length > nh) gests++; h.int.forEach(function (e) { e.v -= A.decay(e.c); }); h.int = h.int.filter(function (e) { return e.v >= 5; }); if (bt.tg.length && S.week < bt.until) warm = warm && A.decay(bt.tg[0].c) === 0.35; if (w === 12) { var stAt = A.status(), hAt = bt.hist.length, tAt = bt.tg.length; } maxT = Math.max(maxT, bt.tg.length); bt.tg.forEach(function (x) { pushes[x.c] = Math.max(pushes[x.c] || 0, x.push); }); }
+t('el resumen de la pantalla sale del estado guardado (gestiones, objetivos, instrucción vigente)', stAt && stAt.effective === hAt && stAt.targets.length === tAt && stAt.active && stAt.left > 0 && stAt.cap === 6 && stAt.max === 3 && stAt.next && stAt.fit && stAt.fit.label, stAt);
 t('la lista de objetivos nunca supera 3 clubes (máximo ' + maxT + ')', maxT <= 3 && maxT >= 1);
 t('el agente insiste con el mismo club más de una vez', Object.keys(pushes).some(function (k) { return pushes[k] >= 2; }), JSON.stringify(pushes));
 t('las seis gestiones se reparten en objetivos, no en clubes siempre distintos (' + gests + ' gestiones, ' + Object.keys(pushes).length + ' clubes)', gests <= 6 && Object.keys(pushes).length <= gests);
