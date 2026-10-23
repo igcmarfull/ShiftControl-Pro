@@ -452,10 +452,11 @@
     var h = FP.S.hero, c = Market.agentCandidates()[i];
     if (!c) return { ok: false, msg: 'Representante no disponible.' };
     if (FP.Hero.age() < 15) return { ok: false, msg: 'Podrás contratar representante desde los 15 años.' };
-    h.agent = { nm: c.nm, lvl: c.lvl, com: c.com };
+    if (FP.Agents) FP.Agents.hire(c); else h.agent = { nm: c.nm, lvl: c.lvl, com: c.com };
     return { ok: true, msg: c.nm + ' es ahora tu representante.' };
   };
   Market.agentCandidates = function () {
+    if (FP.Agents) return FP.Agents.candidates();          // js/agentes.js: candidatos del mundo de representantes
     var S = FP.S, r = U.mulberry(U.hash(S.seed, 'agents', Math.floor(S.week / 52)));
     return [1, 3, 5].map(function (l) { return { nm: FP.Names.gen(S.hero.nat, r) + ' (agente)', lvl: l, com: l === 1 ? 3 : l === 3 ? 6 : 10 }; });
   };
