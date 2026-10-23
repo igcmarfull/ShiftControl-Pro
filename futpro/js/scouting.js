@@ -77,10 +77,12 @@
     if (club.c === cc) {
       var need = (lg.t === 1 ? 50 : lg.t === 2 ? 36 : 22) + (club.ra > 3 ? 4 : 0);
       var have = lg.t === 3 ? Math.max(r.loc * 0.95, r.nat) : Math.max(r.loc * 0.8, r.nat);
+      need -= FP.Agents ? FP.Agents.visibility(club) : 0;          // contactos del representante (js/agentes.js): hasta 6 puntos menos de requisito
       return { ok: have >= need, need: need, have: have };
     }
     var need2 = 24 + (lg.q - 48) * 1.25;
     if ({ KSA: 1, QAT: 1, UAE: 1, CHN: 1 }[club.c] && FP.Hero.age() >= 31) need2 -= 18;       // los veteranos con nombre les interesan aunque no sean estrellas internacionales
+    need2 -= FP.Agents ? FP.Agents.visibility(club) : 0;
     return { ok: r.int >= need2, need: need2, have: r.int };
   };
 
@@ -143,6 +145,7 @@
     w *= Rep.proximity(club);
     w *= 1 + P.prestige * U.clamp((clubTier(club).q - 55) / 20, 0, 1);
     var ex = Rep.exposure(club); w *= 0.7 + 0.5 * U.clamp((ex.have - ex.need) / 30, 0, 1);
+    if (FP.Agents) w *= FP.Agents.pullBoost(club);              // los clubes donde el representante tiene contactos siguen más de cerca al jugador
     return Math.max(w, 1e-6);
   };
   // elección ponderada con una pequeña probabilidad de «sorpresa» (elige entre todos los elegibles sin pesos).

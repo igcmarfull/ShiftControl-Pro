@@ -64,7 +64,12 @@
     if (!S.agents || S.agents.v !== VER) S.agents = { v: VER, list: Agents.generate(S.seed) };
     return S.agents;
   };
-  Agents.get = function (id) { var A = Agents.ensure(); return A ? A.list.filter(function (a) { return a.id === id; })[0] || null : null; };
+  var idx = { list: null, map: null };                      // índice id → agente (se reconstruye si cambia la lista: carga, migración)
+  Agents.get = function (id) {
+    var A = Agents.ensure(); if (!A) return null;
+    if (idx.list !== A.list || idx.n !== A.list.length) { idx.list = A.list; idx.n = A.list.length; idx.map = {}; A.list.forEach(function (a) { idx.map[a.id] = a; }); }
+    return idx.map[id] || null;
+  };
   // representante actual del héroe (objeto del mundo) o null
   Agents.current = function () { var h = FP.S && FP.S.hero; return h && h.agent && h.agent.id ? Agents.get(h.agent.id) : null; };
   // fuerza de contacto del agente con un club (0 a 1): país × peso de la división. Solo informativa en la fase 1.
@@ -73,6 +78,20 @@
     var cs = a.contacts[club.c] || 0, lg = FP.LGDEF && FP.LGDEF[club.lg], t = lg ? Math.min(lg.t, 5) : 1;
     return cs * (a.tiers[t - 1] != null ? a.tiers[t - 1] : 0.5);
   };
+
+  // ---------- efecto de los contactos (fase 2) ----------
+  // Supuestos de diseño: el representante solo modera la visibilidad y el seguimiento donde tiene contactos; nunca decide por el club ni salta las reglas
+  // deportivas (Rep.fit, lowerGate, offerGate, cupos de extranjeros, sueldos). vis: puntos máximos que baja el requisito de reputación del club; pull: aumento máximo del peso de interés.
+  Agents.CFG = { vis: 6, pull: 0.5, q0: 0.6 };
+  // fuerza efectiva (0 a 1): contacto del país × peso de la división × calidad del agente (el nivel 1 aporta el 60 % y el 5 el 100 %)
+  Agents.strength = function (club) {
+    var S = FP.S, h = S && S.hero; if (!h || !h.agent || !h.agent.id) return 0;
+    var a = Agents.get(h.agent.id); if (!a) return 0;
+    var c = Agents.contact(a, club); if (c <= 0) return 0;
+    var C = Agents.CFG; return c * (C.q0 + (1 - C.q0) * (a.lvl - 1) / 4);
+  };
+  Agents.visibility = function (club) { return Agents.CFG.vis * Agents.strength(club); };      // puntos de reputación que se descuentan del requisito del club
+  Agents.pullBoost = function (club) { return 1 + Agents.CFG.pull * Agents.strength(club); };  // multiplicador del peso con el que el club se fija en el jugador
 
   // ---------- candidatos ----------
   // seis candidatos por año (mismo resultado para una semilla y un año): generalista del país, especialista de divisiones inferiores, élite y otros perfiles
