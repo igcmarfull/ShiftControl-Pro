@@ -488,3 +488,26 @@ Resultado de la auditoría (`docs/AUDITORIA_GOLES_MERCADO.md`). Cambios en `js/m
 - **Prórroga**: el protagonista ya no suma los 30 minutos de la prórroga si fue sustituido, lesionado o expulsado antes.
 - **Pruebas nuevas** (`tests/equilibrio.js`, ≈ 10 s): goles por partido, cuota del delantero, defensas y mediocampo en cuatro ligas; delantero de la IA; goles del protagonista por nivel en una liga media, una débil y una fuerte; minutos de prórroga (la prueba detecta el error anterior: 45 de 45 sustituidos mal contados).
 - **No incluido** (propuesto en la auditoría, pendiente): tope a la ventaja del tirador estrella, mezcla del remate con el nivel general, más asistencias del delantero, reputación internacional por calidad de liga y valor escalado por calidad de liga.
+
+## Precontratos y reparto del interés
+
+`js/scouting.js` (`Rep.PULL`, `Rep.situation`, `Rep.proximity`, `Rep.pull`, `Rep.pickClub`, `Rep.lowerGate`, `Rep.attract`, `Rep.offerGate`), `js/contracts.js` (`K.preOffers`) y pruebas `tests/precontratos.js` y `tests/precontratos2.js`. Antes, con un delantero chileno de nivel 77, el 51 % de los precontratos venía de clubes extranjeros, el 65 % de clubes más débiles que el suyo (19 % mucho más débiles) y el interés se repartía de forma uniforme entre ≈ 700 clubes.
+
+- **Reparto del interés** (`Rep.pickClub`, usado por `Rep.scoutWeek` y `Rep.spark`): peso por encaje deportivo, nivel frente al club actual, cercanía (país, confederación, vínculo cultural), prestigio de la liga y visibilidad; con una probabilidad pequeña de «sorpresa» (`Rep.PULL.surprise`) que elige sin pesos. `Rep.fit` no cambia y sigue sin límite inferior global.
+- **Mercado nacional** (`Rep.PULL.domestic = 0,10`): una parte de las miradas semanales se reserva a los clubes del país del jugador. Afecta solo al interés, no a las puertas de oferta. Sin esto, con reputación internacional ≥ 50 los cientos de clubes extranjeros visibles dejaban a los chilenos con 2–6 % del interés. Medición con tres perfiles (150 corridas por celda): con 0,05 el 11 % de los precontratos eran del país; con 0,10, el 24 %; con 0,15, el 39 %. Se eligió 0,10 para que las ofertas sigan siendo mayoritariamente extranjeras y el mercado nacional no desaparezca.
+- **Bajar de nivel** (`Rep.lowerGate`, `Rep.attract`): un club claramente inferior solo llega a proponer en pocas ocasiones, menos si eres titular o estrella, más si quieres irte, eres veterano o la propuesta es atractiva (sueldo frente al actual, minutos esperados, liga, situación contractual). `K.preOffers` aplica también `Rep.offerGate`.
+- **Resultados** (valores medidos; los porcentajes son supuestos de diseño, ≈ 40–50 muestras por nivel, error ≈ ±7 puntos):
+
+| Reputación internacional | Extranjeros | Europa | Del país |
+|---|---|---|---|
+| 29 | 2 % | 2 % | 98 % |
+| 35 | 8 % | 0 % | 92 % |
+| 40 | 49 % | 35 % | 51 % |
+| 45 | 63 % | 24 % | 37 % |
+| 50 | 82 % | 37 % | 18 % |
+| 60 | 77 % | 46 % | 23 % |
+| 70 | 84 % | 53 % | 16 % |
+| 85 | 80 % | 55 % | 20 % |
+
+- **Límites conocidos**: la apertura entre reputación 35 y 40 es la más brusca (≈ 40 puntos) porque proviene del umbral de `Rep.exposure` para clubes extranjeros (`int ≥ 24 + (q − 48)·1,25`), que no se modificó; los perfiles medidos son de un delantero joven chileno; con pocas muestras los porcentajes tienen ruido. Las herramientas de medición están en `tools/auditoria/nacional*.js`.
+- **Pruebas**: `node tests/precontratos.js` (≈ 2 min) y `node tests/precontratos2.js` (≈ 16 min: apertura progresiva, interés nacional con reputación alta y razones para bajar de nivel).
