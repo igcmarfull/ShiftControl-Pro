@@ -522,3 +522,17 @@ Resultado de la auditoría (`docs/AUDITORIA_GOLES_MERCADO.md`). Cambios en `js/m
 - **Migración** (`Agents.migrate`, llamada al cargar): el `h.agent = {nm, lvl, com}` anterior se conserva sin cambios (se le añaden `id` y `since`) y se enlaza con una entrada `legacy` del mundo; es idempotente y las partidas sin `S.agents` lo generan al cargar.
 - **Sin cambios de comportamiento**: en esta fase los contactos y las especialidades no modifican visibilidad, ofertas ni precontratos. El efecto del agente sigue siendo el de siempre (`Market.agentMult` = 1 + nivel × 0,05 en `Rep.wage` y sueldos, `+nivel × 0,04` en `M.negotiate`, comisión en `K.net` y sueldo semanal). Verificado con `tools/auditoria/huella-agente.js`: una carrera de 104 semanas con un agente antiguo contratado da la misma huella (RNG, dinero, club, nivel y ofertas) en el código anterior y en el nuevo, con dos semillas.
 - **Pruebas**: `node tests/agentes.js` (determinismo, estructura del mundo, candidatos, contratación, migración, guardado y carga).
+
+## Contactos de los representantes (fase 2)
+
+`js/agentes.js` (`Agents.CFG`, `Agents.strength`, `Agents.visibility`, `Agents.pullBoost`), dos líneas en `Rep.exposure` y una en `Rep.pull` (`js/scouting.js`), `tests/agentes2.js` (≈ 4 min) y `tools/auditoria/agentes-ofertas.js`.
+
+- **Fuerza del contacto** (0–1) = contacto del agente con el país × peso de la división (el especialista inglés de League Two tiene 0,9 en las divisiones 3 y 4 y 0,1 en la Premier) × calidad del agente (nivel 1: 60 %, nivel 5: 100 %). Sin representante, o sin contacto con ese país, vale 0.
+- **Visibilidad** (`Rep.exposure`): el requisito de reputación del club baja `6 × fuerza` puntos (máximo 6; en la práctica ≈ 3–5). Se aplica a todos los usos de `exposure` (interés, ofertas, precontratos, pruebas). Nunca sube el requisito ni abre algo que no abriría el jugador con 6 puntos más de reputación.
+- **Seguimiento** (`Rep.pull`): el peso con el que un club se fija en el jugador sube hasta un +50 % × fuerza.
+- **No cambia**: `Rep.fit`, `lowerGate`, `offerGate`, cupos de extranjeros, sueldos (el agente sigue influyendo solo con su nivel), `Rep.PULL.domestic = 0,10`. Sin representante todo se comporta como antes y siguen llegando ofertas espontáneas.
+- **Medición** (jugadores de nivel 55, 70 y 85, agente inglés de divisiones inferiores de nivel 1; supuestos de diseño):
+  - Visibilidad: solo se suman clubes de países con contactos (+24 de la 3.ª inglesa con reputación 37 y +9/+24 con 30); el salto conocido entre reputación 35 y 40 es el mismo con y sin agente (+194 clubes visibles).
+  - Seguimiento: la franja donde el agente abre la 3.ª división inglesa antes (reputación 36–39) es la más sensible (nivel 70: 0,17 → 1,90 clubes de la 3.ª/4.ª inglesa siguiéndolo por temporada); con reputación 45 la diferencia es pequeña (0,47 → 0,75).
+  - Ofertas reales con reputación 37 (de la 3.ª/4.ª inglesa, % de temporadas con alguna): nivel 55: 0 % → 0 %; nivel 70: 1 % → 11 %; nivel 85: 1 % → 17 %. Las ofertas totales casi no cambian (0,42 → 0,48 y 0,92 → 0,99 por temporada), porque las puertas deportivas siguen igual.
+- **Límite conocido**: como la visibilidad es un umbral, el agente adelanta la apertura de una liga unos 3 puntos de reputación; no suaviza el salto de reputación 35–40 ni lo amplifica.
