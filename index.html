@@ -4778,6 +4778,7 @@ body[data-role="chief"] #today table td:nth-child(2){
 <link rel="stylesheet" href="src/modules/fuel/fuel.css">
 <link rel="stylesheet" href="src/modules/invoice-cost/invoice-cost.css">
 <link rel="stylesheet" href="src/modules/documents/documents.css">
+<link rel="stylesheet" href="src/modules/sales-analysis/sales-analysis.css">
 <link rel="stylesheet" href="src/modules/sales/sales.css">
 <link rel="stylesheet" href="src/ui-papel.css">
 <link rel="stylesheet" href="src/report-export.css">
@@ -5885,6 +5886,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <button class="nav-btn role-admin-visible" data-view="team"><span>◍</span>Equipo de estación</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="reports"><span>↗</span>Reportes</button>
     <button class="nav-btn role-admin-visible" data-view="documents"><span>🗎</span>Documentos</button>
+    <button class="nav-btn role-admin-visible" data-view="salesAnalysis"><span>📈</span>Análisis de ventas</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="audit"><span>≡</span>Historial de actividad</button>
     <button class="nav-btn role-admin-visible role-chief-visible" data-view="settings"><span>⚙</span>Configuración</button>
   </div>
@@ -6506,6 +6508,7 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
     <section id="fuel" class="view"><div id="fuelRoot"></div></section>
     <section id="invcost" class="view"><div id="invCostRoot"></div></section>
     <section id="documents" class="view"><div id="documentsRoot"></div></section>
+    <section id="salesAnalysis" class="view"><div id="salesAnalysisRoot"></div></section>
     <section id="sales" class="view"><div id="salesRoot"></div></section>
 
     <section id="invoices" class="view">
@@ -18004,6 +18007,8 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script src="src/modules/documents/documents-data.js"></script>
 <script src="src/modules/documents/documents-render.js"></script>
 <script src="src/modules/documents/documents.js"></script>
+<script src="src/modules/sales-analysis/sales-analysis-calc.js"></script>
+<script src="src/modules/sales-analysis/sales-analysis.js"></script>
 <script src="src/modules/sales/sales.js"></script>
 <script src="src/modules/suppliers/suppliers.js"></script>
 <script src="src/modules/suppliers/suppliers-ui.js"></script>

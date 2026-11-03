@@ -265,6 +265,7 @@ Las siguientes vistas y flujos existen hoy, pero no están extraídos como módu
 | Comisiones | Vista `fuel` (solo administrador): litros por día y comisión del contrato; ver `docs/combustible-comisiones.md` |
 | Costo de facturas | Vista `invcost` (solo administrador): sube una factura de proveedor en PDF y calcula el costo unitario sin IVA; no guarda datos; ver `docs/costo-facturas.md` |
 | Documentos | Vista `documents` (solo administrador): modelos de contrato, finiquito, cartas y constancias en PDF y Word; no guarda datos; ver `docs/documentos.md` |
+| Análisis de ventas | Vista `salesAnalysis` (solo administrador): sube el reporte de transacciones del POS (Excel) y busca patrones (cliente repetido por operadora, montos redondos, anulaciones, ventas fuera de turno); no guarda datos en el servidor; ver `docs/analisis-ventas.md` |
 | Reportes | Vista `reports`, reportes operativos/contables, CSV, Excel (`docs/reportes-excel.md`) e impresión |
 | Auditoría | Vista `audit`, más una auditoría auxiliar en clave local separada |
 | Ausencias | Vista `absences`, sincronización de ejecuciones y cobertura de reemplazos |
