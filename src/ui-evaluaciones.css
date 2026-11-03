@@ -23,7 +23,8 @@
 #evaluations .ev-seg button{padding:0 15px;font-size:13px;font-weight:650;border-radius:9px}
 
 /* ---------- Lista ---------- */
-#evaluationList.ev-list{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;padding-bottom:4px}
+/* .ops-list limita la altura a 580px; con overflow:hidden se cortaban las últimas filas. */
+#evaluationList.ev-list{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;padding-bottom:4px;max-height:none}
 #evaluationList .ev-gh{margin:0;padding:16px 20px 8px}
 #evaluationList .ev-row{padding:12px 20px;grid-template-columns:44px minmax(0,2fr) 90px 130px 150px auto}
 #evaluationList .ev-av{width:44px;height:44px;border-radius:14px;border:0;background:color-mix(in srgb,var(--c,var(--blue)) 14%,transparent);color:var(--c,var(--act-fg));font-size:12.5px;font-weight:800}
