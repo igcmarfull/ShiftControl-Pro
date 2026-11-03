@@ -48,7 +48,7 @@ Verificación: capturas con datos simulados en claro/oscuro, escritorio y celula
 Estructura en `index.html` (`#workcenter`) y estilos `.wc-*` en `src/ui-papel.css`. `src/ui-workcenter.js` (IIFE, se carga después de `ui-papel.js`) solo dibuja lo visual:
 
 - **Anillo de avance:** lee el contador del cierre guiado (`#v17CloseProgress`, p. ej. «3/7»).
-- **Línea de tiempo del turno:** usa los porcentajes de los flujos ya calculados (`#v16Workflows`) y el horario del turno de `settings.A/B/C` (por defecto 07–15, 15–23, 23–07). El marcador «Ahora» sale del reloj.
+- **Línea de tiempo del turno:** usa los porcentajes de los flujos ya calculados (`#v16Workflows`) y el horario del turno de `settings.A/B/C` (por defecto A 23–07, B 07–15, C 15–23). El marcador «Ahora» sale del reloj.
 - **Estadísticas y chip de integridad:** conservan los ids `v52PendingTotal`, `v52HighTotal`, `v52FlowTotal`, `v52WorkStatus` que ya actualiza el script V52. El panel de integridad solo se muestra si hay hallazgos.
 - **Asistencia del turno:** `v14DailySnapshot()` (presentes, atrasados, excepciones, sin confirmar y cobertura por turno A/B/C).
 - **Pagos pendientes:** `AdditionalModule.getAll()` con `paid !== 'Pagado'`; solo para el administrador. Las barras muestran los 6 turnos extra más recientes.
@@ -99,7 +99,7 @@ Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritori
 
 - **Arriba (`#odTop`):** anillo de confirmados (planificados con registro de asistencia), seis cifras (planificados, presentes, atrasos, ausentes, licencias, sin confirmar), franja de alerta (usa el texto de `#todayProblems`) y cobertura por turno A/B/C con color según el estado (verde completo, ámbar parcial, rojo sin cubrir). Las tarjetas y el cuadro «Problemas» originales se ocultan en escritorio pero siguen en el DOM (los ids se conservan).
 - **Tablero de turnos:** mismo contenido y acciones (`quickPresent`, `openTodayExceptions`, `markPendingPresent`); se agregó avatar con iniciales, «Reiniciar día» pasó a un menú «⋯» (`clearTodayExecutions`, que ya pedía confirmación) y se quitó la franja inferior de totales, que ahora está en la cabecera. Se eliminó el cartel de demo de esta pantalla.
-- **Abajo (`#odLow`):** asistencia de los últimos 7 días (presentes sobre planificados por día, hasta la fecha elegida; un día sin turnos planificados se muestra con «—»), excepciones y reemplazos del día (incluye los pendientes) y relevo del siguiente turno (solo si la fecha elegida es hoy; horario desde `settings.A/B/C`).
+- **Abajo (`#odLow`):** asistencia de los últimos 7 días (presentes sobre planificados por día, hasta la fecha elegida; un día sin turnos planificados se muestra con «—»), excepciones y reemplazos del día (incluye los pendientes) y relevo del siguiente turno (solo si la fecha elegida es hoy; horario desde `settings.A/B/C`). El turno en curso y el siguiente salen de `window.ShiftSchedule` (definido en `index.html`), que lee esos horarios: A es el turno de noche y su fecha en la planificación es la del día en que termina, por eso el relevo de la tarde (C) apunta al A del día siguiente.
 - La app no guarda la hora de llegada, por eso no hay línea de tiempo de llegadas.
 
 Verificación: pruebas en navegador con datos simulados (claro/oscuro, escritorio y celular): confirmar a un trabajador actualiza el resumen, el menú «⋯» ofrece «Reiniciar día» y, al aceptarlo, los registros del día se borran. Sin pruebas con datos reales.

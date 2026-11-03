@@ -7565,17 +7565,17 @@ body.light #dashboard .v16-station-panel,body.light #dashboard .v16-summary-pane
 
             <label>
               Turno A
-              <input class="field" id="shiftA" placeholder="07:00–15:00" required="">
+              <input class="field" id="shiftA" placeholder="23:00–07:00" required="">
             </label>
 
             <label>
               Turno B
-              <input class="field" id="shiftB" placeholder="15:00–23:00" required="">
+              <input class="field" id="shiftB" placeholder="07:00–15:00" required="">
             </label>
 
             <label>
               Turno C
-              <input class="field" id="shiftC" placeholder="23:00–07:00" required="">
+              <input class="field" id="shiftC" placeholder="15:00–23:00" required="">
             </label>
 
             <label class="full role-admin-only">
@@ -8029,7 +8029,7 @@ function safeRandomUUID(){
 const monthNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 let state=JSON.parse(localStorage.getItem(KEYS.data)||'null')||{
-  settings:{company:'Mi Empresa',A:'07:00–15:00',B:'15:00–23:00',C:'23:00–07:00',theme:'dark',sundayThreshold:2,sundayNormalAmount:0,sundaySpecialAmount:50000,sundayAutoGenerate:true},
+  settings:{company:'Mi Empresa',A:'23:00–07:00',B:'07:00–15:00',C:'15:00–23:00',theme:'dark',sundayThreshold:2,sundayNormalAmount:0,sundaySpecialAmount:50000,sundayAutoGenerate:true},
   employees:[],
   plans:[],
   executions:[],
@@ -13472,9 +13472,9 @@ function renderSettings(){
   const defaultExtraPayment=document.getElementById('defaultExtraPayment');
 
   if(company)company.value=state.settings.company||'';
-  if(a)a.value=state.settings.A||'07:00–15:00';
-  if(b)b.value=state.settings.B||'15:00–23:00';
-  if(c)c.value=state.settings.C||'23:00–07:00';
+  if(a)a.value=state.settings.A||'23:00–07:00';
+  if(b)b.value=state.settings.B||'07:00–15:00';
+  if(c)c.value=state.settings.C||'15:00–23:00';
   if(defaultExtraPayment)defaultExtraPayment.value=Number(state.settings.defaultExtraPayment||30000);
 
   renderSpecials();
@@ -16009,7 +16009,39 @@ function nextPlannedShifts(worker,limit=6){
  for(let i=0;i<31&&rows.length<limit;i++){const d=new Date(today);d.setDate(today.getDate()+i);const iso=d.toISOString().slice(0,10);const plan=state.plans.find(p=>p.employeeId===worker.id&&p.date===iso);const code=plan?.code||worker.shift||'A';if(!['D','L','V','P','X'].includes(code))rows.push({date:iso,code})}
  return rows;
 }
-function shiftHours(code){return ({A:'07:00–15:00',B:'15:00–23:00',C:'23:00–07:00'}[code]||'Horario por confirmar')}
+/* Horario de los turnos. A es el turno de noche (23:00–07:00): su fecha en la planificación es la del día en que termina.
+   Lee state.settings.A/B/C y cae en estos valores si faltan. */
+window.ShiftSchedule=(function(){
+  const DEFAULTS={A:'23:00–07:00',B:'07:00–15:00',C:'15:00–23:00'};
+  const pad=minutes=>`${String(Math.floor(minutes/60)%24).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
+  function settings(){return (window.ShiftControlState?.get?.()||window.state||{}).settings||{}}
+  function parse(code){
+    const pattern=/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/;
+    const match=String(settings()[code]||'').match(pattern)||DEFAULTS[code].match(pattern);
+    const start=Number(match[1])*60+Number(match[2]);
+    const end=Number(match[3])*60+Number(match[4]);
+    return {code,start,end,wraps:end<=start,label:`${pad(start)}–${pad(end)}`,start_label:pad(start),end_label:pad(end)};
+  }
+  function all(){return ['A','B','C'].map(parse)}
+  function at(minutes){
+    const list=all();
+    return list.find(item=>item.wraps?(minutes>=item.start||minutes<item.end):(minutes>=item.start&&minutes<item.end))||list[0];
+  }
+  /* Siguiente turno: cuántos días después de "hoy" cae su fecha en la planificación. */
+  function next(minutes){
+    const current=at(minutes);
+    const list=all();
+    const following=list.find(item=>item.start===current.end%1440)||current;
+    const startsTomorrow=following.start<=minutes;
+    return {shift:following,dayOffset:(startsTomorrow?1:0)+(following.wraps?1:0)};
+  }
+  function periodName(shift){
+    const hour=Math.floor(shift.start/60);
+    return hour>=5&&hour<12?'Mañana':hour<20&&hour>=12?'Tarde':'Noche';
+  }
+  return {DEFAULTS,parse,at,next,periodName,label:code=>parse(code).label};
+})();
+function shiftHours(code){return ({A:1,B:1,C:1}[code]?window.ShiftSchedule.label(code):'Horario por confirmar')}
 function renderMyShift(){
  const worker=attendantEmployee();if(!worker)return;const shifts=nextPlannedShifts(worker),next=shifts[0],notices=opsRead(ATTENDANT_NOTICE_KEY,[]).filter(x=>x.employeeId===worker.id),month=isoToday.slice(0,7),execs=state.executions.filter(x=>x.employeeId===worker.id&&x.date.startsWith(month));
  if(next){myShiftDate.textContent=new Date(next.date+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});myShiftHours.textContent=shiftHours(next.code);myShiftLabel.textContent=`Turno ${next.code}`;const n=notices.find(x=>x.date===next.date);myShiftState.textContent=n?({confirmed:'Asistencia confirmada. Pendiente de validación de jefatura.',absent:'Inasistencia informada a la jefa de isla.',arrived:'Llegada informada. Pendiente de validación.'}[n.status]):'Aún no has confirmado este turno.'}
@@ -17942,7 +17974,7 @@ body[data-role="chief"] .v17-chief-today{display:block}
 <script id="v18-clean-interface-script">
 (function(){
   const fmtDate=()=>new Intl.DateTimeFormat('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());
-  const currentShift=()=>{const h=new Date().getHours();if(h>=7&&h<15)return 'Turno A · 07:00–15:00';if(h>=15&&h<23)return 'Turno B · 15:00–23:00';return 'Turno C · 23:00–07:00'};
+  const currentShift=()=>{const now=new Date();const shift=window.ShiftSchedule.at(now.getHours()*60+now.getMinutes());return `Turno ${shift.code} · ${shift.label}`};
   function refreshV18Context(){
     const date=document.getElementById('v18ContextDate');if(date)date.textContent=fmtDate();
     const shift=document.getElementById('v18ContextShift');if(shift)shift.textContent=currentShift();
