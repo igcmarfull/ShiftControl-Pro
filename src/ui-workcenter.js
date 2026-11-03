@@ -14,21 +14,16 @@
   function setHtml(key,el,html){if(el&&last[key]!==html){last[key]=html;el.innerHTML=html}}
 
   function shiftRange(){
-    const settings=(window.ShiftControlState?.get?.()||window.state||{}).settings||{};
-    const hour=new Date().getHours();
-    const code=hour>=7&&hour<15?'A':hour>=15&&hour<23?'B':'C';
-    const names={A:'Mañana',B:'Tarde',C:'Noche'};
-    const defaults={A:'07:00–15:00',B:'15:00–23:00',C:'23:00–07:00'};
-    const raw=String(settings[code]||defaults[code]);
-    const match=raw.match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/)||defaults[code].match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/);
-    const start=Number(match[1])*60+Number(match[2]);
-    let end=Number(match[3])*60+Number(match[4]);
-    if(end<=start)end+=1440;
     const now=new Date();
-    let current=now.getHours()*60+now.getMinutes();
+    const minutes=now.getHours()*60+now.getMinutes();
+    const shift=window.ShiftSchedule.at(minutes);
+    const start=shift.start;
+    let end=shift.end;
+    if(end<=start)end+=1440;
+    let current=minutes;
     if(current<start)current+=1440;
     const pad=n=>String(Math.floor(n/60)%24).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
-    return {name:names[code],label:`${pad(start)} – ${pad(end)}`,fraction:Math.max(0,Math.min(1,(current-start)/(end-start))),now:pad(now.getHours()*60+now.getMinutes()),start:pad(start),end:pad(end)};
+    return {name:window.ShiftSchedule.periodName(shift),label:`${pad(start)} – ${pad(end)}`,fraction:Math.max(0,Math.min(1,(current-start)/(end-start))),now:pad(minutes),start:pad(start),end:pad(end)};
   }
 
   function closeProgress(){

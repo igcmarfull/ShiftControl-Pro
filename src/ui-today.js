@@ -90,10 +90,7 @@
   }
 
   function shiftStart(code){
-    const settings=data().settings||{};
-    const defaults={A:'07:00–15:00',B:'15:00–23:00',C:'23:00–07:00'};
-    const match=String(settings[code]||defaults[code]).match(/(\d{1,2}):(\d{2})/)||defaults[code].match(/(\d{1,2}):(\d{2})/);
-    return `${String(match[1]).padStart(2,'0')}:${match[2]}`;
+    return window.ShiftSchedule.parse(code).start_label;
   }
 
   function renderLow(date,rows,execs){
@@ -136,10 +133,10 @@
     let relay='<div class="od-quiet">El relevo se muestra solo para el día de hoy.</div>';
     let relayTitle='Siguiente turno';
     if(date===todayIso()){
-      const hour=new Date().getHours();
-      const currentCode=hour>=7&&hour<15?'A':hour>=15&&hour<23?'B':'C';
-      const nextCode={A:'B',B:'C',C:'A'}[currentCode];
-      const nextDate=hour>=23&&nextCode==='A'?addDays(date,1):date;
+      const now=new Date();
+      const upcoming=window.ShiftSchedule.next(now.getHours()*60+now.getMinutes());
+      const nextCode=upcoming.shift.code;
+      const nextDate=addDays(date,upcoming.dayOffset);
       const nextRows=plannedRows(nextDate).filter(row=>row.plan?.code===nextCode);
       const nextExecs=execsOf(nextDate);
       relay=`<div class="od-next"><div class="when">Turno ${nextCode}<small>${plural(nextRows.length,'trabajador planificado','trabajadores planificados')}</small></div>${nextRows.slice(0,5).map(row=>{const ok=isPresent(nextExecs,row);return `<div class="p"><span class="od-av">${esc(initials(row.employee.name))}</span><div><strong>${esc(row.employee.name)}</strong></div><span class="od-chip" style="--c:var(--${ok?'green':'blue'})">${ok?'Confirmado':'Planificado'}</span></div>`}).join('')}${nextRows.length>5?`<p class="od-more">y ${nextRows.length-5} más</p>`:''}</div>`;
